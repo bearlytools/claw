@@ -2,10 +2,14 @@
 package binary
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	"golang.org/x/exp/constraints"
 )
+
+var Enc = binary.LittleEndian
 
 // Get gets any Uint size from a []byte slice.
 func Get[T constraints.Integer](b []byte) T {
@@ -21,7 +25,7 @@ func Get[T constraints.Integer](b []byte) T {
 		return T(int32(uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24))
 	case int64:
 		return T(int64(uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 |
-                uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56))
+			uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56))
 	case uint8:
 		return T(uint8(b[0]))
 	case uint16:
@@ -53,6 +57,7 @@ func Put[T constraints.Integer](b []byte, v T) {
 	switch any(v).(type) {
 	case uint8:
 		b[0] = byte(v)
+		return
 	case uint16:
 		b[0] = byte(v)
 		b[1] = byte(v >> 8)
@@ -72,4 +77,27 @@ func Put[T constraints.Integer](b []byte, v T) {
 	b[5] = byte(v >> 40)
 	b[6] = byte(v >> 48)
 	b[7] = byte(v >> 56)
+}
+
+// PutBuffer encodes an integer into the passed Buffer.
+func PutBuffer[T constraints.Integer](buff *bytes.Buffer, v T) error {
+	var b []byte
+	switch any(v).(type) {
+	case int8:
+		v = T(uint8(v))
+		b = make([]byte, 1)
+	case int16:
+		v = T(uint16(v))
+		b = make([]byte, 2)
+	case int32:
+		v = T(uint32(v))
+		b = make([]byte, 4)
+	case int64:
+		v = T(uint64(v))
+		b = make([]byte, 8)
+	}
+
+	Put(b, v)
+	_, err := buff.Write(b)
+	return err
 }
