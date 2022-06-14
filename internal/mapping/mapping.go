@@ -4,6 +4,10 @@ import "github.com/bearlytools/claw/internal/field"
 
 // FieldDesc describes a field.
 type FieldDesc struct {
+	// Name is the name of the field as described in the .claw file.
+	Name string
+	// GoName is the name of field, if required.
+	GoName string
 	// Type is the type of field.
 	Type field.Type
 

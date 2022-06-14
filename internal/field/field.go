@@ -1,5 +1,7 @@
 package field
 
+//go:generate stringer -type=Type
+
 // Type represents the type of data that is held in a byte field.
 type Type uint8
 

@@ -2,6 +2,7 @@ package structs
 
 import "fmt"
 
+// TODO(jdoak): Delete this?
 var (
 	padding1Bytes  = make([]byte, 1)
 	padding2Bytes  = make([]byte, 2)

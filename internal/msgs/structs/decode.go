@@ -114,6 +114,7 @@ func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
 		case field.FTString, field.FTBytes:
 			err = s.decodeBytes(buffer, fieldNum)
 		case field.FTStruct:
+			panic("not supported yet")
 		case field.FTListBool:
 			err = s.decodeListBool(buffer, fieldNum)
 		case field.FTList8, field.FTList16, field.FTList32, field.FTList64:
@@ -121,7 +122,9 @@ func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
 		case field.FTListBytes:
 			err = s.decodeListBytes(buffer, fieldNum)
 		case field.FTListStruct:
+			panic("not supported yet")
 		default:
+			err = fmt.Errorf("got field type %v that we don't support", fieldType)
 		}
 		if err != nil {
 			return err
