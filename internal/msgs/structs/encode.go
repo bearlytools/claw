@@ -10,11 +10,11 @@ import (
 
 // Marshal writes out the Struct to an io.Writer.
 func (s *Struct) Marshal(w io.Writer) (n int, err error) {
-	total := atomic.LoadInt64(s.total)
+	total := atomic.LoadInt64(s.structTotal)
 	if total%8 != 0 {
 		return 0, fmt.Errorf("Struct has an internal size(%d) that is not divisible by 8, something is bugged", total)
 	}
-	s.header.SetFinal40(uint64(atomic.LoadInt64(s.total)))
+	s.header.SetFinal40(uint64(total))
 
 	written, err := w.Write(s.header)
 	if err != nil {

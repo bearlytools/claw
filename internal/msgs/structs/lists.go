@@ -5,7 +5,6 @@ import (
 	stdbinary "encoding/binary"
 	"fmt"
 	"math"
-	"sync/atomic"
 
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
@@ -18,32 +17,31 @@ type Numbers interface {
 	constraints.Integer | constraints.Float
 }
 
-// Bool is a wrapper around a list of boolean values. This allows for
-// changing or
+// Bool is a wrapper around a list of boolean values.
 type Bool struct {
 	data []byte
 	len  int
 
-	total *int64
+	s *Struct
 }
 
 // NewBool creates a new Bool that will be stored in a Struct field with number fieldNum.
-func NewBool(fieldNum uint16, total *int64) *Bool {
+func NewBool(fieldNum uint16, s *Struct) *Bool {
 	b := pool.Get(boolPool).(*Bool)
 	b.data = make([]byte, 8)
-	b.total = total
+	s = s
 
 	var u uint64
 	bits.SetValue(fieldNum, u, 0, 16)
 	bits.SetValue(uint8(field.FTListBool), u, 16, 24)
 	binary.Put(b.data, u)
-	atomic.AddInt64(total, 8)
+	addToTotal(s, 8)
 
 	return b
 }
 
 // NewBoolFromBytes returns a new Bool value and advances "data" passed the list.
-func NewBoolFromBytes(data *[]byte, total *int64) (*Bool, error) {
+func NewBoolFromBytes(data *[]byte, s *Struct) (*Bool, error) {
 	l := len(*data)
 	if l < 8 {
 		return nil, fmt.Errorf("Struct.decodeListBool() header was < 64 bits")
@@ -56,10 +54,10 @@ func NewBoolFromBytes(data *[]byte, total *int64) (*Bool, error) {
 		b := pool.Get(boolPool).(*Bool)
 		b.data = (*data)[:8]
 		b.len = 0
-		b.total = total
+		b.s = s
 
 		*data = (*data)[8:]
-		atomic.AddInt64(total, int64(len(b.data)))
+		addToTotal(s, len(b.data))
 		return b, nil
 	}
 
@@ -73,10 +71,10 @@ func NewBoolFromBytes(data *[]byte, total *int64) (*Bool, error) {
 
 	b.data = sl
 	b.len = int(items)
-	b.total = total
+	b.s = s
 
 	*data = (*data)[rightBound:]
-	atomic.AddInt64(total, int64(len(b.data)))
+	addToTotal(s, len(b.data))
 	return b, nil
 }
 
@@ -181,7 +179,7 @@ func (b *Bool) Append(i ...bool) {
 	}
 
 	updateItems(b.data[:8], b.len)
-	atomic.AddInt64(b.total, int64(len(b.data)-oldSize))
+	addToTotal(b.s, len(b.data)-oldSize)
 }
 
 // Slice converts this into a standard []bool. The values aren't linked, so changing
@@ -215,11 +213,11 @@ type Number[I Numbers] struct {
 	len         int
 	isFloat     bool
 
-	total *int64
+	s *Struct
 }
 
 // NewNumberFromBytes returns a new Number value.
-func NewNumberFromBytes[I Numbers](data *[]byte, total *int64) (*Number[I], error) {
+func NewNumberFromBytes[I Numbers](data *[]byte, s *Struct) (*Number[I], error) {
 	l := len(*data)
 	if l < 8 {
 		return nil, fmt.Errorf("header was < 64 bits")
@@ -275,10 +273,10 @@ func NewNumberFromBytes[I Numbers](data *[]byte, total *int64) (*Number[I], erro
 	if items == 0 {
 		n.data = (*data)[:8]
 		n.len = 0
-		n.total = total
+		n.s = s
 
 		*data = (*data)[8:]
-		atomic.AddInt64(total, 8)
+		addToTotal(s, 8)
 		return n, nil
 	}
 
@@ -294,11 +292,11 @@ func NewNumberFromBytes[I Numbers](data *[]byte, total *int64) (*Number[I], erro
 
 	rightBound := (8 * requiredWords) + 8
 	sl := (*data)[0:rightBound]
-	atomic.AddInt64(total, int64(len(sl)))
+	addToTotal(s, len(sl))
 
 	n.data = sl
 	n.len = int(items)
-	n.total = total
+	n.s = s
 	*data = (*data)[rightBound:]
 
 	return n, nil
@@ -432,7 +430,7 @@ func (n *Number[I]) Append(i ...I) {
 	oldSize := len(n.data)
 	defer func() {
 		updateItems(n.data[:8], n.len)
-		atomic.AddInt64(n.total, int64(len(n.data)-oldSize))
+		addToTotal(n.s, len(n.data)-oldSize)
 	}()
 
 	requiredSize := n.len + len(i)
@@ -492,13 +490,13 @@ func (n *Number[I]) Encode() []byte {
 type Bytes struct {
 	data [][]byte // Header is entry 0. Each entry includes the item header of 64bits.
 
-	total    *int64
+	s        *Struct
 	dataSize int64 // This is the size of the "data" field
 	padding  int64 // This is how much padding would currently be needed
 }
 
 // NewBytesFromBytes returns a new Bytes value.
-func NewBytesFromBytes(data *[]byte, total *int64) (*Bytes, error) {
+func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	if len(*data) < 16 { // list header(8) + entry header(4) + at least 4 byte (1 bytes of data + 3 padding)
 		return nil, fmt.Errorf("malformed list of bytes: must be at least 16 bytes in size")
 	}
@@ -541,10 +539,10 @@ func NewBytesFromBytes(data *[]byte, total *int64) (*Bytes, error) {
 		*data = (*data)[paddingNeeded:]
 	}
 
-	atomic.AddInt64(total, int64(read+paddingNeeded)) // Add header and padding
+	addToTotal(s, read+paddingNeeded) // Add header + data + padding
 
 	b.data = d
-	b.total = total
+	b.s = s
 	b.dataSize = int64(read)
 	b.padding = int64(paddingNeeded)
 
@@ -630,7 +628,7 @@ func (b *Bytes) Set(index int, value []byte) error {
 
 	// dataSize - oldSize is our data size change.
 	// padding - oldPadding is our padding data size change.
-	atomic.AddInt64(b.total, b.dataSize-oldSize+b.padding-oldPadding)
+	addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding)
 	b.set(index, value)
 	return nil
 }
@@ -672,7 +670,7 @@ func (b *Bytes) Append(values ...[]byte) error {
 	} else {
 		b.padding = 8 - (newSize % 8)
 	}
-	atomic.AddInt64(b.total, b.dataSize-oldSize+b.padding-oldPadding)
+	addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding)
 
 	return nil
 }

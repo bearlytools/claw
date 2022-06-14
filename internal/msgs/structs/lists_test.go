@@ -11,11 +11,11 @@ import (
 func TestBoolGetSetAppendRange(t *testing.T) {
 	// Sets our header to message type 15, field number 2 and 20 entries.
 	b := []byte{15, 0, 2, 20, 0, 0, 0, 0}
-	var total int64
+	s := New(0, nil, nil)
 
 	// This sets up the first 20 entries to be set to true, everything else is false.
 	b = append(b, bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 4), 0, 0, 0, 0, 0)
-	list, err := NewBoolFromBytes(&b, &total)
+	list, err := NewBoolFromBytes(&b, s)
 	if err != nil {
 		panic(err)
 	}
@@ -85,8 +85,8 @@ func TestBoolGetSetAppendRange(t *testing.T) {
 		t.Fatalf("TestBoolGetSetAppendRange(Range): found %d items, want %d items", i, list.Len()-3)
 	}
 
-	if *list.total != 24 {
-		t.Fatalf("TestBoolGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", *list.total, 24)
+	if *s.structTotal != 24 {
+		t.Fatalf("TestBoolGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", *s.structTotal, 24)
 	}
 }
 
@@ -94,7 +94,7 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 	// Sets our header to message type 16, field number 3 and 7 entries.
 	b := []byte{16, 0, 3, 7, 0, 0, 0, 0}
 
-	var total int64
+	s := New(0, nil, nil)
 
 	values := map[int]uint8{
 		0: 5,
@@ -111,7 +111,7 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 		b = append(b, values[i])
 	}
 	b = append(b, 0) // Padding
-	list, err := NewNumberFromBytes[uint8](&b, &total)
+	list, err := NewNumberFromBytes[uint8](&b, s)
 	if err != nil {
 		panic(err)
 	}
@@ -170,8 +170,8 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 		t.Fatalf("TestNumberGetSetAppendRange(Range): found %d items, want %d items", i, list.Len()-3)
 	}
 
-	if *list.total != 24 {
-		t.Fatalf("TestNumberGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", *list.total, 24)
+	if *s.structTotal != 24 {
+		t.Fatalf("TestNumberGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", *s.structTotal, 24)
 	}
 }
 
@@ -179,9 +179,9 @@ func TestNumberFloat(t *testing.T) {
 	// Sets our header to message type 16, field number 3 and 0 entries.
 	b := []byte{16, 0, 4, 0, 0, 0, 0, 0}
 
-	var total int64
+	s := New(0, nil, nil)
 
-	list, err := NewNumberFromBytes[float64](&b, &total)
+	list, err := NewNumberFromBytes[float64](&b, s)
 	if err != nil {
 		panic(err)
 	}
@@ -202,7 +202,7 @@ func TestBytes(t *testing.T) {
 	// Sets our header to message type 20, field number 5 and 1 entry.
 	b := []byte{20, 0, 5, 1, 0, 0, 0, 0}
 
-	var total int64
+	s := New(0, nil, nil)
 
 	values := []string{
 		"hello", // len 5
@@ -215,7 +215,7 @@ func TestBytes(t *testing.T) {
 	} // 17 bytes now - list header(8) + entry header(4) + data(5)
 	b = append(b, 0, 0, 0, 0, 0, 0, 0) // 7 bytes of Padding
 
-	list, err := NewBytesFromBytes(&b, &total)
+	list, err := NewBytesFromBytes(&b, s)
 	if err != nil {
 		panic(err)
 	}
@@ -261,7 +261,7 @@ func TestBytes(t *testing.T) {
 		size += len(v)
 	}
 
-	if *list.total != 48 {
-		t.Fatalf("TestBytes(total count): internal 'total' counter, got %d bytes, want %d bytes", *list.total, 48)
+	if *s.structTotal != 48 {
+		t.Fatalf("TestBytes(total count): internal 'total' counter, got %d bytes, want %d bytes", *s.structTotal, 48)
 	}
 }

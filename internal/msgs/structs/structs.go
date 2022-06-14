@@ -79,28 +79,31 @@ type Struct struct {
 	// mapping holds our Mapping object that allows us to understand what field number holds what value type.
 	mapping mapping.Map
 
-	// total is the total size of the top level Struct. It is passed from the top level all
-	// the way down.
-	total *int64
+	parent *Struct
+
+	// structTotal is the total size of this struct in bytes.
+	structTotal *int64
 }
 
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
-func New(fieldNum uint16, dataMap mapping.Map) *Struct {
+func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
 	h := GenericHeader(make([]byte, 8))
 	h.SetFirst16(fieldNum)
 	h.SetNext8(uint8(field.FTStruct))
 
-	return &Struct{
-		header:  h,
-		mapping: dataMap,
-		fields:  make([]structField, len(dataMap)),
-		total:   new(int64),
+	s := &Struct{
+		header:      h,
+		mapping:     dataMap,
+		fields:      make([]structField, len(dataMap)),
+		structTotal: new(int64),
+		parent:      parent,
 	}
+	return s
 }
 
 // NewFromReader creates a new Struct from data we read in.
 func NewFromReader(r io.Reader, maps mapping.Map) (*Struct, error) {
-	s := New(0, maps)
+	s := New(0, maps, nil)
 
 	if err := s.unmarshal(r); err != nil {
 		return nil, err
@@ -157,7 +160,7 @@ func SetBool(s *Struct, fieldNum uint16, value bool) error {
 		}
 		binary.Put(f.header, n)
 		s.fields[fieldNum-1] = f
-		atomic.AddInt64(s.total, 8)
+		addToTotal(s, 8)
 		return nil
 	}
 
@@ -228,11 +231,11 @@ func SetNumber[N Numbers](s *Struct, fieldNum uint16, value N) error {
 		f.header = GenericHeader(make([]byte, 8))
 		switch size < 64 {
 		case true:
-			atomic.AddInt64(s.total, 8)
+			addToTotal(s, 8)
 		case false:
 			b := make([]byte, 8)
 			f.ptr = unsafe.Pointer(&b)
-			atomic.AddInt64(s.total, 16)
+			addToTotal(s, 16)
 		default:
 			panic("wtf")
 		}
@@ -289,9 +292,9 @@ func DeleteNumber(s *Struct, fieldNum uint16) error {
 
 	switch desc.Type {
 	case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
-		atomic.AddInt64(s.total, -8) // Requires single 64 bit value (8 bytes)
+		addToTotal(s, -8)
 	case field.FTInt64, field.FTUint64, field.FTFloat64:
-		atomic.AddInt64(s.total, -16) // Requires single two 64 bit value (16 bytes)
+		addToTotal(s, -16)
 	default:
 		panic("wtf")
 	}
@@ -345,7 +348,7 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 			// add the padding.
 			remove += SizeWithPadding(dataSize)
 		}
-		atomic.AddInt64(s.total, int64(-remove))
+		addToTotal(s, -remove)
 		f.header = nil
 		f.ptr = nil
 		s.fields[fieldNum-1] = f
@@ -363,7 +366,7 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 		f.header = GenericHeader(make([]byte, 8))
 	} else { // We need to remove our existing entry size total before applying our new data
 		remove += 8 + SizeWithPadding(int(f.header.Final40()))
-		atomic.AddInt64(s.total, -int64(remove))
+		addToTotal(s, -remove)
 	}
 	f.header.SetFirst16(fieldNum)
 	f.header.SetNext8(uint8(ftype))
@@ -372,7 +375,7 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	f.ptr = unsafe.Pointer(&value)
 	// We don't store any padding at this point because we don't want to do another allocation.
 	// But we do record the size it would be with padding.
-	atomic.AddInt64(s.total, int64(8+SizeWithPadding(len(value))))
+	addToTotal(s, int64(8+SizeWithPadding(len(value))))
 	s.fields[fieldNum-1] = f
 	return nil
 }
@@ -390,15 +393,27 @@ func DeleteBytes(s *Struct, fieldNum uint16) error {
 	remove := 8
 	f.header = nil
 	if f.ptr == nil {
-		atomic.AddInt64(s.total, int64(-remove))
+		addToTotal(s, -remove)
 		return nil
 	}
 	x := (*[]byte)(f.ptr)
 	remove += SizeWithPadding(len(*x))
-	atomic.AddInt64(s.total, int64(-remove))
+	addToTotal(s, -remove)
 	f.ptr = nil
 	s.fields[fieldNum-1] = f
 	return nil
+}
+
+func addToTotal[N int64 | int | uint | uint64](s *Struct, value N) {
+	atomic.AddInt64(s.structTotal, int64(value))
+	var ptr *Struct
+	for {
+		ptr = s.parent
+		if ptr == nil {
+			return
+		}
+		atomic.AddInt64(ptr.structTotal, int64(value))
+	}
 }
 
 // validateFieldNum will validate that the fieldNum is > 0, that the type is described in the mapping.Map,

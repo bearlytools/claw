@@ -26,7 +26,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 	// 8 * 8 + 16 * 3 = 112
 
-	root := New(0, msg0Mapping)
+	root := New(0, msg0Mapping, nil)
 
 	// Test zero value of bool field.
 	gotBool, err := GetBool(root, 1)
@@ -261,8 +261,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	var totalWithScalars int64 = 112
-	if *root.total != totalWithScalars {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.total, totalWithScalars)
+	if *root.structTotal != totalWithScalars {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.structTotal, totalWithScalars)
 	}
 
 	/////////////////////
@@ -307,8 +307,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	totalWithBytes := totalWithScalars + 8 + int64(SizeWithPadding(len(strData)))
-	if *root.total != totalWithBytes {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.total, totalWithBytes)
+	if *root.structTotal != totalWithBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.structTotal, totalWithBytes)
 	}
 }
 
@@ -329,9 +329,9 @@ func TestGetBool(t *testing.T) {
 	}
 
 	s := &Struct{
-		mapping: m,
-		fields:  make([]structField, len(m)),
-		total:   new(int64),
+		mapping:     m,
+		fields:      make([]structField, len(m)),
+		structTotal: new(int64),
 	}
 
 	if err := SetBool(s, 3, true); err != nil {
@@ -422,9 +422,9 @@ func TestSetNumber(t *testing.T) {
 	}
 
 	s := &Struct{
-		mapping: m,
-		fields:  make([]structField, len(m)),
-		total:   new(int64),
+		mapping:     m,
+		fields:      make([]structField, len(m)),
+		structTotal: new(int64),
 	}
 
 	if err := SetNumber[float32](s, 1, float32(8.7)); err != nil {
@@ -472,9 +472,9 @@ func TestGetNumber(t *testing.T) {
 	}
 
 	s := &Struct{
-		mapping: m,
-		fields:  make([]structField, len(m)),
-		total:   new(int64),
+		mapping:     m,
+		fields:      make([]structField, len(m)),
+		structTotal: new(int64),
 	}
 
 	if err := SetNumber[int8](s, 3, 10); err != nil {

@@ -3,7 +3,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"sync/atomic"
 	"unsafe"
 
 	"github.com/bearlytools/claw/internal/binary"
@@ -68,7 +67,7 @@ func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
 		// drop it.
 		if fieldNum > maxFields {
 			s.excess = *buffer
-			atomic.AddInt64(s.total, int64(8+len(s.excess)))
+			addToTotal(s, 8+len(s.excess))
 			return nil
 		}
 
@@ -126,7 +125,7 @@ func (s *Struct) decodeBool(buffer *[]byte, fieldNum uint16) error {
 	f := s.fields[fieldNum-1]
 	f.header = (*buffer)[0:8]
 	s.fields[fieldNum-1] = f
-	atomic.AddInt64(s.total, 8)
+	addToTotal(s, 8)
 	*buffer = (*buffer)[8:]
 	return nil
 }
@@ -141,7 +140,7 @@ func (s *Struct) decodeNum(buffer *[]byte, fieldNum uint16, numSize int8) error 
 		}
 		f := s.fields[fieldNum-1]
 		f.header = (*buffer)[:8]
-		atomic.AddInt64(s.total, 8)
+		addToTotal(s, 8)
 		*buffer = (*buffer)[8:]
 	case 64:
 		if len(*buffer) < 16 {
@@ -152,7 +151,7 @@ func (s *Struct) decodeNum(buffer *[]byte, fieldNum uint16, numSize int8) error 
 		v := (*buffer)[8:16]
 		f.ptr = unsafe.Pointer(&v)
 		s.fields[fieldNum] = f
-		atomic.AddInt64(s.total, 16)
+		addToTotal(s, 16)
 		*buffer = (*buffer)[16:]
 	default:
 		return fmt.Errorf("Struct.decodeNum() numSize was %d, must be 32 or 64", numSize)
@@ -180,7 +179,7 @@ func (s *Struct) decodeBytes(buffer *[]byte, fieldNum uint16) error {
 	b := (*buffer)[8:withPadding]
 	f.ptr = unsafe.Pointer(&b)
 	s.fields[fieldNum-1] = f
-	atomic.AddInt64(s.total, int64(withPadding))
+	addToTotal(s, withPadding)
 	*buffer = (*buffer)[withPadding:]
 	return nil
 }
@@ -189,7 +188,7 @@ func (s *Struct) decodeListBool(buffer *[]byte, fieldNum uint16) error {
 	f := s.fields[fieldNum-1]
 	f.header = (*buffer)[:8]
 
-	ptr, err := NewBoolFromBytes(buffer, s.total) // This handles our additions to s.total.
+	ptr, err := NewBoolFromBytes(buffer, s) // This handles our additions to s.total.
 	if err != nil {
 		return err
 	}
@@ -206,61 +205,61 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 	var uptr unsafe.Pointer
 	switch m.ListType.Type {
 	case field.FTInt8:
-		ptr, err := NewNumberFromBytes[int8](buffer, s.total)
+		ptr, err := NewNumberFromBytes[int8](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTInt16:
-		ptr, err := NewNumberFromBytes[int16](buffer, s.total)
+		ptr, err := NewNumberFromBytes[int16](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTInt32:
-		ptr, err := NewNumberFromBytes[int32](buffer, s.total)
+		ptr, err := NewNumberFromBytes[int32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTInt64:
-		ptr, err := NewNumberFromBytes[int64](buffer, s.total)
+		ptr, err := NewNumberFromBytes[int64](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTUint8:
-		ptr, err := NewNumberFromBytes[uint8](buffer, s.total)
+		ptr, err := NewNumberFromBytes[uint8](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTUint16:
-		ptr, err := NewNumberFromBytes[uint16](buffer, s.total)
+		ptr, err := NewNumberFromBytes[uint16](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTUint32:
-		ptr, err := NewNumberFromBytes[uint32](buffer, s.total)
+		ptr, err := NewNumberFromBytes[uint32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTUint64:
-		ptr, err := NewNumberFromBytes[uint64](buffer, s.total)
+		ptr, err := NewNumberFromBytes[uint64](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTFloat32:
-		ptr, err := NewNumberFromBytes[float32](buffer, s.total)
+		ptr, err := NewNumberFromBytes[float32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTFloat64:
-		ptr, err := NewNumberFromBytes[float64](buffer, s.total)
+		ptr, err := NewNumberFromBytes[float64](buffer, s)
 		if err != nil {
 			return err
 		}
@@ -277,7 +276,7 @@ func (s *Struct) decodeListBytes(buffer *[]byte, fieldNum uint16) error {
 	f := s.fields[fieldNum-1]
 	f.header = (*buffer)[:8]
 
-	ptr, err := NewBytesFromBytes(buffer, s.total)
+	ptr, err := NewBytesFromBytes(buffer, s)
 	if err != nil {
 		return err
 	}
