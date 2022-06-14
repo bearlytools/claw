@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"bytes"
 	"math"
 	"testing"
 
@@ -21,11 +22,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		&mapping.FieldDesc{Name: "Uint64", Type: field.FTUint64},
 		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},
 		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},
+		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},
 	}
 	// 8 * 8 + 16 * 3 = 112
 
-	msg0Factory := New(msg0Mapping)
-	root := msg0Factory(0)
+	root := New(0, msg0Mapping)
 
 	// Test zero value of bool field.
 	gotBool, err := GetBool(root, 1)
@@ -259,8 +260,55 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): float64 field, got %v, want 1.2", gotFloat64)
 	}
 
-	if *root.total != 112 {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.total, 112)
+	var totalWithScalars int64 = 112
+	if *root.total != totalWithScalars {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.total, totalWithScalars)
+	}
+
+	/////////////////////
+	// End Scalars
+	/////////////////////
+
+	// Test zero value of float64 field.
+	getBytes, err := GetBytes(root, 12)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
+	}
+	if getBytes != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): bytes field is %v", getBytes)
+	}
+
+	err = SetBytes(root, 12, []byte{}, false)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
+	}
+
+	// Test empty bytes field.
+	getBytes, err = GetBytes(root, 12)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
+	}
+	if !bytes.Equal(getBytes, []byte{}) {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): want empty bytes field ([]byte{}), got %v", getBytes)
+	}
+
+	// Add byte field.
+	strData := "Hello World"
+	err = SetBytes(root, 12, []byte(strData), false)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
+	}
+	getBytes, err = GetBytes(root, 12)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
+	}
+	if !bytes.Equal(getBytes, []byte(strData)) {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): want empty bytes field: %v, got: %v", strData, string(getBytes))
+	}
+
+	totalWithBytes := totalWithScalars + 8 + int64(SizeWithPadding(len(strData)))
+	if *root.total != totalWithBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.total, totalWithBytes)
 	}
 }
 
@@ -282,13 +330,8 @@ func TestGetBool(t *testing.T) {
 
 	s := &Struct{
 		mapping: m,
-		fields: [][]byte{
-			nil,
-			nil,
-			nil,
-			nil,
-		},
-		total: new(int64),
+		fields:  make([]structField, len(m)),
+		total:   new(int64),
 	}
 
 	if err := SetBool(s, 3, true); err != nil {
@@ -380,11 +423,8 @@ func TestSetNumber(t *testing.T) {
 
 	s := &Struct{
 		mapping: m,
-		fields: [][]byte{
-			nil,
-			nil,
-		},
-		total: new(int64),
+		fields:  make([]structField, len(m)),
+		total:   new(int64),
 	}
 
 	if err := SetNumber[float32](s, 1, float32(8.7)); err != nil {
@@ -433,14 +473,8 @@ func TestGetNumber(t *testing.T) {
 
 	s := &Struct{
 		mapping: m,
-		fields: [][]byte{
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-		},
-		total: new(int64),
+		fields:  make([]structField, len(m)),
+		total:   new(int64),
 	}
 
 	if err := SetNumber[int8](s, 3, 10); err != nil {

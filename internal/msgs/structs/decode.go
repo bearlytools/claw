@@ -3,6 +3,7 @@ package structs
 import (
 	"fmt"
 	"io"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/bearlytools/claw/internal/binary"
@@ -10,10 +11,9 @@ import (
 	"github.com/bearlytools/claw/internal/field"
 )
 
-func (s *Struct) unmarshal(r io.Reader, buffer *[]byte) error {
-	hb := headerPool.Get().([]byte)
-
-	n, err := r.Read(hb)
+func (s *Struct) unmarshal(r io.Reader) error {
+	h := GenericHeader(make([]byte, 8))
+	n, err := r.Read(h)
 	if n != 8 {
 		return fmt.Errorf("could only read %d bytes, a Struct header is always 8 bytes", n)
 	}
@@ -21,30 +21,24 @@ func (s *Struct) unmarshal(r io.Reader, buffer *[]byte) error {
 		return err
 	}
 
-	h := Header{}
-	if err := h.Read(hb); err != nil {
-		return err
-	}
-	if err := h.validate(); err != nil {
-		return err
+	ft := field.Type(h.Next8())
+	if ft != field.FTStruct {
+		return fmt.Errorf("expecting Struct, got %v", ft)
 	}
 
-	padding := (h.DataSize % 8)
-	total := int(h.DataSize + padding)
-	if cap(*buffer) < total {
-		*buffer = make([]byte, total)
+	size := h.Final40()
+	if size%8 != 0 {
+		return fmt.Errorf("Struct malformed: must have a size divisible by 8, was %d", h.Final40())
 	}
-	*buffer = (*buffer)[0:total]
 
-	n, err = r.Read(*buffer)
+	buffer := make([]byte, size)
+
+	_, err = r.Read(buffer)
 	if err != nil {
-		return fmt.Errorf("Struct data should be %d bytes + %d padding, but could only read %d bytes", h.DataSize, padding, n)
+		return fmt.Errorf("problem reading Struct data: %w", err)
 	}
 
-	*buffer = (*buffer)[:h.DataSize]
-	s.unmarshalFields(buffer, 0)
-	return nil
-
+	return s.unmarshalFields(&buffer, 0)
 }
 
 func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
@@ -73,18 +67,9 @@ func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
 		// need to retain our data so that even though the user can't see it, we don't
 		// drop it.
 		if fieldNum > maxFields {
-			// If we don't have enough capacity in our slice, extend the slice capacity
-			// up to the fieldNum. Remember that while fields must come in order, they
-			// can skip field numbers, so we may have to extend multiple times with append.
-			if cap(s.fields) < int(fieldNum) {
-				s.fields = s.fields[:cap(s.fields)]
-				for i := 0; i < int(fieldNum)-cap(s.fields); i++ {
-					s.fields = append(s.fields, nil)
-				}
-			} else {
-				// We have enough capacity in our underlying aray, so just extend the slice.
-				s.fields = s.fields[:fieldNum]
-			}
+			s.excess = *buffer
+			atomic.AddInt64(s.total, int64(8+len(s.excess)))
+			return nil
 		}
 
 		var err error
@@ -138,7 +123,10 @@ func (s *Struct) decodeBool(buffer *[]byte, fieldNum uint16) error {
 	if len(*buffer) < 8 {
 		return fmt.Errorf("can't decode bool value, not enough bytes for bool value")
 	}
-	s.fields[fieldNum] = (*buffer)[0:8]
+	f := s.fields[fieldNum-1]
+	f.header = (*buffer)[0:8]
+	s.fields[fieldNum-1] = f
+	atomic.AddInt64(s.total, 8)
 	*buffer = (*buffer)[8:]
 	return nil
 }
@@ -151,13 +139,20 @@ func (s *Struct) decodeNum(buffer *[]byte, fieldNum uint16, numSize int8) error 
 		if len(*buffer) < 8 {
 			return fmt.Errorf("can't decode a 8, 16, or 32 bit number with < 64 bits")
 		}
-		s.fields[fieldNum] = (*buffer)[:8]
+		f := s.fields[fieldNum-1]
+		f.header = (*buffer)[:8]
+		atomic.AddInt64(s.total, 8)
 		*buffer = (*buffer)[8:]
 	case 64:
 		if len(*buffer) < 16 {
 			return fmt.Errorf("can't decode a 64 bit number with < 128 bits")
 		}
-		s.fields[fieldNum] = (*buffer)[:8]
+		f := s.fields[fieldNum-1]
+		f.header = (*buffer)[:8]
+		v := (*buffer)[8:16]
+		f.ptr = unsafe.Pointer(&v)
+		s.fields[fieldNum] = f
+		atomic.AddInt64(s.total, 16)
 		*buffer = (*buffer)[16:]
 	default:
 		return fmt.Errorf("Struct.decodeNum() numSize was %d, must be 32 or 64", numSize)
@@ -180,24 +175,34 @@ func (s *Struct) decodeBytes(buffer *[]byte, fieldNum uint16) error {
 	if l < int(withPadding) {
 		return fmt.Errorf("Struct.decodeBytes() found string/byte field that was clipped in size")
 	}
-	s.fields[fieldNum] = (*buffer)[:withPadding]
+	f := s.fields[fieldNum-1]
+	f.header = (*buffer)[:8]
+	b := (*buffer)[8:withPadding]
+	f.ptr = unsafe.Pointer(&b)
+	s.fields[fieldNum-1] = f
+	atomic.AddInt64(s.total, int64(withPadding))
 	*buffer = (*buffer)[withPadding:]
 	return nil
 }
 
 func (s *Struct) decodeListBool(buffer *[]byte, fieldNum uint16) error {
-	ptr, err := NewBoolFromBytes(buffer, s.total)
+	f := s.fields[fieldNum-1]
+	f.header = (*buffer)[:8]
+
+	ptr, err := NewBoolFromBytes(buffer, s.total) // This handles our additions to s.total.
 	if err != nil {
 		return err
 	}
-	listIndex := s.fieldNumToList[fieldNum]
-	s.lists[listIndex] = unsafe.Pointer(ptr)
+	f.ptr = unsafe.Pointer(ptr)
+	s.fields[fieldNum-1] = f
 	return nil
 }
 
 func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
-	m := s.mapping[int(fieldNum)]
-	listIndex := s.fieldNumToList[fieldNum]
+	m := s.mapping[int(fieldNum-1)]
+	f := s.fields[fieldNum-1]
+	f.header = (*buffer)[:8]
+
 	var uptr unsafe.Pointer
 	switch m.ListType.Type {
 	case field.FTInt8:
@@ -263,16 +268,20 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 	default:
 		panic(fmt.Sprintf("Struct.decodeListNumber() called with field that is mapped to value with type: %v", m.ListType.Type))
 	}
-	s.lists[listIndex] = uptr
+	f.ptr = uptr
+	s.fields[fieldNum-1] = f
 	return nil
 }
 
 func (s *Struct) decodeListBytes(buffer *[]byte, fieldNum uint16) error {
+	f := s.fields[fieldNum-1]
+	f.header = (*buffer)[:8]
+
 	ptr, err := NewBytesFromBytes(buffer, s.total)
 	if err != nil {
 		return err
 	}
-	listIndex := s.fieldNumToList[fieldNum]
-	s.lists[listIndex] = unsafe.Pointer(ptr)
+	f.ptr = unsafe.Pointer(ptr)
+	s.fields[fieldNum-1] = f
 	return nil
 }

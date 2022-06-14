@@ -38,3 +38,27 @@ func IsList(ft Type) bool {
 	}
 	return false
 }
+
+// NumberTypes is a list of field types that represent a number.
+var NumberTypes = []Type{
+	FTInt8,
+	FTInt16,
+	FTInt32,
+	FTInt64,
+	FTUint8,
+	FTUint16,
+	FTUint32,
+	FTUint64,
+	FTFloat32,
+	FTFloat64,
+}
+
+// ListTypes is a list of field types that represent a list.
+var ListTypes = []Type{
+	FTList8,
+	FTList16,
+	FTList32,
+	FTList64,
+	FTListBytes,
+	FTListStruct,
+}

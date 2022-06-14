@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"sync"
 	"sync/atomic"
 	"unsafe"
 
@@ -31,87 +30,51 @@ var (
 	dataSizeMask  = bits.Mask[uint64](24, 64)
 )
 
-var headerPool = sync.Pool{
-	New: func() any {
-		v := make([]byte, 8)
-		return &v
-	},
+// GenericHeader is the header of struct.
+type GenericHeader []byte
+
+func (g GenericHeader) First16() uint16 {
+	return binary.Get[uint16](g[:2])
 }
 
-// Header is the header of struct.
-type Header struct {
-	FieldNum  uint16
-	FieldType field.Type // This is always 14, anything else and something is wrong
-	DataSize  uint64     // Max value is 40 bits or 1099511627775
+func (g GenericHeader) SetFirst16(u uint16) {
+	binary.Put(g[:2], u)
 }
 
-// Read unpacks a bitpacked uint64 stored in a slice of bytes into our
-// Header information.
-func (h *Header) Read(b []byte) error {
-	if len(b) != 8 { // Headers are uint64, so 8 bytes.
-		return fmt.Errorf("struct.Header.Read() must recieve a []byte of len 8")
-	}
-
-	s := binary.Get[uint64](b)
-
-	h.FieldNum = bits.GetValue[uint64, uint16](s, fieldNumMask, 0)
-	h.FieldType = field.Type(bits.GetValue[uint64, uint8](s, fieldTypeMask, 16))
-	h.DataSize = bits.GetValue[uint64, uint64](s, dataSizeMask, 24)
-	return h.validate()
+func (g GenericHeader) Next8() uint8 {
+	return g[2]
 }
 
-// Write writes the header onto the io.Writer passed.
-func (h *Header) Write(w io.Writer) (int, error) {
-	b := headerPool.Get().(*[]byte)
-	defer headerPool.Put(b)
-
-	h.Bytes(*b)
-	return w.Write(*b)
+func (g GenericHeader) SetNext8(u uint8) {
+	g[2] = u
 }
 
-// Bytes converts the Header to a slice of 8 bytes holding the Header information.
-// It should be noted that FieldType, regardless of what it is set to, will always
-// be encoded as 14. If the Header is corrupted or the size of "b" is not 8,
-// this is going to panic. While reading in a Header that is bad is an error, writing
-// a bad Header is a critical error.
-func (h Header) Bytes(b []byte) {
-	if len(b) != 8 {
-		panic("Header.ToBytes() requires a slice of exactly 8 bytes")
-	}
-	if h.DataSize > maxDataSize {
-		panic("dataSize cannot be greater than 2^40 -1")
-	}
-
-	var s uint64
-	s = bits.SetValue(h.FieldNum, s, 0, 16)
-	s = bits.SetValue(fieldType, s, 17, 24)
-	s = bits.SetValue(h.DataSize, s, 25, 64)
-	binary.Put(b, s)
+func (g GenericHeader) Final40() uint64 {
+	u := binary.Get[uint64](g)
+	return bits.GetValue[uint64, uint64](u, dataSizeMask, 24)
 }
 
-func (h Header) validate() error {
-	if h.DataSize > maxDataSize {
-		return fmt.Errorf("DataSize is a 40 bit number, this was %d, max is %d", h.DataSize, maxDataSize)
+func (g GenericHeader) SetFinal40(u uint64) {
+	if u > maxDataSize {
+		panic(fmt.Sprintf("can't put %d in a 40bit register, max value is 1099511627775", u))
 	}
-	if h.FieldType != field.FTStruct {
-		return fmt.Errorf("a struct.Header.FieldType must be %d, was %d", field.FTStruct, h.FieldType)
-	}
-	if h.FieldNum == 0 {
-		return fmt.Errorf("a struct.Header.FieldNum must be non-zero")
-	}
-	return nil
+	store := binary.Get[uint64](g)
+	bits.SetValue[uint64, uint64](u, store, 24, 64)
+	binary.Put[uint64](g, store)
+}
+
+// structField holds a struct field entry.
+type structField struct {
+	header GenericHeader
+	ptr    unsafe.Pointer
 }
 
 // Struct is the basic type for holding a set of values. In claw format, every variable
 // must be contained in a Struct.
 type Struct struct {
-	header Header
-	fields [][]byte
-
-	fieldNumToStruct map[uint16]int
-	fieldNumToList   map[uint16]int
-	structs          []*Struct
-	lists            []unsafe.Pointer
+	header GenericHeader
+	fields []structField
+	excess []byte
 
 	// mapping holds our Mapping object that allows us to understand what field number holds what value type.
 	mapping mapping.Map
@@ -121,96 +84,26 @@ type Struct struct {
 	total *int64
 }
 
-// NewStruct creates a *Struct that represents a specific defined *Struct that our user defined.
-// It is a kind of "factory" (I hate to use that term because we are in Go) that has all our
-// internals already presized and ready before we start, instead of computing it each time.
-// This type is created with New().
-type NewStruct func(fieldNum uint16) *Struct
-
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
-func New(dataMap mapping.Map) NewStruct {
-	s := Struct{
-		header:  Header{FieldType: field.FTStruct},
+func New(fieldNum uint16, dataMap mapping.Map) *Struct {
+	h := GenericHeader(make([]byte, 8))
+	h.SetFirst16(fieldNum)
+	h.SetNext8(uint8(field.FTStruct))
+
+	return &Struct{
+		header:  h,
 		mapping: dataMap,
-		// TODO(jdoak): replace with a pull from a generated pool.
-		fields:           make([][]byte, len(dataMap)),
-		fieldNumToStruct: map[uint16]int{},
-		fieldNumToList:   map[uint16]int{},
-		total:            new(int64),
+		fields:  make([]structField, len(dataMap)),
+		total:   new(int64),
 	}
-
-	structs := 0
-	lists := 0
-	for fieldNum, fieldDesc := range dataMap {
-		switch fieldDesc.Type {
-		case field.FTBool:
-		case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
-		case field.FTInt64, field.FTUint64, field.FTFloat64:
-		case field.FTBytes, field.FTString:
-		case field.FTStruct:
-			s.fieldNumToStruct[uint16(fieldNum)] = structs
-			structs++
-		case field.FTListBool, field.FTListBytes, field.FTListStruct, field.FTList8, field.FTList16, field.FTList32, field.FTList64:
-			s.fieldNumToList[uint16(fieldNum)] = lists
-			lists++
-		default:
-			panic(fmt.Sprintf("bug: the dataMap passed had a type %v that we don't support", fieldDesc.Type))
-		}
-	}
-	s.structs = make([]*Struct, structs)
-	s.lists = make([]unsafe.Pointer, lists)
-
-	return func(fieldNum uint16) *Struct {
-		n := copyStruct(s)
-		total := *s.total
-		n.total = &total
-		// TODO(jdoak): These can come out of a pool.
-		n.fields = make([][]byte, len(n.fields))
-		n.structs = make([]*Struct, len(n.structs))
-		n.lists = make([]unsafe.Pointer, len(n.lists))
-		return &n
-	}
-}
-
-// Args are arguments to NewFromReader().
-type Args struct {
-	Data                     io.Reader
-	Map                      mapping.Map
-	Fields                   [][]byte
-	StructLookup, ListLookup map[uint16]int
 }
 
 // NewFromReader creates a new Struct from data we read in.
-func NewFromReader(args Args, bufferPool *sync.Pool) (*Struct, error) {
-	for i := 0; i < len(args.Fields); i++ {
-		args.Fields[i] = nil
-	}
+func NewFromReader(r io.Reader, maps mapping.Map) (*Struct, error) {
+	s := New(0, maps)
 
-	numStructs := 0
-	numList := 0
-	for _, desc := range args.Map {
-		switch desc.Type {
-		case field.FTStruct:
-			numStructs++
-		case field.FTListStruct, field.FTListBytes, field.FTListBool, field.FTList8, field.FTList16, field.FTList32, field.FTList64:
-			numList++
-		}
-	}
-
-	s := &Struct{
-		mapping:          args.Map,
-		fields:           args.Fields,
-		structs:          make([]*Struct, numStructs),
-		lists:            make([]unsafe.Pointer, numList),
-		fieldNumToStruct: args.StructLookup,
-		fieldNumToList:   args.ListLookup,
-	}
-
-	buff := bufferPool.Get().(*[]byte)
-	defer bufferPool.Put(buff)
-
-	if err := s.unmarshal(args.Data, buff); err != nil {
-		return nil, nil
+	if err := s.unmarshal(r); err != nil {
+		return nil, err
 	}
 	return s, nil
 }
@@ -221,19 +114,7 @@ func (s *Struct) IsSet(fieldNum uint16) bool {
 	if int(fieldNum) > len(s.mapping) {
 		return false
 	}
-
-	// Check if we are a special type holding a Struct of list of Structs. If so,
-	// Check our internal mappings instead of .fields.
-	desc := s.mapping[fieldNum-1]
-	switch desc.Type {
-	case field.FTStruct:
-		return s.structs[s.fieldNumToStruct[fieldNum]] != nil
-	case field.FTListStruct, field.FTListBool, field.FTListBytes, field.FTList8, field.FTList16, field.FTList32, field.FTList64:
-		return s.lists[s.fieldNumToList[fieldNum]] != nil
-	}
-
-	// Its a non special field type, so simply simply return if it is not nil (aka set).
-	return s.fields[fieldNum] != nil
+	return s.fields[fieldNum-1].header != nil
 }
 
 var boolMask = bits.Mask[uint64](24, 25)
@@ -248,11 +129,11 @@ func GetBool(s *Struct, fieldNum uint16) (bool, error) {
 
 	f := s.fields[fieldNum-1]
 	// Return the zero value of a non-set field.
-	if f == nil {
+	if f.header == nil {
 		return false, nil
 	}
 
-	i := binary.Get[uint64](f)
+	i := binary.Get[uint64](f.header)
 	if bits.GetValue[uint64, uint8](i, boolMask, 24) == 1 {
 		return true, nil
 	}
@@ -266,23 +147,23 @@ func SetBool(s *Struct, fieldNum uint16, value bool) error {
 	}
 
 	f := s.fields[fieldNum-1]
-	if f == nil {
+	if f.header == nil {
 		var n uint64
-		f = make([]byte, 8)
+		f.header = GenericHeader(make([]byte, 8))
 		n = bits.SetValue(fieldNum, n, 0, 16)
 		n = bits.SetValue(uint8(field.FTBool), n, 16, 24)
 		if value {
 			n = bits.SetBit(n, 24, true)
 		}
-		binary.Put(f, n)
+		binary.Put(f.header, n)
 		s.fields[fieldNum-1] = f
 		atomic.AddInt64(s.total, 8)
 		return nil
 	}
 
-	n := binary.Get[uint64](f)
+	n := binary.Get[uint64](f.header)
 	n = bits.SetBit(n, 25, value)
-	binary.Put(f, n)
+	binary.Put(f.header, n)
 	s.fields[fieldNum-1] = f
 	return nil
 }
@@ -292,21 +173,8 @@ func DeleteBool(s *Struct, fieldNum uint16) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTBool); err != nil {
 		return err
 	}
-	s.fields[fieldNum-1] = nil
+	s.fields[fieldNum-1].header = nil
 	return nil
-}
-
-var numTypes = []field.Type{
-	field.FTInt8,
-	field.FTInt16,
-	field.FTInt32,
-	field.FTInt64,
-	field.FTUint8,
-	field.FTUint16,
-	field.FTUint32,
-	field.FTUint64,
-	field.FTFloat32,
-	field.FTFloat64,
 }
 
 // GetNumber gets a number value at fieldNum.
@@ -322,24 +190,24 @@ func GetNumber[N Numbers](s *Struct, fieldNum uint16) (N, error) {
 	}
 
 	f := s.fields[fieldNum-1]
-	if f == nil {
+	if f.header == nil {
 		return 0, nil
 	}
 
 	if size < 64 {
-		f = f[3:7]
+		b := f.header[3:7]
 		if isFloat {
-			i := binary.Get[uint32](f)
+			i := binary.Get[uint32](b)
 			return N(math.Float32frombits(uint32(i))), nil
 		}
-		return N(binary.Get[uint32](f)), nil
+		return N(binary.Get[uint32](b)), nil
 	}
-	f = f[8:16]
+	b := *(*[]byte)(f.ptr)
 	if isFloat {
-		i := binary.Get[uint64](f)
+		i := binary.Get[uint64](b)
 		return N(math.Float64frombits(uint64(i))), nil
 	}
-	return N(binary.Get[uint64](f)), nil
+	return N(binary.Get[uint64](b)), nil
 }
 
 // SetNumber sets a number value in field "fieldNum" to value "value".
@@ -356,13 +224,14 @@ func SetNumber[N Numbers](s *Struct, fieldNum uint16, value N) error {
 
 	f := s.fields[fieldNum-1]
 	// If the field isn't allocated, allocate space.
-	if f == nil {
+	if f.header == nil {
+		f.header = GenericHeader(make([]byte, 8))
 		switch size < 64 {
 		case true:
-			f = make([]byte, 8)
 			atomic.AddInt64(s.total, 8)
 		case false:
-			f = make([]byte, 16)
+			b := make([]byte, 8)
+			f.ptr = unsafe.Pointer(&b)
 			atomic.AddInt64(s.total, 16)
 		default:
 			panic("wtf")
@@ -382,12 +251,13 @@ func SetNumber[N Numbers](s *Struct, fieldNum uint16, value N) error {
 		case true:
 			i := math.Float32bits(float32(value))
 			ints[0] = bits.SetValue(i, ints[0], 24, 64)
-			binary.Put(f[:8], ints[0])
+			binary.Put(f.header[:8], ints[0])
 		case false:
 			i := math.Float64bits(float64(value))
 			ints[1] = i
-			binary.Put(f[:8], ints[0])
-			binary.Put(f[8:], ints[1])
+			binary.Put(f.header[:8], ints[0])
+			d := (*[]byte)(f.ptr)
+			binary.Put(*d, ints[1])
 		default:
 			panic("wtf")
 		}
@@ -396,11 +266,12 @@ func SetNumber[N Numbers](s *Struct, fieldNum uint16, value N) error {
 		switch size < 64 {
 		case true:
 			ints[0] = bits.SetValue(uint32(value), ints[0], 24, 64)
-			binary.Put(f[:8], ints[0])
+			binary.Put(f.header[:8], ints[0])
 		case false:
 			ints[1] = uint64(value)
-			binary.Put(f[:8], ints[0])
-			binary.Put(f[8:], ints[1])
+			binary.Put(f.header[:8], ints[0])
+			d := (*[]byte)(f.ptr)
+			binary.Put(*d, ints[1])
 		default:
 			panic("wtf")
 		}
@@ -424,51 +295,110 @@ func DeleteNumber(s *Struct, fieldNum uint16) error {
 	default:
 		panic("wtf")
 	}
-	s.fields[fieldNum-1] = nil
+	f := s.fields[fieldNum-1]
+	f.header = nil
+	f.ptr = nil
+	s.fields[fieldNum-1] = f
 	return nil
 }
 
-/*
-func SetBytes(s *Struct, fieldNum uint16, value []byte) error {
+// GetBytes returns a field of bytes (also our string as well in []byte form). If the value was not
+// set, this is returned as nil. If it was set, but empty, this will be []byte{}.
+func GetBytes(s *Struct, fieldNum uint16) ([]byte, error) {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTBytes, field.FTString); err != nil {
+		return nil, err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil { // The zero value
+		return nil, nil
+	}
+
+	if f.ptr == nil { // Set, but value is empty
+		return []byte{}, nil
+	}
+
+	x := (*[]byte)(f.ptr)
+	return *x, nil
+}
+
+// SetBytes sets a field of bytes (also our string as well in []byte form).
+func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTBytes, field.FTString); err != nil {
 		return err
 	}
-	desc := s.mapping[fieldNum-1]
 
 	if len(value) > maxDataSize {
 		return fmt.Errorf("cannot set a String or Byte field to size > 1099511627775")
 	}
 
+	f := s.fields[fieldNum-1]
 	if value == nil {
-		atomic.AddInt64(s.total, -int64(len(s.fields[fieldNum-1])))
-		s.fields[fieldNum-1] = nil
+		if f.header == nil { // It is already unset
+			return nil
+		}
+		remove := 8
+		if f.ptr != nil {
+			x := (*[]byte)(f.ptr)
+			dataSize := len(*x)
+			// Data stored may or may not have padding, so if not aligned this will
+			// add the padding.
+			remove += SizeWithPadding(dataSize)
+		}
+		atomic.AddInt64(s.total, int64(-remove))
+		f.header = nil
+		f.ptr = nil
+		s.fields[fieldNum-1] = f
+		return nil
+	}
+
+	ftype := field.FTBytes
+	if isString {
+		ftype = field.FTString
+	}
+
+	remove := 0
+	// If the field isn't allocated, allocate space.
+	if f.header == nil {
+		f.header = GenericHeader(make([]byte, 8))
+	} else { // We need to remove our existing entry size total before applying our new data
+		remove += 8 + SizeWithPadding(int(f.header.Final40()))
+		atomic.AddInt64(s.total, -int64(remove))
+	}
+	f.header.SetFirst16(fieldNum)
+	f.header.SetNext8(uint8(ftype))
+	f.header.SetFinal40(uint64(len(value)))
+
+	f.ptr = unsafe.Pointer(&value)
+	// We don't store any padding at this point because we don't want to do another allocation.
+	// But we do record the size it would be with padding.
+	atomic.AddInt64(s.total, int64(8+SizeWithPadding(len(value))))
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+// DeleteBytes deletes the bytes field and updates our storage total.
+func DeleteBytes(s *Struct, fieldNum uint16) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTBytes, field.FTString); err != nil {
+		return err
 	}
 
 	f := s.fields[fieldNum-1]
-	// If the field isn't allocated, allocate space.
-	if f == nil {
-		f = make([][]byte, 2)
-		f[0] = make([]byte, 8)
-
-		var u uint64
-		u = bits.SetValue[uint16, uint64](fieldNum, u, 0, 16)
-		u = bits.SetValue[uint8, uint64](uint8(desc.Type), u, 16, 24)
-		u = bits.SetValue[uint64, uint64](uint64(len(value)), u, 24, 64)
-		binary.Put(f[0], u)
-	} else {
-		u = binary.Get[uint64](f[0])
-		u = bits.SetValue[uint64, uint64](uint64(len(value)), u, 24, 64)
-		binary.Put(f[0], u)
+	if f.header == nil {
+		return nil
 	}
-	f[1] = value
-	s.bytesField[fieldNum-1] = f
+	remove := 8
+	f.header = nil
+	if f.ptr == nil {
+		atomic.AddInt64(s.total, int64(-remove))
+		return nil
+	}
+	x := (*[]byte)(f.ptr)
+	remove += SizeWithPadding(len(*x))
+	atomic.AddInt64(s.total, int64(-remove))
+	f.ptr = nil
+	s.fields[fieldNum-1] = f
 	return nil
-}
-*/
-
-// copyStruct is a helper that makes a copy of a Struct.
-func copyStruct(s Struct) Struct {
-	return s
 }
 
 // validateFieldNum will validate that the fieldNum is > 0, that the type is described in the mapping.Map,
