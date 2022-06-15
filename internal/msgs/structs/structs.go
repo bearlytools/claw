@@ -98,12 +98,14 @@ func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
 		structTotal: new(int64),
 		parent:      parent,
 	}
+	*s.structTotal = 8 // the header
 	return s
 }
 
 // NewFromReader creates a new Struct from data we read in.
 func NewFromReader(r io.Reader, maps mapping.Map) (*Struct, error) {
 	s := New(0, maps, nil)
+	*s.structTotal = 8 // the header
 
 	if err := s.unmarshal(r); err != nil {
 		return nil, err

@@ -12,12 +12,17 @@ var (
 
 // SizeWithPadding returns the complete size once padding has been applied.
 func SizeWithPadding(size int) int {
+	return size + int(8-(size%8))
+}
+
+// PaddingNeeded returns the amount of padding needed for size to align 64 bits.
+func PaddingNeeded(size int) int {
 	return int(8 - (size % 8))
 }
 
 // Padding returns a pre-allocated []byte that represents the padding we need to align
 // to 64 bits.
-func Padding(padding uint8) []byte {
+func Padding(padding int) []byte {
 	if padding > 7 {
 		panic("ok buddy, we are 64 bit aligned, so why are you trying to pad more than 7 bytes?")
 	}

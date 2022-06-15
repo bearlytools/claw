@@ -3,6 +3,7 @@ package structs
 import (
 	"fmt"
 	"io"
+	"log"
 	"sync/atomic"
 
 	"github.com/bearlytools/claw/internal/field"
@@ -25,25 +26,51 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 		if v.header == nil {
 			continue
 		}
-		fd := s.mapping[n]
-		switch fd.Type {
+
+		desc := s.mapping[n]
+		switch desc.Type {
 		// This handles any basic scalar type.
 		case field.FTBool, field.FTInt8, field.FTInt16, field.FTInt32, field.FTInt64, field.FTUint8,
-			field.FTUint16, field.FTUint32, field.FTUint64, field.FTFloat32, field.FTFloat64, field.FTString,
-			field.FTBytes:
+			field.FTUint16, field.FTUint32, field.FTUint64, field.FTFloat32, field.FTFloat64:
 			i, err := w.Write(v.header)
 			written += i
 			if err != nil {
 				return written, err
 			}
-			if v.ptr != nil {
-				b := (*[]byte)(v.ptr)
-				i, err := w.Write(*b)
-				written += i
-				if err != nil {
-					return written, err
-				}
+			if v.ptr == nil {
+				break
 			}
+			b := (*[]byte)(v.ptr)
+			i, err = w.Write(*b)
+			written += i
+			if err != nil {
+				return written, err
+			}
+		case field.FTString, field.FTBytes:
+			howMuch := 0
+			i, err := w.Write(v.header)
+			log.Println("bytes header: ", i)
+			written += i
+			howMuch += i
+			if err != nil {
+				return written, err
+			}
+			if v.ptr == nil {
+				break
+			}
+			b := (*[]byte)(v.ptr)
+			i, err = w.Write(*b)
+			log.Println("bytes data: ", i)
+			written += i
+			howMuch += i
+			if err != nil {
+				return written, err
+			}
+			pad := PaddingNeeded(written)
+			i, err = w.Write(Padding(pad))
+			written += i
+			log.Println("wrote for bytes field: ", written)
+			return written, err
 		case field.FTStruct:
 			s := (*Struct)(v.ptr)
 			if i, err := s.Marshal(w); err != nil {
@@ -57,7 +84,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTList8:
-			switch fd.ListType.Type {
+			switch desc.ListType.Type {
 			case field.FTInt8:
 				x := (*Number[int8])(v.ptr)
 				if i, err := w.Write(x.Encode()); err != nil {
@@ -74,7 +101,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, fmt.Errorf("bug: mapping data for a List8 field did not specify the item type (FTUint8, FTInt8)")
 			}
 		case field.FTList16:
-			switch fd.ListType.Type {
+			switch desc.ListType.Type {
 			case field.FTInt16:
 				x := (*Number[int16])(v.ptr)
 				if i, err := w.Write(x.Encode()); err != nil {
@@ -91,7 +118,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, fmt.Errorf("bug: mapping data for a List16 field did not specify the item type (FTUint16, FTInt16)")
 			}
 		case field.FTList32:
-			switch fd.ListType.Type {
+			switch desc.ListType.Type {
 			case field.FTInt32:
 				x := (*Number[int32])(v.ptr)
 				if i, err := w.Write(x.Encode()); err != nil {
@@ -114,7 +141,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, fmt.Errorf("bug: mapping data for a List32 field did not specify the item type (FTUint32, FTInt32, FTFloat32)")
 			}
 		case field.FTList64:
-			switch fd.ListType.Type {
+			switch desc.ListType.Type {
 			case field.FTInt64:
 				x := (*Number[int64])(v.ptr)
 				if i, err := w.Write(x.Encode()); err != nil {
@@ -147,7 +174,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 		case field.FTListStruct:
 			panic("not supported yet")
 		default:
-			return written, fmt.Errorf("received a field type %v that we don't support", fd.Type)
+			return written, fmt.Errorf("received a field type %v that we don't support", desc.Type)
 		}
 	}
 	if written != int(total) {

@@ -2,6 +2,8 @@ package structs
 
 import (
 	"bytes"
+	"fmt"
+	"log"
 	"math"
 	"testing"
 
@@ -24,7 +26,18 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},
 		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},
 	}
-	// 8 * 8 + 16 * 3 = 112
+	// Number      |   Size
+	// 8               8 bytes
+	// 3           |   16 bytes
+	// ========================
+	// Total: 112 bytes
+
+	// Bytes Field  | Size
+	// 1            | 19 (header + data)
+	// ========================
+	// Total with padding: 24
+
+	// Total: 136
 
 	root := New(0, msg0Mapping, nil)
 
@@ -260,9 +273,13 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): float64 field, got %v, want 1.2", gotFloat64)
 	}
 
-	var totalWithScalars int64 = 112
+	var totalWithScalars int64 = 120 // Scalar sizes + 8 byte hedaer for Struct
 	if *root.structTotal != totalWithScalars {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.structTotal, totalWithScalars)
+	}
+
+	if err := marshalCheck(root, int(totalWithScalars)); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding scalar fields): %s", err)
 	}
 
 	/////////////////////
@@ -305,11 +322,34 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if !bytes.Equal(getBytes, []byte(strData)) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): want empty bytes field: %v, got: %v", strData, string(getBytes))
 	}
-
+	log.Println("totalWithScalars: ", totalWithScalars)
+	log.Println("bytes data size: ", len(strData))
+	log.Println("bytes field with padding: ", 8+int64(SizeWithPadding(len(strData))))
 	totalWithBytes := totalWithScalars + 8 + int64(SizeWithPadding(len(strData)))
 	if *root.structTotal != totalWithBytes {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.structTotal, totalWithBytes)
 	}
+
+	if *root.structTotal%8 != 0 {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): structTotal(%d) is not divisible by 8", *root.structTotal)
+	}
+
+	if err := marshalCheck(root, int(totalWithBytes)); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding bytes field): %s", err)
+	}
+}
+
+func marshalCheck(msg *Struct, wantWritten int) error {
+	buff := new(bytes.Buffer)
+	written, err := msg.Marshal(buff)
+	if err != nil {
+		return err
+	}
+
+	if written != int(wantWritten) {
+		return fmt.Errorf("wrote %d bytes, but total was %d", written, wantWritten)
+	}
+	return nil
 }
 
 func TestGetBool(t *testing.T) {
