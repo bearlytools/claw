@@ -3,7 +3,6 @@ package structs
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"math"
 	"testing"
 
@@ -322,9 +321,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if !bytes.Equal(getBytes, []byte(strData)) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): want empty bytes field: %v, got: %v", strData, string(getBytes))
 	}
-	log.Println("totalWithScalars: ", totalWithScalars)
-	log.Println("bytes data size: ", len(strData))
-	log.Println("bytes field with padding: ", 8+int64(SizeWithPadding(len(strData))))
+
 	totalWithBytes := totalWithScalars + 8 + int64(SizeWithPadding(len(strData)))
 	if *root.structTotal != totalWithBytes {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.structTotal, totalWithBytes)

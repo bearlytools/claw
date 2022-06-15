@@ -3,7 +3,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
 	"sync/atomic"
 
 	"github.com/bearlytools/claw/internal/field"
@@ -47,11 +46,8 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTString, field.FTBytes:
-			howMuch := 0
 			i, err := w.Write(v.header)
-			log.Println("bytes header: ", i)
 			written += i
-			howMuch += i
 			if err != nil {
 				return written, err
 			}
@@ -60,16 +56,13 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 			b := (*[]byte)(v.ptr)
 			i, err = w.Write(*b)
-			log.Println("bytes data: ", i)
 			written += i
-			howMuch += i
 			if err != nil {
 				return written, err
 			}
 			pad := PaddingNeeded(written)
 			i, err = w.Write(Padding(pad))
 			written += i
-			log.Println("wrote for bytes field: ", written)
 			return written, err
 		case field.FTStruct:
 			s := (*Struct)(v.ptr)

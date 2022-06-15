@@ -29,7 +29,7 @@ type Bool struct {
 func NewBool(fieldNum uint16, s *Struct) *Bool {
 	b := pool.Get(boolPool).(*Bool)
 	b.data = make([]byte, 8)
-	s = s
+	b.s = s
 
 	var u uint64
 	bits.SetValue(fieldNum, u, 0, 16)
@@ -57,7 +57,7 @@ func NewBoolFromBytes(data *[]byte, s *Struct) (*Bool, error) {
 		b.s = s
 
 		*data = (*data)[8:]
-		addToTotal(s, len(b.data))
+		addToTotal(s, 8)
 		return b, nil
 	}
 
@@ -144,9 +144,12 @@ func (b *Bool) Set(index int, val bool) {
 		panic(fmt.Sprintf("lists.Bool with size %d cannot have position %d set", b.len, index))
 	}
 
+	// We pack bools into int64s. So 64 bools per 8 bytes.
 	sliceNum := index / 8
 	i := data[sliceNum]
-	indexInSlice := index - (sliceNum * 8)
+	indexInSlice := index - (sliceNum * 8) // Now find the bit in the int64 that holds the value
+
+	// Modify the bits and set it.
 	i = bits.SetBit(i, uint8(indexInSlice), val)
 	data[sliceNum] = i
 }
@@ -200,7 +203,7 @@ func (b *Bool) Slice() []bool {
 // Encode returns the []byte to write to output to represent this Bool. If it returns nil,
 // no output should be written.
 func (b *Bool) Encode() []byte {
-	if b.data == nil || len(b.data[8:]) == 0 {
+	if b.data == nil {
 		return nil
 	}
 	return b.data
@@ -480,7 +483,7 @@ func (n *Number[I]) Slice() []I {
 // Encode returns the []byte to write to output to represent this Number. If it returns nil,
 // no output should be written.
 func (n *Number[I]) Encode() []byte {
-	if n.data == nil || len(n.data) == 0 {
+	if n.data == nil {
 		return nil
 	}
 	return n.data
@@ -696,7 +699,7 @@ func (b *Bytes) Slice() [][]byte {
 func (b *Bytes) Encode() [][]byte {
 	// If we have a Bytes that doesn't actually have any data, it should not be encoded as
 	// indicated by returning nil.
-	if len(b.data) < 2 {
+	if len(b.data) == 0 {
 		return nil
 	}
 	return b.data
