@@ -5,6 +5,7 @@ package structs
 import (
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"sync/atomic"
 	"unsafe"
@@ -87,6 +88,18 @@ type Struct struct {
 
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
 func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
+	if fieldNum == 0 {
+		if parent != nil {
+			panic("cannot create a Struct with a fieldNum of 0 and a parent")
+		}
+	} else {
+		if parent == nil {
+			panic("cannot create a Struct with a fieldNum > 0 and no parent")
+		}
+		if parent.mapping[fieldNum-1].Type != field.FTStruct {
+			panic(fmt.Sprintf("cannot attach a Struct as field %d, that field type is %v", fieldNum, parent.mapping[fieldNum-1].Type))
+		}
+	}
 	h := GenericHeader(make([]byte, 8))
 	h.SetFirst16(fieldNum)
 	h.SetNext8(uint8(field.FTStruct))
@@ -98,7 +111,15 @@ func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
 		structTotal: new(int64),
 		parent:      parent,
 	}
-	*s.structTotal = 8 // the header
+
+	if parent != nil {
+		f := parent.fields[fieldNum-1]
+		f.header = h
+		f.ptr = unsafe.Pointer(s)
+		parent.fields[fieldNum-1] = f
+		log.Println("fieldNum here is: ", fieldNum-1)
+	}
+	addToTotal(s, 8) // the header
 	return s
 }
 
@@ -338,6 +359,7 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	}
 
 	f := s.fields[fieldNum-1]
+	log.Println("setting field: ", fieldNum)
 	if value == nil {
 		if f.header == nil { // It is already unset
 			return nil
@@ -382,7 +404,7 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	return nil
 }
 
-// DeleteBytes deletes the bytes field and updates our storage total.
+// DeleteBytes deletes a bytes field and updates our storage total.
 func DeleteBytes(s *Struct, fieldNum uint16) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTBytes, field.FTString); err != nil {
 		return err
@@ -392,15 +414,89 @@ func DeleteBytes(s *Struct, fieldNum uint16) error {
 	if f.header == nil {
 		return nil
 	}
-	remove := 8
+
 	f.header = nil
-	if f.ptr == nil {
+	x := (*[]byte)(f.ptr)
+	addToTotal(s, -len(*x))
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+// GetStruct returns a Struct field . If the value was not set, this is returned as nil. If it was set,
+// but empty, this will be *Struct with no data.
+func GetStruct(s *Struct, fieldNum uint16) (*Struct, error) {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTStruct); err != nil {
+		return nil, err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil { // The zero value
+		return nil, nil
+	}
+
+	if f.ptr == nil { // Set, but value is empty
+		return New(fieldNum, s.mapping, s), nil
+	}
+
+	x := (*Struct)(f.ptr)
+	return x, nil
+}
+
+// SetStruct sets a Struct field.
+func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
+	if value == nil {
+		return fmt.Errorf("value cannot be nil, to delete a Struct use DeleteStruct()")
+	}
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTStruct); err != nil {
+		return err
+	}
+
+	if atomic.LoadInt64(value.structTotal) > maxDataSize {
+		return fmt.Errorf("cannot set a Struct field to size > 1099511627775")
+	}
+
+	f := s.fields[fieldNum-1]
+
+	value.parent = s
+
+	var remove int64
+	// If the field isn't allocated, allocate space.
+	if f.header == nil {
+		f.header = value.header
+	} else { // We need to remove our existing entry size total before applying our new data
+		x := (*Struct)(f.ptr)
+		remove += atomic.LoadInt64(x.structTotal)
+		x.parent = nil
 		addToTotal(s, -remove)
+	}
+	f.header = value.header
+	value.parent = s
+	f.ptr = unsafe.Pointer(&value)
+	// We don't store any padding at this point because we don't want to do another allocation.
+	// But we do record the size it would be with padding.
+	addToTotal(s, *value.structTotal)
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+// DeleteStruct deletes a Struct field and updates our storage total.
+func DeleteStruct(s *Struct, fieldNum uint16) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTStruct); err != nil {
+		return err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
 		return nil
 	}
-	x := (*[]byte)(f.ptr)
-	remove += SizeWithPadding(len(*x))
-	addToTotal(s, -remove)
+
+	if f.ptr == nil {
+		addToTotal(s, -8)
+		return nil
+	}
+
+	x := (*Struct)(f.ptr)
+	addToTotal(s, -atomic.LoadInt64(x.structTotal))
 	f.ptr = nil
 	s.fields[fieldNum-1] = f
 	return nil
@@ -408,18 +504,18 @@ func DeleteBytes(s *Struct, fieldNum uint16) error {
 
 func addToTotal[N int64 | int | uint | uint64](s *Struct, value N) {
 	atomic.AddInt64(s.structTotal, int64(value))
-	var ptr *Struct
+	var ptr = s.parent
 	for {
-		ptr = s.parent
 		if ptr == nil {
 			return
 		}
 		atomic.AddInt64(ptr.structTotal, int64(value))
+		ptr = ptr.parent
 	}
 }
 
 // validateFieldNum will validate that the fieldNum is > 0, that the type is described in the mapping.Map,
-// and if len(ftypes) != 0, that the ftype and mapping.Map[fieldNum].Type are the same.
+// and if len(ftypes) != 0, that the ftype and mapping.Map[fieldNum-1].Type are the same.
 func validateFieldNum(fieldNum uint16, maps mapping.Map, ftypes ...field.Type) error {
 	if fieldNum == 0 {
 		return fmt.Errorf("fieldNum cannot be 0")

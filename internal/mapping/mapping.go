@@ -11,12 +11,19 @@ type FieldDesc struct {
 	// Type is the type of field.
 	Type field.Type
 
-	// MapKeyType describes the map's key type if Type == FTMap.
-	MapKeyType *FieldDesc
-	// MapValueType describes the map's value type if Type == FTMap.
-	MapValueType *FieldDesc
 	// ListType describes the list's value type if Type == FTList.
-	ListType *FieldDesc
+	ListType *ListDesc
+	// Mapping is provided if .Type == FTStruct. This will describe the
+	// Structs fields.
+	Mapping Map
+}
+
+// ListDesc describes what the entries will be like if the type is a List*.
+type ListDesc struct {
+	// Type is the type of field in the list.
+	Type field.Type
+	// Mapping is provided only if Type == FTListStruct.
+	Mapping Map
 }
 
 // Mqp is a map of field numbers to field descriptions.

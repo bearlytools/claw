@@ -3,27 +3,33 @@ package structs
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"math"
 	"testing"
 
 	"github.com/bearlytools/claw/internal/field"
 	"github.com/bearlytools/claw/internal/mapping"
+	"golang.org/x/exp/constraints"
 )
 
 func TestBasicEncodeDecodeStruct(t *testing.T) {
-	msg0Mapping := mapping.Map{
+	msg1Mapping := mapping.Map{
 		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool},
+	}
+	msg0Mapping := mapping.Map{
+		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool}, // 1
 		&mapping.FieldDesc{Name: "Int8", Type: field.FTInt8},
 		&mapping.FieldDesc{Name: "Int16", Type: field.FTInt16},
 		&mapping.FieldDesc{Name: "Int32", Type: field.FTInt32},
-		&mapping.FieldDesc{Name: "Int64", Type: field.FTInt64},
+		&mapping.FieldDesc{Name: "Int64", Type: field.FTInt64}, // 5
 		&mapping.FieldDesc{Name: "Uint8", Type: field.FTUint8},
 		&mapping.FieldDesc{Name: "Uint16", Type: field.FTUint16},
 		&mapping.FieldDesc{Name: "Uint32", Type: field.FTUint32},
 		&mapping.FieldDesc{Name: "Uint64", Type: field.FTUint64},
-		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},
+		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32}, // 10
 		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},
 		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},
+		&mapping.FieldDesc{Name: "Msg1", Type: field.FTStruct, Mapping: msg1Mapping}, // 13
 	}
 	// Number      |   Size
 	// 8               8 bytes
@@ -39,6 +45,10 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// Total: 136
 
 	root := New(0, msg0Mapping, nil)
+
+	/////////////////////
+	// Start Scalars
+	/////////////////////
 
 	// Test zero value of bool field.
 	gotBool, err := GetBool(root, 1)
@@ -285,7 +295,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// End Scalars
 	/////////////////////
 
-	// Test zero value of float64 field.
+	/////////////////////
+	// Start Bytes
+	/////////////////////
+
+	// Test zero value of Bytes field.
 	getBytes, err := GetBytes(root, 12)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
@@ -334,9 +348,43 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if err := marshalCheck(root, int(totalWithBytes)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding bytes field): %s", err)
 	}
+
+	/////////////////////
+	// End Bytes
+	/////////////////////
+
+	////////////////////
+	// Start Struct
+	////////////////////
+	sub := New(13, msg1Mapping, root)
+	totalWithStruct := totalWithBytes + 8
+	if *root.structTotal != totalWithStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
+	}
+
+	if err = SetBool(sub, 1, true); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], unexpected error on SetBool(): %s", err)
+	}
+	gotBool, err = GetBool(sub, 1)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], unexpected error on GotBool(): %s", err)
+	}
+	totalWithStruct += 8 // Additional space for Bool value.
+	if !gotBool {
+		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], got %v, want %v", gotBool, true)
+	}
+	if *root.structTotal != totalWithStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
+	}
+
+	log.Println("care about things after this line:")
+	log.Println("header: ", root.fields[12].header)
+	if err := marshalCheck(root, totalWithStruct); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding sub Struct): %s", err)
+	}
 }
 
-func marshalCheck(msg *Struct, wantWritten int) error {
+func marshalCheck[I constraints.Integer](msg *Struct, wantWritten I) error {
 	buff := new(bytes.Buffer)
 	written, err := msg.Marshal(buff)
 	if err != nil {

@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"unsafe"
@@ -98,7 +99,31 @@ func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
 		case field.FTString, field.FTBytes:
 			err = s.decodeBytes(buffer, fieldNum)
 		case field.FTStruct:
-			panic("not supported yet")
+			// We need the mapping for the sub Struct.
+			m := s.mapping[fieldNum-1].Mapping
+			if m == nil {
+				return fmt.Errorf("received a fieldNum(%d) with a type that Says it is a Struct, but it is a %v", fieldNum, s.mapping[fieldNum-1].Type)
+			}
+			// Get the size so we can both fetch the entire Struct and move past it in the buffer.
+			size := bits.GetValue[uint64, uint64](store, dataSizeMask, 24)
+
+			// Structs use a Reader, so let's give it a reader.
+			func() { // Simply here to cause our bytes.Reader collection as early as possible.
+				r := readers.Get().(*bytes.Reader)
+				r.Reset((*buffer)[:size])
+				defer readers.Put(r)
+
+				sub := New(fieldNum, m, s)
+				err = sub.unmarshal(r)
+				if err == nil {
+					// Do the field assignment.
+					s.fields[fieldNum-1].header = sub.header
+					s.fields[fieldNum-1].ptr = unsafe.Pointer(sub)
+				}
+
+				// Move our buffer ahead.
+				*buffer = (*buffer)[size:]
+			}()
 		case field.FTListBool:
 			err = s.decodeListBool(buffer, fieldNum)
 		case field.FTList8, field.FTList16, field.FTList32, field.FTList64:

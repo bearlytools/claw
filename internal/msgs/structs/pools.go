@@ -1,8 +1,17 @@
 package structs
 
 import (
+	"bytes"
+	"sync"
+
 	autopool "github.com/johnsiilver/golib/development/autopool/blend"
 )
+
+var readers = sync.Pool{
+	New: func() any {
+		return &bytes.Reader{}
+	},
+}
 
 var (
 	pool         = autopool.New()
