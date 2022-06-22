@@ -5,7 +5,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"sync/atomic"
 	"unsafe"
@@ -117,7 +116,6 @@ func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
 		f.header = h
 		f.ptr = unsafe.Pointer(s)
 		parent.fields[fieldNum-1] = f
-		log.Println("fieldNum here is: ", fieldNum-1)
 	}
 	addToTotal(s, 8) // the header
 	return s
@@ -359,7 +357,6 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	}
 
 	f := s.fields[fieldNum-1]
-	log.Println("setting field: ", fieldNum)
 	if value == nil {
 		if f.header == nil { // It is already unset
 			return nil
@@ -434,10 +431,6 @@ func GetStruct(s *Struct, fieldNum uint16) (*Struct, error) {
 		return nil, nil
 	}
 
-	if f.ptr == nil { // Set, but value is empty
-		return New(fieldNum, s.mapping, s), nil
-	}
-
 	x := (*Struct)(f.ptr)
 	return x, nil
 }
@@ -496,7 +489,226 @@ func DeleteStruct(s *Struct, fieldNum uint16) error {
 	}
 
 	x := (*Struct)(f.ptr)
+	x.parent = nil
 	addToTotal(s, -atomic.LoadInt64(x.structTotal))
+	f.ptr = nil
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+// GetListNumber returns a list of numbers at fieldNum.
+func GetListNumber[N Numbers](s *Struct, fieldNum uint16) (*Number[N], error) {
+	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
+		return nil, err
+	}
+	desc := s.mapping[fieldNum-1]
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		return nil, nil
+	}
+
+	_, _, err := numberToDescCheck[N](desc)
+	if err != nil {
+		return nil, fmt.Errorf("error getting field number %d: %w", fieldNum, err)
+	}
+
+	ptr := (*Number[N])(f.ptr)
+
+	return ptr, nil
+}
+
+func SetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) error {
+	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
+		return err
+	}
+	desc := s.mapping[fieldNum-1]
+
+	_, _, err := numberToDescCheck[N](desc)
+	if err != nil {
+		return fmt.Errorf("error setting field number %d: %w", fieldNum, err)
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header != nil { // We had a previous value stored.
+		ptr := (*Number[N])(f.ptr)
+		addToTotal(s, -len(ptr.data))
+	}
+
+	f.header = value.data[:8]
+	f.ptr = unsafe.Pointer(value)
+	s.fields[fieldNum-1] = f
+	value.s = s
+	addToTotal(s, len(value.data))
+	return nil
+}
+
+// DeleteListNumber deletes a list of numbers field and updates our storage total.
+func DeleteListNumber[N Numbers](s *Struct, fieldNum uint16) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTList8, field.FTList16, field.FTList32, field.FTList64); err != nil {
+		return err
+	}
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		return nil
+	}
+	desc := s.mapping[fieldNum-1]
+
+	size, _, err := numberToDescCheck[N](desc)
+	if err != nil {
+		return fmt.Errorf("error deleting field number %d: %w", fieldNum, err)
+	}
+
+	ptr := (*Number[N])(f.ptr)
+	ptr.s = nil
+
+	reduceBy := int(f.header.Final40()) + int(size) + 8
+	addToTotal(s, -reduceBy)
+
+	f.header = nil
+	f.ptr = nil
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+// GetListStruct returns a list of Structs at fieldNum.
+func GetListStruct(s *Struct, fieldNum uint16) (*[]*Struct, error) {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListStruct); err != nil {
+		return nil, err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil { // The zero value
+		return nil, nil
+	}
+
+	x := (*[]*Struct)(f.ptr)
+	return x, nil
+}
+
+// AddListStruct adds the values to the list of Structs at fieldNum. Existing items will be retained.
+func AddListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
+	if len(values) == 0 {
+		return fmt.Errorf("must add at least a single value")
+	}
+	if len(values) > maxDataSize {
+		return fmt.Errorf("cannot have more than %d items in a list", maxDataSize)
+	}
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListStruct); err != nil {
+		return err
+	}
+
+	size := 8 // ListStruct header
+	for _, value := range values {
+		if atomic.LoadInt64(value.structTotal) > maxDataSize {
+			return fmt.Errorf("cannot add a Struct with size > 1099511627775")
+		}
+		value.header.SetFirst16(fieldNum)
+		value.parent = s
+		size += int(*value.structTotal)
+	}
+
+	f := s.fields[fieldNum-1]
+
+	// If the field isn't allocated, allocate space.
+	if f.header == nil {
+		f.header = GenericHeader(make([]byte, 8))
+		f.header.SetFirst16(fieldNum)
+		f.header.SetNext8(uint8(field.FTListStruct))
+	}
+	f.header.SetFinal40(f.header.Final40() + uint64(len(values)))
+
+	if f.ptr == nil {
+		ptr := &values
+		f.ptr = unsafe.Pointer(ptr)
+	} else {
+		ptr := (*[]*Struct)(f.ptr)
+		*ptr = append(*ptr, values...)
+	}
+	addToTotal(s, size)
+	s.fields[fieldNum-1] = f
+
+	return nil
+}
+
+// DeleteListStruct deletes a list of Structs field and updates our storage total.
+func DeleteListStruct(s *Struct, fieldNum uint16) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListStruct); err != nil {
+		return err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		return nil
+	}
+
+	size := 8
+
+	x := (*[]*Struct)(f.ptr)
+	for _, item := range *x {
+		size += int(atomic.LoadInt64(item.structTotal))
+	}
+	addToTotal(s, -size)
+	f.header = nil
+	f.ptr = nil
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+// GetListBytes returns a list of bytes at fieldNum.
+func GetListBytes[N Numbers](s *Struct, fieldNum uint16) (*Bytes, error) {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
+		return nil, err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		return nil, nil
+	}
+
+	ptr := (*Bytes)(f.ptr)
+
+	return ptr, nil
+}
+
+func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
+		return err
+	}
+	value.s = s
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		f.header = value.data[0]
+		f.ptr = unsafe.Pointer(value)
+		s.fields[fieldNum-1] = f
+		addToTotal(s, value.dataSize+value.padding+8)
+		return nil
+	}
+	f.header = value.data[0]
+	ptr := (*Bytes)(f.ptr)
+	f.ptr = unsafe.Pointer(value)
+	s.fields[fieldNum-1] = f
+
+	addToTotal(s, value.dataSize-ptr.dataSize+value.padding-ptr.padding+8)
+	return nil
+}
+
+// DeleteListBytes deletes a list of bytes field and updates our storage total.
+func DeleteListBytes(s *Struct, fieldNum uint16) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
+		return err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		return nil
+	}
+
+	ptr := (*Bytes)(f.ptr)
+	addToTotal(s, -(ptr.dataSize + ptr.padding))
+
+	f.header = nil
 	f.ptr = nil
 	s.fields[fieldNum-1] = f
 	return nil
@@ -545,54 +757,114 @@ func numberToDescCheck[N Numbers](desc *mapping.FieldDesc) (size uint8, isFloat 
 	var t N
 	switch any(t).(type) {
 	case uint8:
-		if desc.Type != field.FTUint8 {
-			return 0, false, fmt.Errorf("fieldNum is not a uint8 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTUint8:
+		case field.FTList8:
+			if desc.ListType != field.FTUint8 {
+				return 0, false, fmt.Errorf("fieldNum is not a []uint8 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint8 or []uint8 type, was %v", desc.Type)
 		}
 		size = 8
 	case uint16:
-		if desc.Type != field.FTUint16 {
-			return 0, false, fmt.Errorf("fieldNum is not a uint16 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTUint16:
+		case field.FTList16:
+			if desc.ListType != field.FTUint16 {
+				return 0, false, fmt.Errorf("fieldNum is not a []uint16 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint16 or []uint16 type, was %v", desc.Type)
 		}
 		size = 16
 	case uint32:
-		if desc.Type != field.FTUint32 {
-			return 0, false, fmt.Errorf("fieldNum is not a uint32 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTUint32:
+		case field.FTList32:
+			if desc.ListType != field.FTUint32 {
+				return 0, false, fmt.Errorf("fieldNum is not a []uint32 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint32 or []uint32 type, was %v", desc.Type)
 		}
 		size = 32
 	case uint64:
-		if desc.Type != field.FTUint64 {
-			return 0, false, fmt.Errorf("fieldNum is not a uint64 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTUint64:
+		case field.FTList64:
+			if desc.ListType != field.FTUint64 {
+				return 0, false, fmt.Errorf("fieldNum is not a []uint64 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint64 or []uint64 type, was %v", desc.Type)
 		}
 		size = 64
 	case int8:
-		if desc.Type != field.FTInt8 {
-			return 0, false, fmt.Errorf("fieldNum is not a int8 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTInt8:
+		case field.FTList8:
+			if desc.ListType != field.FTInt8 {
+				return 0, false, fmt.Errorf("fieldNum is not a []int8 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int8 or []int8 type, was %v", desc.Type)
 		}
 		size = 8
 	case int16:
-		if desc.Type != field.FTInt16 {
-			return 0, false, fmt.Errorf("fieldNum is not a int16 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTInt16:
+		case field.FTList16:
+			if desc.ListType != field.FTInt16 {
+				return 0, false, fmt.Errorf("fieldNum is not a []int16 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int16 or []int16 type, was %v", desc.Type)
 		}
 		size = 16
 	case int32:
-		if desc.Type != field.FTInt32 {
-			return 0, false, fmt.Errorf("fieldNum is not a int32 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTInt32:
+		case field.FTList32:
+			if desc.ListType != field.FTInt32 {
+				return 0, false, fmt.Errorf("fieldNum is not a []int32 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int32 or []int32 type, was %v", desc.Type)
 		}
 		size = 32
 	case int64:
-		if desc.Type != field.FTInt64 {
-			return 0, false, fmt.Errorf("fieldNum is not a int64 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTInt64:
+		case field.FTList64:
+			if desc.ListType != field.FTInt8 {
+				return 0, false, fmt.Errorf("fieldNum is not a []int64 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int64 or []int64 type, was %v", desc.Type)
 		}
 		size = 64
 	case float32:
-		if desc.Type != field.FTFloat32 {
-			return 0, false, fmt.Errorf("fieldNum is not a float32 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTFloat32:
+		case field.FTList32:
+			if desc.ListType != field.FTFloat32 {
+				return 0, false, fmt.Errorf("fieldNum is not a []float32 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a float32 or []float32 type, was %v", desc.Type)
 		}
 		size = 32
 		isFloat = true
 	case float64:
-		if desc.Type != field.FTFloat64 {
-			return 0, false, fmt.Errorf("fieldNum is not a float64 type, was %v", desc.Type)
+		switch desc.Type {
+		case field.FTFloat64:
+		case field.FTList64:
+			if desc.ListType != field.FTFloat32 {
+				return 0, false, fmt.Errorf("fieldNum is not a []float64 type, was []%v", desc.ListType)
+			}
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a float64 or []float64 type, was %v", desc.Type)
 		}
 		size = 64
 		isFloat = true

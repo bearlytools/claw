@@ -99,31 +99,7 @@ func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
 		case field.FTString, field.FTBytes:
 			err = s.decodeBytes(buffer, fieldNum)
 		case field.FTStruct:
-			// We need the mapping for the sub Struct.
-			m := s.mapping[fieldNum-1].Mapping
-			if m == nil {
-				return fmt.Errorf("received a fieldNum(%d) with a type that Says it is a Struct, but it is a %v", fieldNum, s.mapping[fieldNum-1].Type)
-			}
-			// Get the size so we can both fetch the entire Struct and move past it in the buffer.
-			size := bits.GetValue[uint64, uint64](store, dataSizeMask, 24)
-
-			// Structs use a Reader, so let's give it a reader.
-			func() { // Simply here to cause our bytes.Reader collection as early as possible.
-				r := readers.Get().(*bytes.Reader)
-				r.Reset((*buffer)[:size])
-				defer readers.Put(r)
-
-				sub := New(fieldNum, m, s)
-				err = sub.unmarshal(r)
-				if err == nil {
-					// Do the field assignment.
-					s.fields[fieldNum-1].header = sub.header
-					s.fields[fieldNum-1].ptr = unsafe.Pointer(sub)
-				}
-
-				// Move our buffer ahead.
-				*buffer = (*buffer)[size:]
-			}()
+			err = s.decodeStruct(buffer, fieldNum)
 		case field.FTListBool:
 			err = s.decodeListBool(buffer, fieldNum)
 		case field.FTList8, field.FTList16, field.FTList32, field.FTList64:
@@ -131,7 +107,7 @@ func (s *Struct) unmarshalFields(buffer *[]byte, lastNum uint16) error {
 		case field.FTListBytes:
 			err = s.decodeListBytes(buffer, fieldNum)
 		case field.FTListStruct:
-			panic("not supported yet")
+			err = s.decodeListStruct(buffer, fieldNum)
 		default:
 			err = fmt.Errorf("got field type %v that we don't support", fieldType)
 		}
@@ -228,7 +204,7 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 	f.header = (*buffer)[:8]
 
 	var uptr unsafe.Pointer
-	switch m.ListType.Type {
+	switch m.ListType {
 	case field.FTInt8:
 		ptr, err := NewNumberFromBytes[int8](buffer, s)
 		if err != nil {
@@ -290,7 +266,7 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 		}
 		uptr = unsafe.Pointer(ptr)
 	default:
-		panic(fmt.Sprintf("Struct.decodeListNumber() called with field that is mapped to value with type: %v", m.ListType.Type))
+		panic(fmt.Sprintf("Struct.decodeListNumber() called with field that is mapped to value with type: %v", m.ListType))
 	}
 	f.ptr = uptr
 	s.fields[fieldNum-1] = f
@@ -306,6 +282,55 @@ func (s *Struct) decodeListBytes(buffer *[]byte, fieldNum uint16) error {
 		return err
 	}
 	f.ptr = unsafe.Pointer(ptr)
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
+	// We need the mapping for the sub Struct.
+	m := s.mapping[fieldNum-1].Mapping
+	if m == nil {
+		return fmt.Errorf("received a fieldNum(%d) with a type that Says it is a Struct, but it is a %v", fieldNum, s.mapping[fieldNum-1].Type)
+	}
+
+	// Structs use a Reader, so let's give it a reader.
+	r := readers.Get().(*bytes.Reader)
+	r.Reset(*buffer)
+	defer readers.Put(r)
+
+	sub := New(fieldNum, m, s)
+	err := sub.unmarshal(r)
+	if err != nil {
+		return err
+	}
+
+	s.fields[fieldNum-1].header = sub.header
+	s.fields[fieldNum-1].ptr = unsafe.Pointer(sub)
+
+	*buffer = (*buffer)[*sub.structTotal:]
+	return nil
+}
+
+func (s *Struct) decodeListStruct(buffer *[]byte, fieldNum uint16) error {
+	f := s.fields[fieldNum-1]
+	header := GenericHeader((*buffer)[:8])
+	*buffer = (*buffer)[8:]
+
+	numItems := header.Final40()
+	sl := make([]*Struct, int(numItems))
+
+	r := readers.Get().(*bytes.Reader)
+	for i := 0; i < int(numItems); i++ {
+		item := New(fieldNum, s.mapping[fieldNum].Mapping, s)
+		r.Reset(*buffer)
+		if err := s.unmarshal(r); err != nil {
+			return err
+		}
+		sl[i] = item
+		*buffer = (*buffer)[int(item.header.Final40()):]
+	}
+	f.header = header
+	f.ptr = unsafe.Pointer(&sl)
 	s.fields[fieldNum-1] = f
 	return nil
 }

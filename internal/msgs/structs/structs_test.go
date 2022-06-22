@@ -3,7 +3,6 @@ package structs
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"math"
 	"testing"
 
@@ -29,7 +28,10 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32}, // 10
 		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},
 		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},
-		&mapping.FieldDesc{Name: "Msg1", Type: field.FTStruct, Mapping: msg1Mapping}, // 13
+		&mapping.FieldDesc{Name: "Msg1", Type: field.FTStruct, Mapping: msg1Mapping},         // 13
+		&mapping.FieldDesc{Name: "ListMsg1", Type: field.FTListStruct, Mapping: msg1Mapping}, // 14
+		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTList8, ListType: field.FTUint8}, // 15
+		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                       // 16
 	}
 	// Number      |   Size
 	// 8               8 bytes
@@ -365,6 +367,10 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if err = SetBool(sub, 1, true); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], unexpected error on SetBool(): %s", err)
 	}
+	sub, err = GetStruct(root, 13)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(get sub Struct): unexpected error on GetStruct(): %s", err)
+	}
 	gotBool, err = GetBool(sub, 1)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], unexpected error on GotBool(): %s", err)
@@ -377,11 +383,112 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
 	}
 
-	log.Println("care about things after this line:")
-	log.Println("header: ", root.fields[12].header)
 	if err := marshalCheck(root, totalWithStruct); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding sub Struct): %s", err)
 	}
+
+	////////////////////
+	// End Struct
+	////////////////////
+
+	////////////////////
+	// Start List Struct
+	////////////////////
+	structs := []*Struct{
+		New(0, msg1Mapping, nil),
+		New(0, msg1Mapping, nil),
+	}
+
+	if err := AddListStruct(root, 14, structs...); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): AddListStruct() had error: %s", err)
+	}
+
+	totalWithListStruct := totalWithStruct + 8 + 16 // ListStruct header + two Struct headers
+	if *root.structTotal != totalWithListStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
+	}
+
+	if err = SetBool(structs[1], 1, true); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14], unexpected error on SetBool(structs[1]...): %s", err)
+	}
+
+	listStruct, err := GetListStruct(root, 14)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): GetListStruct() had error: %s", err)
+	}
+	gotBool, err = GetBool((*listStruct)[1], 1)
+	if err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14][1], unexpected error on GotBool(): %s", err)
+	}
+	totalWithListStruct += 8 // Additional space for Bool value.
+	if !gotBool {
+		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14][1], got %v, want %v", gotBool, true)
+	}
+	if *root.structTotal != totalWithListStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
+	}
+	if err := marshalCheck(root, totalWithListStruct); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding list Struct): %s", err)
+	}
+
+	////////////////////
+	// End List Struct
+	////////////////////
+
+	////////////////////
+	// Start List Number
+	////////////////////
+
+	nums := NewNumber[uint8]()
+	if err = SetListNumber(root, 15, nums); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding list of numbers): %s", err)
+	}
+
+	totalWithListNumber := totalWithListStruct + 8
+	if *root.structTotal != totalWithListNumber {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListNumber): root.Struct total was %d, want %d", *root.structTotal, totalWithListNumber)
+	}
+
+	nums.Append(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	totalWithListNumber += 16 // Requires 16 bytes to hold 9 uint8 values
+	if *root.structTotal != totalWithListNumber {
+		t.Fatalf("TestBasicEncodeDecodeStruct(appending to ListNumber): root.Struct total was %d, want %d", *root.structTotal, totalWithListNumber)
+	}
+
+	if err := marshalCheck(root, totalWithListNumber); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding ListNumber): %s", err)
+	}
+
+	////////////////////
+	// End List Number
+	////////////////////
+
+	////////////////////
+	// Start List Bytes
+	////////////////////
+
+	bytes := NewBytes()
+	if err := SetListBytes(root, 16, bytes); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding list of bytes): %s", err)
+	}
+	totalWithListBytes := totalWithListNumber + 8
+
+	if *root.structTotal != totalWithListBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Listbytes): root.Struct total was %d, want %d", *root.structTotal, totalWithListBytes)
+	}
+
+	if err := bytes.Append([]byte("what"), []byte("ever")); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(append Listbytes): error: %s", err)
+	}
+
+	totalWithListBytes += 16 // 2 * content(4 bytes each) + two entry headers(4 bytes)
+	if *root.structTotal != totalWithListBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(appending to Listbytes): root.Struct total was %d, want %d", *root.structTotal, totalWithListBytes)
+	}
+	if err := marshalCheck(root, totalWithListBytes); err != nil {
+		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding Listbytes): %s", err)
+	}
+
 }
 
 func marshalCheck[I constraints.Integer](msg *Struct, wantWritten I) error {

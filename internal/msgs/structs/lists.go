@@ -26,16 +26,14 @@ type Bool struct {
 }
 
 // NewBool creates a new Bool that will be stored in a Struct field with number fieldNum.
-func NewBool(fieldNum uint16, s *Struct) *Bool {
+func NewBool(fieldNum uint16) *Bool {
 	b := pool.Get(boolPool).(*Bool)
 	b.data = make([]byte, 8)
-	b.s = s
 
 	var u uint64
 	bits.SetValue(fieldNum, u, 0, 16)
 	bits.SetValue(uint8(field.FTListBool), u, 16, 24)
 	binary.Put(b.data, u)
-	addToTotal(s, 8)
 
 	return b
 }
@@ -182,7 +180,9 @@ func (b *Bool) Append(i ...bool) {
 	}
 
 	updateItems(b.data[:8], b.len)
-	addToTotal(b.s, len(b.data)-oldSize)
+	if b.s != nil {
+		addToTotal(b.s, len(b.data)-oldSize)
+	}
 }
 
 // Slice converts this into a standard []bool. The values aren't linked, so changing
@@ -217,6 +217,55 @@ type Number[I Numbers] struct {
 	isFloat     bool
 
 	s *Struct
+}
+
+// NewNumber is used to create a holder for a list of numbers not decoded from an existing []byte stream.
+func NewNumber[I Numbers]() *Number[I] {
+	var t I
+
+	var n *Number[I]
+	var sizeInBytes uint8
+	var isFloat bool
+	switch any(t).(type) {
+	case uint8:
+		n = pool.Get(nUint8Pool).(*Number[I])
+		sizeInBytes = 1
+	case uint16:
+		n = pool.Get(nUint16Pool).(*Number[I])
+		sizeInBytes = 2
+	case uint32:
+		n = pool.Get(nUint32Pool).(*Number[I])
+		sizeInBytes = 4
+	case uint64:
+		n = pool.Get(nUint64Pool).(*Number[I])
+		sizeInBytes = 8
+	case int8:
+		n = pool.Get(nInt8Pool).(*Number[I])
+		sizeInBytes = 1
+	case int16:
+		n = pool.Get(nInt16Pool).(*Number[I])
+		sizeInBytes = 2
+	case int32:
+		n = pool.Get(nInt32Pool).(*Number[I])
+		sizeInBytes = 4
+	case int64:
+		n = pool.Get(nInt64Pool).(*Number[I])
+		sizeInBytes = 8
+	case float32:
+		n = pool.Get(nFloat32Pool).(*Number[I])
+		sizeInBytes = 4
+		isFloat = true
+	case float64:
+		n = pool.Get(nFloat64Pool).(*Number[I])
+		sizeInBytes = 8
+		isFloat = true
+	default:
+		panic(fmt.Sprintf("unsupported number type %T", t))
+	}
+	n.sizeInBytes = sizeInBytes
+	n.isFloat = isFloat
+	n.data = GenericHeader(make([]byte, 8))
+	return n
 }
 
 // NewNumberFromBytes returns a new Number value.
@@ -433,7 +482,9 @@ func (n *Number[I]) Append(i ...I) {
 	oldSize := len(n.data)
 	defer func() {
 		updateItems(n.data[:8], n.len)
-		addToTotal(n.s, len(n.data)-oldSize)
+		if n.s != nil {
+			addToTotal(n.s, len(n.data)-oldSize)
+		}
 	}()
 
 	requiredSize := n.len + len(i)
@@ -489,13 +540,31 @@ func (n *Number[I]) Encode() []byte {
 	return n.data
 }
 
-// Byts represents a list of bytes.
+// Bytes represents a list of bytes.
 type Bytes struct {
 	data [][]byte // Header is entry 0. Each entry includes the item header of 64bits.
 
 	s        *Struct
 	dataSize int64 // This is the size of the "data" field
 	padding  int64 // This is how much padding would currently be needed
+}
+
+// NewBytes returns a new Bytes for holding lists of bytes. This is used when creating a new list
+// not attached to a Struct yet.
+func NewBytes() *Bytes {
+	b := pool.Get(bytesPool).(*Bytes)
+	var h GenericHeader
+	if cap(b.data) > 0 {
+		b.data = b.data[0:1]
+		h = GenericHeader(b.data[0])
+	} else {
+		h = GenericHeader(make([]byte, 8))
+		b.data = append(b.data, h)
+	}
+	h.SetFirst16(0)
+	h.SetNext8(uint8(field.FTListBytes))
+	h.SetFinal40(0)
+	return b
 }
 
 // NewBytesFromBytes returns a new Bytes value.
@@ -557,6 +626,20 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	return b, nil
 }
 
+// Reset resets all the internal fields to their zero value. Slices are not nilled, but are
+// set to their zero size to hold the capacity.
+func (b *Bytes) Reset() {
+	if len(b.data) > 0 {
+		h := GenericHeader(b.data[0])
+		h.SetFinal40(0)
+		h.SetFirst16(0)
+	}
+	b.data = b.data[0:0]
+	b.s = nil
+	b.dataSize = 0
+	b.padding = 0
+}
+
 // Len returns the number of items in the list.
 func (b *Bytes) Len() int {
 	return len(b.data) - 1
@@ -577,7 +660,7 @@ func (b *Bytes) Get(index int) []byte {
 
 // Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
 // Range until the returned channel closes or cancel the Context passed. Otherwise
-// you will have a goroutine leak.
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
 func (b *Bytes) Range(ctx context.Context, from, to int) chan []byte {
 	if b.Len() == 0 {
 		ch := make(chan []byte)
@@ -628,7 +711,6 @@ func (b *Bytes) Set(index int, value []byte) error {
 	b.dataSize -= int64(oldSize)
 	b.dataSize += int64(len(value)) + 4 // data + entry header
 	b.padding = b.dataSize % 8
-
 	// dataSize - oldSize is our data size change.
 	// padding - oldPadding is our padding data size change.
 	addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding)
@@ -651,9 +733,11 @@ func (b *Bytes) Append(values ...[]byte) error {
 		}
 	}
 	// Record information before change.
+	entryHeaderSize := int64(4 * len(values))
+
 	oldSize := b.dataSize
 	oldPadding := b.padding
-	newSize := oldSize // We are appending, so our new size starts at the old size
+	newSize := oldSize + entryHeaderSize // We are appending, so our new size starts at the old size
 
 	// Create new slice that can hold our data.
 	indexStart := len(b.data) - 1
@@ -662,7 +746,7 @@ func (b *Bytes) Append(values ...[]byte) error {
 	copy(b.data, old)
 	for i, v := range values {
 		b.set(indexStart+i, v)
-		newSize += int64(len(v)) + 4 // data + entry header
+		newSize += int64(len(v))
 	}
 	updateItems(b.data[0], len(b.data)-1)
 
@@ -673,7 +757,11 @@ func (b *Bytes) Append(values ...[]byte) error {
 	} else {
 		b.padding = 8 - (newSize % 8)
 	}
-	addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding)
+	if b.s != nil {
+		addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding) // data size + entry header size
+	}
+	h := GenericHeader(b.data[0])
+	h.SetFinal40(h.Final40() + uint64(len(values)))
 
 	return nil
 }
