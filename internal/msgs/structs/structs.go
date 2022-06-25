@@ -33,6 +33,10 @@ var (
 // GenericHeader is the header of struct.
 type GenericHeader []byte
 
+func NewGenericHeader() GenericHeader {
+	return GenericHeader(make([]byte, 8))
+}
+
 func (g GenericHeader) First16() uint16 {
 	return binary.Get[uint16](g[:2])
 }
@@ -59,8 +63,9 @@ func (g GenericHeader) SetFinal40(u uint64) {
 		panic(fmt.Sprintf("can't put %d in a 40bit register, max value is 1099511627775", u))
 	}
 	store := binary.Get[uint64](g)
-	bits.SetValue[uint64, uint64](u, store, 24, 64)
-	binary.Put[uint64](g, store)
+	store = bits.ClearBits(store, 24, 64)
+	store = bits.SetValue(u, store, 24, 64)
+	binary.Put(g, store)
 }
 
 // structField holds a struct field entry.
@@ -72,6 +77,8 @@ type structField struct {
 // Struct is the basic type for holding a set of values. In claw format, every variable
 // must be contained in a Struct.
 type Struct struct {
+	inList bool
+
 	header GenericHeader
 	fields []structField
 	excess []byte
@@ -81,17 +88,13 @@ type Struct struct {
 
 	parent *Struct
 
-	// structTotal is the total size of this struct in bytes.
+	// structTotal is the total size of this struct in bytes, including header.
 	structTotal *int64
 }
 
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
 func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
-	if fieldNum == 0 {
-		if parent != nil {
-			panic("cannot create a Struct with a fieldNum of 0 and a parent")
-		}
-	} else {
+	if fieldNum != 0 {
 		if parent == nil {
 			panic("cannot create a Struct with a fieldNum > 0 and no parent")
 		}
@@ -111,7 +114,7 @@ func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
 		parent:      parent,
 	}
 
-	if parent != nil {
+	if parent != nil && fieldNum != 0 {
 		f := parent.fields[fieldNum-1]
 		f.header = h
 		f.ptr = unsafe.Pointer(s)
@@ -124,9 +127,8 @@ func New(fieldNum uint16, dataMap mapping.Map, parent *Struct) *Struct {
 // NewFromReader creates a new Struct from data we read in.
 func NewFromReader(r io.Reader, maps mapping.Map) (*Struct, error) {
 	s := New(0, maps, nil)
-	*s.structTotal = 8 // the header
 
-	if err := s.unmarshal(r); err != nil {
+	if _, err := s.unmarshal(r); err != nil {
 		return nil, err
 	}
 	return s, nil
@@ -162,6 +164,14 @@ func GetBool(s *Struct, fieldNum uint16) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func MustGetBool(s *Struct, fieldNum uint16) bool {
+	b, err := GetBool(s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // SetBool sets a boolean value in field "fieldNum" to value "value".
@@ -219,7 +229,7 @@ func GetNumber[N Numbers](s *Struct, fieldNum uint16) (N, error) {
 	}
 
 	if size < 64 {
-		b := f.header[3:7]
+		b := f.header[3:8]
 		if isFloat {
 			i := binary.Get[uint32](b)
 			return N(math.Float32frombits(uint32(i))), nil
@@ -232,6 +242,14 @@ func GetNumber[N Numbers](s *Struct, fieldNum uint16) (N, error) {
 		return N(math.Float64frombits(uint64(i))), nil
 	}
 	return N(binary.Get[uint64](b)), nil
+}
+
+func MustGetNumber[N Numbers](s *Struct, fieldNum uint16) N {
+	n, err := GetNumber[N](s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return n
 }
 
 // SetNumber sets a number value in field "fieldNum" to value "value".
@@ -327,8 +345,9 @@ func DeleteNumber(s *Struct, fieldNum uint16) error {
 }
 
 // GetBytes returns a field of bytes (also our string as well in []byte form). If the value was not
-// set, this is returned as nil. If it was set, but empty, this will be []byte{}.
-func GetBytes(s *Struct, fieldNum uint16) ([]byte, error) {
+// set, this is returned as nil. If it was set, but empty, this will be []byte{}. It is UNSAFE to modify
+// this.
+func GetBytes(s *Struct, fieldNum uint16) (*[]byte, error) {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTBytes, field.FTString); err != nil {
 		return nil, err
 	}
@@ -339,11 +358,19 @@ func GetBytes(s *Struct, fieldNum uint16) ([]byte, error) {
 	}
 
 	if f.ptr == nil { // Set, but value is empty
-		return []byte{}, nil
+		return nil, nil
 	}
 
 	x := (*[]byte)(f.ptr)
-	return *x, nil
+	return x, nil
+}
+
+func MustGetBytes(s *Struct, fieldNum uint16) *[]byte {
+	b, err := GetBytes(s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // SetBytes sets a field of bytes (also our string as well in []byte form).
@@ -415,6 +442,7 @@ func DeleteBytes(s *Struct, fieldNum uint16) error {
 	f.header = nil
 	x := (*[]byte)(f.ptr)
 	addToTotal(s, -len(*x))
+	f.ptr = nil
 	s.fields[fieldNum-1] = f
 	return nil
 }
@@ -435,6 +463,14 @@ func GetStruct(s *Struct, fieldNum uint16) (*Struct, error) {
 	return x, nil
 }
 
+func MustGetStruct(s *Struct, fieldNum uint16) *Struct {
+	s, err := GetStruct(s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
 // SetStruct sets a Struct field.
 func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 	if value == nil {
@@ -451,19 +487,18 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 	f := s.fields[fieldNum-1]
 
 	value.parent = s
+	value.header.SetFirst16(fieldNum)
 
 	var remove int64
-	// If the field isn't allocated, allocate space.
-	if f.header == nil {
-		f.header = value.header
-	} else { // We need to remove our existing entry size total before applying our new data
+	// We need to remove our existing entry size total before applying our new data
+	if f.header != nil {
 		x := (*Struct)(f.ptr)
 		remove += atomic.LoadInt64(x.structTotal)
 		x.parent = nil
 		addToTotal(s, -remove)
 	}
 	f.header = value.header
-	value.parent = s
+
 	f.ptr = unsafe.Pointer(&value)
 	// We don't store any padding at this point because we don't want to do another allocation.
 	// But we do record the size it would be with padding.
@@ -496,6 +531,68 @@ func DeleteStruct(s *Struct, fieldNum uint16) error {
 	return nil
 }
 
+// GetListBool returns a list of bools at fieldNum.
+func GetListBool(s *Struct, fieldNum uint16) (*Bool, error) {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBool); err != nil {
+		return nil, err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		return nil, nil
+	}
+
+	ptr := (*Bool)(f.ptr)
+
+	return ptr, nil
+}
+
+func MustGetListBool(s *Struct, fieldNum uint16) *Bool {
+	b, err := GetListBool(s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func SetListBool(s *Struct, fieldNum uint16, value *Bool) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBool); err != nil {
+		return err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header != nil { // We had a previous value stored.
+		ptr := (*Bool)(f.ptr)
+		addToTotal(s, -len(ptr.data))
+	}
+
+	f.header = value.data[:8]
+	f.ptr = unsafe.Pointer(value)
+	s.fields[fieldNum-1] = f
+	value.s = s
+	addToTotal(s, len(value.data))
+	return nil
+}
+
+// DeleteListBool deletes a list of bools field and updates our storage total.
+func DeleteListBool(s *Struct, fieldNum uint16) error {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBool); err != nil {
+		return err
+	}
+
+	f := s.fields[fieldNum-1]
+	if f.header == nil {
+		return nil
+	}
+
+	f.header = nil
+	ptr := (*Bool)(f.ptr)
+	addToTotal(s, -len(ptr.data))
+	f.ptr = nil
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
 // GetListNumber returns a list of numbers at fieldNum.
 func GetListNumber[N Numbers](s *Struct, fieldNum uint16) (*Number[N], error) {
 	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
@@ -518,6 +615,14 @@ func GetListNumber[N Numbers](s *Struct, fieldNum uint16) (*Number[N], error) {
 	return ptr, nil
 }
 
+func MustGetListNumber[N Numbers](s *Struct, fieldNum uint16) *Number[N] {
+	b, err := GetListNumber[N](s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 func SetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) error {
 	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
 		return err
@@ -536,6 +641,7 @@ func SetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) erro
 	}
 
 	f.header = value.data[:8]
+	f.header.SetFirst16(fieldNum)
 	f.ptr = unsafe.Pointer(value)
 	s.fields[fieldNum-1] = f
 	value.s = s
@@ -584,6 +690,14 @@ func GetListStruct(s *Struct, fieldNum uint16) (*[]*Struct, error) {
 
 	x := (*[]*Struct)(f.ptr)
 	return x, nil
+}
+
+func MustGetListStruct(s *Struct, fieldNum uint16) *[]*Struct {
+	l, err := GetListStruct(s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return l
 }
 
 // AddListStruct adds the values to the list of Structs at fieldNum. Existing items will be retained.
@@ -656,7 +770,7 @@ func DeleteListStruct(s *Struct, fieldNum uint16) error {
 }
 
 // GetListBytes returns a list of bytes at fieldNum.
-func GetListBytes[N Numbers](s *Struct, fieldNum uint16) (*Bytes, error) {
+func GetListBytes(s *Struct, fieldNum uint16) (*Bytes, error) {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
 		return nil, err
 	}
@@ -671,6 +785,14 @@ func GetListBytes[N Numbers](s *Struct, fieldNum uint16) (*Bytes, error) {
 	return ptr, nil
 }
 
+func MustGetListBytes(s *Struct, fieldNum uint16) *Bytes {
+	b, err := GetListBytes(s, fieldNum)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
 		return err
@@ -679,13 +801,15 @@ func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
 
 	f := s.fields[fieldNum-1]
 	if f.header == nil {
-		f.header = value.data[0]
+		value.header.SetFirst16(fieldNum)
+		f.header = value.header
 		f.ptr = unsafe.Pointer(value)
 		s.fields[fieldNum-1] = f
 		addToTotal(s, value.dataSize+value.padding+8)
 		return nil
 	}
 	f.header = value.data[0]
+	f.header.SetFirst16(fieldNum)
 	ptr := (*Bytes)(f.ptr)
 	f.ptr = unsafe.Pointer(value)
 	s.fields[fieldNum-1] = f

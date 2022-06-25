@@ -4,7 +4,10 @@ import (
 	"context"
 	stdbinary "encoding/binary"
 	"fmt"
+	"io"
+	"log"
 	"math"
+	"sync/atomic"
 
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
@@ -226,45 +229,58 @@ func NewNumber[I Numbers]() *Number[I] {
 	var n *Number[I]
 	var sizeInBytes uint8
 	var isFloat bool
+	var ft field.Type
 	switch any(t).(type) {
 	case uint8:
 		n = pool.Get(nUint8Pool).(*Number[I])
 		sizeInBytes = 1
+		ft = field.FTList8
 	case uint16:
 		n = pool.Get(nUint16Pool).(*Number[I])
 		sizeInBytes = 2
+		ft = field.FTList16
 	case uint32:
 		n = pool.Get(nUint32Pool).(*Number[I])
 		sizeInBytes = 4
+		ft = field.FTList32
 	case uint64:
 		n = pool.Get(nUint64Pool).(*Number[I])
 		sizeInBytes = 8
+		ft = field.FTList64
 	case int8:
 		n = pool.Get(nInt8Pool).(*Number[I])
 		sizeInBytes = 1
+		ft = field.FTList8
 	case int16:
 		n = pool.Get(nInt16Pool).(*Number[I])
 		sizeInBytes = 2
+		ft = field.FTList16
 	case int32:
 		n = pool.Get(nInt32Pool).(*Number[I])
 		sizeInBytes = 4
+		ft = field.FTList32
 	case int64:
 		n = pool.Get(nInt64Pool).(*Number[I])
 		sizeInBytes = 8
+		ft = field.FTList64
 	case float32:
 		n = pool.Get(nFloat32Pool).(*Number[I])
 		sizeInBytes = 4
 		isFloat = true
+		ft = field.FTList32
 	case float64:
 		n = pool.Get(nFloat64Pool).(*Number[I])
 		sizeInBytes = 8
 		isFloat = true
+		ft = field.FTList64
 	default:
 		panic(fmt.Sprintf("unsupported number type %T", t))
 	}
 	n.sizeInBytes = sizeInBytes
 	n.isFloat = isFloat
-	n.data = GenericHeader(make([]byte, 8))
+	n.data = make([]byte, 8)
+	h := GenericHeader(n.data)
+	h.SetNext8(uint8(ft))
 	return n
 }
 
@@ -542,10 +558,11 @@ func (n *Number[I]) Encode() []byte {
 
 // Bytes represents a list of bytes.
 type Bytes struct {
-	data [][]byte // Header is entry 0. Each entry includes the item header of 64bits.
+	header GenericHeader
+	data   [][]byte // Each entry includes the item header of 32bits.
 
 	s        *Struct
-	dataSize int64 // This is the size of the "data" field
+	dataSize int64 // This is the size of the "data" field (without header)
 	padding  int64 // This is how much padding would currently be needed
 }
 
@@ -553,46 +570,40 @@ type Bytes struct {
 // not attached to a Struct yet.
 func NewBytes() *Bytes {
 	b := pool.Get(bytesPool).(*Bytes)
-	var h GenericHeader
-	if cap(b.data) > 0 {
-		b.data = b.data[0:1]
-		h = GenericHeader(b.data[0])
-	} else {
-		h = GenericHeader(make([]byte, 8))
-		b.data = append(b.data, h)
+	if b.header == nil {
+		b.header = NewGenericHeader()
 	}
-	h.SetFirst16(0)
-	h.SetNext8(uint8(field.FTListBytes))
-	h.SetFinal40(0)
+	b.header.SetFirst16(0)
+	b.header.SetNext8(uint8(field.FTListBytes))
+	b.header.SetFinal40(0)
 	return b
 }
 
 // NewBytesFromBytes returns a new Bytes value.
 func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
+	// This is an error, because if they want to encode an empty list, it should not get encoded on the
+	// wire. There is no need to distinguish a zero value on a list type from not being set.
 	if len(*data) < 16 { // list header(8) + entry header(4) + at least 4 byte (1 bytes of data + 3 padding)
 		return nil, fmt.Errorf("malformed list of bytes: must be at least 16 bytes in size")
 	}
 	b := pool.Get(bytesPool).(*Bytes)
-
-	header := binary.Get[uint64]((*data)[:8])
-	length := bits.GetValue[uint64, uint64](header, dataSizeMask, 24)
+	b.header = (*data)[:8]
+	*data = (*data)[8:] // Move past the header
 
 	// We need to carve up the slice into a slice of slice.
-	d := make([][]byte, length+1)
-	d[0] = (*data)[:8] // Add the headers as value[0]
+	d := make([][]byte, b.header.Final40())
 
-	*data = (*data)[8:]
 	read := 8 // This will hold the number of bytes we have read.
-	for i := 0; i < int(length); i++ {
+	for i := 0; i < len(d); i++ {
 		if len(*data) < 4 {
-			return nil, fmt.Errorf("malformed list of bytes field: an item did not have a valid header")
+			return nil, fmt.Errorf("malformed list of bytes field: an item (%d) did not have a valid header", i)
 		}
 		size := int(binary.Get[uint32]((*data)[:4]))
 		if len((*data)[4:]) < size {
 			return nil, fmt.Errorf("malformed list of bytes field: an item did not have enough data to match the header")
 		}
 		// Assign data
-		d[i+1] = (*data)[:size+4] // data size + data header
+		d[i] = (*data)[:size+4] // data size + data header
 
 		// Move to next set of data
 		*data = (*data)[4+size:] // Move past item
@@ -600,28 +611,21 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	}
 
 	// Read past any padding that was required to align to 64 bits (8 bytes).
-	paddingNeeded := 0
-	if read%8 != 0 {
-		paddingNeeded = 8 - (read % 8)
-	}
+	paddingNeeded := PaddingNeeded(read)
 	if paddingNeeded != 0 {
 		if len(*data) < paddingNeeded {
-			return nil, fmt.Errorf("malformed list of bytes field: was missing list padding")
+			return nil, fmt.Errorf("malformed list of bytes field: was missing byte list padding")
 		}
 		*data = (*data)[paddingNeeded:]
+		read += paddingNeeded
 	}
 
-	addToTotal(s, read+paddingNeeded) // Add header + data + padding
+	addToTotal(s, read) // Add header + data + padding
 
 	b.data = d
 	b.s = s
-	b.dataSize = int64(read)
-	b.padding = int64(paddingNeeded)
-
-	size := 0
-	for _, v := range b.data {
-		size += len(v)
-	}
+	atomic.StoreInt64(&b.dataSize, int64(read))
+	atomic.StoreInt64(&b.padding, int64(paddingNeeded))
 
 	return b, nil
 }
@@ -629,12 +633,13 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 // Reset resets all the internal fields to their zero value. Slices are not nilled, but are
 // set to their zero size to hold the capacity.
 func (b *Bytes) Reset() {
-	if len(b.data) > 0 {
-		h := GenericHeader(b.data[0])
-		h.SetFinal40(0)
-		h.SetFirst16(0)
+	if b.header != nil {
+		b.header.SetFinal40(0)
+		b.header.SetFirst16(0)
 	}
-	b.data = b.data[0:0]
+	if b.data != nil {
+		b.data = b.data[0:0]
+	}
 	b.s = nil
 	b.dataSize = 0
 	b.padding = 0
@@ -642,7 +647,7 @@ func (b *Bytes) Reset() {
 
 // Len returns the number of items in the list.
 func (b *Bytes) Len() int {
-	return len(b.data) - 1
+	return len(b.data)
 }
 
 // Get gets a []byte stored at the index.
@@ -651,11 +656,11 @@ func (b *Bytes) Get(index int) []byte {
 		panic(fmt.Sprintf("slice out of bounds: index %d in slice of size %d", index, b.Len()))
 	}
 
-	if len(b.data[index+1]) == 4 {
+	if len(b.data[index]) == 4 {
 		return nil
 	}
 
-	return b.data[index+1][4:]
+	return b.data[index][4:]
 }
 
 // Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
@@ -706,11 +711,16 @@ func (b *Bytes) Set(index int, value []byte) error {
 	}
 	// Record the current size of this value and end padding.  Get new value size and new
 	// padding needed. Calculate our new data size.
-	oldSize := int64(len(b.data[index+1]))
+	oldSize := int64(len(b.data[index]))
 	oldPadding := b.padding
-	b.dataSize -= int64(oldSize)
-	b.dataSize += int64(len(value)) + 4 // data + entry header
-	b.padding = b.dataSize % 8
+	addToTotal(b.s, (oldSize + oldPadding))
+	atomic.AddInt64(&b.dataSize, -oldSize)
+
+	b.set(index, value)
+
+	atomic.AddInt64(&b.dataSize, int64(len(value))+4) // data + entry header
+	atomic.StoreInt64(&b.padding, PaddingNeeded(b.dataSize))
+
 	// dataSize - oldSize is our data size change.
 	// padding - oldPadding is our padding data size change.
 	addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding)
@@ -722,7 +732,7 @@ func (b *Bytes) set(index int, value []byte) {
 	buff := make([]byte, 4+len(value))
 	binary.Put(buff, uint32(len(value)))
 	copy(buff[4:], value)
-	b.data[index+1] = buff
+	b.data[index] = buff
 }
 
 // Append appends values to the list of []byte.
@@ -732,37 +742,35 @@ func (b *Bytes) Append(values ...[]byte) error {
 			return fmt.Errorf("cannot set a value > %dKiB", math.MaxUint32/1024)
 		}
 	}
-	// Record information before change.
-	entryHeaderSize := int64(4 * len(values))
 
+	// Record old values
 	oldSize := b.dataSize
 	oldPadding := b.padding
-	newSize := oldSize + entryHeaderSize // We are appending, so our new size starts at the old size
+	oldData := b.data
+
+	newSize := oldSize // We are appending, so our new size starts at the old size
 
 	// Create new slice that can hold our data.
-	indexStart := len(b.data) - 1
-	old := b.data
-	b.data = make([][]byte, len(old)+len(values))
-	copy(b.data, old)
+	indexStart := len(b.data)
+
+	b.data = make([][]byte, len(oldData)+len(values))
+	copy(b.data, oldData)
 	for i, v := range values {
 		b.set(indexStart+i, v)
-		newSize += int64(len(v))
+		newSize += int64(len(v)) + 4 // data + entry header
 	}
-	updateItems(b.data[0], len(b.data)-1)
+	updateItems(b.header, len(b.data))
 
 	// Record our data size and padding requirements.
 	b.dataSize = newSize
-	if newSize%8 == 0 {
-		b.padding = 0
-	} else {
-		b.padding = 8 - (newSize % 8)
-	}
+	b.padding = PaddingNeeded(newSize)
 	if b.s != nil {
+		log.Println("b.dataSize: ", b.dataSize)
+		log.Println("oldSize: ", oldSize)
+		log.Println("b.padding: ", b.padding)
+		log.Println("oldPaddin: ", oldPadding)
 		addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding) // data size + entry header size
 	}
-	h := GenericHeader(b.data[0])
-	h.SetFinal40(h.Final40() + uint64(len(values)))
-
 	return nil
 }
 
@@ -784,13 +792,27 @@ func (b *Bytes) Slice() [][]byte {
 
 // Encode returns the []byte to write to output to represent this Bytes. If it returns nil,
 // no output should be written.
-func (b *Bytes) Encode() [][]byte {
+func (b *Bytes) Encode(w io.Writer) (int, error) {
 	// If we have a Bytes that doesn't actually have any data, it should not be encoded as
 	// indicated by returning nil.
 	if len(b.data) == 0 {
-		return nil
+		return 0, nil
 	}
-	return b.data
+
+	wrote, err := w.Write(b.header)
+	if err != nil {
+		return wrote, err
+	}
+	for _, item := range b.data {
+		n, err := w.Write(item)
+		wrote += n
+		if err != nil {
+			return wrote, err
+		}
+	}
+	n, err := w.Write(Padding(int(b.padding)))
+	wrote += n
+	return wrote, err
 }
 
 // udpateItems updates list header information to reflect the number items.

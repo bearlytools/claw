@@ -80,6 +80,20 @@ func SetBit[U constraints.Unsigned](store U, pos uint8, val bool) U {
 	return store & ^(1 << pos)
 }
 
+// ClearBit clears the bit at pos in store.
+func ClearBit[U constraints.Unsigned](store U, pos uint8) U {
+	store &^= (1 << pos)
+	return store
+}
+
+// ClearBits clears all bits from "from" until "to".
+func ClearBits[U constraints.Unsigned](store U, from, to uint8) U {
+	for i := from; i < to; i++ {
+		store = ClearBit(store, i)
+	}
+	return store
+}
+
 // Mask creates a mask for setting, getting and clearing a set of bits.
 // start is the bit location you wish to start at and end is the bit you wish to end at (exclusive).
 // Index starts at 0.  So mask(1, 4) will create a mask that includes bits at location 1 to 3.

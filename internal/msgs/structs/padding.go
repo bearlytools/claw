@@ -1,5 +1,7 @@
 package structs
 
+import "golang.org/x/exp/constraints"
+
 var (
 	padding1Bytes = make([]byte, 1)
 	padding2Bytes = make([]byte, 2)
@@ -16,8 +18,12 @@ func SizeWithPadding(size int) int {
 }
 
 // PaddingNeeded returns the amount of padding needed for size to align 64 bits.
-func PaddingNeeded(size int) int {
-	return int(8 - (size % 8))
+func PaddingNeeded[I constraints.Integer](size I) I {
+	leftOver := size % 8
+	if leftOver == 0 {
+		return 0
+	}
+	return 8 - (leftOver)
 }
 
 // Padding returns a pre-allocated []byte that represents the padding we need to align

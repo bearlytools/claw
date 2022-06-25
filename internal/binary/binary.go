@@ -41,42 +41,18 @@ func Get[T constraints.Integer](b []byte) T {
 
 // Put puts any Uint size into a []byte slice.
 func Put[T constraints.Integer](b []byte, v T) {
-	_ = b[len(b)-1] // bounds check hint to compiler; see golang.org/issue/14808
-
-	switch any(v).(type) {
-	case int8:
-		v = T(uint8(v))
-	case int16:
-		v = T(uint16(v))
-	case int32:
-		v = T(uint32(v))
-	case int64:
-		v = T(uint64(v))
-	}
-
 	switch any(v).(type) {
 	case uint8:
 		b[0] = byte(v)
 		return
 	case uint16:
-		b[0] = byte(v)
-		b[1] = byte(v >> 8)
+		binary.LittleEndian.PutUint16(b, uint16(v))
 		return
 	case uint32:
-		b[0] = byte(v)
-		b[1] = byte(v >> 8)
-		b[2] = byte(v >> 16)
-		b[3] = byte(v >> 24)
+		binary.LittleEndian.PutUint32(b, uint32(v))
 		return
 	}
-	b[0] = byte(v)
-	b[1] = byte(v >> 8)
-	b[2] = byte(v >> 16)
-	b[3] = byte(v >> 24)
-	b[4] = byte(v >> 32)
-	b[5] = byte(v >> 40)
-	b[6] = byte(v >> 48)
-	b[7] = byte(v >> 56)
+	binary.LittleEndian.PutUint64(b, uint64(v))
 }
 
 // PutBuffer encodes an integer into the passed Buffer.

@@ -15,19 +15,18 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	if total%8 != 0 {
 		return 0, fmt.Errorf("Struct has an internal size(%d) that is not divisible by 8, something is bugged", total)
 	}
-	s.header.SetFinal40(uint64(total))
 
+	defer log.Println("before setting header to final value: ", s.header.Final40())
+	s.header.SetFinal40(uint64(total))
+	defer log.Println("Marshal set the Struct size to: ", s.header.Final40())
+	defer log.Println("Marshal also says the total is: ", total)
 	written, err := w.Write(s.header)
 	if err != nil {
 		return written, err
 	}
 
-	log.Println("field length is: ", len(s.fields))
 	for n, v := range s.fields {
-		log.Printf("fieldNum %d was type %v", n+1, s.mapping[n].Type)
-
 		if v.header == nil {
-			log.Printf("field %d was header nil", n+1)
 			continue
 		}
 
@@ -72,7 +71,9 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTStruct:
+			log.Println("encoding a Struct")
 			s := (*Struct)(v.ptr)
+			log.Println("struct's fieldNum: ", s.header.First16())
 			i, err := s.Marshal(w)
 			written += i
 			if err != nil {
@@ -178,13 +179,10 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 		case field.FTListBytes:
 			x := (*Bytes)(v.ptr)
-			for _, data := range x.Encode() {
-				i, err := w.Write(data)
-				log.Println("wrote: ", i)
-				written += i
-				if err != nil {
-					return written, err
-				}
+			i, err := x.Encode(w)
+			written += i
+			if err != nil {
+				return written, err
 			}
 		case field.FTListStruct:
 			x := (*[]*Struct)(v.ptr)
@@ -193,7 +191,9 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			if err != nil {
 				return written, err
 			}
-			for _, item := range *x {
+			for index, item := range *x {
+				item.header.SetFirst16(uint16(index))
+				log.Println("item index: ", item.header.First16())
 				n, err := item.Marshal(w)
 				written += n
 				if err != nil {
@@ -204,6 +204,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			return written, fmt.Errorf("received a field type %v that we don't support", desc.Type)
 		}
 	}
+	log.Println("wrote: ", written)
 	if written != int(total) {
 		return written, fmt.Errorf("bug: we wrote %d data out, which is not the same as the total bytes it should take (%d)", written, total)
 	}
