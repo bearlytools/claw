@@ -13,12 +13,16 @@ var (
 )
 
 // SizeWithPadding returns the complete size once padding has been applied.
-func SizeWithPadding(size int) int {
-	return size + int(8-(size%8))
+func SizeWithPadding[I constraints.Integer](size I) I {
+	return size + PaddingNeeded(size)
 }
 
 // PaddingNeeded returns the amount of padding needed for size to align 64 bits.
 func PaddingNeeded[I constraints.Integer](size I) I {
+	if size < 0 {
+		panic("size cannot be < 0")
+	}
+
 	leftOver := size % 8
 	if leftOver == 0 {
 		return 0

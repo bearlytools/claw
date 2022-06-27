@@ -11,11 +11,11 @@ import (
 func TestBoolGetSetAppendRange(t *testing.T) {
 	// Sets our header to message type 15, field number 2 and 20 entries.
 	b := []byte{15, 0, 2, 20, 0, 0, 0, 0}
-	s := New(0, nil, nil)
+	s := New(0, nil)
 
 	// This sets up the first 20 entries to be set to true, everything else is false.
 	b = append(b, bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 4), 0, 0, 0, 0, 0)
-	list, err := NewBoolFromBytes(&b, s)
+	_, list, err := NewBoolFromBytes(&b, s)
 	if err != nil {
 		panic(err)
 	}
@@ -94,7 +94,7 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 	// Sets our header to message type 16, field number 3 and 7 entries.
 	b := []byte{16, 0, 3, 7, 0, 0, 0, 0}
 
-	s := New(0, nil, nil)
+	s := New(0, nil)
 
 	values := map[int]uint8{
 		0: 5,
@@ -179,7 +179,7 @@ func TestNumberFloat(t *testing.T) {
 	// Sets our header to message type 16, field number 3 and 0 entries.
 	b := []byte{16, 0, 4, 0, 0, 0, 0, 0}
 
-	s := New(0, nil, nil)
+	s := New(0, nil)
 
 	list, err := NewNumberFromBytes[float64](&b, s)
 	if err != nil {
@@ -202,7 +202,7 @@ func TestBytes(t *testing.T) {
 	// Sets our header to message type 20, field number 5 and 1 entry.
 	b := []byte{20, 0, 5, 1, 0, 0, 0, 0}
 
-	s := New(0, nil, nil)
+	s := New(0, nil)
 
 	values := []string{
 		"hello", // len 5

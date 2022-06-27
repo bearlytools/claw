@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/bearlytools/claw/internal/binary"
@@ -14,7 +15,7 @@ import (
 
 func (s *Struct) unmarshal(r io.Reader) (int, error) {
 	read := 0
-	h := GenericHeader(make([]byte, 8))
+	h := NewGenericHeader()
 	read, err := r.Read(h)
 	if read != 8 {
 		return read, fmt.Errorf("could only read %d bytes, a Struct header is always 8 bytes", read)
@@ -36,17 +37,30 @@ func (s *Struct) unmarshal(r io.Reader) (int, error) {
 	log.Println("Struct says it is: ", size)
 	buffer := make([]byte, size-8) // -8 because we read the buffer
 
+	if len(buffer) == 0 {
+		return read, nil
+	}
+
 	n, err := r.Read(buffer)
 	read += n
 	if err != nil {
+		log.Println("this is the buffer size: ", len(buffer))
 		return read, fmt.Errorf("problem reading Struct data: %w", err)
 	}
 	if int(size-8) != n {
 		panic(fmt.Sprintf("read %d bytes, expected %d", n, size-8))
 	}
 	log.Println("struct read ", read)
+	err = s.unmarshalFields(&buffer)
+	if err != nil {
+		return read, err
+	}
+	st := atomic.LoadInt64(s.structTotal)
+	if read != int(st) {
+		return read, fmt.Errorf("Struct was %d in length, but only found %d worth of fields", read, st)
+	}
 
-	return read, s.unmarshalFields(&buffer)
+	return read, nil
 }
 
 func (s *Struct) unmarshalFields(buffer *[]byte) error {
@@ -195,31 +209,48 @@ func (s *Struct) decodeBytes(buffer *[]byte, fieldNum uint16) error {
 
 	i := binary.Get[uint64]((*buffer)[:8])
 	size := bits.GetValue[uint64, uint64](i, dataSizeMask, 24)
+	if size == 0 {
+		return fmt.Errorf("Struct.decodeBytes() received a Bytes field of size 0 which is invalid")
+	}
 
-	withPadding := 8 + size + PaddingNeeded(8+size) // header + data + padding
+	withPadding := SizeWithPadding(size) + 8 // header + data + padding
 	if l < int(withPadding) {
-		return fmt.Errorf("Struct.decodeBytes() found string/byte field that was clipped in size")
+		return fmt.Errorf("Struct.decodeBytes() found string/byte field that was clipped in size, got %d, want %d", l, withPadding)
 	}
 	f := s.fields[fieldNum-1]
 
 	f.header = (*buffer)[:8]
-	b := (*buffer)[8:withPadding] // from end of header to end of data with padding
+	b := (*buffer)[8 : 8+size] // from end of header to end of data without padding
 	f.ptr = unsafe.Pointer(&b)
 
 	s.fields[fieldNum-1] = f
+	log.Println("addToTotal: ", withPadding)
 	addToTotal(s, withPadding)
 	*buffer = (*buffer)[withPadding:]
 	return nil
 }
 
 func (s *Struct) decodeListBool(buffer *[]byte, fieldNum uint16) error {
-	f := s.fields[fieldNum-1]
-	f.header = (*buffer)[:8]
-
-	ptr, err := NewBoolFromBytes(buffer, s) // This handles our additions to s.structTotal
+	h, ptr, err := NewBoolFromBytes(buffer, s) // This handles our additions to s.structTotal
 	if err != nil {
 		return err
 	}
+
+	f := s.fields[fieldNum-1]
+	f.header = h
+	f.ptr = unsafe.Pointer(ptr)
+	s.fields[fieldNum-1] = f
+	return nil
+}
+
+func (s *Struct) decodeListBytes(buffer *[]byte, fieldNum uint16) error {
+	f := s.fields[fieldNum-1]
+
+	ptr, err := NewBytesFromBytes(buffer, s)
+	if err != nil {
+		return err
+	}
+	f.header = ptr.header
 	f.ptr = unsafe.Pointer(ptr)
 	s.fields[fieldNum-1] = f
 	return nil
@@ -312,14 +343,12 @@ func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
 	r.Reset(*buffer)
 	defer readers.Put(r)
 
-	sub := New(fieldNum, m, s)
+	sub := New(fieldNum, m)
 	n, err := sub.unmarshal(r)
 	if err != nil {
 		return err
 	}
-
-	s.fields[fieldNum-1].header = sub.header
-	s.fields[fieldNum-1].ptr = unsafe.Pointer(sub)
+	SetStruct(s, fieldNum, sub)
 
 	*buffer = (*buffer)[n:]
 	return nil
@@ -331,35 +360,35 @@ func (s *Struct) decodeListStruct(buffer *[]byte, fieldNum uint16) error {
 	*buffer = (*buffer)[8:] // Move ahead of the list header
 
 	numItems := h.Final40()
+	if numItems == 0 {
+		return fmt.Errorf("cannot decode a list of Structs with list size of 0: encoding error")
+	}
+
+	addToTotal(s, 8) // Add list header size
+	log.Println("number of items: ", numItems)
 	sl := make([]*Struct, int(numItems))
 	r := readers.Get().(*bytes.Reader)
+	r.Reset(*buffer)
+	totalDataSize := 0 // Size without header
 	for i := 0; i < int(numItems); i++ {
 		log.Println("decoding list struct item: ", i)
-		item := New(0, s.mapping[fieldNum-1].Mapping, s)
+		item := New(0, s.mapping[fieldNum-1].Mapping)
 		item.inList = true
-		r.Reset(*buffer)
+		log.Println("\tlength of buffer before item unmarshal: ", len(*buffer)-totalDataSize)
 		n, err := item.unmarshal(r)
 		if err != nil {
+			panic("this happened: " + err.Error())
 			return err
 		}
+		totalDataSize += n
+		log.Printf("\tread Struct item: %d bytes", n)
+		addToTotal(s, n)
 		sl[i] = item
-		*buffer = (*buffer)[n:]
+		log.Println("\tlength of buffer after item unmarshal: ", len(*buffer)-totalDataSize)
 	}
+	*buffer = (*buffer)[totalDataSize:]
 	f.header = h
 	f.ptr = unsafe.Pointer(&sl)
-	s.fields[fieldNum-1] = f
-	return nil
-}
-
-func (s *Struct) decodeListBytes(buffer *[]byte, fieldNum uint16) error {
-	f := s.fields[fieldNum-1]
-	f.header = (*buffer)[:8]
-
-	ptr, err := NewBytesFromBytes(buffer, s)
-	if err != nil {
-		return err
-	}
-	f.ptr = unsafe.Pointer(ptr)
 	s.fields[fieldNum-1] = f
 	return nil
 }

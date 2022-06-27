@@ -1,9 +1,6 @@
 package claw
 
 import (
-	"reflect"
-	"unsafe"
-
 	"github.com/bearlytools/claw/internal/field"
 )
 
@@ -38,13 +35,3 @@ const (
 	FTListBytes  = field.FTListBytes
 	FTListStruct = field.FTListStruct
 )
-
-func byteSlice2String(bs []byte) string {
-	return *(*string)(unsafe.Pointer(&bs))
-}
-
-func unsafeGetBytes(s string) []byte {
-	return (*[0x7fff0000]byte)(unsafe.Pointer(
-		(*reflect.StringHeader)(unsafe.Pointer(&s)).Data),
-	)[:len(s):len(s)]
-}

@@ -16,8 +16,9 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 		return 0, fmt.Errorf("Struct has an internal size(%d) that is not divisible by 8, something is bugged", total)
 	}
 
-	defer log.Println("before setting header to final value: ", s.header.Final40())
-	s.header.SetFinal40(uint64(total))
+	if uint64(total) != s.header.Final40() {
+		return 0, fmt.Errorf("Struct had internal size(%d), but header size as %d", total, s.header.Final40())
+	}
 	defer log.Println("Marshal set the Struct size to: ", s.header.Final40())
 	defer log.Println("Marshal also says the total is: ", total)
 	written, err := w.Write(s.header)
@@ -72,9 +73,10 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 		case field.FTStruct:
 			log.Println("encoding a Struct")
-			s := (*Struct)(v.ptr)
-			log.Println("struct's fieldNum: ", s.header.First16())
-			i, err := s.Marshal(w)
+			value := (*Struct)(v.ptr)
+			log.Printf("the struct ptr: %+#v", value)
+			log.Println("struct's fieldNum: ", value.header.First16())
+			i, err := value.Marshal(w)
 			written += i
 			if err != nil {
 				return written, err

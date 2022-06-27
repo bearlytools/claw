@@ -5,7 +5,6 @@ import (
 	stdbinary "encoding/binary"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"sync/atomic"
 
@@ -22,7 +21,7 @@ type Numbers interface {
 
 // Bool is a wrapper around a list of boolean values.
 type Bool struct {
-	data []byte
+	data []byte // Includes the header
 	len  int
 
 	s *Struct
@@ -42,29 +41,21 @@ func NewBool(fieldNum uint16) *Bool {
 }
 
 // NewBoolFromBytes returns a new Bool value and advances "data" passed the list.
-func NewBoolFromBytes(data *[]byte, s *Struct) (*Bool, error) {
+func NewBoolFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bool, error) {
 	l := len(*data)
 	if l < 8 {
-		return nil, fmt.Errorf("Struct.decodeListBool() header was < 64 bits")
+		return nil, nil, fmt.Errorf("Struct.decodeListBool() header was < 64 bits")
 	}
 
-	i := binary.Get[uint64]((*data)[:8])
-	items := bits.GetValue[uint64, uint64](i, dataSizeMask, 24)
-
+	h := GenericHeader((*data)[:8])
+	items := h.Final40()
 	if items == 0 {
-		b := pool.Get(boolPool).(*Bool)
-		b.data = (*data)[:8]
-		b.len = 0
-		b.s = s
-
-		*data = (*data)[8:]
-		addToTotal(s, 8)
-		return b, nil
+		return nil, nil, fmt.Errorf("Struct.decodeListBool() header had item count == 0, which is not allowed")
 	}
 
 	wordsNeeded := (items / 64) + 1
 	if len((*data)[8:]) < int(wordsNeeded)*8 {
-		return nil, fmt.Errorf("malformed: list of boolean: header had data size not consistend with message")
+		return nil, nil, fmt.Errorf("malformed: list of boolean: header had data size not consistend with message")
 	}
 	rightBound := (8 * wordsNeeded) + 8
 	sl := (*data)[0:rightBound]
@@ -76,7 +67,7 @@ func NewBoolFromBytes(data *[]byte, s *Struct) (*Bool, error) {
 
 	*data = (*data)[rightBound:]
 	addToTotal(s, len(b.data))
-	return b, nil
+	return h, b, nil
 }
 
 // Len returns the number of items in this list of bools.
@@ -276,12 +267,23 @@ func NewNumber[I Numbers]() *Number[I] {
 	default:
 		panic(fmt.Sprintf("unsupported number type %T", t))
 	}
+	h := NewGenericHeader()
+	h.SetNext8(uint8(ft))
+
 	n.sizeInBytes = sizeInBytes
 	n.isFloat = isFloat
-	n.data = make([]byte, 8)
-	h := GenericHeader(n.data)
-	h.SetNext8(uint8(ft))
+	n.data = h
+
 	return n
+}
+
+func wordsRequiredToStore(items, sizeInBytes int) int {
+	required := (sizeInBytes * items)
+	words := required / 8
+	if required%8 > 0 {
+		words++
+	}
+	return words
 }
 
 // NewNumberFromBytes returns a new Number value.
@@ -291,8 +293,11 @@ func NewNumberFromBytes[I Numbers](data *[]byte, s *Struct) (*Number[I], error) 
 		return nil, fmt.Errorf("header was < 64 bits")
 	}
 
-	i := binary.Get[uint64]((*data)[:8])
-	items := bits.GetValue[uint64, uint64](i, dataSizeMask, 24)
+	h := GenericHeader((*data)[:8])
+	items := h.Final40()
+	if items == 0 {
+		return nil, fmt.Errorf("list of Numbers had zero items, which is an encoding error")
+	}
 
 	var t I
 
@@ -338,33 +343,19 @@ func NewNumberFromBytes[I Numbers](data *[]byte, s *Struct) (*Number[I], error) 
 	n.sizeInBytes = sizeInBytes
 	n.isFloat = isFloat
 
-	if items == 0 {
-		n.data = (*data)[:8]
-		n.len = 0
-		n.s = s
-
-		*data = (*data)[8:]
-		addToTotal(s, 8)
-		return n, nil
-	}
-
-	requiredBytes := int(items) * int(n.sizeInBytes)
-	requiredWords := requiredBytes / 8
-	if requiredBytes%8 != 0 {
-		requiredWords++
-	}
+	requiredWords := wordsRequiredToStore(int(items), int(n.sizeInBytes))
 
 	if len((*data)[8:]) < int(requiredWords)*8 {
 		return nil, fmt.Errorf("malformed: list of numbers[%d bits]: header had data size not consistend with message", sizeInBytes)
 	}
 
-	rightBound := (8 * requiredWords) + 8
-	sl := (*data)[0:rightBound]
-	addToTotal(s, len(sl))
-
-	n.data = sl
+	rightBound := (8 * requiredWords) + 8 // datasize(8 * requiredWords) + header(8)
+	n.data = (*data)[0:rightBound]
 	n.len = int(items)
 	n.s = s
+	addToTotal(s, len(n.data))
+
+	// Advance the slice.
 	*data = (*data)[rightBound:]
 
 	return n, nil
@@ -503,23 +494,7 @@ func (n *Number[I]) Append(i ...I) {
 		}
 	}()
 
-	requiredSize := n.len + len(i)
-	// If we have enough internal capacity, then just append inside our capcity.
-	if n.cap() >= requiredSize {
-		start := n.len
-		n.len = n.len + len(i)
-		for _, v := range i {
-			n.Set(start, v)
-		}
-		return
-	}
-
-	// We don't have enough internal capacity, so let's allocate enough capacity.
-	requiredBytes := requiredSize * int(n.sizeInBytes)
-	requiredWords := requiredBytes / 8
-	if requiredBytes/8 != 0 {
-		requiredWords++
-	}
+	requiredWords := wordsRequiredToStore(n.len+len(i), int(n.sizeInBytes))
 
 	c := make([]byte, (requiredWords*8)+8) // +8 is header space
 	copy(c, n.data)
@@ -589,6 +564,10 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	b := pool.Get(bytesPool).(*Bytes)
 	b.header = (*data)[:8]
 	*data = (*data)[8:] // Move past the header
+
+	if b.header.Final40() == 0 {
+		return nil, fmt.Errorf("cannot have a ListBytes field that has zero entries")
+	}
 
 	// We need to carve up the slice into a slice of slice.
 	d := make([][]byte, b.header.Final40())
@@ -765,10 +744,6 @@ func (b *Bytes) Append(values ...[]byte) error {
 	b.dataSize = newSize
 	b.padding = PaddingNeeded(newSize)
 	if b.s != nil {
-		log.Println("b.dataSize: ", b.dataSize)
-		log.Println("oldSize: ", oldSize)
-		log.Println("b.padding: ", b.padding)
-		log.Println("oldPaddin: ", oldPadding)
 		addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding) // data size + entry header size
 	}
 	return nil

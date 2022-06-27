@@ -90,7 +90,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 
 	// Total: 136
 
-	root := New(0, msg0Mapping, nil)
+	root := New(0, msg0Mapping)
 
 	/////////////////////
 	// Start Scalars
@@ -354,20 +354,6 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): bytes field is %v", getBytes)
 	}
 
-	err = SetBytes(root, 12, []byte{}, false)
-	if err != nil {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
-	}
-
-	// Test empty bytes field.
-	getBytes, err = GetBytes(root, 12)
-	if err != nil {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
-	}
-	if !bytes.Equal(*getBytes, []byte{}) {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): want empty bytes field ([]byte{}), got %v", *getBytes)
-	}
-
 	// Add byte field.
 	strData := "Hello World"
 	err = SetBytes(root, 12, []byte(strData), false)
@@ -402,7 +388,10 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	////////////////////
 	// Start Struct
 	////////////////////
-	sub := New(13, msg1Mapping, root)
+	sub := New(13, msg1Mapping)
+	if err := SetStruct(root, 13, sub); err != nil {
+		panic(err)
+	}
 	totalWithStruct := totalWithBytes + 8
 	if *root.structTotal != totalWithStruct {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
@@ -439,8 +428,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// Start List Struct
 	////////////////////
 	structs := []*Struct{
-		New(0, msg1Mapping, nil),
-		New(0, msg1Mapping, nil),
+		New(0, msg1Mapping),
+		New(0, msg1Mapping),
 	}
 
 	if err := AddListStruct(root, 14, structs...); err != nil {
@@ -545,7 +534,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	buff := new(bytes.Buffer)
 	written, _ := root.Marshal(buff) // We just marshalled, so no error
 	log.Println("encoder says it wrote: ", written)
-	cp := New(0, msg0Mapping, nil)
+	cp := New(0, msg0Mapping)
 	log.Println("new root is: ", *cp.structTotal)
 	if _, err := cp.unmarshal(buff); err != nil {
 		panic(err)
