@@ -55,6 +55,8 @@ func TestGenericHeader(t *testing.T) {
 
 }
 
+// TestBasicEncodeDecodeStruct is a more involved version of decode_test.go/TestDecodeStruct().
+// If this tests stops failing, that one probably does too.  It is easier to debug that one.
 func TestBasicEncodeDecodeStruct(t *testing.T) {
 	msg1Mapping := mapping.Map{
 		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool},
