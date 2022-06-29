@@ -1,0 +1,267 @@
+{{ range .Structs }}
+
+type {{ .Name }} struct {
+   s *structs.Struct
+}
+
+// New{{ .Name }} creates a new instance of {{ .Name }}.
+func New{{ .Name }}() {{ .Name }} {
+    return {{ .Name }}{
+        s: structs.New(0, mapping{{.Name}}),
+    }
+}
+
+{{- range $index, $field := .Fields }}
+{{ if .Fields.Type eq 1 }}
+func (x {{ .Name }}) {{ $field.Name }}() bool {
+    return structs.MustGetBool(x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value bool) {
+    return structs.MustSetBool(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 2 }}
+func (x {{ .Name }}) {{ $field.Name }}() int8 {
+    return structs.MustGetNumber[int8](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value int8) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 3 }}
+func (x {{ .Name }}) {{ $field.Name }}() int16 {
+    return structs.MustGetNumber[int16](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value int16) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 4 }}
+func (x {{ .Name }}) {{ $field.Name }}() int32 {
+    return structs.MustGetNumber[int32](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value int32) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 5 }}
+func (x {{ .Name }}) {{ $field.Name }}() int64 {
+    return structs.MustGetNumber[int64](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value int64) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 6 }}
+func (x {{ .Name }}) {{ $field.Name }}() uint8 {
+    return structs.MustGetNumber[uint8](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value uint8) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 7 }}
+func (x {{ .Name }}) {{ $field.Name }}() uint16 {
+    return structs.MustGetNumber[uint16](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value uint16) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 8 }}
+func (x {{ .Name }}) {{ $field.Name }}() uint32 {
+    return structs.MustGetNumber[uint32](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value uint32) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 9 }}
+func (x {{ .Name }}) {{ $field.Name }}() uint64 {
+    return structs.MustGetNumber[uint64](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value uint64) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 10 }}
+func (x {{ .Name }}) {{ $field.Name }}() float32 {
+    return structs.MustGetNumber[float32](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value float32) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 11 }}
+func (x {{ .Name }}) {{ $field.Name }}() float64 {
+    return structs.MustGetNumber[float64](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value float64) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 12 }}
+func (x {{ .Name }}) {{ $field.Name }}() string {
+    ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    return conversions.ByteSlice2String(*ptr)
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value string) {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, {{ $field.Index }}, b, true)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 13 }}
+func (x {{ .Name }}) {{ $field.Name }}() []byte {
+    ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    return *ptr
+}
+
+func (x {{ .Name }}) SafeGet{{ $field.Name }}() []byte {
+    ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    b := make([]byte, len(*ptr))
+    copy(b, *ptr)
+    return b
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value []byte) {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, {{ $field.Index }}, b, false)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 14 }}
+func (x {{ .Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
+    s := structs.MustGetStruct(x.s, {{ $field.Index }})
+    return {{ $field.IdentName }}{s: s} 
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
+    MustSetStruct(x.s, {{ $field.Index }}, value.s)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 15 }}
+func (x {{ .Name }}) {{ $field.Name }}() *lists.Bool {
+    return MustGetListBool(x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value *lists.Bool) {
+    MustSetListBool(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 16 17 18 19 }}
+func (x {{ .Name }}) {{ $field.Name }}() *lists.Number[.GoListType] {
+    return MustGetListNumber[.GoListType](x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value *lists.Number[.GoListType]) {
+    MustSetListNumber(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 20 }}
+func (x {{ .Name }}) {{ $field.Name }}() *lists.Bytes {
+    return MustGetListBytes(x.s, {{ $field.Index }})
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value *lists.Bytes) {
+    MustSetListBytes(x.s, {{ $field.Index }}, value)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 21 }}
+func (x {{ .Name }}) {{ $field.Name }}() *lists.String {
+    return &lists.String{l: MustGetListBytes(x.s, {{ $field.Index }})}
+}
+
+func (x {{ .Name }}) Set{{ $field.Name }}(value *lists.String) {
+    MustSetListBytes(x.s, {{ $field.Index }}, value.Bytes())
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ else if .Fields.Type eq 22 }}
+func (x {{ .Name }}) {{ $field.Name }}() []{{ $field.IdentName }} {
+    ptr := MustGetListStruct(x.s, {{ $field.Index }})
+    vals := make([]{{ $field.IdentName }}, len(*ptr))
+    for i, val := range vals {
+        val.s = (*ptr)[i]
+        vals[i] = val
+    }
+    return vals
+}
+
+func (x {{ .Name }}) Append{{ $field.Name }}(values ...{{ $field.IdentName }}) {
+    vals := make([]*structs.Struct, len(values))
+    for i, val := range values {
+        vals[i] = val.s
+    }
+    MustAppendListStruct(x.s, {{ $field.Index }}, vals...)
+}
+
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{ end }} {{/* End if .Fields.Type eq */}}
+{{ end }} {{/* End range $index, $field := .Fields */}}
+{{ end }} {{/* End range .Structs */}}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
+	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/internal/field"
 	"golang.org/x/exp/constraints"
 )
@@ -788,6 +789,86 @@ func (b *Bytes) Encode(w io.Writer) (int, error) {
 	n, err := w.Write(Padding(int(b.padding)))
 	wrote += n
 	return wrote, err
+}
+
+type String struct {
+	l *Bytes
+}
+
+// Bytes returns the underlying Bytes implementation. This is for internal use out side of that
+// has no support.
+func (s String) Bytes() *Bytes {
+	return s.l
+}
+
+// Reset resets all the internal fields to their zero value. Slices are not nilled, but are
+// set to their zero size to hold the capacity.
+func (s String) Reset() {
+	s.l.Reset()
+}
+
+// Len returns the number of items in the list.
+func (s String) Len() int {
+	return s.l.Len()
+}
+
+// Get gets a string stored at the index.
+func (s String) Get(index int) string {
+	b := s.l.Get(index)
+	if b == nil {
+		return ""
+	}
+	return conversions.ByteSlice2String(b)
+}
+
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
+func (s String) Range(ctx context.Context, from, to int) chan string {
+	ch := make(chan string, 1)
+
+	go func() {
+		defer close(ch)
+		for b := range s.l.Range(ctx, from, to) {
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- conversions.ByteSlice2String(b):
+			}
+		}
+	}()
+	return ch
+}
+
+// Set a number in position "index" to "value".
+func (s String) Set(index int, value string) error {
+	return s.l.Set(index, conversions.UnsafeGetBytes(value))
+}
+
+// Append appends values to the list of []byte.
+func (s String) Append(values ...string) error {
+	x := make([][]byte, len(values))
+	for i, v := range values {
+		x[i] = conversions.UnsafeGetBytes(v)
+	}
+	return s.l.Append(x...)
+}
+
+// Slice converts this into a standard []string. The values aren't linked, so changing
+// []string or calling b.Set(...) will have no affect on the other. If there are no
+// entries, this returns a nil slice.
+func (s String) Slice() []string {
+	length := s.l.Len()
+	if length == 0 {
+		return nil
+	}
+	x := make([]string, length)
+	index := 0
+	for v := range s.Range(context.Background(), 0, length) {
+		x[index] = v
+		index++
+	}
+	return x
 }
 
 // udpateItems updates list header information to reflect the number items.

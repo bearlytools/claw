@@ -434,7 +434,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		New(0, msg1Mapping),
 	}
 
-	if err := AddListStruct(root, 14, structs...); err != nil {
+	if err := AppendListStruct(root, 14, structs...); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): AddListStruct() had error: %s", err)
 	}
 

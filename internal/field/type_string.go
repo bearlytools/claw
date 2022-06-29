@@ -29,12 +29,13 @@ func _() {
 	_ = x[FTList32-18]
 	_ = x[FTList64-19]
 	_ = x[FTListBytes-20]
-	_ = x[FTListStruct-21]
+	_ = x[FTListString-21]
+	_ = x[FTListStruct-22]
 }
 
-const _Type_name = "FTUnknownFTBoolFTInt8FTInt16FTInt32FTInt64FTUint8FTUint16FTUint32FTUint64FTFloat32FTFloat64FTStringFTBytesFTStructFTListBoolFTList8FTList16FTList32FTList64FTListBytesFTListStruct"
+const _Type_name = "FTUnknownFTBoolFTInt8FTInt16FTInt32FTInt64FTUint8FTUint16FTUint32FTUint64FTFloat32FTFloat64FTStringFTBytesFTStructFTListBoolFTList8FTList16FTList32FTList64FTListBytesFTListStringFTListStruct"
 
-var _Type_index = [...]uint8{0, 9, 15, 21, 28, 35, 42, 49, 57, 65, 73, 82, 91, 99, 106, 114, 124, 131, 139, 147, 155, 166, 178}
+var _Type_index = [...]uint8{0, 9, 15, 21, 28, 35, 42, 49, 57, 65, 73, 82, 91, 99, 106, 114, 124, 131, 139, 147, 155, 166, 178, 190}
 
 func (i Type) String() string {
 	if i >= Type(len(_Type_index)-1) {

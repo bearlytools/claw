@@ -1030,7 +1030,7 @@ func TestDecodeListStruct(t *testing.T) {
 	expectedTotal := 8 + 8 + 8 + 16 // s0Header(8) + list header(8) + ls0(16) + ls1(8)
 
 	s0 := New(0, msg0Mapping)
-	if err := AddListStruct(s0, 1, ls0, ls1); err != nil {
+	if err := AppendListStruct(s0, 1, ls0, ls1); err != nil {
 		panic(err)
 	}
 
@@ -1101,7 +1101,7 @@ func TestDecodeStruct(t *testing.T) {
 	SetBytes(s1, 12, []byte("Hello"), false) // 136 bytes
 	SetListNumber(s1, 13, numList)           // 160 bytes
 	SetListBytes(s1, 14, bytesList)          // 184 bytes
-	AddListStruct(s1, 15, ls0, ls1)          // 216 bytes = list header(8) + ls0(16) + ls1(8)
+	AppendListStruct(s1, 15, ls0, ls1)       // 216 bytes = list header(8) + ls0(16) + ls1(8)
 
 	// Total for both structs: 216 + 8
 	expectedTotal := 224

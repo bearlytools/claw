@@ -5,7 +5,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"sync/atomic"
 	"unsafe"
@@ -154,7 +153,6 @@ var boolMask = bits.Mask[uint64](24, 25)
 // is not a bool or fieldNum is not a valid field number. If the field is not set, it
 // returns false with no error.
 func GetBool(s *Struct, fieldNum uint16) (bool, error) {
-	log.Println("Struct: ", s)
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTBool); err != nil {
 		return false, err
 	}
@@ -206,6 +204,13 @@ func SetBool(s *Struct, fieldNum uint16, value bool) error {
 	binary.Put(f.header, n)
 	s.fields[fieldNum-1] = f
 	return nil
+}
+
+func MustSetBool(s *Struct, fieldNum uint16, value bool) {
+	err := SetBool(s, fieldNum, value)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // DeleteBool deletes a boolean and updates our storage total.
@@ -437,6 +442,13 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	return nil
 }
 
+func MustSetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) {
+	err := SetBytes(s, fieldNum, value, isString)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // DeleteBytes deletes a bytes field and updates our storage total.
 func DeleteBytes(s *Struct, fieldNum uint16) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTBytes, field.FTString); err != nil {
@@ -465,7 +477,6 @@ func GetStruct(s *Struct, fieldNum uint16) (*Struct, error) {
 
 	f := s.fields[fieldNum-1]
 	if f.header == nil { // The zero value
-		log.Printf("getting Struct field %d: header was nil", fieldNum)
 		return nil, nil
 	}
 
@@ -484,20 +495,16 @@ func MustGetStruct(s *Struct, fieldNum uint16) *Struct {
 // SetStruct sets a Struct field.
 func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 	if s == nil {
-		log.Fatalf("I DID GET HERE0")
 		return fmt.Errorf("value cannot be added to a nil Struct")
 	}
 	if value == nil {
-		log.Fatalf("I DID GET HERE1")
 		return fmt.Errorf("value cannot be nil, to delete a Struct use DeleteStruct()")
 	}
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTStruct); err != nil {
-		log.Fatalf("I DID GET HERE2")
 		return err
 	}
 
 	if atomic.LoadInt64(value.structTotal) > maxDataSize {
-		log.Fatalf("I DID GET HERE3")
 		return fmt.Errorf("cannot set a Struct field to size > 1099511627775")
 	}
 
@@ -519,10 +526,15 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 
 	f.ptr = unsafe.Pointer(value)
 	addToTotal(s, atomic.LoadInt64(value.structTotal))
-	log.Println("I DID GET HERE")
-	log.Printf("field %d: %#+v", fieldNum, f)
 	s.fields[fieldNum-1] = f
 	return nil
+}
+
+func MustSetStruct(s *Struct, fieldNum uint16, value *Struct) {
+	err := SetStruct(s, fieldNum, value)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // DeleteStruct deletes a Struct field and updates our storage total.
@@ -590,6 +602,12 @@ func SetListBool(s *Struct, fieldNum uint16, value *Bool) error {
 	value.s = s
 	addToTotal(s, len(value.data))
 	return nil
+}
+func MustSetListBool(s *Struct, fieldNum uint16, value *Bool) {
+	err := SetListBool(s, fieldNum, value)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // DeleteListBool deletes a list of bools field and updates our storage total.
@@ -667,6 +685,13 @@ func SetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) erro
 	return nil
 }
 
+func MustSetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) {
+	err := SetListNumber(s, fieldNum, value)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // DeleteListNumber deletes a list of numbers field and updates our storage total.
 func DeleteListNumber[N Numbers](s *Struct, fieldNum uint16) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTList8, field.FTList16, field.FTList32, field.FTList64); err != nil {
@@ -718,8 +743,8 @@ func MustGetListStruct(s *Struct, fieldNum uint16) *[]*Struct {
 	return l
 }
 
-// AddListStruct adds the values to the list of Structs at fieldNum. Existing items will be retained.
-func AddListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
+// AppendListStruct adds the values to the list of Structs at fieldNum. Existing items will be retained.
+func AppendListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
 	if len(values) == 0 {
 		return fmt.Errorf("must add at least a single value")
 	}
@@ -761,6 +786,13 @@ func AddListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
 	s.fields[fieldNum-1] = f
 
 	return nil
+}
+
+func MustAppendListStruct(s *Struct, fieldNum uint16, values ...*Struct) {
+	err := AppendListStruct(s, fieldNum, values...)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // DeleteListStruct deletes a list of Structs field and updates our storage total.
@@ -834,6 +866,12 @@ func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
 
 	addToTotal(s, value.dataSize-ptr.dataSize+value.padding-ptr.padding+8)
 	return nil
+}
+
+func MustSetListBytes(s *Struct, fieldNum uint16, value *Bytes) {
+	if err := SetListBytes(s, fieldNum, value); err != nil {
+		panic(err)
+	}
 }
 
 // DeleteListBytes deletes a list of bytes field and updates our storage total.

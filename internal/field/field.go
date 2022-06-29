@@ -27,7 +27,8 @@ const (
 	FTList32     Type = 18
 	FTList64     Type = 19
 	FTListBytes  Type = 20
-	FTListStruct Type = 21
+	FTListString Type = 21
+	FTListStruct Type = 22
 )
 
 // IsList determines if a Type represents a list of entries.
@@ -60,5 +61,6 @@ var ListTypes = []Type{
 	FTList32,
 	FTList64,
 	FTListBytes,
+	FTListString,
 	FTListStruct,
 }

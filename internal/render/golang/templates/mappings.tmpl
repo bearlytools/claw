@@ -1,0 +1,14 @@
+{{ range .Structs }}
+var mapping{{.Name}} = mapping.Map{
+    {{- range .Fields }}
+    {
+        Name: .Name,
+        Type: .Type,
+        {{- if .Type gt 14 }}
+        ListType: {{ .ListType }}
+        Mapping: mapping{{ .IdentName }},
+        {{ end }}
+    }
+    {{end}}
+}
+{{end}}
