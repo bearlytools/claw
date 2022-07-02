@@ -35,7 +35,7 @@ type Rendered struct {
 }
 
 // Render is used to render a set of languages from the .claw file.
-func Render(ctx context.Context, langs []Lang) ([]Rendered, error) {
+func Render(ctx context.Context, file *idl.File, langs ...Lang) ([]Rendered, error) {
 	out := make([]Rendered, len(langs))
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -43,18 +43,20 @@ func Render(ctx context.Context, langs []Lang) ([]Rendered, error) {
 	wg := sync.WaitGroup{}
 	errCh := make(chan error, 1)
 	for i := 0; i < len(langs); i++ {
-		r, ok := Supported[langs[i]]
+		lang := langs[i]
+		i := i
+
+		r, ok := Supported[lang]
 		if !ok {
 			cancel()
 			wg.Wait()
 			return nil, fmt.Errorf("language %v is not supported", langs[i])
 		}
-		lang := langs[i]
-		i := i
+
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			b, err := r.Render(ctx)
+			b, err := r.Render(ctx, file)
 			if err != nil {
 				select {
 				case errCh <- err:

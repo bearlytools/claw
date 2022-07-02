@@ -1,0 +1,26 @@
+{{- range .Enums }}
+type {{ .Name }} {{ .GoType }}
+
+// String implements fmt.Stringer.
+func (x {{ .Name }}) String() string {
+    return {{ .Name }}ByValue[{{ .GoType }}(x)]
+}
+{{ $enum := . }}
+const (
+{{- range $index, $value := .OrderByValues }}
+    {{ $value.Name }} {{ $enum.Name }} = {{ $value.Value }}
+{{- end }}
+)
+
+var {{ .Name }}ByName = map[string]{{ .Name }}{
+{{- range $index, $value := $enum.OrderByNames }}
+    "{{ $value.Name }}": {{ $value.Value }},
+{{- end }}
+}
+
+var {{ .Name }}ByValue = map[{{ $enum.GoType }} ]string{
+{{- range $index, $value := $enum.OrderByValues}}
+    {{ $value.Value }}: "{{ $value.Name }}",
+{{- end }}
+}
+{{- end }} {{/* End range .Enums */}}

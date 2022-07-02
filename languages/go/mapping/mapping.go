@@ -1,3 +1,6 @@
+// Package mapping holds metadata mapping information used to map Struct field numbers to descriptions
+// of the fields so that they can be encoded/decoded properly. THIS FILE IS FOR INTERNAL USE ONLY and
+// is exposed simply to allow generated packages access.
 package mapping
 
 import (
@@ -15,22 +18,13 @@ type FieldDesc struct {
 	// Type is the type of field.
 	Type field.Type
 
-	// ListType describes the list's value type if Type == FTList.
-	ListType field.Type
 	// Mapping is provided if .Type == FTStruct || FTListStruct. This will describe the Structs fields.
 	Mapping Map
 }
 
 func (f *FieldDesc) Validate() error {
 	switch f.Type {
-	case field.FTList8, field.FTList16, field.FTList32, field.FTList64:
-		switch f.ListType {
-		case field.FTUint8, field.FTUint16, field.FTUint32, field.FTUint64, field.FTInt8, field.FTInt16,
-			field.FTInt32, field.FTInt64, field.FTFloat32, field.FTFloat64:
-		default:
-			return fmt.Errorf(".%s: type was %v, but had non numeric .ListType %v", f.Name, f.Type, f.ListType)
-		}
-	case field.FTListStruct, field.FTStruct:
+	case field.FTListStructs, field.FTStruct:
 		if f.Mapping == nil {
 			return fmt.Errorf(".%s: type was %v, but had Mapping == nil", f.Name, f.Type)
 		}

@@ -5,6 +5,7 @@ import (
 	stdbinary "encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"sync/atomic"
 
@@ -28,14 +29,14 @@ type Bool struct {
 	s *Struct
 }
 
-// NewBool creates a new Bool that will be stored in a Struct field with number fieldNum.
+// NewBool creates a new Bool that will be stored in a Struct field.
 func NewBool(fieldNum uint16) *Bool {
 	b := pool.Get(boolPool).(*Bool)
 	b.data = make([]byte, 8)
 
 	var u uint64
 	bits.SetValue(fieldNum, u, 0, 16)
-	bits.SetValue(uint8(field.FTListBool), u, 16, 24)
+	bits.SetValue(uint8(field.FTListBools), u, 16, 24)
 	binary.Put(b.data, u)
 
 	return b
@@ -226,50 +227,50 @@ func NewNumber[I Numbers]() *Number[I] {
 	case uint8:
 		n = pool.Get(nUint8Pool).(*Number[I])
 		sizeInBytes = 1
-		ft = field.FTList8
+		ft = field.FTListUint8
 	case uint16:
 		n = pool.Get(nUint16Pool).(*Number[I])
 		sizeInBytes = 2
-		ft = field.FTList16
+		ft = field.FTListUint16
 	case uint32:
 		n = pool.Get(nUint32Pool).(*Number[I])
 		sizeInBytes = 4
-		ft = field.FTList32
+		ft = field.FTListUint32
 	case uint64:
 		n = pool.Get(nUint64Pool).(*Number[I])
 		sizeInBytes = 8
-		ft = field.FTList64
+		ft = field.FTListUint64
 	case int8:
 		n = pool.Get(nInt8Pool).(*Number[I])
 		sizeInBytes = 1
-		ft = field.FTList8
+		ft = field.FTListInt8
 	case int16:
 		n = pool.Get(nInt16Pool).(*Number[I])
 		sizeInBytes = 2
-		ft = field.FTList16
+		ft = field.FTListInt16
 	case int32:
 		n = pool.Get(nInt32Pool).(*Number[I])
 		sizeInBytes = 4
-		ft = field.FTList32
+		ft = field.FTListInt32
 	case int64:
 		n = pool.Get(nInt64Pool).(*Number[I])
 		sizeInBytes = 8
-		ft = field.FTList64
+		ft = field.FTListInt64
 	case float32:
 		n = pool.Get(nFloat32Pool).(*Number[I])
 		sizeInBytes = 4
 		isFloat = true
-		ft = field.FTList32
+		ft = field.FTListFloat32
 	case float64:
 		n = pool.Get(nFloat64Pool).(*Number[I])
 		sizeInBytes = 8
 		isFloat = true
-		ft = field.FTList64
+		ft = field.FTListFloat64
 	default:
 		panic(fmt.Sprintf("unsupported number type %T", t))
 	}
 	h := NewGenericHeader()
-	h.SetNext8(uint8(ft))
+	h.SetFieldType(ft)
 
 	n.sizeInBytes = sizeInBytes
 	n.isFloat = isFloat
@@ -442,10 +443,6 @@ func (n *Number[I]) Range(ctx context.Context, from, to int) chan I {
 	return ch
 }
 
-func (n *Number[I]) cap() int {
-	return len(n.data[8:]) / int(n.sizeInBytes)
-}
-
 // Set a number in position "index" to "value".
 func (n *Number[I]) Set(index int, value I) {
 	data := n.data[8:]
@@ -529,6 +526,7 @@ func (n *Number[I]) Encode() []byte {
 	if n.data == nil {
 		return nil
 	}
+	log.Println("fieldNum before encode: ", GenericHeader(n.data[:8]).FieldNum())
 	return n.data
 }
 
@@ -549,8 +547,8 @@ func NewBytes() *Bytes {
 	if b.header == nil {
 		b.header = NewGenericHeader()
 	}
-	b.header.SetFirst16(0)
-	b.header.SetNext8(uint8(field.FTListBytes))
+	b.header.SetFieldNum(0)
+	b.header.SetFieldType(field.FTListBytes)
 	b.header.SetFinal40(0)
 	return b
 }
@@ -600,11 +598,12 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 		read += paddingNeeded
 	}
 
+	log.Println("1: ", read)
 	addToTotal(s, read) // Add header + data + padding
 
 	b.data = d
 	b.s = s
-	atomic.StoreInt64(&b.dataSize, int64(read))
+	atomic.StoreInt64(&b.dataSize, int64(read-8-paddingNeeded)) // We do not count the list header or padding in this
 	atomic.StoreInt64(&b.padding, int64(paddingNeeded))
 
 	return b, nil
@@ -615,7 +614,7 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 func (b *Bytes) Reset() {
 	if b.header != nil {
 		b.header.SetFinal40(0)
-		b.header.SetFirst16(0)
+		b.header.SetFieldNum(0)
 	}
 	if b.data != nil {
 		b.data = b.data[0:0]
@@ -693,17 +692,12 @@ func (b *Bytes) Set(index int, value []byte) error {
 	// padding needed. Calculate our new data size.
 	oldSize := int64(len(b.data[index]))
 	oldPadding := b.padding
-	addToTotal(b.s, (oldSize + oldPadding))
+	addToTotal(b.s, -(oldSize + oldPadding))
 	atomic.AddInt64(&b.dataSize, -oldSize)
-
-	b.set(index, value)
 
 	atomic.AddInt64(&b.dataSize, int64(len(value))+4) // data + entry header
 	atomic.StoreInt64(&b.padding, PaddingNeeded(b.dataSize))
 
-	// dataSize - oldSize is our data size change.
-	// padding - oldPadding is our padding data size change.
-	addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding)
 	b.set(index, value)
 	return nil
 }
@@ -723,18 +717,20 @@ func (b *Bytes) Append(values ...[]byte) error {
 		}
 	}
 
-	// Record old values
-	oldSize := b.dataSize
-	oldPadding := b.padding
-	oldData := b.data
+	// Remove old data size = padding.
+	if b.s != nil {
+		log.Println("removing old data size before append: ", -(b.dataSize + b.padding))
+		addToTotal(b.s, -(b.dataSize + b.padding))
+	}
 
-	newSize := oldSize // We are appending, so our new size starts at the old size
+	newSize := b.dataSize // We are appending, so our new size starts at the old size
 
 	// Create new slice that can hold our data.
 	indexStart := len(b.data)
+	n := make([][]byte, len(b.data)+len(values))
+	copy(n, b.data)
+	b.data = n
 
-	b.data = make([][]byte, len(oldData)+len(values))
-	copy(b.data, oldData)
 	for i, v := range values {
 		b.set(indexStart+i, v)
 		newSize += int64(len(v)) + 4 // data + entry header
@@ -745,7 +741,8 @@ func (b *Bytes) Append(values ...[]byte) error {
 	b.dataSize = newSize
 	b.padding = PaddingNeeded(newSize)
 	if b.s != nil {
-		addToTotal(b.s, b.dataSize-oldSize+b.padding-oldPadding) // data size + entry header size
+		log.Println("adding new append data size: ", b.dataSize+b.padding)
+		addToTotal(b.s, b.dataSize+b.padding) // data size + entry header size
 	}
 	return nil
 }

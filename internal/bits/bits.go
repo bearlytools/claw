@@ -2,11 +2,9 @@ package bits
 
 import (
 	"fmt"
-	"log"
 	"math/bits"
 	"strings"
 
-	"github.com/bearlytools/claw/internal/conversions"
 	"golang.org/x/exp/constraints"
 )
 
@@ -26,6 +24,7 @@ func SetValue[I, U constraints.Unsigned](val I, store U, start, end uint64) U {
 	return store | c
 }
 
+/*
 // SetValue stores "val" in "store" starting at bit "start" and
 // ending at bit "end" (exclusive). Any error condition in this causes a panic, for example:
 // start >= end, store cannot contain start and end, store isn't big enough for val, ...
@@ -128,6 +127,7 @@ func SetValueBytes[I constraints.Unsigned](val I, store []byte, start, end uint6
 		panic("you've gone'n done it now!")
 	}
 }
+*/
 
 // GetValue retrieves a value we stored with setValue. store is the unsigned number we
 // stored the value in. bitMask is the mask to apply to retrieve the value. start tells
@@ -194,6 +194,13 @@ func SetBit[U constraints.Unsigned](store U, pos uint8, val bool) U {
 func ClearBit[U constraints.Unsigned](store U, pos uint8) U {
 	store &^= (1 << pos)
 	return store
+}
+
+// ClearBytes clears all the bytes at position from to position to.
+func ClearBytes(b []byte, from, to uint8) {
+	for i := from; i < to; i++ {
+		b[from] = 0
+	}
 }
 
 // ClearBits clears all bits from "from" until "to".

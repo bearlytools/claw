@@ -23,23 +23,40 @@ func _() {
 	_ = x[FTString-12]
 	_ = x[FTBytes-13]
 	_ = x[FTStruct-14]
-	_ = x[FTListBool-15]
-	_ = x[FTList8-16]
-	_ = x[FTList16-17]
-	_ = x[FTList32-18]
-	_ = x[FTList64-19]
-	_ = x[FTListBytes-20]
-	_ = x[FTListString-21]
-	_ = x[FTListStruct-22]
+	_ = x[FTListBools-41]
+	_ = x[FTListInt8-42]
+	_ = x[FTListInt16-43]
+	_ = x[FTListInt32-44]
+	_ = x[FTListInt64-45]
+	_ = x[FTListUint8-46]
+	_ = x[FTListUint16-47]
+	_ = x[FTListUint32-48]
+	_ = x[FTListUint64-49]
+	_ = x[FTListFloat32-50]
+	_ = x[FTListFloat64-51]
+	_ = x[FTListBytes-52]
+	_ = x[FTListStrings-53]
+	_ = x[FTListStructs-54]
 }
 
-const _Type_name = "FTUnknownFTBoolFTInt8FTInt16FTInt32FTInt64FTUint8FTUint16FTUint32FTUint64FTFloat32FTFloat64FTStringFTBytesFTStructFTListBoolFTList8FTList16FTList32FTList64FTListBytesFTListStringFTListStruct"
+const (
+	_Type_name_0 = "FTUnknownFTBoolFTInt8FTInt16FTInt32FTInt64FTUint8FTUint16FTUint32FTUint64FTFloat32FTFloat64FTStringFTBytesFTStruct"
+	_Type_name_1 = "FTListBoolsFTListInt8FTListInt16FTListInt32FTListInt64FTListUint8FTListUint16FTListUint32FTListUint64FTListFloat32FTListFloat64FTListBytesFTListStringsFTListStructs"
+)
 
-var _Type_index = [...]uint8{0, 9, 15, 21, 28, 35, 42, 49, 57, 65, 73, 82, 91, 99, 106, 114, 124, 131, 139, 147, 155, 166, 178, 190}
+var (
+	_Type_index_0 = [...]uint8{0, 9, 15, 21, 28, 35, 42, 49, 57, 65, 73, 82, 91, 99, 106, 114}
+	_Type_index_1 = [...]uint8{0, 11, 21, 32, 43, 54, 65, 77, 89, 101, 114, 127, 138, 151, 164}
+)
 
 func (i Type) String() string {
-	if i >= Type(len(_Type_index)-1) {
+	switch {
+	case i <= 14:
+		return _Type_name_0[_Type_index_0[i]:_Type_index_0[i+1]]
+	case 41 <= i && i <= 54:
+		i -= 41
+		return _Type_name_1[_Type_index_1[i]:_Type_index_1[i+1]]
+	default:
 		return "Type(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _Type_name[_Type_index[i]:_Type_index[i+1]]
 }

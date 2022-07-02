@@ -1,0 +1,272 @@
+// Package list contains types that implement lists of scalar values that can be stored
+// in Claw Struct fields.
+package list
+
+import (
+	"context"
+
+	"github.com/bearlytools/claw/internal/conversions"
+	"github.com/bearlytools/claw/languages/go/structs"
+	"golang.org/x/exp/constraints"
+)
+
+// Number represents all int, uint and float types.
+type Number interface {
+	constraints.Integer | constraints.Float
+}
+
+// Bools is a wrapper around a list of boolean values.
+type Bools struct {
+	b *structs.Bool
+}
+
+// NewBools creates a new Bool that will be stored in a Struct field with number fieldNum.
+func NewBools() Bools {
+	return Bools{b: structs.NewBool(0)}
+}
+
+// Internal use only.
+func XXXFromBools(b *structs.Bool) Bools {
+	return Bools{b: b}
+}
+
+// Internal use only.
+func (b Bools) XXXBools() *structs.Bool {
+	return b.b
+}
+
+// Len returns the number of items in this list of bools.
+func (b Bools) Len() int {
+	return b.b.Len()
+}
+
+// Get gets a value in the list[pos].
+func (b Bools) Get(index int) bool {
+	return b.b.Get(index)
+}
+
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (b Bools) Range(ctx context.Context, from, to int) chan bool {
+	return b.b.Range(ctx, from, to)
+}
+
+// Set a boolean in position "pos" to "val".
+func (b Bools) Set(index int, val bool) {
+	b.b.Set(index, val)
+}
+
+// Append appends values to the list of bools.
+func (b Bools) Append(i ...bool) {
+	b.b.Append(i...)
+}
+
+// Slice converts this into a standard []bool. The values aren't linked, so changing
+// []bool or calling b.Set(...) will have no affect on the other. If there are no
+// entries, this returns a nil slice.
+func (b *Bools) Slice() []bool {
+	return b.b.Slice()
+}
+
+// Numbers represents a list of numbers
+type Numbers[N Number] struct {
+	n *structs.Number[N]
+}
+
+// NewNumbers creates a new Numbers.
+func NewNumbers[N Number]() Numbers[N] {
+	return Numbers[N]{n: structs.NewNumber[N]()}
+}
+
+// Internal use only.
+func XXXFromNumbers[N Number](n *structs.Number[N]) Numbers[N] {
+	return Numbers[N]{n: n}
+}
+
+// Internal use only.
+func (n Numbers[N]) XXXNumbers() *structs.Number[N] {
+	return n.n
+}
+
+// Len returns the number of items in this list.
+func (n Numbers[N]) Len() int {
+	return n.n.Len()
+}
+
+// Get gets a number stored at the index.
+func (n Numbers[N]) Get(index int) N {
+	return n.n.Get(index)
+}
+
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (n Numbers[N]) Range(ctx context.Context, from, to int) chan N {
+	return n.n.Range(ctx, from, to)
+}
+
+// Set a number in position "index" to "value".
+func (n Numbers[N]) Set(index int, value N) {
+	n.n.Set(index, value)
+}
+
+// Append appends values to the list of numbers.
+func (n Numbers[N]) Append(i ...N) {
+	n.n.Append(i...)
+}
+
+// Slice converts this into a standard []I, where I is a number value. The values aren't linked, so changing
+// []I or calling n.Set(...) will have no affect on the other. If there are no
+// entries, this returns a nil slice.
+func (n Numbers[N]) Slice() []N {
+	return n.n.Slice()
+}
+
+// Bytes represents a list of bytes.
+type Bytes struct {
+	b *structs.Bytes
+}
+
+// NewBytes returns a new Bytes.
+func NewBytes() Bytes {
+	return Bytes{b: structs.NewBytes()}
+}
+
+// Internal use only.
+func XXXFromBytes(b *structs.Bytes) Bytes {
+	return Bytes{b: b}
+}
+
+// Internal use only.
+func (b Bytes) XXXBytes() *structs.Bytes {
+	return b.b
+}
+
+// Reset resets all the internal fields to their zero value.
+func (b *Bytes) Reset() {
+	b.b.Reset()
+}
+
+// Len returns the number of items in the list.
+func (b *Bytes) Len() int {
+	return b.b.Len()
+}
+
+// Get gets a []byte stored at the index.
+func (b *Bytes) Get(index int) []byte {
+	return b.b.Get(index)
+}
+
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
+func (b *Bytes) Range(ctx context.Context, from, to int) chan []byte {
+	return b.b.Range(ctx, from, to)
+}
+
+// Set a number in position "index" to "value".
+func (b *Bytes) Set(index int, value []byte) error {
+	return b.b.Set(index, value)
+}
+
+// Append appends values to the list of []byte.
+func (b *Bytes) Append(values ...[]byte) error {
+	return b.b.Append()
+}
+
+// Slice converts this into a standard [][]byte. The values aren't linked, so changing
+// []bool or calling b.Set(...) will have no affect on the other. If there are no
+// entries, this returns a nil slice.
+func (b *Bytes) Slice() [][]byte {
+	return b.b.Slice()
+}
+
+// String represents a list of strings.
+type Strings struct {
+	b *structs.Bytes
+}
+
+// NewString creates a new Strings.
+func NewString() Strings {
+	return Strings{b: structs.NewBytes()}
+}
+
+// Internal use only.
+func XXXFromStrings(b *structs.Bytes) Strings {
+	return Strings{b: b}
+}
+
+// Internal use only.
+func (s Strings) XXXBytes() *structs.Bytes {
+	return s.b
+}
+
+// Reset resets all the internal fields to their zero value.
+func (s Strings) Reset() {
+	s.b.Reset()
+}
+
+// Len returns the number of items in the list.
+func (s Strings) Len() int {
+	return s.b.Len()
+}
+
+// Get gets a string stored at the index.
+func (s Strings) Get(index int) string {
+	b := s.b.Get(index)
+	if b == nil {
+		return ""
+	}
+	return conversions.ByteSlice2String(b)
+}
+
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
+func (s Strings) Range(ctx context.Context, from, to int) chan string {
+	ch := make(chan string, 1)
+
+	go func() {
+		defer close(ch)
+		for b := range s.b.Range(ctx, from, to) {
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- conversions.ByteSlice2String(b):
+			}
+		}
+	}()
+	return ch
+}
+
+// Set a number in position "index" to "value".
+func (s Strings) Set(index int, value string) error {
+	return s.b.Set(index, conversions.UnsafeGetBytes(value))
+}
+
+// Append appends values to the list of []byte.
+func (s Strings) Append(values ...string) error {
+	x := make([][]byte, len(values))
+	for i, v := range values {
+		x[i] = conversions.UnsafeGetBytes(v)
+	}
+	return s.b.Append(x...)
+}
+
+// Slice converts this into a standard []string. The values aren't linked, so changing
+// []string or calling b.Set(...) will have no affect on the other. If there are no
+// entries, this returns a nil slice.
+func (s Strings) Slice() []string {
+	length := s.b.Len()
+	if length == 0 {
+		return nil
+	}
+	x := make([]string, length)
+	index := 0
+	for v := range s.Range(context.Background(), 0, length) {
+		x[index] = v
+		index++
+	}
+	return x
+}

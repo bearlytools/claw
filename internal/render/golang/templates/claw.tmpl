@@ -1,0 +1,20 @@
+// Package {{ .Package }} 
+package {{ .Package }}
+
+import (
+    "github.com/bearlytools/claw/languages/go/mapping"
+    "github.com/bearlytools/claw/languages/go/structs"
+    "github.com/bearlytools/claw/languages/go/types/list"
+    "github.com/bearlytools/claw/internal/conversions"
+    "github.com/bearlytools/claw/internal/field"
+)
+
+// Forces "list" to be imported, even if nothing is using it.
+var _ = list.Bools{}
+
+// SyntaxVersion is the major version of the Claw language that is being rendered.
+const SyntaxVersion = {{ .Version }}
+
+{{ template "mappings.tmpl" . }}
+{{ template "enums.tmpl" . }}
+{{ template "structs.tmpl" . }}

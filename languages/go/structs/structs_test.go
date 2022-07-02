@@ -9,21 +9,21 @@ import (
 	"testing"
 
 	"github.com/bearlytools/claw/internal/field"
-	"github.com/bearlytools/claw/internal/mapping"
+	"github.com/bearlytools/claw/languages/go/mapping"
 	"golang.org/x/exp/constraints"
 )
 
 func TestGenericHeader(t *testing.T) {
 	h := NewGenericHeader()
-	h.SetFirst16(1)
-	h.SetNext8(2)
+	h.SetFieldNum(1)
+	h.SetFieldType(field.FTListUint16)
 	h.SetFinal40(3)
 
-	if h.First16() != 1 {
-		t.Fatalf("TestGenericHeader(First16()): got %d, want %d", h.First16(), 1)
+	if h.FieldNum() != 1 {
+		t.Fatalf("TestGenericHeader(FieldNum()): got %d, want %d", h.FieldNum(), 1)
 	}
-	if h.Next8() != 2 {
-		t.Fatalf("TestGenericHeader(Next8()): got %d, want %d", h.Next8(), 2)
+	if h.FieldType() != field.FTListUint16 {
+		t.Fatalf("TestGenericHeader(FieldType()): got %d, want %d", h.FieldType(), field.FTListUint16)
 	}
 	if h.Final40() != 3 {
 		t.Fatalf("TestGenericHeader(Final40()): got %d, want %d", h.Final40(), 3)
@@ -35,19 +35,19 @@ func TestGenericHeader(t *testing.T) {
 		t.Fatalf("TestGenericHeader(Final40()): got %d, want %d", h.Final40(), 240)
 	}
 
-	h.SetNext8(8)
-	if h.Next8() != 8 {
-		t.Fatalf("TestGenericHeader(First16()): got %d, want %d", h.First16(), 1)
+	h.SetFieldType(8)
+	if h.FieldType() != 8 {
+		t.Fatalf("TestGenericHeader(First16()): got %d, want %d", h.FieldNum(), 1)
 	}
 
-	h.SetFirst16(16)
-	if h.First16() != 16 {
-		t.Fatalf("TestGenericHeader(Next8()): got %d, want %d", h.Next8(), 2)
+	h.SetFieldNum(16)
+	if h.FieldNum() != 16 {
+		t.Fatalf("TestGenericHeader(Next8()): got %d, want %d", h.FieldType(), 2)
 	}
 
 	// Make sure changing the Next8 and First16 did not any values.
-	if h.Next8() != 8 {
-		t.Fatalf("TestGenericHeader(First16()): got %d, want %d", h.First16(), 1)
+	if h.FieldType() != 8 {
+		t.Fatalf("TestGenericHeader(First16()): got %d, want %d", h.FieldNum(), 1)
 	}
 	if h.Final40() != 240 {
 		t.Fatalf("TestGenericHeader(Final40()): got %d, want %d", h.Final40(), 240)
@@ -71,13 +71,13 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		&mapping.FieldDesc{Name: "Uint16", Type: field.FTUint16},
 		&mapping.FieldDesc{Name: "Uint32", Type: field.FTUint32},
 		&mapping.FieldDesc{Name: "Uint64", Type: field.FTUint64},
-		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},                           // 10
-		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},                           // 11
-		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},                               // 12
-		&mapping.FieldDesc{Name: "Msg1", Type: field.FTStruct, Mapping: msg1Mapping},         // 13
-		&mapping.FieldDesc{Name: "ListMsg1", Type: field.FTListStruct, Mapping: msg1Mapping}, // 14
-		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTList8, ListType: field.FTUint8}, // 15
-		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                       // 16
+		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},                            // 10
+		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},                            // 11
+		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},                                // 12
+		&mapping.FieldDesc{Name: "Msg1", Type: field.FTStruct, Mapping: msg1Mapping},          // 13
+		&mapping.FieldDesc{Name: "ListMsg1", Type: field.FTListStructs, Mapping: msg1Mapping}, // 14
+		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTListUint8},                       // 15
+		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                        // 16
 	}
 	// Number      |   Size
 	// 8               8 bytes
@@ -370,7 +370,10 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): want empty bytes field: %v, got: %v", strData, string(*getBytes))
 	}
 
+	log.Println("before total: ", totalWithScalars)
+	log.Println("we are adding: ", 8+SizeWithPadding(len(strData)))
 	totalWithBytes := totalWithScalars + 8 + int64(SizeWithPadding(len(strData)))
+	log.Println("totalWithBytes: ", totalWithBytes)
 	if *root.structTotal != totalWithBytes {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.structTotal, totalWithBytes)
 	}
@@ -644,7 +647,7 @@ func compareStruct(a, b *Struct) error {
 			if err := compareStruct(v0, v1); err != nil {
 				return fmt.Errorf("%d.%w", i, err)
 			}
-		case field.FTListBool:
+		case field.FTListBools:
 			v0 := MustGetListBool(a, uint16(fieldNum))
 			v1 := MustGetListBool(b, uint16(fieldNum))
 			for x := 0; x < v0.Len(); x++ {
@@ -652,105 +655,85 @@ func compareStruct(a, b *Struct) error {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
-		case field.FTList8:
-			switch a.mapping[i].ListType {
-			case field.FTUint8:
-				v0 := MustGetListNumber[uint8](a, uint16(fieldNum))
-				v1 := MustGetListNumber[uint8](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
+		case field.FTListInt8:
+			v0 := MustGetListNumber[int8](a, uint16(fieldNum))
+			v1 := MustGetListNumber[int8](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
-			case field.FTInt8:
-				v0 := MustGetListNumber[int8](a, uint16(fieldNum))
-				v1 := MustGetListNumber[int8](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
-				}
-			default:
-				return fmt.Errorf("had an invalid List8 type: %v", a.mapping[i].ListType)
 			}
-		case field.FTList16:
-			switch a.mapping[i].ListType {
-			case field.FTUint16:
-				v0 := MustGetListNumber[uint16](a, uint16(fieldNum))
-				v1 := MustGetListNumber[uint16](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
+		case field.FTListUint8:
+			v0 := MustGetListNumber[uint8](a, uint16(fieldNum))
+			v1 := MustGetListNumber[uint8](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
-			case field.FTInt16:
-				v0 := MustGetListNumber[int16](a, uint16(fieldNum))
-				v1 := MustGetListNumber[int16](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
-				}
-			default:
-				return fmt.Errorf("had an invalid List16 type: %v", a.mapping[i].ListType)
 			}
-		case field.FTList32:
-			switch a.mapping[i].ListType {
-			case field.FTUint32:
-				v0 := MustGetListNumber[uint32](a, uint16(fieldNum))
-				v1 := MustGetListNumber[uint32](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
+		case field.FTListInt16:
+			v0 := MustGetListNumber[int16](a, uint16(fieldNum))
+			v1 := MustGetListNumber[int16](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
-			case field.FTInt32:
-				v0 := MustGetListNumber[int32](a, uint16(fieldNum))
-				v1 := MustGetListNumber[int32](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
-				}
-			case field.FTFloat32:
-				v0 := MustGetListNumber[float32](a, uint16(fieldNum))
-				v1 := MustGetListNumber[float32](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
-				}
-			default:
-				return fmt.Errorf("had an invalid List32 type: %v", a.mapping[i].ListType)
 			}
-		case field.FTList64:
-			switch a.mapping[i].ListType {
-			case field.FTUint64:
-				v0 := MustGetListNumber[uint64](a, uint16(fieldNum))
-				v1 := MustGetListNumber[uint64](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
+		case field.FTListUint16:
+			v0 := MustGetListNumber[uint16](a, uint16(fieldNum))
+			v1 := MustGetListNumber[uint16](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
-			case field.FTInt64:
-				v0 := MustGetListNumber[int64](a, uint16(fieldNum))
-				v1 := MustGetListNumber[int64](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
+			}
+		case field.FTListInt32:
+			v0 := MustGetListNumber[int32](a, uint16(fieldNum))
+			v1 := MustGetListNumber[int32](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
-			case field.FTFloat64:
-				v0 := MustGetListNumber[float64](a, uint16(fieldNum))
-				v1 := MustGetListNumber[float64](b, uint16(fieldNum))
-				for x := 0; x < v0.Len(); x++ {
-					if v0.Get(x) != v1.Get(x) {
-						return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
-					}
+			}
+		case field.FTListUint32:
+			v0 := MustGetListNumber[uint32](a, uint16(fieldNum))
+			v1 := MustGetListNumber[uint32](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
-			default:
-				return fmt.Errorf("had an invalid List64 type: %v", a.mapping[i].ListType)
+			}
+		case field.FTListFloat32:
+			v0 := MustGetListNumber[float32](a, uint16(fieldNum))
+			v1 := MustGetListNumber[float32](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
+				}
+			}
+		case field.FTListInt64:
+			v0 := MustGetListNumber[int64](a, uint16(fieldNum))
+			v1 := MustGetListNumber[int64](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
+				}
+			}
+		case field.FTListUint64:
+			v0 := MustGetListNumber[uint64](a, uint16(fieldNum))
+			v1 := MustGetListNumber[uint64](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
+				}
+			}
+		case field.FTListFloat64:
+			v0 := MustGetListNumber[float64](a, uint16(fieldNum))
+			v1 := MustGetListNumber[float64](b, uint16(fieldNum))
+			for x := 0; x < v0.Len(); x++ {
+				if v0.Get(x) != v1.Get(x) {
+					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
+				}
 			}
 		case field.FTListBytes:
 			v0 := MustGetListBytes(a, uint16(fieldNum))
@@ -762,7 +745,7 @@ func compareStruct(a, b *Struct) error {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, b0, b1)
 				}
 			}
-		case field.FTListStruct:
+		case field.FTListStructs:
 			v0 := MustGetListStruct(a, uint16(fieldNum))
 			v1 := MustGetListStruct(b, uint16(fieldNum))
 			for x := 0; x < len(*v0); x++ {
@@ -782,6 +765,7 @@ func compareStruct(a, b *Struct) error {
 func marshalCheck[I constraints.Integer](msg *Struct, wantWritten I) error {
 	buff := new(bytes.Buffer)
 	written, err := msg.Marshal(buff)
+	log.Println("marshalCheck says we wrote: ", written)
 	if err != nil {
 		return err
 	}
@@ -808,11 +792,7 @@ func TestGetBool(t *testing.T) {
 		},
 	}
 
-	s := &Struct{
-		mapping:     m,
-		fields:      make([]structField, len(m)),
-		structTotal: new(int64),
-	}
+	s := New(0, m)
 
 	if err := SetBool(s, 3, true); err != nil {
 		panic(err)
@@ -901,11 +881,7 @@ func TestSetNumber(t *testing.T) {
 		},
 	}
 
-	s := &Struct{
-		mapping:     m,
-		fields:      make([]structField, len(m)),
-		structTotal: new(int64),
-	}
+	s := New(0, m)
 
 	if err := SetNumber[float32](s, 1, float32(8.7)); err != nil {
 		panic(err)
@@ -951,11 +927,7 @@ func TestGetNumber(t *testing.T) {
 		},
 	}
 
-	s := &Struct{
-		mapping:     m,
-		fields:      make([]structField, len(m)),
-		structTotal: new(int64),
-	}
+	s := New(0, m)
 
 	if err := SetNumber[int8](s, 3, 10); err != nil {
 		panic(err)

@@ -2,6 +2,7 @@ package structs
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"math"
 	"reflect"
@@ -11,7 +12,7 @@ import (
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/internal/field"
-	"github.com/bearlytools/claw/internal/mapping"
+	"github.com/bearlytools/claw/languages/go/mapping"
 )
 
 func TestDecodeBool(t *testing.T) {
@@ -182,11 +183,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 16 {
 				t.Errorf("TestDecodeNum(uint8): structTotal: got %d, want %d", *s.structTotal, 16)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTUint8) {
-				t.Errorf("TestDecodeNum(uint8): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTUint8 {
+				t.Errorf("TestDecodeNum(uint8): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(uint8): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(uint8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTUint16:
 			got, err := GetNumber[uint16](s, 1)
@@ -199,11 +200,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 16 {
 				t.Errorf("TestDecodeNum(uint16): structTotal: got %d, want %d", *s.structTotal, 16)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTUint16) {
-				t.Errorf("TestDecodeNum(uint16): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTUint16 {
+				t.Errorf("TestDecodeNum(uint16): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(uint16): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(uint16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTUint32:
 			got, err := GetNumber[uint32](s, 1)
@@ -216,11 +217,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 16 {
 				t.Errorf("TestDecodeNum(uint32): structTotal: got %d, want %d", *s.structTotal, 16)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTUint32) {
-				t.Errorf("TestDecodeNum(uint32): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTUint32 {
+				t.Errorf("TestDecodeNum(uint32): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(uint32): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(uint32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTUint64:
 			got, err := GetNumber[uint64](s, 1)
@@ -233,11 +234,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 24 {
 				t.Errorf("TestDecodeNum(uint64): structTotal: got %d, want %d", *s.structTotal, 24)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTUint64) {
-				t.Errorf("TestDecodeNum(uint64): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTUint64 {
+				t.Errorf("TestDecodeNum(uint64): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(uint64): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(uint64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTInt8:
 			got, err := GetNumber[int8](s, 1)
@@ -250,11 +251,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 16 {
 				t.Errorf("TestDecodeNum(int8): structTotal: got %d, want %d", *s.structTotal, 16)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTInt8) {
-				t.Errorf("TestDecodeNum(int8): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTInt8 {
+				t.Errorf("TestDecodeNum(int8): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(int8): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(int8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTInt16:
 			got, err := GetNumber[int16](s, 1)
@@ -267,11 +268,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 16 {
 				t.Errorf("TestDecodeNum(int16): structTotal: got %d, want %d", *s.structTotal, 16)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTInt16) {
-				t.Errorf("TestDecodeNum(int16): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTInt16 {
+				t.Errorf("TestDecodeNum(int16): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(int16): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(int16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTInt32:
 			got, err := GetNumber[int32](s, 1)
@@ -284,11 +285,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 16 {
 				t.Errorf("TestDecodeNum(int32): structTotal: got %d, want %d", *s.structTotal, 16)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTInt32) {
-				t.Errorf("TestDecodeNum(int32): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTInt32 {
+				t.Errorf("TestDecodeNum(int32): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(int32): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(int32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTInt64:
 			got, err := GetNumber[int64](s, 1)
@@ -301,11 +302,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 24 {
 				t.Errorf("TestDecodeNum(int64): structTotal: got %d, want %d", *s.structTotal, 24)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTInt64) {
-				t.Errorf("TestDecodeNum(int64): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTInt64 {
+				t.Errorf("TestDecodeNum(int64): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(int64): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(int64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTFloat32:
 			got, err := GetNumber[float32](s, 1)
@@ -318,11 +319,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 16 {
 				t.Errorf("TestDecodeNum(float32): structTotal: got %d, want %d", *s.structTotal, 16)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTFloat32) {
-				t.Errorf("TestDecodeNum(float32): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTFloat32 {
+				t.Errorf("TestDecodeNum(float32): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(float32): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(float32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		case field.FTFloat64:
 			got, err := GetNumber[float64](s, 1)
@@ -335,11 +336,11 @@ func TestDecodeNum(t *testing.T) {
 			if *s.structTotal != 24 {
 				t.Errorf("TestDecodeNum(float64): structTotal: got %d, want %d", *s.structTotal, 24)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTFloat64) {
-				t.Errorf("TestDecodeNum(float64): fieldNum: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTFloat64 {
+				t.Errorf("TestDecodeNum(float64): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeNum(float64): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeNum(float64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		}
 		if len(encoded[i]) != 0 {
@@ -420,8 +421,8 @@ func TestDecodeBytes(t *testing.T) {
 	}
 
 	sizeZeroHeader := NewGenericHeader()
-	sizeZeroHeader.SetFirst16(1)
-	sizeZeroHeader.SetNext8(uint8(field.FTBytes))
+	sizeZeroHeader.SetFieldNum(1)
+	sizeZeroHeader.SetFieldType(field.FTBytes)
 
 	tests := []struct {
 		desc     string
@@ -487,19 +488,19 @@ func TestDecodeBytes(t *testing.T) {
 			t.Errorf("TestDecodeBytes(%s): structTotal: got %d, want %d", test.desc, *s.structTotal, totalWant)
 			continue
 		}
-		if s.fields[0].header.Next8() != uint8(field.FTBytes) {
-			t.Errorf("TestDecodeBytes(%s): fieldNum: got %v", test.desc, field.Type(s.fields[0].header.Next8()))
+		if s.fields[0].header.FieldType() != field.FTBytes {
+			t.Errorf("TestDecodeBytes(%s): fieldNum: got %v", test.desc, field.Type(s.fields[0].header.FieldType()))
 		}
-		if s.fields[0].header.First16() != 1 {
-			t.Errorf("TestDecodeBytes(%s): fieldNum: got %d, want %d", test.desc, s.fields[0].header.First16(), 1)
+		if s.fields[0].header.FieldNum() != 1 {
+			t.Errorf("TestDecodeBytes(%s): fieldNum: got %d, want %d", test.desc, s.fields[0].header.FieldNum(), 1)
 		}
 	}
 }
 
 func boolListInBytes(howMany uint64) []byte {
 	h := NewGenericHeader()
-	h.SetFirst16(1)
-	h.SetNext8(uint8(field.FTListBool))
+	h.SetFieldNum(1)
+	h.SetFieldType(field.FTListBools)
 	h.SetFinal40(howMany)
 
 	wordsNeeded := (howMany / 64) + 1
@@ -524,7 +525,7 @@ func TestDecodeListBool(t *testing.T) {
 		0: &mapping.FieldDesc{
 			Name:   "listBool",
 			GoName: "ListBool",
-			Type:   field.FTListBool,
+			Type:   field.FTListBools,
 		},
 	}
 
@@ -543,8 +544,8 @@ func TestDecodeListBool(t *testing.T) {
 			desc: "Error: header has wrong type",
 			listData: func() []byte {
 				h := NewGenericHeader()
-				h.SetFirst16(1)
-				h.SetNext8(uint8(field.FTBool))
+				h.SetFieldNum(1)
+				h.SetFieldType(field.FTBool)
 				h.SetFinal40(1)
 				return h
 			}(),
@@ -634,8 +635,8 @@ func TestDecodeListBytes(t *testing.T) {
 			desc: "Error: header has wrong type",
 			listData: func() []byte {
 				h := NewGenericHeader()
-				h.SetFirst16(1)
-				h.SetNext8(uint8(field.FTBytes))
+				h.SetFieldNum(1)
+				h.SetFieldType(field.FTBytes)
 				h.SetFinal40(1)
 				return h
 			}(),
@@ -652,8 +653,8 @@ func TestDecodeListBytes(t *testing.T) {
 			listData: func() []byte {
 				// Put in header.
 				h := NewGenericHeader()
-				h.SetFirst16(1)
-				h.SetNext8(uint8(field.FTListBytes))
+				h.SetFieldNum(1)
+				h.SetFieldType(field.FTListBytes)
 				h.SetFinal40(2)
 				// Put in the entry header + data
 				entry0Header := make([]byte, 4)
@@ -720,105 +721,141 @@ func TestDecodeListNum(t *testing.T) {
 	want := make([]any, len(mappings))
 	sizeInBytes := make([]int8, len(mappings))
 
-	for i, ft := range field.NumberTypes {
+	for i, ft := range field.NumericListTypes {
 		switch ft {
-		case field.FTUint8:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTUint8}}
+		case field.FTListUint8:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []uint8{math.MaxUint8, 0, 1, 2, 3, 4, 5, 6, 9, 10} // store 10 values
 			want[i] = vals
 
 			n := NewNumber[uint8]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			if len(encoded[i]) != 24 {
+				panic(fmt.Sprintf("encoded %d bytes, but expected %d", len(encoded[i]), 24))
+			}
 
 			sizeInBytes[i] = 1
-		case field.FTUint16:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTUint16}}
+		case field.FTListUint16:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []uint16{math.MaxUint16, 0, 1, 2, 3} // store 5 values
 			want[i] = vals
 
 			n := NewNumber[uint16]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 
 			sizeInBytes[i] = 2
-		case field.FTUint32:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTUint32}}
+		case field.FTListUint32:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []uint32{math.MaxUint32, 0, 1} // store 3 values
 			want[i] = vals
 
 			n := NewNumber[uint32]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 
 			sizeInBytes[i] = 4
-		case field.FTUint64:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTUint64}}
+		case field.FTListUint64:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []uint64{math.MaxUint64, 0} // store 2 values
 			want[i] = vals
 
 			n := NewNumber[uint64]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 			sizeInBytes[i] = 8
-		case field.FTInt8:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTInt8}}
+		case field.FTListInt8:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []int8{math.MaxInt8, math.MinInt8, 1, 2, 3, 4, 5, 6, 9, 10} // store 10 values
 			want[i] = vals
 
 			n := NewNumber[int8]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			if len(encoded[i]) != 24 {
+				panic(fmt.Sprintf("encoded %d bytes, but expected %d", len(encoded[i]), 24))
+			}
 
 			sizeInBytes[i] = 1
-		case field.FTInt16:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTInt16}}
+		case field.FTListInt16:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []int16{math.MaxInt8, math.MinInt16, 1, 2, 3} // store 5 values
 			want[i] = vals
 
 			n := NewNumber[int16]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 
 			sizeInBytes[i] = 2
-		case field.FTInt32:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTInt32}}
+		case field.FTListInt32:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []int32{math.MaxInt32, math.MinInt32, 1} // store 3 values
 			want[i] = vals
 
 			n := NewNumber[int32]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 
 			sizeInBytes[i] = 4
-		case field.FTInt64:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTInt64}}
+		case field.FTListInt64:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []int64{math.MaxInt64, math.MinInt64} // store 2 values
 			want[i] = vals
 
 			n := NewNumber[int64]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 
 			sizeInBytes[i] = 8
-		case field.FTFloat32:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTFloat32}}
+		case field.FTListFloat32:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []float32{math.MaxFloat32, math.SmallestNonzeroFloat32, 1.1} // store 3 values
 			want[i] = vals
 
 			n := NewNumber[float32]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 
 			sizeInBytes[i] = 4
-		case field.FTFloat64:
-			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft, ListType: field.FTFloat64}}
+		case field.FTListFloat64:
+			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
 			vals := []float64{math.MaxFloat32, math.SmallestNonzeroFloat64} // store 2 values
 			want[i] = vals
 
 			n := NewNumber[float64]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
+			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
+			// to a Struct with SetListNumbers(). So we fake it.
+			GenericHeader(encoded[i][:8]).SetFieldNum(1)
 
 			sizeInBytes[i] = 8
 		}
@@ -832,179 +869,219 @@ func TestDecodeListNum(t *testing.T) {
 			continue
 		}
 		switch mapping[0].Type {
-		case field.FTList8:
-			switch mapping[0].ListType {
-			case field.FTUint8:
-				wantList := want[i].([]uint8)
-				gotList, err := GetListNumber[uint8](s, 1)
-				if err != nil {
-					panic(err)
+		case field.FTListInt8:
+			wantList := want[i].([]int8)
+			gotList, err := GetListNumber[int8](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]int8): item[%d]: got %d, want %d", x, gotList.Get(x), want)
 				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]uint8): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
-				}
-			case field.FTInt8:
-				wantList := want[i].([]int8)
-				gotList, err := GetListNumber[int8](s, 1)
-				if err != nil {
-					panic(err)
-				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]int8): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
-				}
-			default:
-				panic("invalid type")
 			}
 
-			wantSize := int64(8 + 8 + wordsRequiredToStore(len(want), int(sizeInBytes[i])))
+			// StructHeader(8) + ListHeader(8) + Data(16 bytes to hold 10 values)
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
 			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum(list8): structTotal: got %d, want %d", *s.structTotal, wantSize)
+				t.Errorf("TestDecodeListNum([]int8): structTotal: got %d, want %d", *s.structTotal, wantSize)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTList8) {
-				t.Errorf("TestDecodeListNum(list8): field type: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTListInt8 {
+				t.Errorf("TestDecodeListNum([]int8]): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeListNum(list8): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]int8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
-		case field.FTList16:
-			switch mapping[0].ListType {
-			case field.FTUint16:
-				wantList := want[i].([]uint16)
-				gotList, err := GetListNumber[uint16](s, 1)
-				if err != nil {
-					panic(err)
+		case field.FTListUint8:
+			wantList := want[i].([]uint8)
+			gotList, err := GetListNumber[uint8](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]uint8): item[%d]: got %d, want %d", x, gotList.Get(x), want)
 				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]uint16): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
-				}
-			case field.FTInt16:
-				wantList := want[i].([]int16)
-				gotList, err := GetListNumber[int16](s, 1)
-				if err != nil {
-					panic(err)
-				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]int16): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
-				}
-			default:
-				panic("invalid type")
 			}
 
-			wantSize := int64(8 + 8 + wordsRequiredToStore(len(want), int(sizeInBytes[i])))
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
 			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum(list16): structTotal: got %d, want %d", *s.structTotal, wantSize)
+				t.Errorf("TestDecodeListNum([]uint8): structTotal: got %d, want %d", *s.structTotal, wantSize)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTList8) {
-				t.Errorf("TestDecodeListNum(list16): field type: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTListUint8 {
+				t.Errorf("TestDecodeListNum([]uint8): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeListNum(list16): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]uint8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
-		case field.FTList32:
-			switch mapping[0].ListType {
-			case field.FTUint32:
-				wantList := want[i].([]uint32)
-				gotList, err := GetListNumber[uint32](s, 1)
-				if err != nil {
-					panic(err)
+		case field.FTListInt16:
+			wantList := want[i].([]int16)
+			gotList, err := GetListNumber[int16](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]int16): item[%d]: got %d, want %d", x, gotList.Get(x), want)
 				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]uint32): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
+			if *s.structTotal != wantSize {
+				t.Errorf("TestDecodeListNum([]int16): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			}
+			if s.fields[0].header.FieldType() != field.FTListInt16 {
+				t.Errorf("TestDecodeListNum([]int16): field type: got %v", field.Type(s.fields[0].header.FieldType()))
+			}
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]int16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			}
+		case field.FTListUint16:
+			wantList := want[i].([]uint16)
+			gotList, err := GetListNumber[uint16](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]uint16): item[%d]: got %d, want %d", x, gotList.Get(x), want)
 				}
-			case field.FTInt32:
-				wantList := want[i].([]int32)
-				gotList, err := GetListNumber[int32](s, 1)
-				if err != nil {
-					panic(err)
-				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]int32): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
-				}
-			case field.FTFloat32:
-				wantList := want[i].([]float32)
-				gotList, err := GetListNumber[float32](s, 1)
-				if err != nil {
-					panic(err)
-				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]float32): item[%d]: got %v, want %v", x, gotList.Get(x), want)
-					}
-				}
-			default:
-				panic("invalid type")
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
+			if *s.structTotal != wantSize {
+				t.Errorf("TestDecodeListNum([]uint16): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			}
+			if s.fields[0].header.FieldType() != field.FTListUint16 {
+				t.Errorf("TestDecodeListNum([]uint16): field type: got %v", field.Type(s.fields[0].header.FieldType()))
+			}
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]uint16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 
-			wantSize := int64(8 + 8 + wordsRequiredToStore(len(want), int(sizeInBytes[i])))
+		case field.FTListInt32:
+			wantList := want[i].([]int32)
+			gotList, err := GetListNumber[int32](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]int32): item[%d]: got %d, want %d", x, gotList.Get(x), want)
+				}
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
 			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum(list32): structTotal: got %d, want %d", *s.structTotal, wantSize)
+				t.Errorf("TestDecodeListNum([]int32): structTotal: got %d, want %d", *s.structTotal, wantSize)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTList8) {
-				t.Errorf("TestDecodeListNum(list32): field type: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTListInt32 {
+				t.Errorf("TestDecodeListNum([]int32): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeListNum(list32): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]int32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
-		case field.FTList64:
-			switch mapping[0].ListType {
-			case field.FTUint64:
-				wantList := want[i].([]uint64)
-				gotList, err := GetListNumber[uint64](s, 1)
-				if err != nil {
-					panic(err)
-				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]uint64): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
-				}
-			case field.FTInt64:
-				wantList := want[i].([]int64)
-				gotList, err := GetListNumber[int64](s, 1)
-				if err != nil {
-					panic(err)
-				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]int64): item[%d]: got %d, want %d", x, gotList.Get(x), want)
-					}
-				}
-			case field.FTFloat64:
-				wantList := want[i].([]float64)
-				gotList, err := GetListNumber[float64](s, 1)
-				if err != nil {
-					panic(err)
-				}
-				for x, want := range wantList {
-					if want != gotList.Get(x) {
-						t.Errorf("TestDecodeListNum([]float64): item[%d]: got %v, want %v", x, gotList.Get(x), want)
-					}
-				}
-			default:
-				panic("invalid type")
+		case field.FTListUint32:
+			wantList := want[i].([]uint32)
+			gotList, err := GetListNumber[uint32](s, 1)
+			if err != nil {
+				panic(err)
 			}
-
-			wantSize := int64(8 + 8 + wordsRequiredToStore(len(want), int(sizeInBytes[i])))
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]uint32): item[%d]: got %d, want %d", x, gotList.Get(x), want)
+				}
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
 			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum(list64): structTotal: got %d, want %d", *s.structTotal, wantSize)
+				t.Errorf("TestDecodeListNum([]uint32): structTotal: got %d, want %d", *s.structTotal, wantSize)
 			}
-			if s.fields[0].header.Next8() != uint8(field.FTList8) {
-				t.Errorf("TestDecodeListNum(list64): field type: got %v", field.Type(s.fields[0].header.Next8()))
+			if s.fields[0].header.FieldType() != field.FTListUint32 {
+				t.Errorf("TestDecodeListNum([]uint32): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.First16() != 1 {
-				t.Errorf("TestDecodeListNum(list64): fieldNum: got %d, want %d", s.fields[0].header.First16(), 1)
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]uint32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			}
+		case field.FTListFloat32:
+			wantList := want[i].([]float32)
+			gotList, err := GetListNumber[float32](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]float32): item[%d]: got %v, want %v", x, gotList.Get(x), want)
+				}
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
+			if *s.structTotal != wantSize {
+				t.Errorf("TestDecodeListNum([]float32): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			}
+			if s.fields[0].header.FieldType() != field.FTListFloat32 {
+				t.Errorf("TestDecodeListNum([]float32): field type: got %v", field.Type(s.fields[0].header.FieldType()))
+			}
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]float32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			}
+		case field.FTListInt64:
+			wantList := want[i].([]int64)
+			gotList, err := GetListNumber[int64](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]int64): item[%d]: got %d, want %d", x, gotList.Get(x), want)
+				}
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
+			if *s.structTotal != wantSize {
+				t.Errorf("TestDecodeListNum([]int64): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			}
+			if s.fields[0].header.FieldType() != field.FTListInt64 {
+				t.Errorf("TestDecodeListNum([]int64): field type: got %v", field.Type(s.fields[0].header.FieldType()))
+			}
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]int64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			}
+		case field.FTListUint64:
+			wantList := want[i].([]uint64)
+			gotList, err := GetListNumber[uint64](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]uint64): item[%d]: got %d, want %d", x, gotList.Get(x), want)
+				}
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
+			if *s.structTotal != wantSize {
+				t.Errorf("TestDecodeListNum([]uint64): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			}
+			if s.fields[0].header.FieldType() != field.FTListUint64 {
+				t.Errorf("TestDecodeListNum([]uint64): field type: got %v", field.Type(s.fields[0].header.FieldType()))
+			}
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]uint64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			}
+		case field.FTListFloat64:
+			wantList := want[i].([]float64)
+			gotList, err := GetListNumber[float64](s, 1)
+			if err != nil {
+				panic(err)
+			}
+			for x, want := range wantList {
+				if want != gotList.Get(x) {
+					t.Errorf("TestDecodeListNum([]float64): item[%d]: got %v, want %v", x, gotList.Get(x), want)
+				}
+			}
+			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
+			if *s.structTotal != wantSize {
+				t.Errorf("TestDecodeListNum([]float64): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			}
+			if s.fields[0].header.FieldType() != field.FTListFloat64 {
+				t.Errorf("TestDecodeListNum([]float64): field type: got %v", field.Type(s.fields[0].header.FieldType()))
+			}
+			if s.fields[0].header.FieldNum() != 1 {
+				t.Errorf("TestDecodeListNum([]float64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
 			}
 		}
 		if len(encoded[i]) != 0 {
@@ -1019,7 +1096,7 @@ func TestDecodeListStruct(t *testing.T) {
 	}
 
 	msg0Mapping := mapping.Map{
-		&mapping.FieldDesc{Name: "ListStructs", Type: field.FTListStruct, Mapping: lmsgMapping},
+		&mapping.FieldDesc{Name: "ListStructs", Type: field.FTListStructs, Mapping: lmsgMapping},
 	}
 
 	msg0Mapping.MustValidate()
@@ -1062,12 +1139,12 @@ func TestDecodeStruct(t *testing.T) {
 		&mapping.FieldDesc{Name: "Uint16", Type: field.FTUint16},
 		&mapping.FieldDesc{Name: "Uint32", Type: field.FTUint32},
 		&mapping.FieldDesc{Name: "Uint64", Type: field.FTUint64},
-		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},                              // 10
-		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},                              // 11
-		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},                                  // 12
-		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTList8, ListType: field.FTUint8},    // 13
-		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                          // 14
-		&mapping.FieldDesc{Name: "ListStructs", Type: field.FTListStruct, Mapping: lmsgMapping}, // 15
+		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},                               // 10
+		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},                               // 11
+		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},                                   // 12
+		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTListUint8},                          // 13
+		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                           // 14
+		&mapping.FieldDesc{Name: "ListStructs", Type: field.FTListStructs, Mapping: lmsgMapping}, // 15
 	}
 	msg0Mapping := mapping.Map{
 		&mapping.FieldDesc{Name: "Struct", Type: field.FTStruct, Mapping: msg1Mapping},

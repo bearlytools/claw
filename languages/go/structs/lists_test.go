@@ -3,9 +3,12 @@ package structs
 import (
 	"context"
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/bearlytools/claw/internal/bits"
+	"github.com/bearlytools/claw/internal/conversions"
+	"github.com/bearlytools/claw/internal/field"
 )
 
 func TestBoolGetSetAppendRange(t *testing.T) {
@@ -176,31 +179,63 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 }
 
 func TestNumberFloat(t *testing.T) {
-	// Sets our header to message type 16, field number 3 and 0 entries.
-	b := []byte{16, 0, 4, 0, 0, 0, 0, 0}
-
-	s := New(0, nil)
-
-	list, err := NewNumberFromBytes[float64](&b, s)
-	if err != nil {
-		panic(err)
+	tests := []struct {
+		desc                 string
+		h                    GenericHeader
+		values, appendValues []float64
+		err                  bool
+	}{
+		{
+			h: func() GenericHeader {
+				h := NewGenericHeader()
+				h.SetFieldNum(3)
+				h.SetFieldType(field.FTFloat64)
+				return h
+			}(),
+			values:       []float64{3.2, 2.8, 5.2, 0},
+			appendValues: []float64{18.2},
+		},
 	}
 
-	values := []float64{3.2, 2.8, 5.2, 0}
-	list.Append(values...)
-
-	i := 0
-	for got := range list.Range(context.Background(), 0, list.Len()) {
-		if got != values[i] {
-			t.Fatalf("TestNumberFloat: index %d, got %v, want %v", i, got, values[i])
+	for _, test := range tests {
+		test.h.SetFinal40(uint64(len(test.values)))
+		for _, v := range test.values {
+			u := math.Float64bits(v)
+			b := conversions.NumToBytes(&u)
+			test.h = append(test.h, b...)
 		}
-		i++
+
+		s := New(0, nil)
+		b := []byte(test.h)
+		list, err := NewNumberFromBytes[float64](&b, s)
+		switch {
+		case err == nil && test.err:
+			t.Errorf("TestNumberFloat(%s): got err == nil, want err != nil", test.desc)
+			continue
+		case err != nil && !test.err:
+			t.Errorf("TestNumberFloat(%s): got err == %s, want err == nil", test.desc, err)
+			continue
+		case err != nil:
+			continue
+		}
+		list.Append(test.appendValues...)
+
+		i := 0
+		want := append(test.values, test.appendValues...)
+		for got := range list.Range(context.Background(), 0, list.Len()) {
+			if got != want[i] {
+				t.Fatalf("TestNumberFloat: index %d, got %v, want %v", i, got, want[i])
+			}
+			i++
+		}
 	}
 }
 
 func TestBytes(t *testing.T) {
 	// Sets our header to message type 20, field number 5 and 1 entry.
-	b := []byte{20, 0, 5, 1, 0, 0, 0, 0}
+	h := NewGenericHeader()
+	h.SetFieldType(field.FTBytes)
+	h.SetFieldNum(5)
 
 	s := New(0, nil)
 
@@ -210,10 +245,15 @@ func TestBytes(t *testing.T) {
 
 	// This sets up the first entry.
 	for i := 0; i < len(values); i++ {
-		b = append(b, []byte{5, 0, 0, 0}...) // 32 bit entry header
-		b = append(b, []byte(values[i])...)
+		h = append(h, []byte{5, 0, 0, 0}...) // 32 bit entry header
+		h = append(h, []byte(values[i])...)
 	} // 17 bytes now - list header(8) + entry header(4) + data(5)
-	b = append(b, 0, 0, 0, 0, 0, 0, 0) // 7 bytes of Padding
+	h = append(h, 0, 0, 0, 0, 0, 0, 0) // 7 bytes of Padding
+	h.SetFinal40(1)                    // number of items
+	b := []byte(h)
+	if len(b) != 24 {
+		t.Fatalf("TestBytes(test initial setup): message to read in was %d bytes, expected %d bytes", len(b), 24)
+	}
 
 	list, err := NewBytesFromBytes(&b, s)
 	if err != nil {
@@ -232,6 +272,12 @@ func TestBytes(t *testing.T) {
 	// Make sure everything is right.
 	if err := testValues(); err != nil {
 		t.Fatalf("TestBytes(test initial setup): %s", err)
+	}
+	if list.dataSize != 9 {
+		t.Fatalf("TestBytes(test initial setup): dataSize was %d, want %d", list.dataSize, 9)
+	}
+	if list.padding != 7 {
+		t.Fatalf("TestBytes(test initial setup): padding was %d, want %d", list.padding, 7)
 	}
 
 	// Append a few values.

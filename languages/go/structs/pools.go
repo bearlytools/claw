@@ -7,6 +7,18 @@ import (
 	autopool "github.com/johnsiilver/golib/development/autopool/blend"
 )
 
+var ()
+
+type BytesPool interface {
+	Get() *[]byte
+	Put(*[]byte)
+}
+
+type StructsPool interface {
+	Get() *Struct
+	Put(*Struct)
+}
+
 var readers = sync.Pool{
 	New: func() any {
 		return &bytes.Reader{}

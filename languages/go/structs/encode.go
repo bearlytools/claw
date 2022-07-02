@@ -19,19 +19,22 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	if uint64(total) != s.header.Final40() {
 		return 0, fmt.Errorf("Struct had internal size(%d), but header size as %d", total, s.header.Final40())
 	}
-	defer log.Println("Marshal set the Struct size to: ", s.header.Final40())
+	defer log.Println("Marshal headers says the size is: ", s.header.Final40())
 	defer log.Println("Marshal also says the total is: ", total)
 	written, err := w.Write(s.header)
 	if err != nil {
 		return written, err
 	}
 
-	for n, v := range s.fields {
+	for i, v := range s.fields {
 		if v.header == nil {
+			log.Printf("field %d was skipped for encode", i+1)
 			continue
 		}
 
-		desc := s.mapping[n]
+		desc := s.mapping[i]
+		log.Printf("field %d was: %s", i+1, desc.Type)
+
 		switch desc.Type {
 		// This handles any basic scalar type.
 		case field.FTBool, field.FTInt8, field.FTInt16, field.FTInt32, field.FTInt64, field.FTUint8,
@@ -52,6 +55,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 		case field.FTString, field.FTBytes:
 			i, err := w.Write(v.header)
+			log.Println("wrote bytes header of: ", i)
 			written += i
 			if err != nil {
 				return written, err
@@ -61,12 +65,14 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 			b := (*[]byte)(v.ptr)
 			i, err = w.Write(*b)
+			log.Println("wrote bytes data of: ", i)
 			written += i
 			if err != nil {
 				return written, err
 			}
 			pad := PaddingNeeded(written)
 			i, err = w.Write(Padding(pad))
+			log.Println("wrote bytes padding of: ", i)
 			written += i
 			if err != nil {
 				return written, err
@@ -75,109 +81,89 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			log.Println("encoding a Struct")
 			value := (*Struct)(v.ptr)
 			log.Printf("the struct ptr: %+#v", value)
-			log.Println("struct's fieldNum: ", value.header.First16())
+			log.Println("struct's fieldNum: ", value.header.FieldNum())
 			i, err := value.Marshal(w)
 			written += i
 			if err != nil {
 				return written, err
 			}
-		case field.FTListBool:
+		case field.FTListBools:
 			b := (*Bool)(v.ptr)
 			i, err := w.Write(b.Encode())
 			written += i
 			if err != nil {
 				return written, err
 			}
-		case field.FTList8:
-			switch desc.ListType {
-			case field.FTInt8:
-				x := (*Number[int8])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			case field.FTUint8:
-				x := (*Number[uint8])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			default:
-				return written, fmt.Errorf("bug: mapping data for a List8 field did not specify the item type (FTUint8, FTInt8)")
+		case field.FTListInt8:
+			x := (*Number[int8])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
 			}
-		case field.FTList16:
-			switch desc.ListType {
-			case field.FTInt16:
-				x := (*Number[int16])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			case field.FTUint16:
-				x := (*Number[uint16])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					written += i
-					return written, err
-				}
-			default:
-				return written, fmt.Errorf("bug: mapping data for a List16 field did not specify the item type (FTUint16, FTInt16)")
+		case field.FTListUint8:
+			x := (*Number[uint8])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
 			}
-		case field.FTList32:
-			switch desc.ListType {
-			case field.FTInt32:
-				x := (*Number[int32])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			case field.FTUint32:
-				x := (*Number[uint32])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			case field.FTFloat32:
-				x := (*Number[float32])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			default:
-				return written, fmt.Errorf("bug: mapping data for a List32 field did not specify the item type (FTUint32, FTInt32, FTFloat32)")
+		case field.FTListInt16:
+			x := (*Number[int16])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
 			}
-		case field.FTList64:
-			switch desc.ListType {
-			case field.FTInt64:
-				x := (*Number[int64])(v.ptr)
-				i, err := w.Write(x.Encode())
+		case field.FTListUint16:
+			x := (*Number[uint16])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
 				written += i
-				if err != nil {
-					return written, err
-				}
-			case field.FTUint64:
-				x := (*Number[uint64])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			case field.FTFloat64:
-				x := (*Number[float64])(v.ptr)
-				i, err := w.Write(x.Encode())
-				written += i
-				if err != nil {
-					return written, err
-				}
-			default:
-				return written, fmt.Errorf("bug: mapping data for a List64 field did not specify the item type (FTUint64, FTInt64, FTFloat64)")
+				return written, err
+			}
+		case field.FTListInt32:
+			x := (*Number[int32])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
+			}
+		case field.FTListUint32:
+			x := (*Number[uint32])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
+			}
+		case field.FTListFloat32:
+			x := (*Number[float32])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
+			}
+		case field.FTListInt64:
+			x := (*Number[int64])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
+			}
+		case field.FTListUint64:
+			x := (*Number[uint64])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
+			}
+		case field.FTListFloat64:
+			x := (*Number[float64])(v.ptr)
+			i, err := w.Write(x.Encode())
+			written += i
+			if err != nil {
+				return written, err
 			}
 		case field.FTListBytes:
 			x := (*Bytes)(v.ptr)
@@ -186,7 +172,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			if err != nil {
 				return written, err
 			}
-		case field.FTListStruct:
+		case field.FTListStructs:
 			x := (*[]*Struct)(v.ptr)
 			n, err := w.Write(v.header)
 			written += n
@@ -194,8 +180,8 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 			for index, item := range *x {
-				item.header.SetFirst16(uint16(index))
-				log.Println("item index: ", item.header.First16())
+				item.header.SetFieldNum(uint16(index))
+				log.Println("item index: ", item.header.FieldNum())
 				n, err := item.Marshal(w)
 				written += n
 				if err != nil {

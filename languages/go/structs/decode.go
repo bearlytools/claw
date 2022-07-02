@@ -24,7 +24,7 @@ func (s *Struct) unmarshal(r io.Reader) (int, error) {
 		return read, err
 	}
 
-	ft := field.Type(h.Next8())
+	ft := field.Type(h.FieldType())
 	if ft != field.FTStruct {
 		return read, fmt.Errorf("expecting Struct, got %v", ft)
 	}
@@ -81,8 +81,8 @@ func (s *Struct) unmarshalFields(buffer *[]byte) error {
 		log.Println("buffer size: ", len(*buffer))
 
 		h := GenericHeader((*buffer)[:8])
-		fieldNum = h.First16()
-		fieldType = field.Type(h.Next8())
+		fieldNum = h.FieldNum()
+		fieldType = field.Type(h.FieldType())
 
 		if fieldNum <= lastNum {
 			log.Println(*buffer)
@@ -132,13 +132,15 @@ func (s *Struct) unmarshalFields(buffer *[]byte) error {
 			err = s.decodeBytes(buffer, fieldNum)
 		case field.FTStruct:
 			err = s.decodeStruct(buffer, fieldNum)
-		case field.FTListBool:
+		case field.FTListBools:
 			err = s.decodeListBool(buffer, fieldNum)
-		case field.FTList8, field.FTList16, field.FTList32, field.FTList64:
+		case field.FTListInt8, field.FTListInt16, field.FTListInt32, field.FTListInt64,
+			field.FTListUint8, field.FTListUint16, field.FTListUint32, field.FTListUint64,
+			field.FTListFloat32, field.FTListFloat64:
 			err = s.decodeListNumber(buffer, fieldNum)
 		case field.FTListBytes:
 			err = s.decodeListBytes(buffer, fieldNum)
-		case field.FTListStruct:
+		case field.FTListStructs:
 			err = s.decodeListStruct(buffer, fieldNum)
 		default:
 			err = fmt.Errorf("got field type %v that we don't support", fieldType)
@@ -260,71 +262,71 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 	m := s.mapping[int(fieldNum-1)]
 	f := s.fields[fieldNum-1]
 	f.header = (*buffer)[:8]
-
+	log.Println("fieldNum: ", f.header.FieldNum())
 	var uptr unsafe.Pointer
-	switch m.ListType {
-	case field.FTInt8:
+	switch m.Type {
+	case field.FTListInt8:
 		ptr, err := NewNumberFromBytes[int8](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTInt16:
+	case field.FTListInt16:
 		ptr, err := NewNumberFromBytes[int16](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTInt32:
+	case field.FTListInt32:
 		ptr, err := NewNumberFromBytes[int32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTInt64:
+	case field.FTListInt64:
 		ptr, err := NewNumberFromBytes[int64](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTUint8:
+	case field.FTListUint8:
 		ptr, err := NewNumberFromBytes[uint8](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTUint16:
+	case field.FTListUint16:
 		ptr, err := NewNumberFromBytes[uint16](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTUint32:
+	case field.FTListUint32:
 		ptr, err := NewNumberFromBytes[uint32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTUint64:
+	case field.FTListUint64:
 		ptr, err := NewNumberFromBytes[uint64](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTFloat32:
+	case field.FTListFloat32:
 		ptr, err := NewNumberFromBytes[float32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
-	case field.FTFloat64:
+	case field.FTListFloat64:
 		ptr, err := NewNumberFromBytes[float64](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	default:
-		panic(fmt.Sprintf("Struct.decodeListNumber() called with field that is mapped to value with type: %v", m.ListType))
+		panic(fmt.Sprintf("Struct.decodeListNumber() called with field that is mapped to value with type: %v", m.Type))
 	}
 	f.ptr = uptr
 	s.fields[fieldNum-1] = f
@@ -334,8 +336,8 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
 	// We need the mapping for the sub Struct.
 	m := s.mapping[fieldNum-1].Mapping
-	if m == nil {
-		return fmt.Errorf("received a fieldNum(%d) with a type that Says it is a Struct, but it is a %v", fieldNum, s.mapping[fieldNum-1].Type)
+	if m == nil { // This means that the contained Struct is the same mapping as the part.
+		m = s.mapping
 	}
 
 	// Structs use a Reader, so let's give it a reader.
@@ -370,9 +372,14 @@ func (s *Struct) decodeListStruct(buffer *[]byte, fieldNum uint16) error {
 	r := readers.Get().(*bytes.Reader)
 	r.Reset(*buffer)
 	totalDataSize := 0 // Size without header
+
+	mapping := s.mapping[fieldNum-1].Mapping
+	if mapping == nil { // Means this Struct is the same as the parent.
+		mapping = s.mapping
+	}
 	for i := 0; i < int(numItems); i++ {
 		log.Println("decoding list struct item: ", i)
-		item := New(0, s.mapping[fieldNum-1].Mapping)
+		item := New(0, mapping)
 		item.inList = true
 		log.Println("\tlength of buffer before item unmarshal: ", len(*buffer)-totalDataSize)
 		n, err := item.unmarshal(r)

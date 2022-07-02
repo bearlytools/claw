@@ -3,8 +3,6 @@ package bits
 import (
 	"math"
 	"testing"
-
-	"github.com/bearlytools/claw/internal/conversions"
 )
 
 func TestSetValue(t *testing.T) {
@@ -29,6 +27,7 @@ func TestSetValue(t *testing.T) {
 	}
 }
 
+/*
 func TestSetValueBytes(t *testing.T) {
 	storeStart := []byte{uint8(1)}
 	// We start at using bit 1 (we index at 0), so that we can set bit 0 to 1
@@ -50,6 +49,7 @@ func TestSetValueBytes(t *testing.T) {
 		}
 	}
 }
+*/
 
 func TestSetBits(t *testing.T) {
 	// Tests we can set all bits that we expect.

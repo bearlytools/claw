@@ -2,13 +2,14 @@
 var mapping{{.Name}} = mapping.Map{
     {{- range .Fields }}
     {
-        Name: .Name,
-        Type: .Type,
-        {{- if .Type gt 14 }}
-        ListType: {{ .ListType }}
+        Name: "{{ .Name }}",
+        Type: field.{{ .Type }},
+        {{- if gt .Type 14 }}
+        {{- if not .SelfReferential }}
         Mapping: mapping{{ .IdentName }},
-        {{ end }}
-    }
-    {{end}}
+        {{- end }}
+        {{- end }}
+    },
+    {{- end}}
 }
 {{end}}

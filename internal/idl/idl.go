@@ -11,6 +11,7 @@ import (
 
 	"github.com/bearlytools/claw/internal/field"
 	"github.com/johnsiilver/halfpike"
+	"golang.org/x/exp/slices"
 )
 
 /*
@@ -54,6 +55,11 @@ func (f *File) Validate() error {
 	return nil
 }
 
+// Start is the start point for reading the IDL.
+func (f *File) Start(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
+	return f.ParsePackage
+}
+
 // Structs returns all Structs that were decoded.
 func (f *File) Structs() chan Struct {
 	ch := make(chan Struct, 1)
@@ -75,9 +81,25 @@ func (f *File) Structs() chan Struct {
 	return ch
 }
 
-// Start is the start point for reading the IDL.
-func (f *File) Start(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
-	return f.ParsePackage
+// Enums returns all Enums that were decoded.
+func (f *File) Enums() chan Enum {
+	ch := make(chan Enum, 1)
+
+	if f.Identifers == nil {
+		close(ch)
+		return ch
+	}
+
+	go func() {
+		defer close(ch)
+		for _, i := range f.Identifers {
+			switch v := i.(type) {
+			case Enum:
+				ch <- v
+			}
+		}
+	}()
+	return ch
 }
 
 func (f *File) SkipLinesWithComments(p *halfpike.Parser) {
@@ -207,7 +229,6 @@ func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseF
 		}
 		return p.Errorf("[Line %d] do not understand this line", line.LineNum)
 	}
-	return nil
 }
 
 func (f *File) ParseOptions(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
@@ -290,10 +311,6 @@ func (i *Import) parse(p *halfpike.Parser) error {
 		default:
 			return fmt.Errorf("[Line %d]: import statement looks malformed: %q", l.LineNum, l.Raw)
 		}
-
-		if err := commentOrEOL(l, 2); err != nil {
-			return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
-		}
 	}
 	if len(i.imports) == 0 {
 		return fmt.Errorf("empty import block, which is a parse error")
@@ -305,15 +322,57 @@ func (i *Import) parse(p *halfpike.Parser) error {
 type Enum struct {
 	Name   string
 	Size   int
-	Names  map[string]EnumVal
-	Values map[uint16]EnumVal
+	names  map[string]EnumVal
+	values map[uint16]EnumVal
+}
+
+func (e Enum) OrderByValues() []EnumVal {
+	// TODO(jdoak): This is stupid, just make .names into .names a slice and insert.
+	// We can do a binary search when looking for duplicates, because this will be small in size.
+	// I'm just too tired to do this now.
+	l := make([]EnumVal, len(e.values))
+	for i, v := range e.values {
+		l[i] = v
+	}
+	slices.SortFunc(
+		l,
+		func(a, b EnumVal) bool {
+			return a.Value < b.Value
+		},
+	)
+	return l
+}
+
+func (e Enum) OrderByNames() []EnumVal {
+	// TODO(jdoak): Same as above.
+	l := make([]EnumVal, len(e.values))
+	for i, v := range e.values {
+		l[i] = v
+	}
+	slices.SortFunc(
+		l,
+		func(a, b EnumVal) bool {
+			return a.Name < b.Name
+		},
+	)
+	return l
+}
+
+func (e Enum) GoType() string {
+	switch e.Size {
+	case 8:
+		return "uint8"
+	case 16:
+		return "uint16"
+	}
+	panic(fmt.Sprintf("unknown size: %v", e.Size))
 }
 
 // New creates a new Enum.
 func NewEnum() Enum {
 	return Enum{
-		Names:  map[string]EnumVal{},
-		Values: map[uint16]EnumVal{},
+		names:  map[string]EnumVal{},
+		values: map[uint16]EnumVal{},
 	}
 }
 
@@ -369,7 +428,7 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 		if err := validateIdent(l.Items[0].Val); err != nil {
 			return fmt.Errorf("[Line %d]: error: Enum identifier: %w", l.LineNum, err)
 		}
-		if _, ok := e.Names[l.Items[0].Val]; ok {
+		if _, ok := e.names[l.Items[0].Val]; ok {
 			return fmt.Errorf("[Line %d]: error: Enum %q already contains enumerator %q", l.LineNum, e.Name, l.Items[0].Val)
 		}
 		if !strings.HasPrefix(l.Items[1].Val, "@") {
@@ -383,19 +442,19 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 		if n < 0 {
 			return fmt.Errorf("[Line %d]: error: cannot have an enumerated value < 0", l.LineNum)
 		}
-		if _, ok := e.Values[uint16(n)]; ok {
-			return fmt.Errorf("[Line %d]: error: Enum %q already contains enumerator(%s) with value %d", l.LineNum, e.Name, e.Values[uint16(n)].Name, n)
+		if _, ok := e.values[uint16(n)]; ok {
+			return fmt.Errorf("[Line %d]: error: Enum %q already contains enumerator(%s) with value %d", l.LineNum, e.Name, e.values[uint16(n)].Name, n)
 		}
 		v := EnumVal{Name: l.Items[0].Val, Value: uint16(n)}
-		e.Names[v.Name] = v
-		e.Values[v.Value] = v
+		e.names[v.Name] = v
+		e.values[v.Value] = v
 
 		if err := commentOrEOL(l, 2); err != nil {
 			return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
 		}
 	}
 	// We are on the line with }.
-	if len(e.Names) == 0 {
+	if len(e.names) == 0 {
 		return fmt.Errorf("Enum %q has no entries, which is not valid", e.Name)
 	}
 	if err := commentOrEOL(l, 1); err != nil {
@@ -423,49 +482,15 @@ type StructField struct {
 	Index uint16
 	// Type is the type of the field.
 	Type field.Type
-	// ListType is the type stored in the list, if this is a list type.
-	ListType field.Type
 	// IdentName is the name of the Struct or Enum that goes in this field. If not a Struct or Enum,
 	// this is empty.
 	IdentName string
+	// SelfReferential indicates this type is the same Struct type as the containing Struct.
+	SelfReferential bool
 }
 
-// GoListType returns the Go language type, for use in templates.
-func (s *StructField) GoListType() string {
-	switch s.ListType {
-	case field.FTBool:
-		return "bool"
-	case field.FTUint8:
-		if s.IdentName != "" {
-			return s.IdentName // Its an Enum
-		}
-		return "uint8"
-	case field.FTUint16:
-		if s.IdentName != "" {
-			return s.IdentName // Its an Enum
-		}
-		return "uint16"
-	case field.FTUint32:
-		return "uint32"
-	case field.FTUint64:
-		return "uint64"
-	case field.FTInt8:
-		return "int8"
-	case field.FTInt16:
-		return "int16"
-	case field.FTInt32:
-		return "int32"
-	case field.FTInt64:
-		return "int64"
-	case field.FTString:
-		return "string"
-	case field.FTBytes:
-		return "bytes"
-	case field.FTStruct:
-		return s.IdentName
-	default:
-		panic(fmt.Sprintf("Unknown list type %v", s.ListType))
-	}
+func (s StructField) TypeAsString() string {
+	return field.TypeToString(s.Type)
 }
 
 func (s *Struct) parse(p *halfpike.Parser) error {
@@ -544,6 +569,14 @@ func (s *Struct) fields(p *halfpike.Parser) error {
 		}
 		ids[slIndex] = true
 	}
+	// We now know we have a sequence starting at 1 that doesn't skip numbers, so 1, 2, 3, 4. But they
+	// can be in random order and we need them to be in field order.
+	slices.SortFunc(
+		s.Fields,
+		func(a, b StructField) bool {
+			return a.Index < b.Index
+		},
+	)
 
 	return nil
 }
@@ -589,43 +622,32 @@ func (s *Struct) field(p *halfpike.Parser) error {
 	case "bytes":
 		f.Type = field.FTBytes
 	case "[]bool":
-		f.Type = field.FTListBool
+		f.Type = field.FTListBools
 	case "[]uint8":
-		f.Type = field.FTList8
+		f.Type = field.FTListUint8
 	case "[]uint16":
-		f.Type = field.FTList16
-		f.ListType = field.FTUint16
+		f.Type = field.FTListUint16
 	case "[]uint32":
-		f.Type = field.FTList32
-		f.ListType = field.FTUint32
+		f.Type = field.FTListUint32
 	case "[]uint64":
-		f.Type = field.FTList64
-		f.ListType = field.FTUint64
+		f.Type = field.FTListUint64
 	case "[]int8":
-		f.Type = field.FTList8
-		f.ListType = field.FTInt8
+		f.Type = field.FTListInt8
 	case "[]int16":
-		f.Type = field.FTList16
-		f.ListType = field.FTInt16
+		f.Type = field.FTListInt16
 	case "[]int32":
-		f.Type = field.FTList32
-		f.ListType = field.FTInt32
+		f.Type = field.FTListInt32
 	case "[]int64":
-		f.Type = field.FTList64
-		f.ListType = field.FTInt64
+		f.Type = field.FTListInt64
 	case "[]float32":
-		f.Type = field.FTFloat32
-		f.ListType = field.FTFloat32
+		f.Type = field.FTListFloat32
 	case "[]float64":
-		f.Type = field.FTFloat64
-		f.ListType = field.FTFloat64
+		f.Type = field.FTListFloat64
 	case "[]string":
-		f.Type = field.FTListString
-		f.ListType = field.FTString
+		f.Type = field.FTListStrings
 	case "[]bytes":
 		f.Type = field.FTListBytes
-		f.ListType = field.FTBytes
-	default:
+	default: // Struct, []Struct, or []{{Enum}}
 		ft := l.Items[1].Val
 		isList := false
 		if strings.HasPrefix(ft, "[]") {
@@ -640,9 +662,10 @@ func (s *Struct) field(p *halfpike.Parser) error {
 				return fmt.Errorf("[Line %d]: found duplicate top level identifier %q", l.LineNum, ft)
 			}
 
-			f.IdentName = f.Name
+			f.IdentName = s.Name
+			f.SelfReferential = true
 			if isList {
-				f.Type = field.FTListStruct
+				f.Type = field.FTListStructs
 			} else {
 				f.Type = field.FTStruct
 			}
@@ -659,13 +682,13 @@ func (s *Struct) field(p *halfpike.Parser) error {
 				switch v.Size {
 				case 8:
 					if isList {
-						f.Type = field.FTList8
+						f.Type = field.FTListUint8
 					} else {
 						f.Type = field.FTUint8
 					}
 				case 16:
 					if isList {
-						f.Type = field.FTList16
+						f.Type = field.FTListUint16
 					} else {
 						f.Type = field.FTUint16
 					}
@@ -675,7 +698,7 @@ func (s *Struct) field(p *halfpike.Parser) error {
 			case Struct:
 				f.IdentName = ft
 				if isList {
-					f.Type = field.FTListStruct
+					f.Type = field.FTListStructs
 				} else {
 					f.Type = field.FTStruct
 				}
