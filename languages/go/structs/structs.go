@@ -190,22 +190,14 @@ func SetBool(s *Struct, fieldNum uint16, value bool) error {
 
 	f := s.fields[fieldNum-1]
 	if f.header == nil {
-		var n uint64
-		f.header = GenericHeader(make([]byte, 8))
-		n = bits.SetValue(fieldNum, n, 0, 16)
-		n = bits.SetValue(uint8(field.FTBool), n, 16, 24)
-		if value {
-			n = bits.SetBit(n, 24, true)
-		}
-		binary.Put(f.header, n)
-		s.fields[fieldNum-1] = f
-		addToTotal(s, 8)
-		return nil
-	}
+		f.header = NewGenericHeader()
+		f.header.SetFieldNum(fieldNum)
+		f.header.SetFieldType(field.FTBool)
 
-	n := binary.Get[uint64](f.header)
-	n = bits.SetBit(n, 25, value)
-	binary.Put(f.header, n)
+		addToTotal(s, 8)
+	}
+	n := conversions.BytesToNum[uint64](f.header)
+	*n = bits.SetBit(*n, 24, value)
 	s.fields[fieldNum-1] = f
 	return nil
 }

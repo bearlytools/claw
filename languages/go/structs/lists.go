@@ -32,12 +32,12 @@ type Bool struct {
 // NewBool creates a new Bool that will be stored in a Struct field.
 func NewBool(fieldNum uint16) *Bool {
 	b := pool.Get(boolPool).(*Bool)
-	b.data = make([]byte, 8)
 
-	var u uint64
-	bits.SetValue(fieldNum, u, 0, 16)
-	bits.SetValue(uint8(field.FTListBools), u, 16, 24)
-	binary.Put(b.data, u)
+	h := NewGenericHeader()
+	h.SetFieldNum(fieldNum)
+	h.SetFieldType(field.FTListBools)
+
+	b.data = h
 
 	return b
 }
@@ -149,7 +149,7 @@ func (b *Bool) Set(index int, val bool) {
 }
 
 func (b *Bool) cap() int {
-	return (len(b.data) - 8) * 8 // number of bytes * 8 bit values we can hold
+	return (len(b.data) - 8) * 8 // number of bytes * 8 bit values we can hold, minus the header because we don't store there
 }
 
 // Append appends values to the list of bools.
