@@ -1,6 +1,6 @@
 # Claw
 
-Claw's intention is to provide an easy alternative to Protocol Buffers this is free, performant and easy to use.
+Claw's intention is to provide an easy alternative to Protocol Buffers that is free, performant and easy to use.
 
 The whys for using it:
 
@@ -42,11 +42,8 @@ But overall this format will be more in size. All entries are a minimum for 8 by
 	* Proto3 - have zero values only except for Message types
 * Allocations - proto has to allocate more often, which eventually bogs down GC languages
 
-You might say, why not use buf.io tooling for your protoc problems.  I think buf is great, but using it in any substantial
-way requires me to pay. At this fundamental level, I just don't want to pay and I don't want to figure out how to get my
-company to pay (it is really easier to roll my own).  You can hack on buf's tools to let you get around the pay model, 
-but I feel *icky* about that. But if you need rock solid support for every language and based on an IDL that has been 
-around for years + can figure out how to get your company to pay for it, buf is the way to go.
+You might say, why not use `buf.io` tooling for your protoc problems.  I think `buf` is great, but using it in any substantial way requires me to pay. At this fundamental level, I just don't want to pay and I don't want to figure out how to get my company to pay (it is really easier to roll my own).  You can hack on `buf`'s tools to let you get around the pay model, 
+but I feel *icky* about that. But if you need rock solid support for every language and based on an IDL that has been around for years + can figure out how to get your company to pay for it, `buf` is the way to go.
 
 Also, I wanted zero allocations for reads and proto isn't going to provide me that (though Google's internal versions
 are much better in this regards).
@@ -55,7 +52,7 @@ are much better in this regards).
 
 Look, that guy is a genius. But the format is hard to understand (I don't know how many times I read his format document before I "got" it).
 The RPC mechanism is nuts.  Only he has been able to write an implementation and just for C++ that supports I think more than level 2 support.
-Every other language that does simply is loading the C++. And the Go maintainer has left the building.
+Every other language that does simply is loading the C++. And the Go maintainer has left the building the last time I checked.
 
 I don't want to write every implementation of this, so the format has to be easy to understand (at least for people who know how to write binary encoding formats) and the eventual RPC system has to be fairly easy to implement and work with tooling.
 
