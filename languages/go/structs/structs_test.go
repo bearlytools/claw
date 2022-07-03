@@ -99,7 +99,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	/////////////////////
 
 	// Test zero value of bool field.
-	gotBool, err := GetBool(root, 1)
+	gotBool, err := GetBool(root, 0)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -108,11 +108,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Set bool field.
-	if err := SetBool(root, 1, true); err != nil {
+	if err := SetBool(root, 0, true); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test bool field.
-	gotBool, err = GetBool(root, 1)
+	gotBool, err = GetBool(root, 0)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -121,7 +121,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of int8 field.
-	gotInt8, err := GetNumber[int8](root, 2)
+	gotInt8, err := GetNumber[int8](root, 1)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -129,11 +129,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int8 field is %d", gotInt8)
 	}
 	// Set int8 field.
-	if err := SetNumber(root, 2, int8(-1)); err != nil {
+	if err := SetNumber(root, 1, int8(-1)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int8 field.
-	gotInt8, err = GetNumber[int8](root, 2)
+	gotInt8, err = GetNumber[int8](root, 1)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -142,7 +142,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of int16 field.
-	gotInt16, err := GetNumber[int16](root, 3)
+	gotInt16, err := GetNumber[int16](root, 2)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -150,11 +150,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int16 field is %d", gotInt16)
 	}
 	// Set int16 field.
-	if err := SetNumber(root, 3, int16(-2)); err != nil {
+	if err := SetNumber(root, 2, int16(-2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int16 field.
-	gotInt16, err = GetNumber[int16](root, 3)
+	gotInt16, err = GetNumber[int16](root, 2)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -163,7 +163,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of int32 field.
-	gotInt32, err := GetNumber[int32](root, 4)
+	gotInt32, err := GetNumber[int32](root, 3)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -171,11 +171,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int32 field is %d", gotInt32)
 	}
 	// Set int32 field.
-	if err := SetNumber(root, 4, int32(-3)); err != nil {
+	if err := SetNumber(root, 3, int32(-3)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int32 field.
-	gotInt32, err = GetNumber[int32](root, 4)
+	gotInt32, err = GetNumber[int32](root, 3)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -184,7 +184,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of int64 field.
-	gotInt64, err := GetNumber[int64](root, 5)
+	gotInt64, err := GetNumber[int64](root, 4)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -192,11 +192,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int64 field is %d", gotInt64)
 	}
 	// Set int64 field.
-	if err := SetNumber(root, 5, int64(-4)); err != nil {
+	if err := SetNumber(root, 4, int64(-4)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int64 field.
-	gotInt64, err = GetNumber[int64](root, 5)
+	gotInt64, err = GetNumber[int64](root, 4)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -205,7 +205,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of uint8 field.
-	gotUint8, err := GetNumber[uint8](root, 6)
+	gotUint8, err := GetNumber[uint8](root, 5)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -213,11 +213,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint8 field is %d", gotUint8)
 	}
 	// Set uint8 field.
-	if err := SetNumber(root, 6, uint8(1)); err != nil {
+	if err := SetNumber(root, 5, uint8(1)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint8 field.
-	gotUint8, err = GetNumber[uint8](root, 6)
+	gotUint8, err = GetNumber[uint8](root, 5)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -226,7 +226,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of uint16 field.
-	gotUint16, err := GetNumber[uint16](root, 7)
+	gotUint16, err := GetNumber[uint16](root, 6)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -234,11 +234,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint16 field is %d", gotUint16)
 	}
 	// Set uint16 field.
-	if err := SetNumber(root, 7, uint16(2)); err != nil {
+	if err := SetNumber(root, 6, uint16(2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint16 field.
-	gotUint16, err = GetNumber[uint16](root, 7)
+	gotUint16, err = GetNumber[uint16](root, 6)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -247,7 +247,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of uint32 field.
-	gotUint32, err := GetNumber[uint32](root, 8)
+	gotUint32, err := GetNumber[uint32](root, 7)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -255,11 +255,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint32 field is %d", gotUint32)
 	}
 	// Set uint32 field.
-	if err := SetNumber(root, 8, uint32(3)); err != nil {
+	if err := SetNumber(root, 7, uint32(3)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint32 field.
-	gotUint32, err = GetNumber[uint32](root, 8)
+	gotUint32, err = GetNumber[uint32](root, 7)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -268,7 +268,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of uint64 field.
-	gotUint64, err := GetNumber[uint64](root, 9)
+	gotUint64, err := GetNumber[uint64](root, 8)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -276,11 +276,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint64 field is %d", gotUint64)
 	}
 	// Set uint64 field.
-	if err := SetNumber(root, 9, uint64(4)); err != nil {
+	if err := SetNumber(root, 8, uint64(4)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint64 field.
-	gotUint64, err = GetNumber[uint64](root, 9)
+	gotUint64, err = GetNumber[uint64](root, 8)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -289,7 +289,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of float32 field.
-	gotFloat32, err := GetNumber[float32](root, 10)
+	gotFloat32, err := GetNumber[float32](root, 9)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -297,11 +297,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): float32 field is %v", gotFloat32)
 	}
 	// Set float32 field.
-	if err := SetNumber(root, 10, float32(1.2)); err != nil {
+	if err := SetNumber(root, 9, float32(1.2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test float32 field.
-	gotFloat32, err = GetNumber[float32](root, 10)
+	gotFloat32, err = GetNumber[float32](root, 9)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -310,7 +310,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Test zero value of float64 field.
-	gotFloat64, err := GetNumber[float64](root, 11)
+	gotFloat64, err := GetNumber[float64](root, 10)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -318,11 +318,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): float64 field is %v", gotFloat64)
 	}
 	// Set float64 field.
-	if err := SetNumber(root, 11, float64(1.2)); err != nil {
+	if err := SetNumber(root, 10, float64(1.2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test float64 field.
-	gotFloat64, err = GetNumber[float64](root, 11)
+	gotFloat64, err = GetNumber[float64](root, 10)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -348,7 +348,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	/////////////////////
 
 	// Test zero value of Bytes field.
-	getBytes, err := GetBytes(root, 12)
+	getBytes, err := GetBytes(root, 11)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -358,11 +358,11 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 
 	// Add byte field.
 	strData := "Hello World"
-	err = SetBytes(root, 12, []byte(strData), false)
+	err = SetBytes(root, 11, []byte(strData), false)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
-	getBytes, err = GetBytes(root, 12)
+	getBytes, err = GetBytes(root, 11)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
@@ -394,7 +394,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// Start Struct
 	////////////////////
 	sub := New(13, msg1Mapping)
-	if err := SetStruct(root, 13, sub); err != nil {
+	if err := SetStruct(root, 12, sub); err != nil {
 		panic(err)
 	}
 	totalWithStruct := totalWithBytes + 8
@@ -402,14 +402,14 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
 	}
 
-	if err = SetBool(sub, 1, true); err != nil {
+	if err = SetBool(sub, 0, true); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], unexpected error on SetBool(): %s", err)
 	}
-	sub, err = GetStruct(root, 13)
+	sub, err = GetStruct(root, 12)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(get sub Struct): unexpected error on GetStruct(): %s", err)
 	}
-	gotBool, err = GetBool(sub, 1)
+	gotBool, err = GetBool(sub, 0)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], unexpected error on GotBool(): %s", err)
 	}
@@ -437,7 +437,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		New(0, msg1Mapping),
 	}
 
-	if err := AppendListStruct(root, 14, structs...); err != nil {
+	if err := AppendListStruct(root, 13, structs...); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): AddListStruct() had error: %s", err)
 	}
 
@@ -446,15 +446,15 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
 	}
 
-	if err = SetBool(structs[1], 1, true); err != nil {
+	if err = SetBool(structs[1], 0, true); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14], unexpected error on SetBool(structs[1]...): %s", err)
 	}
 
-	listStruct, err := GetListStruct(root, 14)
+	listStruct, err := GetListStruct(root, 13)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): GetListStruct() had error: %s", err)
 	}
-	gotBool, err = GetBool((*listStruct)[1], 1)
+	gotBool, err = GetBool((*listStruct)[1], 0)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14][1], unexpected error on GotBool(): %s", err)
 	}
@@ -478,7 +478,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	////////////////////
 
 	nums := NewNumber[uint8]()
-	if err = SetListNumber(root, 15, nums); err != nil {
+	if err = SetListNumber(root, 14, nums); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding list of numbers): %s", err)
 	}
 
@@ -506,7 +506,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	////////////////////
 
 	bytesList := NewBytes()
-	if err := SetListBytes(root, 16, bytesList); err != nil {
+	if err := SetListBytes(root, 15, bytesList); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding list of bytes): %s", err)
 	}
 	totalWithListBytes := totalWithListNumber + 8
@@ -567,177 +567,177 @@ func compareStruct(a, b *Struct) error {
 		return fmt.Errorf("b has fields length %d, mapping has %d, malformed Struct", len(a.fields), len(a.mapping))
 	}
 	for i := 0; i < len(a.fields); i++ {
-		fieldNum := i + 1
+		fieldNum := uint16(i)
 		switch a.mapping[i].Type {
 		case field.FTBool:
-			v0 := MustGetBool(a, uint16(fieldNum))
-			v1 := MustGetBool(b, uint16(fieldNum))
+			v0 := MustGetBool(a, fieldNum)
+			v1 := MustGetBool(b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTInt8:
-			v0 := MustGetNumber[int8](a, uint16(fieldNum))
-			v1 := MustGetNumber[int8](b, uint16(fieldNum))
+			v0 := MustGetNumber[int8](a, fieldNum)
+			v1 := MustGetNumber[int8](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTInt16:
-			v0 := MustGetNumber[int16](a, uint16(fieldNum))
-			v1 := MustGetNumber[int16](b, uint16(fieldNum))
+			v0 := MustGetNumber[int16](a, fieldNum)
+			v1 := MustGetNumber[int16](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTInt32:
-			v0 := MustGetNumber[int32](a, uint16(fieldNum))
-			v1 := MustGetNumber[int32](b, uint16(fieldNum))
+			v0 := MustGetNumber[int32](a, fieldNum)
+			v1 := MustGetNumber[int32](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTInt64:
-			v0 := MustGetNumber[int64](a, uint16(fieldNum))
-			v1 := MustGetNumber[int64](b, uint16(fieldNum))
+			v0 := MustGetNumber[int64](a, fieldNum)
+			v1 := MustGetNumber[int64](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTUint8:
-			v0 := MustGetNumber[uint8](a, uint16(fieldNum))
-			v1 := MustGetNumber[uint8](b, uint16(fieldNum))
+			v0 := MustGetNumber[uint8](a, fieldNum)
+			v1 := MustGetNumber[uint8](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTUint16:
-			v0 := MustGetNumber[uint16](a, uint16(fieldNum))
-			v1 := MustGetNumber[uint16](b, uint16(fieldNum))
+			v0 := MustGetNumber[uint16](a, fieldNum)
+			v1 := MustGetNumber[uint16](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTUint32:
-			v0 := MustGetNumber[uint32](a, uint16(fieldNum))
-			v1 := MustGetNumber[uint32](b, uint16(fieldNum))
+			v0 := MustGetNumber[uint32](a, fieldNum)
+			v1 := MustGetNumber[uint32](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTUint64:
-			v0 := MustGetNumber[uint64](a, uint16(fieldNum))
-			v1 := MustGetNumber[uint64](b, uint16(fieldNum))
+			v0 := MustGetNumber[uint64](a, fieldNum)
+			v1 := MustGetNumber[uint64](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTFloat32:
-			v0 := MustGetNumber[float32](a, uint16(fieldNum))
-			v1 := MustGetNumber[float32](b, uint16(fieldNum))
+			v0 := MustGetNumber[float32](a, fieldNum)
+			v1 := MustGetNumber[float32](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTFloat64:
-			v0 := MustGetNumber[float64](a, uint16(fieldNum))
-			v1 := MustGetNumber[float64](b, uint16(fieldNum))
+			v0 := MustGetNumber[float64](a, fieldNum)
+			v1 := MustGetNumber[float64](b, fieldNum)
 			if v0 != v1 {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTString, field.FTBytes:
-			v0 := MustGetBytes(a, uint16(fieldNum))
-			v1 := MustGetBytes(b, uint16(fieldNum))
+			v0 := MustGetBytes(a, fieldNum)
+			v1 := MustGetBytes(b, fieldNum)
 			if !bytes.Equal(*v0, *v1) {
 				return fmt.Errorf("%d field: diff: a was %v, b was %v", fieldNum, v0, v1)
 			}
 		case field.FTStruct:
-			v0 := MustGetStruct(a, uint16(fieldNum))
-			v1 := MustGetStruct(b, uint16(fieldNum))
+			v0 := MustGetStruct(a, fieldNum)
+			v1 := MustGetStruct(b, fieldNum)
 			if err := compareStruct(v0, v1); err != nil {
 				return fmt.Errorf("%d.%w", i, err)
 			}
 		case field.FTListBools:
-			v0 := MustGetListBool(a, uint16(fieldNum))
-			v1 := MustGetListBool(b, uint16(fieldNum))
+			v0 := MustGetListBool(a, fieldNum)
+			v1 := MustGetListBool(b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListInt8:
-			v0 := MustGetListNumber[int8](a, uint16(fieldNum))
-			v1 := MustGetListNumber[int8](b, uint16(fieldNum))
+			v0 := MustGetListNumber[int8](a, fieldNum)
+			v1 := MustGetListNumber[int8](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListUint8:
-			v0 := MustGetListNumber[uint8](a, uint16(fieldNum))
-			v1 := MustGetListNumber[uint8](b, uint16(fieldNum))
+			v0 := MustGetListNumber[uint8](a, fieldNum)
+			v1 := MustGetListNumber[uint8](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListInt16:
-			v0 := MustGetListNumber[int16](a, uint16(fieldNum))
-			v1 := MustGetListNumber[int16](b, uint16(fieldNum))
+			v0 := MustGetListNumber[int16](a, fieldNum)
+			v1 := MustGetListNumber[int16](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListUint16:
-			v0 := MustGetListNumber[uint16](a, uint16(fieldNum))
-			v1 := MustGetListNumber[uint16](b, uint16(fieldNum))
+			v0 := MustGetListNumber[uint16](a, fieldNum)
+			v1 := MustGetListNumber[uint16](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListInt32:
-			v0 := MustGetListNumber[int32](a, uint16(fieldNum))
-			v1 := MustGetListNumber[int32](b, uint16(fieldNum))
+			v0 := MustGetListNumber[int32](a, fieldNum)
+			v1 := MustGetListNumber[int32](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListUint32:
-			v0 := MustGetListNumber[uint32](a, uint16(fieldNum))
-			v1 := MustGetListNumber[uint32](b, uint16(fieldNum))
+			v0 := MustGetListNumber[uint32](a, fieldNum)
+			v1 := MustGetListNumber[uint32](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListFloat32:
-			v0 := MustGetListNumber[float32](a, uint16(fieldNum))
-			v1 := MustGetListNumber[float32](b, uint16(fieldNum))
+			v0 := MustGetListNumber[float32](a, fieldNum)
+			v1 := MustGetListNumber[float32](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListInt64:
-			v0 := MustGetListNumber[int64](a, uint16(fieldNum))
-			v1 := MustGetListNumber[int64](b, uint16(fieldNum))
+			v0 := MustGetListNumber[int64](a, fieldNum)
+			v1 := MustGetListNumber[int64](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListUint64:
-			v0 := MustGetListNumber[uint64](a, uint16(fieldNum))
-			v1 := MustGetListNumber[uint64](b, uint16(fieldNum))
+			v0 := MustGetListNumber[uint64](a, fieldNum)
+			v1 := MustGetListNumber[uint64](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListFloat64:
-			v0 := MustGetListNumber[float64](a, uint16(fieldNum))
-			v1 := MustGetListNumber[float64](b, uint16(fieldNum))
+			v0 := MustGetListNumber[float64](a, fieldNum)
+			v1 := MustGetListNumber[float64](b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				if v0.Get(x) != v1.Get(x) {
 					return fmt.Errorf("%d field, item %d: a was %v, b was %v", fieldNum, x, v0.Get(x), v1.Get(x))
 				}
 			}
 		case field.FTListBytes:
-			v0 := MustGetListBytes(a, uint16(fieldNum))
-			v1 := MustGetListBytes(b, uint16(fieldNum))
+			v0 := MustGetListBytes(a, fieldNum)
+			v1 := MustGetListBytes(b, fieldNum)
 			for x := 0; x < v0.Len(); x++ {
 				b0 := v0.Get(x)
 				b1 := v1.Get(x)
@@ -746,8 +746,8 @@ func compareStruct(a, b *Struct) error {
 				}
 			}
 		case field.FTListStructs:
-			v0 := MustGetListStruct(a, uint16(fieldNum))
-			v1 := MustGetListStruct(b, uint16(fieldNum))
+			v0 := MustGetListStruct(a, fieldNum)
+			v1 := MustGetListStruct(b, fieldNum)
 			for x := 0; x < len(*v0); x++ {
 				s0 := (*v0)[x]
 				s1 := (*v1)[x]
@@ -794,10 +794,10 @@ func TestGetBool(t *testing.T) {
 
 	s := New(0, m)
 
-	if err := SetBool(s, 3, true); err != nil {
+	if err := SetBool(s, 2, true); err != nil {
 		panic(err)
 	}
-	if err := SetBool(s, 4, false); err != nil {
+	if err := SetBool(s, 3, false); err != nil {
 		panic(err)
 	}
 
@@ -809,45 +809,33 @@ func TestGetBool(t *testing.T) {
 		err      bool
 	}{
 		{
-			desc:     "Error: fieldNum is 0",
-			s:        s,
-			fieldNum: 0,
-			err:      true,
-		},
-		{
 			desc:     "Error: fieldNum is greater that possible fields",
 			s:        s,
-			fieldNum: 5,
+			fieldNum: 4,
 			err:      true,
 		},
 		{
 			desc:     "Error: fieldNum is not a bool",
 			s:        s,
-			fieldNum: 2, // FTFloat32
-			err:      true,
-		},
-		{
-			desc:     "Error: fieldNum is not a bool",
-			s:        s,
-			fieldNum: 2, // FTFloat32
+			fieldNum: 1, // FTFloat32
 			err:      true,
 		},
 		{
 			desc:     "fieldNum that has a nil value and should return false",
 			s:        s,
-			fieldNum: 1,
+			fieldNum: 0,
 			want:     false,
 		},
 		{
 			desc:     "fieldNum that is set to true",
 			s:        s,
-			fieldNum: 3,
+			fieldNum: 2,
 			want:     true,
 		},
 		{
 			desc:     "fieldNum that is set to false",
 			s:        s,
-			fieldNum: 4,
+			fieldNum: 3,
 			want:     false,
 		},
 	}
@@ -883,15 +871,15 @@ func TestSetNumber(t *testing.T) {
 
 	s := New(0, m)
 
-	if err := SetNumber[float32](s, 1, float32(8.7)); err != nil {
+	if err := SetNumber(s, 0, float32(8.7)); err != nil {
 		panic(err)
 	}
 
-	if err := SetNumber[float64](s, 2, math.MaxFloat64); err != nil {
+	if err := SetNumber(s, 1, math.MaxFloat64); err != nil {
 		panic(err)
 	}
 
-	gotFloat32, err := GetNumber[float32](s, 1)
+	gotFloat32, err := GetNumber[float32](s, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -899,7 +887,7 @@ func TestSetNumber(t *testing.T) {
 		t.Fatalf("TestSetNumber(float32): got %v, want 8.7", gotFloat32)
 	}
 
-	gotFloat64, err := GetNumber[float64](s, 2)
+	gotFloat64, err := GetNumber[float64](s, 1)
 	if err != nil {
 		panic(err)
 	}
@@ -929,13 +917,13 @@ func TestGetNumber(t *testing.T) {
 
 	s := New(0, m)
 
-	if err := SetNumber[int8](s, 3, 10); err != nil {
+	if err := SetNumber[int8](s, 2, 10); err != nil {
 		panic(err)
 	}
-	if err := SetNumber[uint64](s, 4, uint64(math.MaxUint32)+1); err != nil {
+	if err := SetNumber(s, 3, uint64(math.MaxUint32)+1); err != nil {
 		panic(err)
 	}
-	if err := SetNumber[float32](s, 5, 3.2); err != nil {
+	if err := SetNumber[float32](s, 4, 3.2); err != nil {
 		panic(err)
 	}
 
@@ -947,45 +935,39 @@ func TestGetNumber(t *testing.T) {
 		err      bool
 	}{
 		{
-			desc:     "Error: fieldNum is 0",
-			s:        s,
-			fieldNum: 0,
-			err:      true,
-		},
-		{
 			desc:     "Error: fieldNum is greater that possible fields",
 			s:        s,
-			fieldNum: 30,
+			fieldNum: 29,
 			err:      true,
 		},
 		{
 			desc:     "Error: fieldNum is not a number",
 			s:        s,
-			fieldNum: 2, // FTBool
+			fieldNum: 1, // FTBool
 			err:      true,
 		},
 		{
 			desc:     "fieldNum that has a nil value and should return 0",
 			s:        s,
-			fieldNum: 1,
+			fieldNum: 0,
 			want:     uint8(0),
 		},
 		{
 			desc:     "fieldNum that is set to 10",
 			s:        s,
-			fieldNum: 3,
+			fieldNum: 2,
 			want:     int8(10),
 		},
 		{
 			desc:     "fieldNum that is set to math.MaxUint32+1",
 			s:        s,
-			fieldNum: 4,
+			fieldNum: 3,
 			want:     uint64(math.MaxUint32) + 1,
 		},
 		{
 			desc:     "fieldNum that is set to a float",
 			s:        s,
-			fieldNum: 5,
+			fieldNum: 4,
 			want:     float32(3.2),
 		},
 	}
@@ -995,10 +977,10 @@ func TestGetNumber(t *testing.T) {
 
 		// We can't switch on types for either field 0 or fields not in our mapping.Map, but
 		// we still want to test our error conditions.
-		if test.fieldNum < 1 || test.fieldNum-1 > uint16(len(m)) {
+		if test.fieldNum >= uint16(len(m)) {
 			got, err = GetNumber[uint8](test.s, test.fieldNum)
 		} else { // Any other tests
-			switch m[test.fieldNum-1].Type {
+			switch m[test.fieldNum].Type {
 			case field.FTUint8:
 				got, err = GetNumber[uint8](test.s, test.fieldNum)
 			case field.FTUint16:

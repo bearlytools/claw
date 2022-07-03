@@ -14,25 +14,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-/*
-package {{package name}}
-version {{Integer}}
-options {{ [ {{option string}}, {{option string}} ] }}
-
-import (
-	"github.com/some/location"
-)
-
-Enum {{String}} {{uint8|uint16}} {
-	{{Name}} @{{Number}}
-}
-
-Struct {{String}} {
-	{{Name}} {{Type}} @{{Integer}}
-}
-
-*/
-
 // FileOption is an option for the file.
 type FileOption int
 
@@ -554,20 +535,16 @@ func (s *Struct) fields(p *halfpike.Parser) error {
 	}
 
 	// Validate the fields are sequentially ordered. The order in the file doesn't matter, as long
-	// as we start at 1 and don't skip a number.
+	// as we start at 0 and don't skip a number.
 	ids := make([]bool, len(s.Fields))
 	for _, f := range s.Fields {
-		if f.Index < 1 {
-			return fmt.Errorf("Struct %q field %q has an invalid field number %d, fields start at 1, not 0", s.Name, f.Name, f.Index)
+		if int(f.Index) >= len(ids) {
+			return fmt.Errorf("Struct %q field %q has an invalid field number %d, fields must start at 0 and be sequential", s.Name, f.Name, f.Index)
 		}
-		slIndex := f.Index - 1
-		if len(ids) <= int(slIndex) {
-			return fmt.Errorf("Struct %q field %q has an invalid field number %d, fields must start at 1 and be sequential", s.Name, f.Name, f.Index)
-		}
-		if ids[slIndex] {
+		if ids[f.Index] {
 			return fmt.Errorf("Struct %q field %q has duplicate field number %d", s.Name, f.Name, f.Index)
 		}
-		ids[slIndex] = true
+		ids[f.Index] = true
 	}
 	// We now know we have a sequence starting at 1 that doesn't skip numbers, so 1, 2, 3, 4. But they
 	// can be in random order and we need them to be in field order.

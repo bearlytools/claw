@@ -23,13 +23,12 @@ func TestDecodeBool(t *testing.T) {
 			Type:   field.FTBool,
 		},
 	}
-	var valTrue uint64
 
-	valTrue = bits.SetValue(uint16(1), valTrue, 0, 16)
-	valTrue = bits.SetValue(uint8(field.FTBool), valTrue, 16, 24)
-	valTrue = bits.SetBit(valTrue, 24, true)
-	bufTrue := make([]byte, 8)
-	binary.Put(bufTrue, valTrue)
+	// Sets up "h" to be a bool with the value of true.
+	h := NewGenericHeader()
+	h.SetFieldType(field.FTBool)
+	n := conversions.BytesToNum[uint64](h)
+	*n = bits.SetBit(*n, 24, true)
 
 	tests := []struct {
 		desc     string
@@ -41,19 +40,13 @@ func TestDecodeBool(t *testing.T) {
 		{
 			desc:     "Error: len(buffer) is < 8",
 			buf:      []byte{0, 0, 0, 0, 0, 0, 0}, // 7 in length
-			fieldNum: 1,
-			err:      true,
-		},
-		{
-			desc:     "Error: fieldNum is > than len(struct.fields)",
-			buf:      make([]byte, 8),
-			fieldNum: 2,
+			fieldNum: 0,
 			err:      true,
 		},
 		{
 			desc:     "Success: set to true",
-			buf:      bufTrue,
-			fieldNum: 1,
+			buf:      h,
+			fieldNum: 0,
 			want:     true,
 		},
 	}
@@ -84,7 +77,7 @@ func TestDecodeBool(t *testing.T) {
 		if *s.structTotal != 16 {
 			t.Errorf("TestDecodeBool(%s): structTotal: got %v, want %v", test.desc, s.structTotal, 16)
 		}
-		f := s.fields[test.fieldNum-1]
+		f := s.fields[test.fieldNum]
 		if !bytes.Equal(f.header, wantHeader) {
 			t.Errorf("TestDecodeBool(%s): field.header value: got %v, want %v", test.desc, f.header, wantHeader)
 		}
@@ -96,7 +89,7 @@ func TestDecodeBool(t *testing.T) {
 
 func numFieldInBytes[N Numbers](value N, dataMap mapping.Map) []byte {
 	s := New(0, dataMap)
-	if err := SetNumber(s, 1, value); err != nil {
+	if err := SetNumber(s, 0, value); err != nil {
 		panic(err)
 	}
 	var b []byte
@@ -166,14 +159,14 @@ func TestDecodeNum(t *testing.T) {
 
 	for i, mapping := range mappings {
 		s := New(0, mapping)
-		err := s.decodeNum(&encoded[i], 1, size[i])
+		err := s.decodeNum(&encoded[i], 0, size[i])
 		if err != nil {
 			t.Errorf("TestDecodeNum: could not decode type %v: %s", mapping[0].Type, err)
 			continue
 		}
 		switch mapping[0].Type {
 		case field.FTUint8:
-			got, err := GetNumber[uint8](s, 1)
+			got, err := GetNumber[uint8](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -186,11 +179,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTUint8 {
 				t.Errorf("TestDecodeNum(uint8): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(uint8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(uint8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTUint16:
-			got, err := GetNumber[uint16](s, 1)
+			got, err := GetNumber[uint16](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -203,11 +196,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTUint16 {
 				t.Errorf("TestDecodeNum(uint16): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(uint16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(uint16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTUint32:
-			got, err := GetNumber[uint32](s, 1)
+			got, err := GetNumber[uint32](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -220,11 +213,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTUint32 {
 				t.Errorf("TestDecodeNum(uint32): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(uint32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(uint32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTUint64:
-			got, err := GetNumber[uint64](s, 1)
+			got, err := GetNumber[uint64](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -237,11 +230,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTUint64 {
 				t.Errorf("TestDecodeNum(uint64): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(uint64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(uint64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTInt8:
-			got, err := GetNumber[int8](s, 1)
+			got, err := GetNumber[int8](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -254,11 +247,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTInt8 {
 				t.Errorf("TestDecodeNum(int8): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(int8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(int8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTInt16:
-			got, err := GetNumber[int16](s, 1)
+			got, err := GetNumber[int16](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -271,11 +264,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTInt16 {
 				t.Errorf("TestDecodeNum(int16): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(int16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(int16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTInt32:
-			got, err := GetNumber[int32](s, 1)
+			got, err := GetNumber[int32](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -288,11 +281,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTInt32 {
 				t.Errorf("TestDecodeNum(int32): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(int32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(int32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTInt64:
-			got, err := GetNumber[int64](s, 1)
+			got, err := GetNumber[int64](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -305,11 +298,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTInt64 {
 				t.Errorf("TestDecodeNum(int64): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(int64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(int64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTFloat32:
-			got, err := GetNumber[float32](s, 1)
+			got, err := GetNumber[float32](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -322,11 +315,11 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTFloat32 {
 				t.Errorf("TestDecodeNum(float32): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(float32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(float32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTFloat64:
-			got, err := GetNumber[float64](s, 1)
+			got, err := GetNumber[float64](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -339,8 +332,8 @@ func TestDecodeNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTFloat64 {
 				t.Errorf("TestDecodeNum(float64): fieldNum: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeNum(float64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeNum(float64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		}
 		if len(encoded[i]) != 0 {
@@ -399,7 +392,7 @@ func TestDecodeNum(t *testing.T) {
 
 func bytesFieldInBytes(value []byte, dataMap mapping.Map) []byte {
 	s := New(0, dataMap)
-	if err := SetBytes(s, 1, value, false); err != nil {
+	if err := SetBytes(s, 0, value, false); err != nil {
 		panic(err)
 	}
 	var b []byte
@@ -421,7 +414,7 @@ func TestDecodeBytes(t *testing.T) {
 	}
 
 	sizeZeroHeader := NewGenericHeader()
-	sizeZeroHeader.SetFieldNum(1)
+	sizeZeroHeader.SetFieldNum(0)
 	sizeZeroHeader.SetFieldType(field.FTBytes)
 
 	tests := []struct {
@@ -462,7 +455,7 @@ func TestDecodeBytes(t *testing.T) {
 		}
 		s := New(0, m)
 
-		err := s.decodeBytes(&test.buf, 1)
+		err := s.decodeBytes(&test.buf, 0)
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestDecodeBytes(%s): got err == nil, want err != nil", test.desc)
@@ -474,7 +467,7 @@ func TestDecodeBytes(t *testing.T) {
 			continue
 		}
 
-		got, err := GetBytes(s, 1)
+		got, err := GetBytes(s, 0)
 		if err != nil {
 			t.Errorf("TestDecodeBytes(%s): unexpected error: %s", test.desc, err)
 			continue
@@ -491,15 +484,15 @@ func TestDecodeBytes(t *testing.T) {
 		if s.fields[0].header.FieldType() != field.FTBytes {
 			t.Errorf("TestDecodeBytes(%s): fieldNum: got %v", test.desc, field.Type(s.fields[0].header.FieldType()))
 		}
-		if s.fields[0].header.FieldNum() != 1 {
-			t.Errorf("TestDecodeBytes(%s): fieldNum: got %d, want %d", test.desc, s.fields[0].header.FieldNum(), 1)
+		if s.fields[0].header.FieldNum() != 0 {
+			t.Errorf("TestDecodeBytes(%s): fieldNum: got %d, want %d", test.desc, s.fields[0].header.FieldNum(), 0)
 		}
 	}
 }
 
 func boolListInBytes(howMany uint64) []byte {
 	h := NewGenericHeader()
-	h.SetFieldNum(1)
+	h.SetFieldNum(0)
 	h.SetFieldType(field.FTListBools)
 	h.SetFinal40(howMany)
 
@@ -544,7 +537,7 @@ func TestDecodeListBool(t *testing.T) {
 			desc: "Error: header has wrong type",
 			listData: func() []byte {
 				h := NewGenericHeader()
-				h.SetFieldNum(1)
+				h.SetFieldNum(0)
 				h.SetFieldType(field.FTBool)
 				h.SetFinal40(1)
 				return h
@@ -567,7 +560,7 @@ func TestDecodeListBool(t *testing.T) {
 		s := New(0, m)
 		dataSize := len(test.listData) // Must record before we change the []byte slice
 
-		err := s.decodeListBool(&test.listData, 1)
+		err := s.decodeListBool(&test.listData, 0)
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestDecodeListBool(%s): got err == nil, want err != nil", test.desc)
@@ -579,7 +572,7 @@ func TestDecodeListBool(t *testing.T) {
 			continue
 		}
 
-		lb, err := GetListBool(s, 1)
+		lb, err := GetListBool(s, 0)
 		if err != nil {
 			panic(err)
 		}
@@ -635,7 +628,6 @@ func TestDecodeListBytes(t *testing.T) {
 			desc: "Error: header has wrong type",
 			listData: func() []byte {
 				h := NewGenericHeader()
-				h.SetFieldNum(1)
 				h.SetFieldType(field.FTBytes)
 				h.SetFinal40(1)
 				return h
@@ -653,7 +645,6 @@ func TestDecodeListBytes(t *testing.T) {
 			listData: func() []byte {
 				// Put in header.
 				h := NewGenericHeader()
-				h.SetFieldNum(1)
 				h.SetFieldType(field.FTListBytes)
 				h.SetFinal40(2)
 				// Put in the entry header + data
@@ -677,7 +668,7 @@ func TestDecodeListBytes(t *testing.T) {
 		s := New(0, m)
 		dataSize := len(test.listData) // Must record before we change the slice
 
-		err := s.decodeListBytes(&test.listData, 1)
+		err := s.decodeListBytes(&test.listData, 0)
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestDecodeListBytes(%s): got err == nil, want err != nil", test.desc)
@@ -689,7 +680,7 @@ func TestDecodeListBytes(t *testing.T) {
 			continue
 		}
 
-		lb, err := GetListBytes(s, 1)
+		lb, err := GetListBytes(s, 0)
 		if err != nil {
 			panic(err)
 		}
@@ -733,7 +724,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 			if len(encoded[i]) != 24 {
 				panic(fmt.Sprintf("encoded %d bytes, but expected %d", len(encoded[i]), 24))
 			}
@@ -749,7 +740,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 
 			sizeInBytes[i] = 2
 		case field.FTListUint32:
@@ -762,7 +753,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 
 			sizeInBytes[i] = 4
 		case field.FTListUint64:
@@ -775,7 +766,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 			sizeInBytes[i] = 8
 		case field.FTListInt8:
 			mappings[i] = mapping.Map{0: &mapping.FieldDesc{Type: ft}}
@@ -787,7 +778,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 			if len(encoded[i]) != 24 {
 				panic(fmt.Sprintf("encoded %d bytes, but expected %d", len(encoded[i]), 24))
 			}
@@ -803,7 +794,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 
 			sizeInBytes[i] = 2
 		case field.FTListInt32:
@@ -816,7 +807,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 
 			sizeInBytes[i] = 4
 		case field.FTListInt64:
@@ -829,7 +820,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 
 			sizeInBytes[i] = 8
 		case field.FTListFloat32:
@@ -842,7 +833,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 
 			sizeInBytes[i] = 4
 		case field.FTListFloat64:
@@ -855,7 +846,7 @@ func TestDecodeListNum(t *testing.T) {
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
 			// to a Struct with SetListNumbers(). So we fake it.
-			GenericHeader(encoded[i][:8]).SetFieldNum(1)
+			GenericHeader(encoded[i][:8]).SetFieldNum(0)
 
 			sizeInBytes[i] = 8
 		}
@@ -863,7 +854,7 @@ func TestDecodeListNum(t *testing.T) {
 
 	for i, mapping := range mappings {
 		s := New(0, mapping)
-		err := s.decodeListNumber(&encoded[i], 1)
+		err := s.decodeListNumber(&encoded[i], 0)
 		if err != nil {
 			t.Errorf("TestDecodeListNum: could not decode type %v: %s", mapping[0].Type, err)
 			continue
@@ -871,7 +862,7 @@ func TestDecodeListNum(t *testing.T) {
 		switch mapping[0].Type {
 		case field.FTListInt8:
 			wantList := want[i].([]int8)
-			gotList, err := GetListNumber[int8](s, 1)
+			gotList, err := GetListNumber[int8](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -889,12 +880,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListInt8 {
 				t.Errorf("TestDecodeListNum([]int8]): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]int8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]int8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListUint8:
 			wantList := want[i].([]uint8)
-			gotList, err := GetListNumber[uint8](s, 1)
+			gotList, err := GetListNumber[uint8](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -911,12 +902,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListUint8 {
 				t.Errorf("TestDecodeListNum([]uint8): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]uint8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]uint8): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListInt16:
 			wantList := want[i].([]int16)
-			gotList, err := GetListNumber[int16](s, 1)
+			gotList, err := GetListNumber[int16](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -932,12 +923,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListInt16 {
 				t.Errorf("TestDecodeListNum([]int16): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]int16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]int16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListUint16:
 			wantList := want[i].([]uint16)
-			gotList, err := GetListNumber[uint16](s, 1)
+			gotList, err := GetListNumber[uint16](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -953,13 +944,13 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListUint16 {
 				t.Errorf("TestDecodeListNum([]uint16): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]uint16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]uint16): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 
 		case field.FTListInt32:
 			wantList := want[i].([]int32)
-			gotList, err := GetListNumber[int32](s, 1)
+			gotList, err := GetListNumber[int32](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -975,12 +966,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListInt32 {
 				t.Errorf("TestDecodeListNum([]int32): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]int32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]int32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListUint32:
 			wantList := want[i].([]uint32)
-			gotList, err := GetListNumber[uint32](s, 1)
+			gotList, err := GetListNumber[uint32](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -996,12 +987,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListUint32 {
 				t.Errorf("TestDecodeListNum([]uint32): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]uint32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]uint32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListFloat32:
 			wantList := want[i].([]float32)
-			gotList, err := GetListNumber[float32](s, 1)
+			gotList, err := GetListNumber[float32](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -1017,12 +1008,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListFloat32 {
 				t.Errorf("TestDecodeListNum([]float32): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]float32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]float32): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListInt64:
 			wantList := want[i].([]int64)
-			gotList, err := GetListNumber[int64](s, 1)
+			gotList, err := GetListNumber[int64](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -1038,12 +1029,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListInt64 {
 				t.Errorf("TestDecodeListNum([]int64): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]int64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]int64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListUint64:
 			wantList := want[i].([]uint64)
-			gotList, err := GetListNumber[uint64](s, 1)
+			gotList, err := GetListNumber[uint64](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -1059,12 +1050,12 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListUint64 {
 				t.Errorf("TestDecodeListNum([]uint64): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]uint64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]uint64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		case field.FTListFloat64:
 			wantList := want[i].([]float64)
-			gotList, err := GetListNumber[float64](s, 1)
+			gotList, err := GetListNumber[float64](s, 0)
 			if err != nil {
 				panic(err)
 			}
@@ -1080,8 +1071,8 @@ func TestDecodeListNum(t *testing.T) {
 			if s.fields[0].header.FieldType() != field.FTListFloat64 {
 				t.Errorf("TestDecodeListNum([]float64): field type: got %v", field.Type(s.fields[0].header.FieldType()))
 			}
-			if s.fields[0].header.FieldNum() != 1 {
-				t.Errorf("TestDecodeListNum([]float64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 1)
+			if s.fields[0].header.FieldNum() != 0 {
+				t.Errorf("TestDecodeListNum([]float64): fieldNum: got %d, want %d", s.fields[0].header.FieldNum(), 0)
 			}
 		}
 		if len(encoded[i]) != 0 {
@@ -1102,14 +1093,12 @@ func TestDecodeListStruct(t *testing.T) {
 	msg0Mapping.MustValidate()
 
 	ls0 := New(0, lmsgMapping)
-	SetBool(ls0, 1, true)           // 16 bytes
+	MustSetBool(ls0, 0, true)       // 16 bytes
 	ls1 := New(0, lmsgMapping)      // 8 bytes
 	expectedTotal := 8 + 8 + 8 + 16 // s0Header(8) + list header(8) + ls0(16) + ls1(8)
 
 	s0 := New(0, msg0Mapping)
-	if err := AppendListStruct(s0, 1, ls0, ls1); err != nil {
-		panic(err)
-	}
+	MustAppendListStruct(s0, 0, ls0, ls1)
 
 	buff := &bytes.Buffer{}
 	written, err := s0.Marshal(buff)
@@ -1126,25 +1115,25 @@ func TestDecodeListStruct(t *testing.T) {
 
 func TestDecodeStruct(t *testing.T) {
 	lmsgMapping := mapping.Map{
-		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool}, // 1
+		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool}, // 0
 	}
 
 	msg1Mapping := mapping.Map{
-		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool}, // 1
+		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool}, // 0
 		&mapping.FieldDesc{Name: "Int8", Type: field.FTInt8},
 		&mapping.FieldDesc{Name: "Int16", Type: field.FTInt16},
 		&mapping.FieldDesc{Name: "Int32", Type: field.FTInt32},
-		&mapping.FieldDesc{Name: "Int64", Type: field.FTInt64}, // 5
+		&mapping.FieldDesc{Name: "Int64", Type: field.FTInt64}, // 4
 		&mapping.FieldDesc{Name: "Uint8", Type: field.FTUint8},
 		&mapping.FieldDesc{Name: "Uint16", Type: field.FTUint16},
 		&mapping.FieldDesc{Name: "Uint32", Type: field.FTUint32},
 		&mapping.FieldDesc{Name: "Uint64", Type: field.FTUint64},
-		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},                               // 10
-		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},                               // 11
-		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},                                   // 12
-		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTListUint8},                          // 13
-		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                           // 14
-		&mapping.FieldDesc{Name: "ListStructs", Type: field.FTListStructs, Mapping: lmsgMapping}, // 15
+		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},                               // 9
+		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},                               // 10
+		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},                                   // 11
+		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTListUint8},                          // 12
+		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                           // 13
+		&mapping.FieldDesc{Name: "ListStructs", Type: field.FTListStructs, Mapping: lmsgMapping}, // 14
 	}
 	msg0Mapping := mapping.Map{
 		&mapping.FieldDesc{Name: "Struct", Type: field.FTStruct, Mapping: msg1Mapping},
@@ -1153,7 +1142,7 @@ func TestDecodeStruct(t *testing.T) {
 	msg0Mapping.MustValidate()
 
 	ls0 := New(0, lmsgMapping)
-	SetBool(ls0, 1, true)      // 16 bytes
+	MustSetBool(ls0, 0, true)  // 16 bytes
 	ls1 := New(0, lmsgMapping) // 8 bytes
 
 	numList := NewNumber[uint8]()
@@ -1163,26 +1152,26 @@ func TestDecodeStruct(t *testing.T) {
 	bytesList.Append([]byte("what"), []byte("ever")) // 24 = header(8) + entry header(4) + entry(4) + entry header(4) + entry(4)
 
 	s0 := New(0, msg0Mapping)
-	s1 := New(1, msg1Mapping)                // 8 bytes
-	SetBool(s1, 1, true)                     // 16 bytes
-	SetNumber(s1, 2, int8(1))                // 24 bytes
-	SetNumber(s1, 3, int16(1))               // 32 bytes
-	SetNumber(s1, 4, int32(1))               // 40 bytes
-	SetNumber(s1, 5, int64(1))               // 56 bytes
-	SetNumber(s1, 6, uint8(1))               // 64 bytes
-	SetNumber(s1, 7, uint16(1))              // 72 bytes
-	SetNumber(s1, 8, uint32(1))              // 80 bytes
-	SetNumber(s1, 9, uint64(1))              // 96 bytes
-	SetNumber(s1, 10, float32(1.1))          // 104 bytes
-	SetNumber(s1, 11, float64(1.1))          // 120 bytes
-	SetBytes(s1, 12, []byte("Hello"), false) // 136 bytes
-	SetListNumber(s1, 13, numList)           // 160 bytes
-	SetListBytes(s1, 14, bytesList)          // 184 bytes
-	AppendListStruct(s1, 15, ls0, ls1)       // 216 bytes = list header(8) + ls0(16) + ls1(8)
+	s1 := New(1, msg1Mapping)                    // 8 bytes
+	MustSetBool(s1, 0, true)                     // 16 bytes
+	MustSetNumber(s1, 1, int8(1))                // 24 bytes
+	MustSetNumber(s1, 2, int16(1))               // 32 bytes
+	MustSetNumber(s1, 3, int32(1))               // 40 bytes
+	MustSetNumber(s1, 4, int64(1))               // 56 bytes
+	MustSetNumber(s1, 5, uint8(1))               // 64 bytes
+	MustSetNumber(s1, 6, uint16(1))              // 72 bytes
+	MustSetNumber(s1, 7, uint32(1))              // 80 bytes
+	MustSetNumber(s1, 8, uint64(1))              // 96 bytes
+	MustSetNumber(s1, 9, float32(1.1))           // 104 bytes
+	MustSetNumber(s1, 10, float64(1.1))          // 120 bytes
+	MustSetBytes(s1, 11, []byte("Hello"), false) // 136 bytes
+	MustSetListNumber(s1, 12, numList)           // 160 bytes
+	MustSetListBytes(s1, 13, bytesList)          // 184 bytes
+	MustAppendListStruct(s1, 14, ls0, ls1)       // 216 bytes = list header(8) + ls0(16) + ls1(8)
 
 	// Total for both structs: 216 + 8
 	expectedTotal := 224
-	if err := SetStruct(s0, 1, s1); err != nil {
+	if err := SetStruct(s0, 0, s1); err != nil {
 		panic(err)
 	}
 	log.Println("header: ", s0.header)
@@ -1212,57 +1201,55 @@ func TestDecodeStruct(t *testing.T) {
 		t.Fatalf("TestDecodeStruct: decoding: unmarshal() returned %d bytes, expected %d bytes", read, expectedTotal)
 	}
 
-	sub, err := GetStruct(cp, 1)
-	if err != nil {
-		panic(err)
-	}
+	sub := MustGetStruct(cp, 0)
+
 	log.Println("before call Struct is: ", sub)
-	if MustGetBool(sub, 1) != true {
+	if MustGetBool(sub, 0) != true {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[1] != true")
 	}
-	if MustGetNumber[int8](sub, 2) != 1 {
+	if MustGetNumber[int8](sub, 1) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[2] != 1")
 	}
-	if MustGetNumber[int16](sub, 3) != 1 {
+	if MustGetNumber[int16](sub, 2) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[3] != 1")
 	}
-	if MustGetNumber[int32](sub, 4) != 1 {
+	if MustGetNumber[int32](sub, 3) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[4] != 1")
 	}
-	if MustGetNumber[int64](sub, 5) != 1 {
+	if MustGetNumber[int64](sub, 4) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[5] != 1")
 	}
-	if MustGetNumber[uint8](sub, 6) != 1 {
+	if MustGetNumber[uint8](sub, 5) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[6] != 1")
 	}
-	if MustGetNumber[uint16](sub, 7) != 1 {
+	if MustGetNumber[uint16](sub, 6) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[7] != 1")
 	}
-	if MustGetNumber[uint32](sub, 8) != 1 {
+	if MustGetNumber[uint32](sub, 7) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[8] != 1")
 	}
-	if MustGetNumber[uint64](sub, 9) != 1 {
+	if MustGetNumber[uint64](sub, 8) != 1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[9] != 1")
 	}
-	if MustGetNumber[float32](sub, 10) != 1.1 {
+	if MustGetNumber[float32](sub, 9) != 1.1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[10] != 1.1")
 	}
-	if MustGetNumber[float64](sub, 11) != 1.1 {
+	if MustGetNumber[float64](sub, 10) != 1.1 {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[11] != 1.1")
 	}
-	if !bytes.Equal(*MustGetBytes(sub, 12), []byte("Hello")) {
+	if !bytes.Equal(*MustGetBytes(sub, 11), []byte("Hello")) {
 		t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[10]: got %q, want %q", *MustGetBytes(sub, 12), []byte("hello"))
 	}
-	f13 := MustGetListNumber[uint8](sub, 13)
+	f12 := MustGetListNumber[uint8](sub, 12)
 	for i := 0; i < numList.Len(); i++ {
-		if numList.Get(i) != f13.Get(i) {
-			t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[13]: number index %d: got %d, want %d", i, f13.Get(i), numList.Get(i))
+		if numList.Get(i) != f12.Get(i) {
+			t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[13]: number index %d: got %d, want %d", i, f12.Get(i), numList.Get(i))
 		}
 	}
-	f14 := MustGetListBytes(sub, 14)
-	for i := 0; i < f14.Len(); i++ {
-		if !bytes.Equal(f14.Get(i), bytesList.Get(i)) {
-			t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[14]: bytes list index %d: got %s, want %s", i, string(f14.Get(i)), string(bytesList.Get(i)))
+	f13 := MustGetListBytes(sub, 13)
+	for i := 0; i < f13.Len(); i++ {
+		if !bytes.Equal(f13.Get(i), bytesList.Get(i)) {
+			t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[14]: bytes list index %d: got %s, want %s", i, string(f13.Get(i)), string(bytesList.Get(i)))
 		}
 	}
 }

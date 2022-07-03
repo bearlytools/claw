@@ -30,12 +30,12 @@ Enum Maker uint8 {
 }
 
 Struct Car {
-	Name string @1
-	Maker Maker @2
-	Year uint16 @3
-	Serial uint64 @5
-	PreviousVersions []Car @4
-	Image bytes @6
+	Name string @0
+	Maker Maker @1
+	Year uint16 @2
+	Serial uint64 @3
+	PreviousVersions []Car @5
+	Image bytes @4
 }
 `
 
