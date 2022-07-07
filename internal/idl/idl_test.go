@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/johnsiilver/halfpike"
+	"github.com/kylelemons/godebug/pretty"
 )
 
 func TestFile(t *testing.T) {
@@ -15,7 +16,10 @@ func TestFile(t *testing.T) {
 package hello // Yeah I can comment here
 
 // Okay, love the version
-version 1 // And here too
+version 0 // And here too
+
+// Comment.
+options [ NoZeroTypeCompression() ]// Comment
 
 import (
 	"github.com/johnsiilver/something"
@@ -26,34 +30,37 @@ Enum Maker uint8 {
 	Unknown @0 // [jsonName(unknown)]
 	Toyota @1
 	Ford @2
-	Tesla @3 // Fuck Elon
+	Tesla @3 // Comment
 }
 
 Struct Car {
 	Name string @0
-	Maker Maker @1
+	Maker Maker @1 //Comment
 	Year uint16 @2
 	Serial uint64 @3
 	PreviousVersions []Car @5
 	Image bytes @4
 }
 `
+	wantOpts := map[string]Option{
+		"NoZeroTypeCompression": {"NoZeroTypeCompression", nil},
+	}
 
 	f := New()
 
-	p, err := halfpike.NewParser(content, f)
-	if err != nil {
+	if err := halfpike.Parse(context.Background(), content, f); err != nil {
 		panic(err)
 	}
-	if err := halfpike.Parse(context.Background(), p, f.Start); err != nil {
-		panic(err)
-	}
+	panic("")
 
 	if f.Package != "hello" {
 		panic("package")
 	}
-	if f.Version != 1 {
-		panic("package")
+	if f.Version != 0 {
+		panic("version")
+	}
+	if diff := pretty.Compare(wantOpts, f.Options); diff != "" {
+		t.Fatalf("TestFile(options) -want/+got:\n%s", diff)
 	}
 
 	for _, impName := range []string{"something", "renamed"} {
@@ -75,4 +82,17 @@ Struct Car {
 			panic("structs")
 		}
 	}
+}
+
+// lineLexer is provided to simply lex out a single line for testing.
+type lineLexer struct {
+	line halfpike.Line
+}
+
+func (l *lineLexer) Start(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
+	l.line = p.Next()
+	return nil
+}
+func (p *lineLexer) Validate() error {
+	return nil
 }

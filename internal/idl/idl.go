@@ -14,25 +14,55 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// FileOption is an option for the file.
-type FileOption int
+// Option is an option for the file.
+type Option struct {
+	Name string
+	Args []string
+}
 
+// File represents the collected information from a .claw file.
 type File struct {
 	Package    string
 	Version    int
-	Options    []FileOption
+	Options    map[string]Option
 	Identifers map[string]any
 	Imports    Import
 }
 
+// New is the constructor for File.
 func New() *File {
 	return &File{
 		Identifers: map[string]any{},
+		Options:    map[string]Option{},
+		Version:    -1,
 		//hp: halfpike.NewParser(input, val Validator) (*Parser, error)
 	}
 }
 
+// Validate validates that the File has all the correct information required.
 func (f *File) Validate() error {
+	if f.Package == "" {
+		return fmt.Errorf("must define a package")
+	}
+
+	switch f.Version {
+	case -1:
+		f.Version = 0
+	case 0:
+	default:
+		return fmt.Errorf("this compiler does not support a Claw language version != 0")
+	}
+
+	for _, opt := range f.Options {
+		v, ok := fileOptions[opt.Name]
+		if !ok {
+			return fmt.Errorf("file option %q provided, but is not valid. spelling or capitalization?", opt.Name)
+		}
+		if err := v(opt.Args); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -123,13 +153,78 @@ func (f *File) ParsePackage(ctx context.Context, p *halfpike.Parser) halfpike.Pa
 		return p.Errorf(err.Error())
 	}
 
-	return f.ParseVersion
+	return f.FindNext
+}
+
+// FindNext is used to scan lines until we find the next thing to parse and direct
+// to the halfpike.ParseFn responsible.
+func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
+	f.SkipLinesWithComments(p)
+
+	line := p.Next()
+
+	switch strings.ToLower(line.Items[0].Val) {
+	case "version":
+		if f.Version >= 0 {
+			return p.Errorf("[Line %d] error: duplicate 'version' line found", line.LineNum)
+		}
+		p.Backup()
+		return f.ParseVersion
+	case "options":
+		if len(f.Options) > 0 {
+			return p.Errorf("[Line %d] error: duplicate 'options' line found", line.LineNum)
+		}
+		if len(f.Identifers) != 0 {
+			return p.Errorf("[Line %d] 'options' must come before any Structs or Enums", line.LineNum)
+		}
+		p.Backup()
+		return f.ParseOptions
+	case "import":
+		if f.Imports.imports != nil {
+			return p.Errorf("[Line %d] error: duplicate 'import' line found", line.LineNum)
+		}
+		if len(f.Identifers) != 0 {
+			return p.Errorf("[Line %d] 'import' must come before any Structs or Enums", line.LineNum)
+		}
+		p.Backup()
+		i := NewImport()
+		if err := i.parse(p); err != nil {
+			return p.Errorf(err.Error())
+		}
+		f.Imports = i
+		return f.FindNext
+	case "enum":
+		p.Backup()
+		e := NewEnum()
+		if err := e.parse(p); err != nil {
+			return p.Errorf(err.Error())
+		}
+		if _, ok := f.Identifers[e.Name]; ok {
+			return p.Errorf("Error: found two top level identifiers named %q", e.Name)
+		}
+		f.Identifers[e.Name] = e
+		return f.FindNext
+	case "struct":
+		p.Backup()
+		s := NewStruct(f)
+		if err := s.parse(p); err != nil {
+			return p.Errorf(err.Error())
+		}
+		if _, ok := f.Identifers[s.Name]; ok {
+			return p.Errorf("Error: found two top level identifiers named %q", s.Name)
+		}
+		f.Identifers[s.Name] = s
+		return f.FindNext
+	default:
+		if p.EOF(line) {
+			return nil
+		}
+		return p.Errorf("[Line %d] do not understand this line", line.LineNum)
+	}
 }
 
 // ParseVersion finds the version
 func (f *File) ParseVersion(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
-	f.SkipLinesWithComments(p)
-
 	line := p.Next()
 
 	if len(line.Items) < 3 {
@@ -153,67 +248,21 @@ func (f *File) ParseVersion(ctx context.Context, p *halfpike.Parser) halfpike.Pa
 	return f.FindNext
 }
 
-func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
-	f.SkipLinesWithComments(p)
-
+// ParseOptions parses file options that follow the root "options" keyword.
+func (f *File) ParseOptions(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
 	line := p.Next()
 
-	switch line.Items[0].Val {
-	case "options":
-		if f.Options != nil {
-			return p.Errorf("[Line %d] error: duplicate 'options' line found", line.LineNum)
-		}
-		if len(f.Identifers) != 0 {
-			return p.Errorf("[Line %d] 'options' must come before any Structs or Enums", line.LineNum)
-		}
-		p.Backup()
-		return f.ParseOptions(ctx, p)
-	case "import":
-		if f.Imports.imports != nil {
-			return p.Errorf("[Line %d] error: duplicate 'import' line found", line.LineNum)
-		}
-		if len(f.Identifers) != 0 {
-			return p.Errorf("[Line %d] 'import' must come before any Structs or Enums", line.LineNum)
-		}
-		p.Backup()
-		i := NewImport()
-		if err := i.parse(p); err != nil {
-			return p.Errorf(err.Error())
-		}
-		f.Imports = i
-		return f.FindNext
-	case "Enum":
-		p.Backup()
-		e := NewEnum()
-		if err := e.parse(p); err != nil {
-			return p.Errorf(err.Error())
-		}
-		if _, ok := f.Identifers[e.Name]; ok {
-			return p.Errorf("Error: found two top level identifiers named %q", e.Name)
-		}
-		f.Identifers[e.Name] = e
-		return f.FindNext
-	case "Struct":
-		p.Backup()
-		s := NewStruct(f)
-		if err := s.parse(p); err != nil {
-			return p.Errorf(err.Error())
-		}
-		if _, ok := f.Identifers[s.Name]; ok {
-			return p.Errorf("Error: found two top level identifiers named %q", s.Name)
-		}
-		f.Identifers[s.Name] = s
-		return f.FindNext
-	default:
-		if p.EOF(line) {
-			return nil
-		}
-		return p.Errorf("[Line %d] do not understand this line", line.LineNum)
+	opts := Options{}
+	if err := opts.parse(line, true); err != nil {
+		return p.Errorf("[Line %d]: %w", line.LineNum, err)
 	}
-}
-
-func (f *File) ParseOptions(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
-	return nil
+	for _, opt := range opts {
+		if _, ok := f.Options[opt.Name]; ok {
+			return p.Errorf("Line %d]: cannot use the same option %s() more than once", line.LineNum, opt.Name)
+		}
+		f.Options[opt.Name] = opt
+	}
+	return f.FindNext
 }
 
 // Import represents an import block.
@@ -808,4 +857,14 @@ func validImportPath(p string) (string, error) {
 
 func pkgFromImpPath(p string) string {
 	return path.Base(p)
+}
+
+func removeSpace(runes []rune) []rune {
+	for i := 0; i < len(runes); i++ {
+		if unicode.IsSpace(runes[i]) {
+			continue
+		}
+		return runes[i:]
+	}
+	return []rune{}
 }

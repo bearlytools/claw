@@ -1,5 +1,6 @@
-// Package list contains types that implement lists of scalar values that can be stored
-// in Claw Struct fields.
+// Package list contains types that implement lists of scalar values that can be store
+// in Claw Struct fields. All fields starting with XXX are not convered by any compatibility
+// promise and should not be used.
 package list
 
 import (
@@ -17,21 +18,21 @@ type Number interface {
 
 // Bools is a wrapper around a list of boolean values.
 type Bools struct {
-	b *structs.Bool
+	b *structs.Bools
 }
 
 // NewBools creates a new Bool that will be stored in a Struct field with number fieldNum.
 func NewBools() Bools {
-	return Bools{b: structs.NewBool(0)}
+	return Bools{b: structs.NewBools(0)}
 }
 
 // Internal use only.
-func XXXFromBools(b *structs.Bool) Bools {
+func XXXFromBools(b *structs.Bools) Bools {
 	return Bools{b: b}
 }
 
 // Internal use only.
-func (b Bools) XXXBools() *structs.Bool {
+func (b Bools) XXXBools() *structs.Bools {
 	return b.b
 }
 
@@ -71,21 +72,21 @@ func (b *Bools) Slice() []bool {
 
 // Numbers represents a list of numbers
 type Numbers[N Number] struct {
-	n *structs.Number[N]
+	n *structs.Numbers[N]
 }
 
 // NewNumbers creates a new Numbers.
 func NewNumbers[N Number]() Numbers[N] {
-	return Numbers[N]{n: structs.NewNumber[N]()}
+	return Numbers[N]{n: structs.NewNumbers[N]()}
 }
 
 // Internal use only.
-func XXXFromNumbers[N Number](n *structs.Number[N]) Numbers[N] {
+func XXXFromNumbers[N Number](n *structs.Numbers[N]) Numbers[N] {
 	return Numbers[N]{n: n}
 }
 
 // Internal use only.
-func (n Numbers[N]) XXXNumbers() *structs.Number[N] {
+func (n Numbers[N]) XXXNumbers() *structs.Numbers[N] {
 	return n.n
 }
 

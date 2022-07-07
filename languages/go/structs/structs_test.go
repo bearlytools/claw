@@ -477,7 +477,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// Start List Number
 	////////////////////
 
-	nums := NewNumber[uint8]()
+	nums := NewNumbers[uint8]()
 	if err = SetListNumber(root, 14, nums); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding list of numbers): %s", err)
 	}

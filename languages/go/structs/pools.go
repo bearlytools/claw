@@ -44,67 +44,67 @@ var (
 func init() {
 	boolPool = pool.Add(
 		func() any {
-			return &Bool{}
+			return &Bools{}
 		},
 	)
 
 	nUint8Pool = pool.Add(
 		func() any {
-			return &Number[uint8]{}
+			return &Numbers[uint8]{}
 		},
 	)
 
 	nUint16Pool = pool.Add(
 		func() any {
-			return &Number[uint16]{}
+			return &Numbers[uint16]{}
 		},
 	)
 
 	nUint32Pool = pool.Add(
 		func() any {
-			return &Number[uint32]{}
+			return &Numbers[uint32]{}
 		},
 	)
 
 	nUint64Pool = pool.Add(
 		func() any {
-			return &Number[uint64]{}
+			return &Numbers[uint64]{}
 		},
 	)
 
 	nInt8Pool = pool.Add(
 		func() any {
-			return &Number[int8]{}
+			return &Numbers[int8]{}
 		},
 	)
 
 	nInt16Pool = pool.Add(
 		func() any {
-			return &Number[int16]{}
+			return &Numbers[int16]{}
 		},
 	)
 
 	nInt32Pool = pool.Add(
 		func() any {
-			return &Number[int32]{}
+			return &Numbers[int32]{}
 		},
 	)
 
 	nInt64Pool = pool.Add(
 		func() any {
-			return &Number[int64]{}
+			return &Numbers[int64]{}
 		},
 	)
 
 	nFloat32Pool = pool.Add(
 		func() any {
-			return &Number[float32]{}
+			return &Numbers[float32]{}
 		},
 	)
 
 	nFloat64Pool = pool.Add(
 		func() any {
-			return &Number[float64]{}
+			return &Numbers[float64]{}
 		},
 	)
 

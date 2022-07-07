@@ -17,6 +17,8 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	flag.Parse()
 	args := flag.Args()
 	path := ""
@@ -52,11 +54,7 @@ func main() {
 	}
 	file := idl.New()
 
-	p, err := halfpike.NewParser(conversions.ByteSlice2String(content), file)
-	if err != nil {
-		exit(err)
-	}
-	if err := halfpike.Parse(context.Background(), p, file.Start); err != nil {
+	if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), file); err != nil {
 		exit(err)
 	}
 

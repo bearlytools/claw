@@ -18,7 +18,7 @@ func TestBoolGetSetAppendRange(t *testing.T) {
 
 	// This sets up the first 20 entries to be set to true, everything else is false.
 	b = append(b, bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 4), 0, 0, 0, 0, 0)
-	_, list, err := NewBoolFromBytes(&b, s)
+	_, list, err := NewBoolsFromBytes(&b, s)
 	if err != nil {
 		panic(err)
 	}
@@ -114,7 +114,7 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 		b = append(b, values[i])
 	}
 	b = append(b, 0) // Padding
-	list, err := NewNumberFromBytes[uint8](&b, s)
+	list, err := NewNumbersFromBytes[uint8](&b, s)
 	if err != nil {
 		panic(err)
 	}
@@ -207,7 +207,7 @@ func TestNumberFloat(t *testing.T) {
 
 		s := New(0, nil)
 		b := []byte(test.h)
-		list, err := NewNumberFromBytes[float64](&b, s)
+		list, err := NewNumbersFromBytes[float64](&b, s)
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestNumberFloat(%s): got err == nil, want err != nil", test.desc)

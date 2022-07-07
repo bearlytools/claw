@@ -87,7 +87,7 @@ func TestDecodeBool(t *testing.T) {
 	}
 }
 
-func numFieldInBytes[N Numbers](value N, dataMap mapping.Map) []byte {
+func numFieldInBytes[N Number](value N, dataMap mapping.Map) []byte {
 	s := New(0, dataMap)
 	if err := SetNumber(s, 0, value); err != nil {
 		panic(err)
@@ -719,7 +719,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []uint8{math.MaxUint8, 0, 1, 2, 3, 4, 5, 6, 9, 10} // store 10 values
 			want[i] = vals
 
-			n := NewNumber[uint8]()
+			n := NewNumbers[uint8]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -735,7 +735,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []uint16{math.MaxUint16, 0, 1, 2, 3} // store 5 values
 			want[i] = vals
 
-			n := NewNumber[uint16]()
+			n := NewNumbers[uint16]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -748,7 +748,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []uint32{math.MaxUint32, 0, 1} // store 3 values
 			want[i] = vals
 
-			n := NewNumber[uint32]()
+			n := NewNumbers[uint32]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -761,7 +761,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []uint64{math.MaxUint64, 0} // store 2 values
 			want[i] = vals
 
-			n := NewNumber[uint64]()
+			n := NewNumbers[uint64]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -773,7 +773,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []int8{math.MaxInt8, math.MinInt8, 1, 2, 3, 4, 5, 6, 9, 10} // store 10 values
 			want[i] = vals
 
-			n := NewNumber[int8]()
+			n := NewNumbers[int8]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -789,7 +789,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []int16{math.MaxInt8, math.MinInt16, 1, 2, 3} // store 5 values
 			want[i] = vals
 
-			n := NewNumber[int16]()
+			n := NewNumbers[int16]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -802,7 +802,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []int32{math.MaxInt32, math.MinInt32, 1} // store 3 values
 			want[i] = vals
 
-			n := NewNumber[int32]()
+			n := NewNumbers[int32]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -815,7 +815,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []int64{math.MaxInt64, math.MinInt64} // store 2 values
 			want[i] = vals
 
-			n := NewNumber[int64]()
+			n := NewNumbers[int64]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -828,7 +828,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []float32{math.MaxFloat32, math.SmallestNonzeroFloat32, 1.1} // store 3 values
 			want[i] = vals
 
-			n := NewNumber[float32]()
+			n := NewNumbers[float32]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -841,7 +841,7 @@ func TestDecodeListNum(t *testing.T) {
 			vals := []float64{math.MaxFloat32, math.SmallestNonzeroFloat64} // store 2 values
 			want[i] = vals
 
-			n := NewNumber[float64]()
+			n := NewNumbers[float64]()
 			n.Append(vals...)
 			encoded[i] = n.Encode()
 			// Encode() only encodes what is there. FieldNum is only assigned when attaching directly
@@ -1145,7 +1145,7 @@ func TestDecodeStruct(t *testing.T) {
 	MustSetBool(ls0, 0, true)  // 16 bytes
 	ls1 := New(0, lmsgMapping) // 8 bytes
 
-	numList := NewNumber[uint8]()
+	numList := NewNumbers[uint8]()
 	numList.Append(0, 1, 2, 3, 4, 5, 6, 7, 8) // 24
 
 	bytesList := NewBytes()

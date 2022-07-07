@@ -60,11 +60,23 @@ A few notes:
 * Types are order dependent. If Struct A refers to Struct B, B must be ahead of it in the file
 * Only 1 .claw file per directory, must have the name of the directory, which must be the same as the package name
 
+One other important rule:
+
+The schema language compiler might accidently break some type of rule, like being lax with some constraint.  An example might be that we require a space character after something like a list comma. 
+
+The laxness would be a bug and we can fix it without considering it a breaking change.
+
 ## Comments
 
 Comments use the C style of `//`.  The comments can stand alone on a line or be used at the end of a line.
 
-Comments are ignored by the compiler and we pretend they don't exist when talking about requirements for the rest of the document.
+Comments are mostly ignored by the compiler and we pretend they don't exist when talking about requirements for the rest of the document.
+
+The compiler MAY collect the comments and output them into language files. For the comment to be included, it must be on the line before the identifier. If there is a blank line between the comment and the identifier, it will be ignored. If it is an inline comment, it is ignored.
+
+Comment collection is not guaranteed by any compatibility promise, though it is unlikely we'd remove the capability, we may change how it works.
+
+Comments that do not start a line REQUIRE a space before them. // also requires a space afterwards.
 
 ## Package declaration
 

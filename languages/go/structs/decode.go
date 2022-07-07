@@ -235,7 +235,7 @@ func (s *Struct) decodeBytes(buffer *[]byte, fieldNum uint16) error {
 }
 
 func (s *Struct) decodeListBool(buffer *[]byte, fieldNum uint16) error {
-	h, ptr, err := NewBoolFromBytes(buffer, s) // This handles our additions to s.structTotal
+	h, ptr, err := NewBoolsFromBytes(buffer, s) // This handles our additions to s.structTotal
 	if err != nil {
 		return err
 	}
@@ -268,61 +268,61 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 	var uptr unsafe.Pointer
 	switch m.Type {
 	case field.FTListInt8:
-		ptr, err := NewNumberFromBytes[int8](buffer, s)
+		ptr, err := NewNumbersFromBytes[int8](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListInt16:
-		ptr, err := NewNumberFromBytes[int16](buffer, s)
+		ptr, err := NewNumbersFromBytes[int16](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListInt32:
-		ptr, err := NewNumberFromBytes[int32](buffer, s)
+		ptr, err := NewNumbersFromBytes[int32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListInt64:
-		ptr, err := NewNumberFromBytes[int64](buffer, s)
+		ptr, err := NewNumbersFromBytes[int64](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListUint8:
-		ptr, err := NewNumberFromBytes[uint8](buffer, s)
+		ptr, err := NewNumbersFromBytes[uint8](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListUint16:
-		ptr, err := NewNumberFromBytes[uint16](buffer, s)
+		ptr, err := NewNumbersFromBytes[uint16](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListUint32:
-		ptr, err := NewNumberFromBytes[uint32](buffer, s)
+		ptr, err := NewNumbersFromBytes[uint32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListUint64:
-		ptr, err := NewNumberFromBytes[uint64](buffer, s)
+		ptr, err := NewNumbersFromBytes[uint64](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListFloat32:
-		ptr, err := NewNumberFromBytes[float32](buffer, s)
+		ptr, err := NewNumbersFromBytes[float32](buffer, s)
 		if err != nil {
 			return err
 		}
 		uptr = unsafe.Pointer(ptr)
 	case field.FTListFloat64:
-		ptr, err := NewNumberFromBytes[float64](buffer, s)
+		ptr, err := NewNumbersFromBytes[float64](buffer, s)
 		if err != nil {
 			return err
 		}

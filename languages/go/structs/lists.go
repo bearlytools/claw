@@ -16,22 +16,22 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// Numbers represents all int, uint and float types.
-type Numbers interface {
+// Number represents all int, uint and float types.
+type Number interface {
 	constraints.Integer | constraints.Float
 }
 
-// Bool is a wrapper around a list of boolean values.
-type Bool struct {
+// Bools is a wrapper around a list of boolean values.
+type Bools struct {
 	data []byte // Includes the header
 	len  int
 
 	s *Struct
 }
 
-// NewBool creates a new Bool that will be stored in a Struct field.
-func NewBool(fieldNum uint16) *Bool {
-	b := pool.Get(boolPool).(*Bool)
+// NewBools creates a new Bool that will be stored in a Struct field.
+func NewBools(fieldNum uint16) *Bools {
+	b := pool.Get(boolPool).(*Bools)
 
 	h := NewGenericHeader()
 	h.SetFieldNum(fieldNum)
@@ -42,8 +42,8 @@ func NewBool(fieldNum uint16) *Bool {
 	return b
 }
 
-// NewBoolFromBytes returns a new Bool value and advances "data" passed the list.
-func NewBoolFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bool, error) {
+// NewBoolsFromBytes returns a new Bool value and advances "data" passed the list.
+func NewBoolsFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bools, error) {
 	l := len(*data)
 	if l < 8 {
 		return nil, nil, fmt.Errorf("Struct.decodeListBool() header was < 64 bits")
@@ -61,7 +61,7 @@ func NewBoolFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bool, error) {
 	}
 	rightBound := (8 * wordsNeeded) + 8
 	sl := (*data)[0:rightBound]
-	b := pool.Get(boolPool).(*Bool)
+	b := pool.Get(boolPool).(*Bools)
 
 	b.data = sl
 	b.len = int(items)
@@ -73,12 +73,12 @@ func NewBoolFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bool, error) {
 }
 
 // Len returns the number of items in this list of bools.
-func (b *Bool) Len() int {
+func (b *Bools) Len() int {
 	return b.len
 }
 
 // Get gets a value in the list[pos].
-func (b *Bool) Get(index int) bool {
+func (b *Bools) Get(index int) bool {
 	data := b.data[8:]
 
 	if index >= b.len {
@@ -95,7 +95,7 @@ func (b *Bool) Get(index int) bool {
 // Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
 // Range until the returned channel closes or cancel the Context passed. Otherwise
 // you will have a goroutine leak.
-func (b *Bool) Range(ctx context.Context, from, to int) chan bool {
+func (b *Bools) Range(ctx context.Context, from, to int) chan bool {
 	if b.len == 0 {
 		ch := make(chan bool)
 		close(ch)
@@ -131,7 +131,7 @@ func (b *Bool) Range(ctx context.Context, from, to int) chan bool {
 }
 
 // Set a boolean in position "pos" to "val".
-func (b *Bool) Set(index int, val bool) {
+func (b *Bools) Set(index int, val bool) {
 	data := b.data[8:]
 
 	if index >= b.len {
@@ -148,12 +148,12 @@ func (b *Bool) Set(index int, val bool) {
 	data[sliceNum] = i
 }
 
-func (b *Bool) cap() int {
+func (b *Bools) cap() int {
 	return (len(b.data) - 8) * 8 // number of bytes * 8 bit values we can hold, minus the header because we don't store there
 }
 
 // Append appends values to the list of bools.
-func (b *Bool) Append(i ...bool) {
+func (b *Bools) Append(i ...bool) {
 	oldSize := len(b.data)
 
 	requiredCap := b.len + len(i) // in bits
@@ -184,7 +184,7 @@ func (b *Bool) Append(i ...bool) {
 // Slice converts this into a standard []bool. The values aren't linked, so changing
 // []bool or calling b.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
-func (b *Bool) Slice() []bool {
+func (b *Bools) Slice() []bool {
 	if b.len == 0 {
 		return nil
 	}
@@ -198,15 +198,15 @@ func (b *Bool) Slice() []bool {
 
 // Encode returns the []byte to write to output to represent this Bool. If it returns nil,
 // no output should be written.
-func (b *Bool) Encode() []byte {
+func (b *Bools) Encode() []byte {
 	if b.data == nil {
 		return nil
 	}
 	return b.data
 }
 
-// Number represents a list of numbers
-type Number[I Numbers] struct {
+// Numbers represents a list of numbers
+type Numbers[I Number] struct {
 	data        []byte
 	sizeInBytes uint8 // 1, 2, 3, 4
 	len         int
@@ -215,54 +215,54 @@ type Number[I Numbers] struct {
 	s *Struct
 }
 
-// NewNumber is used to create a holder for a list of numbers not decoded from an existing []byte stream.
-func NewNumber[I Numbers]() *Number[I] {
+// NewNumbers is used to create a holder for a list of numbers not decoded from an existing []byte stream.
+func NewNumbers[I Number]() *Numbers[I] {
 	var t I
 
-	var n *Number[I]
+	var n *Numbers[I]
 	var sizeInBytes uint8
 	var isFloat bool
 	var ft field.Type
 	switch any(t).(type) {
 	case uint8:
-		n = pool.Get(nUint8Pool).(*Number[I])
+		n = pool.Get(nUint8Pool).(*Numbers[I])
 		sizeInBytes = 1
 		ft = field.FTListUint8
 	case uint16:
-		n = pool.Get(nUint16Pool).(*Number[I])
+		n = pool.Get(nUint16Pool).(*Numbers[I])
 		sizeInBytes = 2
 		ft = field.FTListUint16
 	case uint32:
-		n = pool.Get(nUint32Pool).(*Number[I])
+		n = pool.Get(nUint32Pool).(*Numbers[I])
 		sizeInBytes = 4
 		ft = field.FTListUint32
 	case uint64:
-		n = pool.Get(nUint64Pool).(*Number[I])
+		n = pool.Get(nUint64Pool).(*Numbers[I])
 		sizeInBytes = 8
 		ft = field.FTListUint64
 	case int8:
-		n = pool.Get(nInt8Pool).(*Number[I])
+		n = pool.Get(nInt8Pool).(*Numbers[I])
 		sizeInBytes = 1
 		ft = field.FTListInt8
 	case int16:
-		n = pool.Get(nInt16Pool).(*Number[I])
+		n = pool.Get(nInt16Pool).(*Numbers[I])
 		sizeInBytes = 2
 		ft = field.FTListInt16
 	case int32:
-		n = pool.Get(nInt32Pool).(*Number[I])
+		n = pool.Get(nInt32Pool).(*Numbers[I])
 		sizeInBytes = 4
 		ft = field.FTListInt32
 	case int64:
-		n = pool.Get(nInt64Pool).(*Number[I])
+		n = pool.Get(nInt64Pool).(*Numbers[I])
 		sizeInBytes = 8
 		ft = field.FTListInt64
 	case float32:
-		n = pool.Get(nFloat32Pool).(*Number[I])
+		n = pool.Get(nFloat32Pool).(*Numbers[I])
 		sizeInBytes = 4
 		isFloat = true
 		ft = field.FTListFloat32
 	case float64:
-		n = pool.Get(nFloat64Pool).(*Number[I])
+		n = pool.Get(nFloat64Pool).(*Numbers[I])
 		sizeInBytes = 8
 		isFloat = true
 		ft = field.FTListFloat64
@@ -288,8 +288,8 @@ func wordsRequiredToStore(items, sizeInBytes int) int {
 	return words
 }
 
-// NewNumberFromBytes returns a new Number value.
-func NewNumberFromBytes[I Numbers](data *[]byte, s *Struct) (*Number[I], error) {
+// NewNumbersFromBytes returns a new Number value.
+func NewNumbersFromBytes[I Number](data *[]byte, s *Struct) (*Numbers[I], error) {
 	l := len(*data)
 	if l < 8 {
 		return nil, fmt.Errorf("header was < 64 bits")
@@ -303,40 +303,40 @@ func NewNumberFromBytes[I Numbers](data *[]byte, s *Struct) (*Number[I], error) 
 
 	var t I
 
-	var n *Number[I]
+	var n *Numbers[I]
 	var sizeInBytes uint8
 	var isFloat bool
 	switch any(t).(type) {
 	case uint8:
-		n = pool.Get(nUint8Pool).(*Number[I])
+		n = pool.Get(nUint8Pool).(*Numbers[I])
 		sizeInBytes = 1
 	case uint16:
-		n = pool.Get(nUint16Pool).(*Number[I])
+		n = pool.Get(nUint16Pool).(*Numbers[I])
 		sizeInBytes = 2
 	case uint32:
-		n = pool.Get(nUint32Pool).(*Number[I])
+		n = pool.Get(nUint32Pool).(*Numbers[I])
 		sizeInBytes = 4
 	case uint64:
-		n = pool.Get(nUint64Pool).(*Number[I])
+		n = pool.Get(nUint64Pool).(*Numbers[I])
 		sizeInBytes = 8
 	case int8:
-		n = pool.Get(nInt8Pool).(*Number[I])
+		n = pool.Get(nInt8Pool).(*Numbers[I])
 		sizeInBytes = 1
 	case int16:
-		n = pool.Get(nInt16Pool).(*Number[I])
+		n = pool.Get(nInt16Pool).(*Numbers[I])
 		sizeInBytes = 2
 	case int32:
-		n = pool.Get(nInt32Pool).(*Number[I])
+		n = pool.Get(nInt32Pool).(*Numbers[I])
 		sizeInBytes = 4
 	case int64:
-		n = pool.Get(nInt64Pool).(*Number[I])
+		n = pool.Get(nInt64Pool).(*Numbers[I])
 		sizeInBytes = 8
 	case float32:
-		n = pool.Get(nFloat32Pool).(*Number[I])
+		n = pool.Get(nFloat32Pool).(*Numbers[I])
 		sizeInBytes = 4
 		isFloat = true
 	case float64:
-		n = pool.Get(nFloat64Pool).(*Number[I])
+		n = pool.Get(nFloat64Pool).(*Numbers[I])
 		sizeInBytes = 8
 		isFloat = true
 	default:
@@ -364,12 +364,12 @@ func NewNumberFromBytes[I Numbers](data *[]byte, s *Struct) (*Number[I], error) 
 }
 
 // Len returns the number of items in this list.
-func (n *Number[I]) Len() int {
+func (n *Numbers[I]) Len() int {
 	return n.len
 }
 
 // Get gets a number stored at the index.
-func (n *Number[I]) Get(index int) I {
+func (n *Numbers[I]) Get(index int) I {
 	data := n.data[8:]
 
 	if index >= n.len {
@@ -408,7 +408,7 @@ func (n *Number[I]) Get(index int) I {
 // Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
 // Range until the returned channel closes or cancel the Context passed. Otherwise
 // you will have a goroutine leak.
-func (n *Number[I]) Range(ctx context.Context, from, to int) chan I {
+func (n *Numbers[I]) Range(ctx context.Context, from, to int) chan I {
 	if n.len == 0 {
 		ch := make(chan I)
 		close(ch)
@@ -444,7 +444,7 @@ func (n *Number[I]) Range(ctx context.Context, from, to int) chan I {
 }
 
 // Set a number in position "index" to "value".
-func (n *Number[I]) Set(index int, value I) {
+func (n *Numbers[I]) Set(index int, value I) {
 	data := n.data[8:]
 
 	if index >= n.len {
@@ -483,7 +483,7 @@ func (n *Number[I]) Set(index int, value I) {
 }
 
 // Append appends values to the list of numbers.
-func (n *Number[I]) Append(i ...I) {
+func (n *Numbers[I]) Append(i ...I) {
 	oldSize := len(n.data)
 	defer func() {
 		updateItems(n.data[:8], n.len)
@@ -508,7 +508,7 @@ func (n *Number[I]) Append(i ...I) {
 // Slice converts this into a standard []I, where I is a number value. The values aren't linked, so changing
 // []I or calling n.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
-func (n *Number[I]) Slice() []I {
+func (n *Numbers[I]) Slice() []I {
 	if n.len == 0 {
 		return nil
 	}
@@ -522,7 +522,7 @@ func (n *Number[I]) Slice() []I {
 
 // Encode returns the []byte to write to output to represent this Number. If it returns nil,
 // no output should be written.
-func (n *Number[I]) Encode() []byte {
+func (n *Numbers[I]) Encode() []byte {
 	if n.data == nil {
 		return nil
 	}
@@ -609,19 +609,12 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	return b, nil
 }
 
-// Reset resets all the internal fields to their zero value. Slices are not nilled, but are
-// set to their zero size to hold the capacity.
+// Reset resets all the internal fields to their zero value.
 func (b *Bytes) Reset() {
-	if b.header != nil {
-		b.header.SetFinal40(0)
-		b.header.SetFieldNum(0)
-	}
-	if b.data != nil {
-		b.data = b.data[0:0]
-	}
+	b.header = nil
+	b.data = nil
 	b.s = nil
 	b.dataSize = 0
-	b.padding = 0
 }
 
 // Len returns the number of items in the list.
@@ -788,29 +781,30 @@ func (b *Bytes) Encode(w io.Writer) (int, error) {
 	return wrote, err
 }
 
-type String struct {
+// Strings represents a list of strings.
+type Strings struct {
 	l *Bytes
 }
 
 // Bytes returns the underlying Bytes implementation. This is for internal use out side of that
 // has no support.
-func (s String) Bytes() *Bytes {
+func (s Strings) Bytes() *Bytes {
 	return s.l
 }
 
 // Reset resets all the internal fields to their zero value. Slices are not nilled, but are
 // set to their zero size to hold the capacity.
-func (s String) Reset() {
+func (s Strings) Reset() {
 	s.l.Reset()
 }
 
 // Len returns the number of items in the list.
-func (s String) Len() int {
+func (s Strings) Len() int {
 	return s.l.Len()
 }
 
 // Get gets a string stored at the index.
-func (s String) Get(index int) string {
+func (s Strings) Get(index int) string {
 	b := s.l.Get(index)
 	if b == nil {
 		return ""
@@ -821,7 +815,7 @@ func (s String) Get(index int) string {
 // Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
 // Range until the returned channel closes or cancel the Context passed. Otherwise
 // you will have a goroutine leak. You should NOT modify the returned []byte slice.
-func (s String) Range(ctx context.Context, from, to int) chan string {
+func (s Strings) Range(ctx context.Context, from, to int) chan string {
 	ch := make(chan string, 1)
 
 	go func() {
@@ -838,12 +832,12 @@ func (s String) Range(ctx context.Context, from, to int) chan string {
 }
 
 // Set a number in position "index" to "value".
-func (s String) Set(index int, value string) error {
+func (s Strings) Set(index int, value string) error {
 	return s.l.Set(index, conversions.UnsafeGetBytes(value))
 }
 
 // Append appends values to the list of []byte.
-func (s String) Append(values ...string) error {
+func (s Strings) Append(values ...string) error {
 	x := make([][]byte, len(values))
 	for i, v := range values {
 		x[i] = conversions.UnsafeGetBytes(v)
@@ -854,7 +848,7 @@ func (s String) Append(values ...string) error {
 // Slice converts this into a standard []string. The values aren't linked, so changing
 // []string or calling b.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
-func (s String) Slice() []string {
+func (s Strings) Slice() []string {
 	length := s.l.Len()
 	if length == 0 {
 		return nil

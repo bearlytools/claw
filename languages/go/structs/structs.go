@@ -6,7 +6,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"sync/atomic"
 	"unsafe"
@@ -94,6 +93,10 @@ type Struct struct {
 
 	// structTotal is the total size of this struct in bytes, including header.
 	structTotal *int64
+
+	// zeroTypeCompression indicates if we want to compress the encoding by ignoring
+	// scalar zero values.
+	zeroTypeCompression bool
 }
 
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
@@ -114,10 +117,11 @@ func New(fieldNum uint16, dataMap mapping.Map) *Struct {
 	h.SetFieldType(field.FTStruct)
 
 	s := &Struct{
-		header:      h,
-		mapping:     dataMap,
-		fields:      make([]structField, len(dataMap)),
-		structTotal: new(int64),
+		header:              h,
+		mapping:             dataMap,
+		fields:              make([]structField, len(dataMap)),
+		structTotal:         new(int64),
+		zeroTypeCompression: true,
 	}
 
 	/*
@@ -140,6 +144,15 @@ func NewFromReader(r io.Reader, maps mapping.Map) (*Struct, error) {
 		return nil, err
 	}
 	return s, nil
+}
+
+// XXXSetNoZeroTypeCompression sets the Struct to output scalar value headers even if the
+// value is set to the zero value of the type. This makes the size larger but allows
+// detection if the field was set to 0 versus being a zero value.
+// As with all XXXFunName, this is meant to be used internally. Using this otherwise
+// can have bad effects and there is no compatibility promise around it.
+func (s *Struct) XXXSetNoZeroTypeCompression() {
+	s.zeroTypeCompression = false
 }
 
 // IsSet determines if our Struct has a field set or not. If the fieldNum is invalid,
@@ -219,7 +232,7 @@ func DeleteBool(s *Struct, fieldNum uint16) error {
 }
 
 // GetNumber gets a number value at fieldNum.
-func GetNumber[N Numbers](s *Struct, fieldNum uint16) (N, error) {
+func GetNumber[N Number](s *Struct, fieldNum uint16) (N, error) {
 	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
 		return 0, err
 	}
@@ -251,7 +264,7 @@ func GetNumber[N Numbers](s *Struct, fieldNum uint16) (N, error) {
 	return N(binary.Get[uint64](b)), nil
 }
 
-func MustGetNumber[N Numbers](s *Struct, fieldNum uint16) N {
+func MustGetNumber[N Number](s *Struct, fieldNum uint16) N {
 	n, err := GetNumber[N](s, fieldNum)
 	if err != nil {
 		panic(err)
@@ -260,7 +273,7 @@ func MustGetNumber[N Numbers](s *Struct, fieldNum uint16) N {
 }
 
 // SetNumber sets a number value in field "fieldNum" to value "value".
-func SetNumber[N Numbers](s *Struct, fieldNum uint16, value N) error {
+func SetNumber[N Number](s *Struct, fieldNum uint16, value N) error {
 	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
 		return err
 	}
@@ -329,7 +342,7 @@ func SetNumber[N Numbers](s *Struct, fieldNum uint16, value N) error {
 	return nil
 }
 
-func MustSetNumber[N Numbers](s *Struct, fieldNum uint16, value N) {
+func MustSetNumber[N Number](s *Struct, fieldNum uint16, value N) {
 	err := SetNumber[N](s, fieldNum, value)
 	if err != nil {
 		panic(err)
@@ -447,7 +460,6 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	// But we do record the size it would be with padding.
 	addToTotal(s, int64(8+SizeWithPadding(len(value))))
 	s.fields[fieldNum] = f
-	log.Printf("when I set %d, it was: %s", fieldNum, s.fields[fieldNum].header.FieldType())
 	return nil
 }
 
@@ -571,7 +583,7 @@ func DeleteStruct(s *Struct, fieldNum uint16) error {
 }
 
 // GetListBool returns a list of bools at fieldNum.
-func GetListBool(s *Struct, fieldNum uint16) (*Bool, error) {
+func GetListBool(s *Struct, fieldNum uint16) (*Bools, error) {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBools); err != nil {
 		return nil, err
 	}
@@ -581,12 +593,12 @@ func GetListBool(s *Struct, fieldNum uint16) (*Bool, error) {
 		return nil, nil
 	}
 
-	ptr := (*Bool)(f.ptr)
+	ptr := (*Bools)(f.ptr)
 
 	return ptr, nil
 }
 
-func MustGetListBool(s *Struct, fieldNum uint16) *Bool {
+func MustGetListBool(s *Struct, fieldNum uint16) *Bools {
 	b, err := GetListBool(s, fieldNum)
 	if err != nil {
 		panic(err)
@@ -594,14 +606,14 @@ func MustGetListBool(s *Struct, fieldNum uint16) *Bool {
 	return b
 }
 
-func SetListBool(s *Struct, fieldNum uint16, value *Bool) error {
+func SetListBool(s *Struct, fieldNum uint16, value *Bools) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBools); err != nil {
 		return err
 	}
 
 	f := s.fields[fieldNum]
 	if f.header != nil { // We had a previous value stored.
-		ptr := (*Bool)(f.ptr)
+		ptr := (*Bools)(f.ptr)
 		addToTotal(s, -len(ptr.data))
 	}
 
@@ -612,7 +624,7 @@ func SetListBool(s *Struct, fieldNum uint16, value *Bool) error {
 	addToTotal(s, len(value.data))
 	return nil
 }
-func MustSetListBool(s *Struct, fieldNum uint16, value *Bool) {
+func MustSetListBool(s *Struct, fieldNum uint16, value *Bools) {
 	err := SetListBool(s, fieldNum, value)
 	if err != nil {
 		panic(err)
@@ -631,7 +643,7 @@ func DeleteListBool(s *Struct, fieldNum uint16) error {
 	}
 
 	f.header = nil
-	ptr := (*Bool)(f.ptr)
+	ptr := (*Bools)(f.ptr)
 	addToTotal(s, -len(ptr.data))
 	f.ptr = nil
 	s.fields[fieldNum] = f
@@ -639,7 +651,7 @@ func DeleteListBool(s *Struct, fieldNum uint16) error {
 }
 
 // GetListNumber returns a list of numbers at fieldNum.
-func GetListNumber[N Numbers](s *Struct, fieldNum uint16) (*Number[N], error) {
+func GetListNumber[N Number](s *Struct, fieldNum uint16) (*Numbers[N], error) {
 	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
 		return nil, err
 	}
@@ -655,12 +667,12 @@ func GetListNumber[N Numbers](s *Struct, fieldNum uint16) (*Number[N], error) {
 		return nil, fmt.Errorf("error getting field number %d: %w", fieldNum, err)
 	}
 
-	ptr := (*Number[N])(f.ptr)
+	ptr := (*Numbers[N])(f.ptr)
 
 	return ptr, nil
 }
 
-func MustGetListNumber[N Numbers](s *Struct, fieldNum uint16) *Number[N] {
+func MustGetListNumber[N Number](s *Struct, fieldNum uint16) *Numbers[N] {
 	b, err := GetListNumber[N](s, fieldNum)
 	if err != nil {
 		panic(err)
@@ -668,7 +680,7 @@ func MustGetListNumber[N Numbers](s *Struct, fieldNum uint16) *Number[N] {
 	return b
 }
 
-func SetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) error {
+func SetListNumber[N Number](s *Struct, fieldNum uint16, value *Numbers[N]) error {
 	if err := validateFieldNum(fieldNum, s.mapping); err != nil {
 		return err
 	}
@@ -681,7 +693,7 @@ func SetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) erro
 
 	f := s.fields[fieldNum]
 	if f.header != nil { // We had a previous value stored.
-		ptr := (*Number[N])(f.ptr)
+		ptr := (*Numbers[N])(f.ptr)
 		addToTotal(s, -len(ptr.data))
 	}
 
@@ -694,7 +706,7 @@ func SetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) erro
 	return nil
 }
 
-func MustSetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) {
+func MustSetListNumber[N Number](s *Struct, fieldNum uint16, value *Numbers[N]) {
 	err := SetListNumber(s, fieldNum, value)
 	if err != nil {
 		panic(err)
@@ -702,7 +714,7 @@ func MustSetListNumber[N Numbers](s *Struct, fieldNum uint16, value *Number[N]) 
 }
 
 // DeleteListNumber deletes a list of numbers field and updates our storage total.
-func DeleteListNumber[N Numbers](s *Struct, fieldNum uint16) error {
+func DeleteListNumber[N Number](s *Struct, fieldNum uint16) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.NumericListTypes...); err != nil {
 		return err
 	}
@@ -717,7 +729,7 @@ func DeleteListNumber[N Numbers](s *Struct, fieldNum uint16) error {
 		return fmt.Errorf("error deleting field number %d: %w", fieldNum, err)
 	}
 
-	ptr := (*Number[N])(f.ptr)
+	ptr := (*Numbers[N])(f.ptr)
 	ptr.s = nil
 
 	reduceBy := int(f.header.Final40()) + int(size) + 8
@@ -941,7 +953,7 @@ func validateFieldNum(fieldNum uint16, maps mapping.Map, ftypes ...field.Type) e
 	return nil
 }
 
-func numberToDescCheck[N Numbers](desc *mapping.FieldDesc) (size uint8, isFloat bool, err error) {
+func numberToDescCheck[N Number](desc *mapping.FieldDesc) (size uint8, isFloat bool, err error) {
 	var t N
 	switch any(t).(type) {
 	case uint8:

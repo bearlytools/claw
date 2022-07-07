@@ -1,3 +1,10 @@
+{{- $zeroValueCompression := false }} 
+{{- if .Options.NoZeroValueCompression }}
+{{- $zeroValueCompression = false }} 
+{{- else }}
+{{- $zeroValueCompression = true }}
+{{- end }}
+
 {{- range .Structs }}
 type {{ .Name }} struct {
    s *structs.Struct
@@ -5,8 +12,12 @@ type {{ .Name }} struct {
 
 // New{{ .Name }} creates a new instance of {{ .Name }}.
 func New{{ .Name }}() {{ .Name }} {
+    s := structs.New(0, mapping{{.Name}})
+    {{- if $zeroValueCompression }}
+    s.XXXSetNoZeroTypeCompression()
+    {{- end }}
     return {{ .Name }}{
-        s: structs.New(0, mapping{{.Name}}),
+        s: s,
     }
 }
 {{- $struct := . }}
@@ -21,9 +32,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value bool) {
     return structs.MustSetBool(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Int8" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() int8 {
@@ -34,9 +48,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int8) {
     return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Int16" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() int16 {
@@ -47,9 +64,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int16) {
     return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Int32" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() int32 {
@@ -60,9 +80,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int32) {
     return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Int64" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() int64 {
@@ -73,9 +96,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int64) {
     return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Uint8" }}
 {{- if $field.IdentName }} {{/* It is a Enum */}}
 
@@ -97,9 +123,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint8) {
 }
 {{- end }}
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Uint16" }}
 {{ if $field.IdentName }} {{/* It is a Enum */}}
 
@@ -121,9 +150,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint16) {
 }
 {{- end }}
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Uint32" }}
 func (x {{ $struct.Name }}) {{ $field.Name }}() uint32 {
     return structs.MustGetNumber[uint32](x.s, {{ $field.Index }})
@@ -133,9 +165,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint32) {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Uint64" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() uint64 {
@@ -146,9 +181,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint64) {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Float32" }}
 func (x {{ $struct.Name }}) {{ $field.Name }}() float32 {
     return structs.MustGetNumber[float32](x.s, {{ $field.Index }})
@@ -158,9 +196,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float32) {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Float64" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() float64 {
@@ -171,9 +212,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float64) {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "String" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() string {
@@ -186,9 +230,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value string) {
     structs.MustSetBytes(x.s, {{ $field.Index }}, b, true)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Bytes" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() []byte {
@@ -207,9 +254,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value []byte) {
     structs.MustSetBytes(x.s, {{ $field.Index }}, value, false)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "Struct" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
@@ -221,9 +271,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
     MustSetStruct(x.s, {{ $field.Index }}, value.s)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "ListBools" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() list.Bools {
@@ -234,9 +287,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Bools) {
     MustSetListBool(x.s, {{ $field.Index }}, value.XXXBools())
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "ListUint8" "ListUint16" "ListUint32" "ListUint64" "ListInt8" "ListInt16" "ListInt32" "ListInt64" "ListFloat32" "ListFloat64"}}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() lists.Numbers[.GoListType] {
@@ -249,9 +305,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value lists.Numbers[.GoListType
     MustSetListNumber(x.s, {{ $field.Index }}, n)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "ListBytes" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.Bytes {
@@ -264,9 +323,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.Bytes) {
     MustSetListBytes(x.s, {{ $field.Index }}, b)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "ListStrings" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.String {
@@ -278,9 +340,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.String) {
     MustSetListBytes(x.s, {{ $field.Index }}, value.XXXBytes())
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- else if eq $field.TypeAsString "ListStructs" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() []{{ $field.IdentName }} {
@@ -301,9 +366,12 @@ func (x {{ $struct.Name }}) Append{{ $field.Name }}(values ...{{ $field.IdentNam
     structs.MustAppendListStruct(x.s, {{ $field.Index }}, vals...)
 }
 
+{{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
+{{- end }}
+
 {{- end }} {{/* End if eq $field.Type */}}
 {{- end }} {{/* End range $index, $field := .Fields */}}
 {{- end }} {{/* End range .Structs */}}
