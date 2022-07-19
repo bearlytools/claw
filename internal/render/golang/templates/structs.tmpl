@@ -5,7 +5,7 @@
 {{- $zeroValueCompression = true }}
 {{- end }}
 
-{{- range .Structs }}
+{{- range $structsIndex, $struct := .Structs }}
 type {{ .Name }} struct {
    s *structs.Struct
 }
@@ -20,7 +20,7 @@ func New{{ .Name }}() {{ .Name }} {
         s: s,
     }
 }
-{{- $struct := . }}
+
 {{- range $index, $field := .Fields }}
 {{- if eq $field.TypeAsString "Bool" }}
 
@@ -349,10 +349,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- else if eq $field.TypeAsString "ListStructs" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() []{{ $field.IdentName }} {
-    ptr := structs.MustGetListStruct(x.s, {{ $field.Index }})
-    vals := make([]{{ $field.IdentName }}, len(*ptr))
+    l := structs.MustGetListStruct(x.s, {{ $field.Index }})
+    vals := make([]{{ $field.IdentName }}, l.Len())
     for i, val := range vals {
-        val.s = (*ptr)[i]
+        val.s = l.Get(i)
         vals[i] = val
     }
     return vals
@@ -374,4 +374,16 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 
 {{- end }} {{/* End if eq $field.Type */}}
 {{- end }} {{/* End range $index, $field := .Fields */}}
+
+// XXXDescr returns the Struct's descriptor. This should only be used
+// by the reflect package and is has no compatibility promises like all XXX fields.
+func (x {{ $struct.Name }}) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs()[{{ $structsIndex }}]
+}
+
+// ClawStruct returns a reflection type representing the Struct.
+func (x {{ $struct.Name }}) ClawStruct() reflect.Struct{
+   return reflect.XXXNewStruct(x.s)
+}
+
 {{- end }} {{/* End range .Structs */}}

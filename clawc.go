@@ -58,6 +58,10 @@ func main() {
 		exit(err)
 	}
 
+	if err := file.Validate(); err != nil {
+		exit(err)
+	}
+
 	results, err := render.Render(context.Background(), file, render.Go)
 	if err != nil {
 		exit(err)

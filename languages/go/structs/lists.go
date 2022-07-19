@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"bytes"
 	"context"
 	stdbinary "encoding/binary"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/mapping"
+	"github.com/bearlytools/claw/languages/go/structs/header"
 	"golang.org/x/exp/constraints"
 )
 
@@ -68,7 +71,7 @@ func NewBoolsFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bools, error) {
 	b.s = s
 
 	*data = (*data)[rightBound:]
-	addToTotal(s, len(b.data))
+	XXXAddToTotal(s, len(b.data))
 	return h, b, nil
 }
 
@@ -177,7 +180,7 @@ func (b *Bools) Append(i ...bool) {
 
 	updateItems(b.data[:8], b.len)
 	if b.s != nil {
-		addToTotal(b.s, len(b.data)-oldSize)
+		XXXAddToTotal(b.s, len(b.data)-oldSize)
 	}
 }
 
@@ -355,7 +358,7 @@ func NewNumbersFromBytes[I Number](data *[]byte, s *Struct) (*Numbers[I], error)
 	n.data = (*data)[0:rightBound]
 	n.len = int(items)
 	n.s = s
-	addToTotal(s, len(n.data))
+	XXXAddToTotal(s, len(n.data))
 
 	// Advance the slice.
 	*data = (*data)[rightBound:]
@@ -488,7 +491,7 @@ func (n *Numbers[I]) Append(i ...I) {
 	defer func() {
 		updateItems(n.data[:8], n.len)
 		if n.s != nil {
-			addToTotal(n.s, len(n.data)-oldSize)
+			XXXAddToTotal(n.s, len(n.data)-oldSize)
 		}
 	}()
 
@@ -526,7 +529,6 @@ func (n *Numbers[I]) Encode() []byte {
 	if n.data == nil {
 		return nil
 	}
-	log.Println("fieldNum before encode: ", GenericHeader(n.data[:8]).FieldNum())
 	return n.data
 }
 
@@ -599,7 +601,7 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	}
 
 	log.Println("1: ", read)
-	addToTotal(s, read) // Add header + data + padding
+	XXXAddToTotal(s, read) // Add header + data + padding
 
 	b.data = d
 	b.s = s
@@ -685,7 +687,7 @@ func (b *Bytes) Set(index int, value []byte) error {
 	// padding needed. Calculate our new data size.
 	oldSize := int64(len(b.data[index]))
 	oldPadding := b.padding
-	addToTotal(b.s, -(oldSize + oldPadding))
+	XXXAddToTotal(b.s, -(oldSize + oldPadding))
 	atomic.AddInt64(&b.dataSize, -oldSize)
 
 	atomic.AddInt64(&b.dataSize, int64(len(value))+4) // data + entry header
@@ -713,7 +715,7 @@ func (b *Bytes) Append(values ...[]byte) error {
 	// Remove old data size = padding.
 	if b.s != nil {
 		log.Println("removing old data size before append: ", -(b.dataSize + b.padding))
-		addToTotal(b.s, -(b.dataSize + b.padding))
+		XXXAddToTotal(b.s, -(b.dataSize + b.padding))
 	}
 
 	newSize := b.dataSize // We are appending, so our new size starts at the old size
@@ -735,7 +737,7 @@ func (b *Bytes) Append(values ...[]byte) error {
 	b.padding = PaddingNeeded(newSize)
 	if b.s != nil {
 		log.Println("adding new append data size: ", b.dataSize+b.padding)
-		addToTotal(b.s, b.dataSize+b.padding) // data size + entry header size
+		XXXAddToTotal(b.s, b.dataSize+b.padding) // data size + entry header size
 	}
 	return nil
 }
@@ -860,6 +862,247 @@ func (s Strings) Slice() []string {
 		index++
 	}
 	return x
+}
+
+// Structs represents a list of Struct.
+type Structs struct {
+	header              header.Generic
+	data                []*Struct
+	mapping             *mapping.Map
+	s                   *Struct
+	zeroTypeCompression bool
+	size                *int64 // The size of the header + all structs in the list.
+}
+
+// NewStructs returns a new Structs for holding lists of Structs. This is used when creating a new list
+// not attached to a Struct yet.
+func NewStructs(m *mapping.Map) *Structs {
+	if m == nil {
+		panic("*mapping.map cannot be nil")
+	}
+	s := &Structs{
+		header:  header.New(),
+		mapping: m,
+		size:    new(int64),
+	}
+
+	s.header.SetFieldNum(0)
+	s.header.SetFieldType(field.FTListStructs)
+	s.header.SetFinal40(0)
+	atomic.AddInt64(s.size, 8)
+	return s
+}
+
+// NewStructsFromBytes returns a new Bytes value.
+func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, error) {
+	if m == nil {
+		panic("bug: cannot pass nil *mapping.Map")
+	}
+	if s == nil {
+		panic("bug: cannot pass *Struct == nil")
+	}
+	// This is an error, because if they want to encode an empty list, it should not get encoded on the
+	// wire. There is no need to distinguish a zero value on a list type from not being set.
+	if len(*data) < 16 { // structs header(8) + 8 bytes of some field
+		return nil, fmt.Errorf("malformed list of structs: must be at least 16 bytes in size")
+	}
+	d := &Structs{s: s, mapping: m, size: new(int64)}
+	d.header = (*data)[:8]
+	*data = (*data)[8:] // Move past the header
+
+	if d.header.Final40() == 0 {
+		return nil, fmt.Errorf("cannot have a ListStructs field that has zero entries")
+	}
+	d.data = make([]*Struct, d.header.Final40())
+	reader := bytes.NewReader(*data)
+
+	read := 8 // This will hold the number of bytes we have read.
+	for i := 0; i < len(d.data); i++ {
+		if len(*data) < 8 {
+			return nil, fmt.Errorf("malformed list of structs field: an item (%d) did not have a valid header", i)
+		}
+
+		entry := New(0, m)
+		n, err := entry.unmarshal(reader)
+		if err != nil {
+			return nil, err
+		}
+		read += n
+		d.data[i] = entry
+	}
+
+	*data = (*data)[read-8:] // Move past the data (-8 is for the header we alread moved past)
+	XXXAddToTotal(s, read)   // Add header + data
+	*d.size = int64(read)
+	return d, nil
+}
+
+// Reset resets all the internal fields to their zero value. This should only be used
+// when recycling the Structs as it does not reset parent size counters.
+func (s *Structs) Reset() {
+	s.header = nil
+	s.data = nil
+	s.s = nil
+	*s.size = 0
+}
+
+// Map returns the Map for all entries in this list of Structs.
+func (s *Structs) Map() *mapping.Map {
+	return s.mapping
+}
+
+// Len returns the number of items in the list.
+func (s *Structs) Len() int {
+	return len(s.data)
+}
+
+// Get gets a *Struct stored at the index.
+func (s *Structs) Get(index int) *Struct {
+	if index >= s.Len() {
+		panic(fmt.Sprintf("slice out of bounds: index %d in slice of size %d", index, s.Len()))
+	}
+
+	return s.data[index]
+}
+
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (s *Structs) Range(ctx context.Context, from, to int) chan *Struct {
+	if s.Len() == 0 {
+		ch := make(chan *Struct)
+		close(ch)
+		return ch
+	}
+	if from > s.Len()-1 {
+		panic("Range 'from' argument is out of bounds")
+	}
+	if to > s.Len() {
+		panic("Range 'to' is out of bounds")
+	}
+	if from >= to {
+		panic("Range 'to' cannot be >= to 'from'")
+	}
+
+	ch := make(chan *Struct, 1)
+
+	go func() {
+		defer close(ch)
+
+		for index := from; index < to; index++ {
+			result := s.Get(index)
+
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- result:
+			}
+		}
+	}()
+
+	return ch
+}
+
+// Set a number in position "index" to "value".
+func (s *Structs) Set(index int, value *Struct) error {
+	if index >= len(s.data) {
+		return fmt.Errorf("index %d is not valid", index)
+	}
+
+	if value == nil {
+		return fmt.Errorf("cannot set the value of a nil *Struct")
+	}
+
+	if value.parent != nil {
+		return fmt.Errorf("cannot add a *Struct to a list of structs that is attached to another field")
+	}
+
+	// If the mapping pointers are pointing to the same place, then the Structs aren't the same.
+	if value.mapping != s.mapping {
+		return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", index)
+
+	}
+	s.data[index] = value
+
+	// Remove the size of the current entry.
+	old := s.data[index]
+	oldSize := atomic.LoadInt64(old.structTotal)
+	XXXAddToTotal(s.s, -oldSize)
+	atomic.AddInt64(s.size, -oldSize)
+
+	// Add the new size.
+	newSize := atomic.LoadInt64(value.structTotal)
+	XXXAddToTotal(s.s, newSize)
+	atomic.AddInt64(s.size, newSize)
+	return nil
+}
+
+// Append appends values to the list of []byte.
+func (s *Structs) Append(values ...*Struct) error {
+	oldSize := atomic.LoadInt64(s.size)
+
+	var total int64
+	for i, v := range values {
+		if v == nil {
+			return fmt.Errorf("entry to Append() cannot be a nil *Struct")
+		}
+		if v.parent != nil {
+			// TODO(jdoak): If this is true, deep clone the Struct and attach the copy.
+			return fmt.Errorf("entry %d is attached to another field", i)
+		}
+		// Update our value's parent.
+		v.parent = s.s
+
+		// If the mapping pointers are pointing to the same place, then the Structs aren't the same.
+		if v.mapping != s.mapping {
+			return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", i)
+		}
+		v.zeroTypeCompression = s.zeroTypeCompression
+		total += atomic.LoadInt64(v.structTotal)
+	}
+	s.data = append(s.data, values...)
+
+	// Update the total the list sees.
+	atomic.AddInt64(s.size, total)
+	XXXAddToTotal(s.s, atomic.LoadInt64(s.size)-oldSize)
+
+	updateItems(s.header, len(s.data))
+	return nil
+}
+
+// Slice converts this into a standard []*Struct.
+func (s *Structs) Slice() []*Struct {
+	if len(s.data) == 0 {
+		return nil
+	}
+	return s.data
+}
+
+// Encode returns the []byte to write to output to represent this Structs. If it returns nil,
+// no output should be written.
+func (s *Structs) Encode(w io.Writer) (int, error) {
+	// If we have a Structs that doesn't actually have any data, it should not be encoded as
+	// indicated by returning nil.
+	if len(s.data) == 0 {
+		return 0, nil
+	}
+
+	wrote, err := w.Write(s.header)
+	if err != nil {
+		return wrote, err
+	}
+	log.Println("header was: ", wrote)
+	for index, item := range s.data {
+		item.header.SetFieldNum(uint16(index))
+		n, err := item.Marshal(w)
+		wrote += n
+		log.Println("wrote item: ", n)
+		if err != nil {
+			return wrote, err
+		}
+	}
+	log.Println("total was: ", wrote)
+	return wrote, err
 }
 
 // udpateItems updates list header information to reflect the number items.

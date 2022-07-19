@@ -58,26 +58,30 @@ func TestGenericHeader(t *testing.T) {
 // TestBasicEncodeDecodeStruct is a more involved version of decode_test.go/TestDecodeStruct().
 // If this tests stops failing, that one probably does too.  It is easier to debug that one.
 func TestBasicEncodeDecodeStruct(t *testing.T) {
-	msg1Mapping := mapping.Map{
-		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool},
+	msg1Mapping := &mapping.Map{
+		Fields: []*mapping.FieldDescr{
+			{Name: "Bool", Type: field.FTBool},
+		},
 	}
-	msg0Mapping := mapping.Map{
-		&mapping.FieldDesc{Name: "Bool", Type: field.FTBool}, // 1
-		&mapping.FieldDesc{Name: "Int8", Type: field.FTInt8},
-		&mapping.FieldDesc{Name: "Int16", Type: field.FTInt16},
-		&mapping.FieldDesc{Name: "Int32", Type: field.FTInt32},
-		&mapping.FieldDesc{Name: "Int64", Type: field.FTInt64}, // 5
-		&mapping.FieldDesc{Name: "Uint8", Type: field.FTUint8},
-		&mapping.FieldDesc{Name: "Uint16", Type: field.FTUint16},
-		&mapping.FieldDesc{Name: "Uint32", Type: field.FTUint32},
-		&mapping.FieldDesc{Name: "Uint64", Type: field.FTUint64},
-		&mapping.FieldDesc{Name: "Float32", Type: field.FTFloat32},                            // 10
-		&mapping.FieldDesc{Name: "Float64", Type: field.FTFloat64},                            // 11
-		&mapping.FieldDesc{Name: "Bytes", Type: field.FTBytes},                                // 12
-		&mapping.FieldDesc{Name: "Msg1", Type: field.FTStruct, Mapping: msg1Mapping},          // 13
-		&mapping.FieldDesc{Name: "ListMsg1", Type: field.FTListStructs, Mapping: msg1Mapping}, // 14
-		&mapping.FieldDesc{Name: "ListNumber", Type: field.FTListUint8},                       // 15
-		&mapping.FieldDesc{Name: "ListBytes", Type: field.FTListBytes},                        // 16
+	msg0Mapping := &mapping.Map{
+		Fields: []*mapping.FieldDescr{
+			{Name: "Bool", Type: field.FTBool}, // 1
+			{Name: "Int8", Type: field.FTInt8},
+			{Name: "Int16", Type: field.FTInt16},
+			{Name: "Int32", Type: field.FTInt32},
+			{Name: "Int64", Type: field.FTInt64}, // 5
+			{Name: "Uint8", Type: field.FTUint8},
+			{Name: "Uint16", Type: field.FTUint16},
+			{Name: "Uint32", Type: field.FTUint32},
+			{Name: "Uint64", Type: field.FTUint64},
+			{Name: "Float32", Type: field.FTFloat32},                            // 10
+			{Name: "Float64", Type: field.FTFloat64},                            // 11
+			{Name: "Bytes", Type: field.FTBytes},                                // 12
+			{Name: "Msg1", Type: field.FTStruct, Mapping: msg1Mapping},          // 13
+			{Name: "ListMsg1", Type: field.FTListStructs, Mapping: msg1Mapping}, // 14
+			{Name: "ListNumber", Type: field.FTListUint8},                       // 15
+			{Name: "ListBytes", Type: field.FTListBytes},                        // 16
+		},
 	}
 	// Number      |   Size
 	// 8               8 bytes
@@ -93,6 +97,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// Total: 136
 
 	root := New(0, msg0Mapping)
+	root.XXXSetNoZeroTypeCompression()
 
 	/////////////////////
 	// Start Scalars
@@ -454,7 +459,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): GetListStruct() had error: %s", err)
 	}
-	gotBool, err = GetBool((*listStruct)[1], 0)
+	gotBool, err = GetBool(listStruct.Get(1), 0)
 	if err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14][1], unexpected error on GotBool(): %s", err)
 	}
@@ -560,15 +565,15 @@ func compareStruct(a, b *Struct) error {
 	if len(a.fields) != len(b.fields) {
 		return fmt.Errorf("a and b don't have the same number of fields, so they cannot be the same")
 	}
-	if len(a.fields) != len(a.mapping) {
-		return fmt.Errorf("a has fields length %d, mapping has %d, malformed Struct", len(a.fields), len(a.mapping))
+	if len(a.fields) != len(a.mapping.Fields) {
+		return fmt.Errorf("a has fields length %d, mapping has %d, malformed Struct", len(a.fields), len(a.mapping.Fields))
 	}
-	if len(b.fields) != len(b.mapping) {
-		return fmt.Errorf("b has fields length %d, mapping has %d, malformed Struct", len(a.fields), len(a.mapping))
+	if len(b.fields) != len(b.mapping.Fields) {
+		return fmt.Errorf("b has fields length %d, mapping has %d, malformed Struct", len(a.fields), len(a.mapping.Fields))
 	}
 	for i := 0; i < len(a.fields); i++ {
 		fieldNum := uint16(i)
-		switch a.mapping[i].Type {
+		switch a.mapping.Fields[i].Type {
 		case field.FTBool:
 			v0 := MustGetBool(a, fieldNum)
 			v1 := MustGetBool(b, fieldNum)
@@ -748,15 +753,15 @@ func compareStruct(a, b *Struct) error {
 		case field.FTListStructs:
 			v0 := MustGetListStruct(a, fieldNum)
 			v1 := MustGetListStruct(b, fieldNum)
-			for x := 0; x < len(*v0); x++ {
-				s0 := (*v0)[x]
-				s1 := (*v1)[x]
+			for x := 0; x < v0.Len(); x++ {
+				s0 := v0.Get(x)
+				s1 := v1.Get(x)
 				if err := compareStruct(s0, s1); err != nil {
 					return fmt.Errorf("%d field, item %d, a was %v, b was %v", fieldNum, x, s0, s1)
 				}
 			}
 		default:
-			return fmt.Errorf("%d field has unknown type: %v", i, a.mapping[i].Type)
+			return fmt.Errorf("%d field has unknown type: %v", i, a.mapping.Fields[i].Type)
 		}
 	}
 	return nil
@@ -777,18 +782,20 @@ func marshalCheck[I constraints.Integer](msg *Struct, wantWritten I) error {
 }
 
 func TestGetBool(t *testing.T) {
-	m := mapping.Map{
-		&mapping.FieldDesc{
-			Type: field.FTBool,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTFloat32,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTBool,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTBool,
+	m := &mapping.Map{
+		Fields: []*mapping.FieldDescr{
+			&mapping.FieldDescr{
+				Type: field.FTBool,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTFloat32,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTBool,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTBool,
+			},
 		},
 	}
 
@@ -860,12 +867,14 @@ func TestGetBool(t *testing.T) {
 
 func TestSetNumber(t *testing.T) {
 	// This is going to only handle cases not handled in GetNumber()
-	m := mapping.Map{
-		&mapping.FieldDesc{
-			Type: field.FTFloat32,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTFloat64,
+	m := &mapping.Map{
+		Fields: []*mapping.FieldDescr{
+			&mapping.FieldDescr{
+				Type: field.FTFloat32,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTFloat64,
+			},
 		},
 	}
 
@@ -897,21 +906,23 @@ func TestSetNumber(t *testing.T) {
 }
 
 func TestGetNumber(t *testing.T) {
-	m := mapping.Map{
-		&mapping.FieldDesc{
-			Type: field.FTUint8,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTBool,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTInt8,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTUint64,
-		},
-		&mapping.FieldDesc{
-			Type: field.FTFloat32,
+	m := &mapping.Map{
+		Fields: []*mapping.FieldDescr{
+			&mapping.FieldDescr{
+				Type: field.FTUint8,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTBool,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTInt8,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTUint64,
+			},
+			&mapping.FieldDescr{
+				Type: field.FTFloat32,
+			},
 		},
 	}
 
@@ -977,10 +988,10 @@ func TestGetNumber(t *testing.T) {
 
 		// We can't switch on types for either field 0 or fields not in our mapping.Map, but
 		// we still want to test our error conditions.
-		if test.fieldNum >= uint16(len(m)) {
+		if test.fieldNum >= uint16(len(m.Fields)) {
 			got, err = GetNumber[uint8](test.s, test.fieldNum)
 		} else { // Any other tests
-			switch m[test.fieldNum].Type {
+			switch m.Fields[test.fieldNum].Type {
 			case field.FTUint8:
 				got, err = GetNumber[uint8](test.s, test.fieldNum)
 			case field.FTUint16:
@@ -1018,23 +1029,23 @@ func TestGetNumber(t *testing.T) {
 func TestNumberToDescCheck(t *testing.T) {
 	tests := []struct {
 		n           any
-		desc        mapping.FieldDesc
+		desc        mapping.FieldDescr
 		wantSize    uint8
 		wantIsFloat bool
 		wantErr     bool
 	}{
-		{uint8(1), mapping.FieldDesc{Type: field.FTUint8}, 8, false, false},
-		{uint16(1), mapping.FieldDesc{Type: field.FTUint16}, 16, false, false},
-		{uint32(1), mapping.FieldDesc{Type: field.FTUint32}, 32, false, false},
-		{uint64(1), mapping.FieldDesc{Type: field.FTUint64}, 64, false, false},
-		{int8(1), mapping.FieldDesc{Type: field.FTInt8}, 8, false, false},
-		{int16(1), mapping.FieldDesc{Type: field.FTInt16}, 16, false, false},
-		{int32(1), mapping.FieldDesc{Type: field.FTInt32}, 32, false, false},
-		{int64(1), mapping.FieldDesc{Type: field.FTInt64}, 64, false, false},
-		{float32(1), mapping.FieldDesc{Type: field.FTFloat32}, 32, true, false},
-		{float64(1), mapping.FieldDesc{Type: field.FTFloat64}, 64, true, false},
+		{uint8(1), mapping.FieldDescr{Type: field.FTUint8}, 8, false, false},
+		{uint16(1), mapping.FieldDescr{Type: field.FTUint16}, 16, false, false},
+		{uint32(1), mapping.FieldDescr{Type: field.FTUint32}, 32, false, false},
+		{uint64(1), mapping.FieldDescr{Type: field.FTUint64}, 64, false, false},
+		{int8(1), mapping.FieldDescr{Type: field.FTInt8}, 8, false, false},
+		{int16(1), mapping.FieldDescr{Type: field.FTInt16}, 16, false, false},
+		{int32(1), mapping.FieldDescr{Type: field.FTInt32}, 32, false, false},
+		{int64(1), mapping.FieldDescr{Type: field.FTInt64}, 64, false, false},
+		{float32(1), mapping.FieldDescr{Type: field.FTFloat32}, 32, true, false},
+		{float64(1), mapping.FieldDescr{Type: field.FTFloat64}, 64, true, false},
 		// Cause an error.
-		{uint8(1), mapping.FieldDesc{Type: field.FTUint16}, 8, false, true},
+		{uint8(1), mapping.FieldDescr{Type: field.FTUint16}, 8, false, true},
 	}
 
 	for _, test := range tests {

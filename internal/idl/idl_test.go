@@ -19,7 +19,7 @@ package hello // Yeah I can comment here
 version 0 // And here too
 
 // Comment.
-options [ NoZeroTypeCompression() ]// Comment
+options [ NoZeroValueCompression() ]// Comment
 
 import (
 	"github.com/johnsiilver/something"
@@ -43,7 +43,7 @@ Struct Car {
 }
 `
 	wantOpts := map[string]Option{
-		"NoZeroTypeCompression": {"NoZeroTypeCompression", nil},
+		"NoZeroValueCompression": {"NoZeroValueCompression", nil},
 	}
 
 	f := New()
@@ -51,7 +51,6 @@ Struct Car {
 	if err := halfpike.Parse(context.Background(), content, f); err != nil {
 		panic(err)
 	}
-	panic("")
 
 	if f.Package != "hello" {
 		panic("package")
@@ -64,7 +63,7 @@ Struct Car {
 	}
 
 	for _, impName := range []string{"something", "renamed"} {
-		if _, ok := f.Imports.imports[impName]; !ok {
+		if _, ok := f.Imports.Imports[impName]; !ok {
 			log.Fatalf("can't find import %q", impName)
 		}
 	}

@@ -1,15 +1,27 @@
-{{ range .Structs }}
-var mapping{{.Name}} = mapping.Map{
-    {{- range .Fields }}
-    {
-        Name: "{{ .Name }}",
-        Type: field.{{ .Type }},
-        {{- if gt .Type 14 }}
-        {{- if not .SelfReferential }}
-        Mapping: mapping{{ .IdentName }},
-        {{- end }}
+
+// Everything below this line is internal details.
+{{- $file := . }}
+{{- range .Structs }}
+var mapping{{ .Name }} = &mapping.Map{
+    Name: "{{ .Name }}",
+    Pkg: "{{ $file.Package }}",
+    Path: "{{ $file.FullPath }}",
+    Fields: []*mapping.FieldDescr{
+        {{- range $index, $field := .Fields }}
+        {
+            Name: "{{ $field.Name }}",
+            Type: field.{{ $field.Type }},
+            IsEnum: {{ $field.IsEnum }},
+            FieldNum: {{ $index }},
+            {{- if gt $field.Type 14 }}
+            {{- if $field.SelfReferential }}
+            SelfReferential: true,
+            {{- else }}
+            Mapping: mapping{{ $field.IdentName }},
+            {{- end }}
+            {{- end }}
+        },
         {{- end }}
     },
-    {{- end}}
 }
-{{end}}
+{{- end }}

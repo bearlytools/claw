@@ -9,20 +9,28 @@ import (
 	"github.com/bearlytools/claw/internal/field"
 )
 
-// FieldDesc describes a field.
-type FieldDesc struct {
+// FieldDescr describes a field.
+type FieldDescr struct {
 	// Name is the name of the field as described in the .claw file.
 	Name string
 	// GoName is the name of field, if required.
 	GoName string
 	// Type is the type of field.
 	Type field.Type
+	// FieldNum is the field number in the Struct.
+	FieldNum uint16
+	// IsEnum indicates if the field is an enumerated type. This can only be true
+	// if the Type is FTUint8 or FTUint16
+	IsEnum bool
 
+	// SelfReferential indicates if an FTStruct or FTListStruct is the same as the containing Struct.
+	// If true, Mapping is not set.
+	SelfReferential bool
 	// Mapping is provided if .Type == FTStruct || FTListStruct. This will describe the Structs fields.
-	Mapping Map
+	Mapping *Map
 }
 
-func (f *FieldDesc) Validate() error {
+func (f *FieldDescr) Validate() error {
 	switch f.Type {
 	case field.FTListStructs, field.FTStruct:
 		if f.Mapping == nil {
@@ -35,16 +43,35 @@ func (f *FieldDesc) Validate() error {
 	return nil
 }
 
-// Mqp is a map of field numbers to field descriptions.
-type Map []*FieldDesc
+// Map is a map of field numbers to field descriptions for a Struct.
+type Map struct {
+	// Name of the Struct.
+	Name string
+	// Pkg is the package the Struct is in.
+	Pkg string
+	// Path is the path to the package.
+	Path string
+	// Fields are the field descriptions for all fields in the Struct.
+	Fields []*FieldDescr
+}
 
 func (m Map) validate() error {
-	for _, entry := range m {
+	for _, entry := range m.Fields {
 		if err := entry.Validate(); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// ByName retrieves the FieldDesc by name. If the name can't be found, it panics.
+func (m Map) ByName(name string) *FieldDescr {
+	for _, f := range m.Fields {
+		if f.Name == name {
+			return f
+		}
+	}
+	panic(fmt.Sprintf("could not find name %q", name))
 }
 
 func (m Map) MustValidate() {

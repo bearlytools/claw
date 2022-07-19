@@ -1,10 +1,25 @@
-{{- range .Enums }}
-type {{ .Name }} {{ .GoType }}
+{{- range $enumsIndex, $enumGroup := .Enums }}
+type {{  $enumGroup.Name }} {{  $enumGroup.GoType }}
 
 // String implements fmt.Stringer.
-func (x {{ .Name }}) String() string {
-    return {{ .Name }}ByValue[{{ .GoType }}(x)]
+func (x {{  $enumGroup.Name }}) String() string {
+    return {{  $enumGroup.Name }}ByValue[{{ $enumGroup.GoType }}(x)]
 }
+
+// XXXEnumGroup will return the EnumGroup descriptor for this group of enumerators.
+// This should only be used by the reflect package and is has no compatibility promises 
+// like all XXX fields.
+func (x {{ $enumGroup.Name }}) XXXEnumGroup() reflect.EnumGroup {
+    return XXXPackageDescr.Enums()[{{ $enumsIndex }}]
+}
+
+// XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
+// This should only be used by the reflect package and is has no compatibility promises 
+// like all XXX fields.
+func (x {{ $enumGroup.Name }}) XXXEnumValueDescr() reflect.EnumValueDescr {
+    return XXXPackageDescr.Enums()[{{ $enumsIndex }}].Get(int(x))
+}
+
 {{ $enum := . }}
 const (
 {{- range $index, $value := .OrderByValues }}

@@ -11,11 +11,14 @@ import (
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/structs/header"
 )
+
+var dataSizeMask = bits.Mask[uint64](24, 64)
 
 func (s *Struct) unmarshal(r io.Reader) (int, error) {
 	read := 0
-	h := NewGenericHeader()
+	h := header.New()
 	read, err := r.Read(h)
 	if read != 8 {
 		return read, fmt.Errorf("could only read %d bytes, a Struct header is always 8 bytes", read)
@@ -64,7 +67,7 @@ func (s *Struct) unmarshal(r io.Reader) (int, error) {
 }
 
 func (s *Struct) unmarshalFields(buffer *[]byte) error {
-	maxFields := uint16(len(s.mapping))
+	maxFields := uint16(len(s.mapping.Fields))
 	defer log.Println("unmarshal() end")
 
 	var (
@@ -97,7 +100,7 @@ func (s *Struct) unmarshalFields(buffer *[]byte) error {
 		if fieldNum >= maxFields {
 			log.Printf("wtf: fieldNum %d maxFields %d", fieldNum, maxFields)
 			s.excess = *buffer
-			addToTotal(s, len(s.excess))
+			XXXAddToTotal(s, len(s.excess))
 			return nil
 		}
 		log.Printf("decode field %d/%d", entry, maxFields)
@@ -162,9 +165,9 @@ func (s *Struct) decodeBool(buffer *[]byte, fieldNum uint16) error {
 	}
 
 	f := s.fields[fieldNum]
-	f.header = (*buffer)[0:8]
+	f.Header = (*buffer)[0:8]
 	s.fields[fieldNum] = f
-	addToTotal(s, 8)
+	XXXAddToTotal(s, 8)
 	*buffer = (*buffer)[8:]
 	return nil
 }
@@ -182,20 +185,20 @@ func (s *Struct) decodeNum(buffer *[]byte, fieldNum uint16, numSize int8) error 
 			return fmt.Errorf("can't decode a 8, 16, or 32 bit number with < 64 bits")
 		}
 		f := s.fields[fieldNum]
-		f.header = (*buffer)[:8]
+		f.Header = (*buffer)[:8]
 		s.fields[fieldNum] = f
-		addToTotal(s, 8)
+		XXXAddToTotal(s, 8)
 		*buffer = (*buffer)[8:]
 	case 64:
 		if len(*buffer) < 16 {
 			return fmt.Errorf("can't decode a 64 bit number with < 128 bits")
 		}
 		f := s.fields[fieldNum]
-		f.header = (*buffer)[:8]
+		f.Header = (*buffer)[:8]
 		v := (*buffer)[8:16]
-		f.ptr = unsafe.Pointer(&v)
+		f.Ptr = unsafe.Pointer(&v)
 		s.fields[fieldNum] = f
-		addToTotal(s, 16)
+		XXXAddToTotal(s, 16)
 		*buffer = (*buffer)[16:]
 	default:
 		return fmt.Errorf("Struct.decodeNum() numSize was %d, must be 32 or 64", numSize)
@@ -223,13 +226,13 @@ func (s *Struct) decodeBytes(buffer *[]byte, fieldNum uint16) error {
 	}
 	f := s.fields[fieldNum]
 
-	f.header = (*buffer)[:8]
+	f.Header = (*buffer)[:8]
 	b := (*buffer)[8 : 8+size] // from end of header to end of data without padding
-	f.ptr = unsafe.Pointer(&b)
+	f.Ptr = unsafe.Pointer(&b)
 
 	s.fields[fieldNum] = f
 	log.Println("addToTotal: ", withPadding)
-	addToTotal(s, withPadding)
+	XXXAddToTotal(s, withPadding)
 	*buffer = (*buffer)[withPadding:]
 	return nil
 }
@@ -241,8 +244,8 @@ func (s *Struct) decodeListBool(buffer *[]byte, fieldNum uint16) error {
 	}
 
 	f := s.fields[fieldNum]
-	f.header = h
-	f.ptr = unsafe.Pointer(ptr)
+	f.Header = h
+	f.Ptr = unsafe.Pointer(ptr)
 	s.fields[fieldNum] = f
 	return nil
 }
@@ -254,17 +257,16 @@ func (s *Struct) decodeListBytes(buffer *[]byte, fieldNum uint16) error {
 	if err != nil {
 		return err
 	}
-	f.header = ptr.header
-	f.ptr = unsafe.Pointer(ptr)
+	f.Header = ptr.header
+	f.Ptr = unsafe.Pointer(ptr)
 	s.fields[fieldNum] = f
 	return nil
 }
 
 func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
-	m := s.mapping[int(fieldNum)]
+	m := s.mapping.Fields[int(fieldNum)]
 	f := s.fields[fieldNum]
-	f.header = (*buffer)[:8]
-	log.Println("fieldNum: ", f.header.FieldNum())
+	f.Header = (*buffer)[:8]
 	var uptr unsafe.Pointer
 	switch m.Type {
 	case field.FTListInt8:
@@ -330,14 +332,14 @@ func (s *Struct) decodeListNumber(buffer *[]byte, fieldNum uint16) error {
 	default:
 		panic(fmt.Sprintf("Struct.decodeListNumber() called with field that is mapped to value with type: %v", m.Type))
 	}
-	f.ptr = uptr
+	f.Ptr = uptr
 	s.fields[fieldNum] = f
 	return nil
 }
 
 func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
 	// We need the mapping for the sub Struct.
-	m := s.mapping[fieldNum].Mapping
+	m := s.mapping.Fields[fieldNum].Mapping
 	if m == nil { // This means that the contained Struct is the same mapping as the part.
 		m = s.mapping
 	}
@@ -359,45 +361,18 @@ func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
 }
 
 func (s *Struct) decodeListStruct(buffer *[]byte, fieldNum uint16) error {
+	// We need the mapping for the sub Struct.
+	m := s.mapping.Fields[fieldNum].Mapping
+
 	f := s.fields[fieldNum]
-	h := GenericHeader((*buffer)[:8])
-	*buffer = (*buffer)[8:] // Move ahead of the list header
-
-	numItems := h.Final40()
-	if numItems == 0 {
-		return fmt.Errorf("cannot decode a list of Structs with list size of 0: encoding error")
+	log.Println("buffer size before: ", len(*buffer))
+	l, err := NewStructsFromBytes(buffer, s, m)
+	if err != nil {
+		log.Println("buffer size after: ", len(*buffer))
+		return err
 	}
-
-	addToTotal(s, 8) // Add list header size
-	log.Println("number of items: ", numItems)
-	sl := make([]*Struct, int(numItems))
-	r := readers.Get().(*bytes.Reader)
-	r.Reset(*buffer)
-	totalDataSize := 0 // Size without header
-
-	mapping := s.mapping[fieldNum].Mapping
-	if mapping == nil { // Means this Struct is the same as the parent.
-		mapping = s.mapping
-	}
-	for i := 0; i < int(numItems); i++ {
-		log.Println("decoding list struct item: ", i)
-		item := New(0, mapping)
-		item.inList = true
-		log.Println("\tlength of buffer before item unmarshal: ", len(*buffer)-totalDataSize)
-		n, err := item.unmarshal(r)
-		if err != nil {
-			panic("this happened: " + err.Error())
-			return err
-		}
-		totalDataSize += n
-		log.Printf("\tread Struct item: %d bytes", n)
-		addToTotal(s, n)
-		sl[i] = item
-		log.Println("\tlength of buffer after item unmarshal: ", len(*buffer)-totalDataSize)
-	}
-	*buffer = (*buffer)[totalDataSize:]
-	f.header = h
-	f.ptr = unsafe.Pointer(&sl)
+	f.Header = l.header
+	f.Ptr = unsafe.Pointer(l)
 	s.fields[fieldNum] = f
 	return nil
 }

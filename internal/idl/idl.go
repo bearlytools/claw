@@ -23,6 +23,7 @@ type Option struct {
 // File represents the collected information from a .claw file.
 type File struct {
 	Package    string
+	FullPath   string
 	Version    int
 	Options    map[string]Option
 	Identifers map[string]any
@@ -44,6 +45,8 @@ func (f *File) Validate() error {
 	if f.Package == "" {
 		return fmt.Errorf("must define a package")
 	}
+
+	// TODO(jdoak): FullPath must exist, but we haven't developed claw.mod files yet.
 
 	switch f.Version {
 	case -1:
@@ -180,7 +183,7 @@ func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseF
 		p.Backup()
 		return f.ParseOptions
 	case "import":
-		if f.Imports.imports != nil {
+		if f.Imports.Imports != nil {
 			return p.Errorf("[Line %d] error: duplicate 'import' line found", line.LineNum)
 		}
 		if len(f.Identifers) != 0 {
@@ -267,18 +270,18 @@ func (f *File) ParseOptions(ctx context.Context, p *halfpike.Parser) halfpike.Pa
 
 // Import represents an import block.
 type Import struct {
-	imports map[string]impEntry
+	Imports map[string]ImportEntry
 }
 
-// impEntry represents an individual import entry.
-type impEntry struct {
+// ImportEntry represents an individual import entry.
+type ImportEntry struct {
 	Path string
 	Name string
 }
 
 // NewImport creates a new Import.
 func NewImport() Import {
-	return Import{imports: map[string]impEntry{}}
+	return Import{Imports: map[string]ImportEntry{}}
 }
 
 func (i *Import) parse(p *halfpike.Parser) error {
@@ -318,11 +321,11 @@ func (i *Import) parse(p *halfpike.Parser) error {
 			if err != nil {
 				return fmt.Errorf("[Line %d]: import statement path looks malformed: %q", l.LineNum, l.Items[0].Val)
 			}
-			imp := impEntry{Path: p, Name: pkgFromImpPath(p)}
-			if _, ok := i.imports[imp.Name]; ok {
+			imp := ImportEntry{Path: p, Name: pkgFromImpPath(p)}
+			if _, ok := i.Imports[imp.Name]; ok {
 				return fmt.Errorf("[Line %d]: duplicate import with name %q", l.LineNum, imp.Name)
 			}
-			i.imports[imp.Name] = imp
+			i.Imports[imp.Name] = imp
 			continue
 		case 2:
 			if err := validPackage(l.Items[0].Val); err != nil {
@@ -332,17 +335,17 @@ func (i *Import) parse(p *halfpike.Parser) error {
 			if err != nil {
 				return fmt.Errorf("[Line %d]: import statement path looks malformed: %q", l.LineNum, l.Items[1].Val)
 			}
-			imp := impEntry{Path: pkgFromImpPath(p), Name: l.Items[0].Val}
-			if _, ok := i.imports[imp.Name]; ok {
+			imp := ImportEntry{Path: pkgFromImpPath(p), Name: l.Items[0].Val}
+			if _, ok := i.Imports[imp.Name]; ok {
 				return fmt.Errorf("[Line %d]: duplicate import with name %q", l.LineNum, imp.Name)
 			}
-			i.imports[imp.Name] = imp
+			i.Imports[imp.Name] = imp
 			continue
 		default:
 			return fmt.Errorf("[Line %d]: import statement looks malformed: %q", l.LineNum, l.Raw)
 		}
 	}
-	if len(i.imports) == 0 {
+	if len(i.Imports) == 0 {
 		return fmt.Errorf("empty import block, which is a parse error")
 	}
 	return nil
@@ -354,6 +357,10 @@ type Enum struct {
 	Size   int
 	names  map[string]EnumVal
 	values map[uint16]EnumVal
+}
+
+func (e Enum) Len() int {
+	return len(e.names)
 }
 
 func (e Enum) OrderByValues() []EnumVal {
@@ -512,6 +519,8 @@ type StructField struct {
 	Index uint16
 	// Type is the type of the field.
 	Type field.Type
+	// IsEnum indicates if the field represents an enumerator.
+	IsEnum bool
 	// IdentName is the name of the Struct or Enum that goes in this field. If not a Struct or Enum,
 	// this is empty.
 	IdentName string
@@ -595,7 +604,7 @@ func (s *Struct) fields(p *halfpike.Parser) error {
 		}
 		ids[f.Index] = true
 	}
-	// We now know we have a sequence starting at 1 that doesn't skip numbers, so 1, 2, 3, 4. But they
+	// We now know we have a sequence starting at 0 that doesn't skip numbers, so 0, 1, 2, 3, 4. But they
 	// can be in random order and we need them to be in field order.
 	slices.SortFunc(
 		s.Fields,
@@ -709,8 +718,10 @@ func (s *Struct) field(p *halfpike.Parser) error {
 				case 8:
 					if isList {
 						f.Type = field.FTListUint8
+						f.IsEnum = true
 					} else {
 						f.Type = field.FTUint8
+						f.IsEnum = true
 					}
 				case 16:
 					if isList {

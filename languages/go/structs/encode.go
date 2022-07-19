@@ -27,38 +27,36 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	}
 
 	for i, v := range s.fields {
-		if v.header == nil {
-			log.Printf("field %d was skipped for encode", i+1)
+		if v.Header == nil {
+			log.Printf("field %d was skipped for encode", i)
 			continue
 		}
 
-		desc := s.mapping[i]
-		log.Printf("field %d was: %s", i+1, desc.Type)
+		if v.Header.FieldNum() != uint16(i) {
+			return written, fmt.Errorf("bug: field %d in the index had field number %d(%s), which is a bug", i, v.Header.FieldNum(), v.Header.FieldType())
+		}
+
+		desc := s.mapping.Fields[i]
+		log.Printf("field %d was: %s", i, desc.Type)
 
 		switch desc.Type {
 		// This handles any basic scalar type.
 		case field.FTBool, field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8,
 			field.FTUint16, field.FTUint32, field.FTFloat32:
 			if s.zeroTypeCompression {
-				if v.header.Final40() == 0 {
+				if v.Header.Final40() == 0 {
 					break
 				}
 			}
-			i, err := w.Write(v.header)
-			written += i
-			if err != nil {
-				return written, err
-			}
-			b := (*[]byte)(v.ptr)
-			i, err = w.Write(*b)
+			i, err := w.Write(v.Header)
 			written += i
 			if err != nil {
 				return written, err
 			}
 		case field.FTInt64, field.FTUint64, field.FTFloat64:
 			var b *[]byte
-			if v.ptr != nil {
-				b = (*[]byte)(v.ptr)
+			if v.Ptr != nil {
+				b = (*[]byte)(v.Ptr)
 			}
 			if s.zeroTypeCompression {
 				if b == nil {
@@ -75,7 +73,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 					break
 				}
 			}
-			i, err := w.Write(v.header)
+			i, err := w.Write(v.Header)
 			written += i
 			if err != nil {
 				return written, err
@@ -87,20 +85,20 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 		case field.FTString, field.FTBytes:
 			if s.zeroTypeCompression {
-				if v.header.Final40() == 0 {
+				if v.Header.Final40() == 0 {
 					break
 				}
 			}
-			i, err := w.Write(v.header)
+			i, err := w.Write(v.Header)
 			log.Println("wrote bytes header of: ", i)
 			written += i
 			if err != nil {
 				return written, err
 			}
-			if v.ptr == nil {
+			if v.Ptr == nil {
 				break
 			}
-			b := (*[]byte)(v.ptr)
+			b := (*[]byte)(v.Ptr)
 			i, err = w.Write(*b)
 			log.Println("wrote bytes data of: ", i)
 			written += i
@@ -116,7 +114,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 		case field.FTStruct:
 			log.Println("encoding a Struct")
-			value := (*Struct)(v.ptr)
+			value := (*Struct)(v.Ptr)
 			log.Printf("the struct ptr: %+#v", value)
 			log.Println("struct's fieldNum: ", value.header.FieldNum())
 			i, err := value.Marshal(w)
@@ -125,7 +123,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListBools:
-			b := (*Bools)(v.ptr)
+			b := (*Bools)(v.Ptr)
 			if b.Len() == 0 {
 				break
 			}
@@ -135,7 +133,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListInt8:
-			x := (*Numbers[int8])(v.ptr)
+			x := (*Numbers[int8])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -145,7 +143,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListUint8:
-			x := (*Numbers[uint8])(v.ptr)
+			x := (*Numbers[uint8])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -155,7 +153,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListInt16:
-			x := (*Numbers[int16])(v.ptr)
+			x := (*Numbers[int16])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -165,7 +163,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListUint16:
-			x := (*Numbers[uint16])(v.ptr)
+			x := (*Numbers[uint16])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -176,7 +174,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListInt32:
-			x := (*Numbers[int32])(v.ptr)
+			x := (*Numbers[int32])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -186,7 +184,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListUint32:
-			x := (*Numbers[uint32])(v.ptr)
+			x := (*Numbers[uint32])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -196,7 +194,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListFloat32:
-			x := (*Numbers[float32])(v.ptr)
+			x := (*Numbers[float32])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -206,7 +204,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListInt64:
-			x := (*Numbers[int64])(v.ptr)
+			x := (*Numbers[int64])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -216,7 +214,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListUint64:
-			x := (*Numbers[uint64])(v.ptr)
+			x := (*Numbers[uint64])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -226,7 +224,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListFloat64:
-			x := (*Numbers[float64])(v.ptr)
+			x := (*Numbers[float64])(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -236,7 +234,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListBytes:
-			x := (*Bytes)(v.ptr)
+			x := (*Bytes)(v.Ptr)
 			if x.Len() == 0 {
 				break
 			}
@@ -246,23 +244,15 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 				return written, err
 			}
 		case field.FTListStructs:
-			x := (*[]*Struct)(v.ptr)
-			if len(*x) == 0 {
+			x := (*Structs)(v.Ptr)
+			if x.Len() == 0 {
 				break
 			}
-			n, err := w.Write(v.header)
+			log.Println("before encode: ", written)
+			n, err := x.Encode(w)
 			written += n
 			if err != nil {
 				return written, err
-			}
-			for index, item := range *x {
-				item.header.SetFieldNum(uint16(index))
-				log.Println("item index: ", item.header.FieldNum())
-				n, err := item.Marshal(w)
-				written += n
-				if err != nil {
-					return written, err
-				}
 			}
 		default:
 			return written, fmt.Errorf("received a field type %v that we don't support", desc.Type)
@@ -275,44 +265,3 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 
 	return written, nil
 }
-
-/*
-// Encode encodes the Struct into its byte representation.
-func (s Struct) Encode(fieldNum uint16) ([]byte, error) {
-	buff := bytes.Buffer{}
-
-	for _, f := range s.fields {
-		size += len(f)
-	}
-
-	for n, v := range s.fields {
-		fd := s.mapping[n]
-
-		switch fd.Type {
-		case FTBool:
-
-		case FTInt8:
-		case FTInt16:
-		case FTInt32:
-		case FTInt64:
-		case FTUint8:
-		case FTUint16:
-		case FTUint32:
-		case FTUint64:
-		case FTFloat32:
-		case FTFloat64:
-		case FTString:
-		case FTBytes:
-		case FTStruct:
-		case FTListBool:
-		case FTList8:
-		case FTList16:
-		case FTList32:
-		case FTList64:
-		case FTListBytes:
-		case FTListStruct:
-		default:
-		}
-	}
-}
-*/

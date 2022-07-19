@@ -9,12 +9,13 @@ import (
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/mapping"
 )
 
 func TestBoolGetSetAppendRange(t *testing.T) {
 	// Sets our header to message type 15, field number 2 and 20 entries.
 	b := []byte{15, 0, 2, 20, 0, 0, 0, 0}
-	s := New(0, nil)
+	s := New(0, &mapping.Map{Fields: []*mapping.FieldDescr{{Type: field.FTListBools, FieldNum: 0}}})
 
 	// This sets up the first 20 entries to be set to true, everything else is false.
 	b = append(b, bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 8), bits.Mask[uint8](0, 4), 0, 0, 0, 0, 0)
@@ -97,7 +98,7 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 	// Sets our header to message type 16, field number 3 and 7 entries.
 	b := []byte{16, 0, 3, 7, 0, 0, 0, 0}
 
-	s := New(0, nil)
+	s := New(0, &mapping.Map{Fields: []*mapping.FieldDescr{{Type: field.FTListInt8, FieldNum: 0}}})
 
 	values := map[int]uint8{
 		0: 5,
@@ -205,7 +206,7 @@ func TestNumberFloat(t *testing.T) {
 			test.h = append(test.h, b...)
 		}
 
-		s := New(0, nil)
+		s := New(0, &mapping.Map{Fields: []*mapping.FieldDescr{{Type: field.FTFloat64, FieldNum: 0}}})
 		b := []byte(test.h)
 		list, err := NewNumbersFromBytes[float64](&b, s)
 		switch {
@@ -237,7 +238,7 @@ func TestBytes(t *testing.T) {
 	h.SetFieldType(field.FTBytes)
 	h.SetFieldNum(5)
 
-	s := New(0, nil)
+	s := New(0, &mapping.Map{Fields: []*mapping.FieldDescr{{Type: field.FTBytes, FieldNum: 0}}})
 
 	values := []string{
 		"hello", // len 5

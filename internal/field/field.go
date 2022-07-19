@@ -1,41 +1,41 @@
 package field
 
-//go:generate stringer -type=Type
+//go:generate stringer -type=Type -linecomment
 
 // Type represents the type of data that is held in a byte field.
 type Type uint8
 
 const (
-	FTUnknown Type = 0
-	FTBool    Type = 1
-	FTInt8    Type = 2
-	FTInt16   Type = 3
-	FTInt32   Type = 4
-	FTInt64   Type = 5
-	FTUint8   Type = 6
-	FTUint16  Type = 7
-	FTUint32  Type = 8
-	FTUint64  Type = 9
-	FTFloat32 Type = 10
-	FTFloat64 Type = 11
-	FTString  Type = 12
-	FTBytes   Type = 13
-	FTStruct  Type = 14
+	FTUnknown Type = 0  // Unknown
+	FTBool    Type = 1  // bool
+	FTInt8    Type = 2  // int8
+	FTInt16   Type = 3  // int16
+	FTInt32   Type = 4  // int32
+	FTInt64   Type = 5  // int64
+	FTUint8   Type = 6  // uint8
+	FTUint16  Type = 7  // uint16
+	FTUint32  Type = 8  // uint32
+	FTUint64  Type = 9  // uint64
+	FTFloat32 Type = 10 // float32
+	FTFloat64 Type = 11 // float64
+	FTString  Type = 12 // string
+	FTBytes   Type = 13 // bytes
+	FTStruct  Type = 14 // struct
 	// Reserve 15 to 40
-	FTListBools   Type = 41
-	FTListInt8    Type = 42
-	FTListInt16   Type = 43
-	FTListInt32   Type = 44
-	FTListInt64   Type = 45
-	FTListUint8   Type = 46
-	FTListUint16  Type = 47
-	FTListUint32  Type = 48
-	FTListUint64  Type = 49
-	FTListFloat32 Type = 50
-	FTListFloat64 Type = 51
-	FTListBytes   Type = 52
-	FTListStrings Type = 53
-	FTListStructs Type = 54
+	FTListBools   Type = 41 // []bool
+	FTListInt8    Type = 42 // []int8
+	FTListInt16   Type = 43 // []int16
+	FTListInt32   Type = 44 // []int32
+	FTListInt64   Type = 45 // []int64
+	FTListUint8   Type = 46 // []uint8
+	FTListUint16  Type = 47 // []uint16
+	FTListUint32  Type = 48 // []uint32
+	FTListUint64  Type = 49 // []uint64
+	FTListFloat32 Type = 50 // []float32
+	FTListFloat64 Type = 51 // []float64
+	FTListBytes   Type = 52 // []bytes
+	FTListStrings Type = 53 // []string
+	FTListStructs Type = 54 // []structs
 	// Reserve 55 to 79
 )
 

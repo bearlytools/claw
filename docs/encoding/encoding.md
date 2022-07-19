@@ -170,7 +170,11 @@ padding is 8 - (leftOver)
 
 This requires the decoder to read the data size and calculate the data size + padding and read the entire value.  It can use the data size that was decoded to return only the relevant portion without the padding.
 
-### List of bools
+### Lists
+
+No matter what the list, the list items should be encoded in the order that they are in the list.
+
+#### List of bools
 
 A list of bools is made up of a Generic Header and multiple of 8 bytes. The Generic Header's data portion is set to the number of bool values that are stored in the list. This gives a maximum list size of 2^40 or 1099511627776 entries. 
 
@@ -187,7 +191,7 @@ A (8 bytes) Generic Header with the last 40 bits set the number of items in the 
 B (X bytes) A number of bytes divisible by 8 with a remainder of 0 that stores bools
 ```
 
-### Lists of numbers
+#### Lists of numbers
 
 A list of numbers includes any numeric type. It is made up of the Generic Header and some multiple of 8 bytes (64 bits). The Generic Header's data portion is set to the number of items in the list. This gives a maximum list size of 2^40 or 1099511627776 entries. 
 
@@ -204,7 +208,7 @@ A (8 bytes) Generic Header with the last 40 bits set the number of items in the 
 B (X bytes) A number of bytes divisible by 8 with a remainder of 0 that stores numbers of some size
 ```
 
-### Lists of strings or bytes
+#### Lists of strings or bytes
 
 Similar to either the string or bytes type from above, a list of strings or bytes is encoded the same way with only the field type different. We will refer only to list of bytes for rest of this section.
 
@@ -222,7 +226,7 @@ C (X bytes)   The entry data
 D (0-7 bytes) Padding to round out the list to be divisible by 8 bytes
 ```
 
-### Lists of structs
+#### Lists of structs
 
 List of structs are encoded with a Generic Header with the data portion set to the number of items in the list and the encoded structs. All structs must be the same type, as denoted by its name.
 
@@ -233,3 +237,4 @@ List of structs are encoded with a Generic Header with the data portion set to t
 A (8 bytes)   Generic Header with the last 40 bits set the number of items in the list
 B (X bytes)   An encoded struct type
 
+When encoding lists of Structs, the Struct items have their field number set to the index number in the array.
