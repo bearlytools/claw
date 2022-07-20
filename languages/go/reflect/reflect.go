@@ -6,7 +6,9 @@ import (
 	"github.com/bearlytools/claw/languages/go/structs"
 )
 
+// ClawStruct indicates that the type represents a Claw Struct.
 type ClawStruct interface {
+	// ClawReflect returns the reflect.Struct for a Claw Struct.
 	ClawReflect() Struct
 }
 
