@@ -2,48 +2,45 @@
 
 ## Introduction
 
-Claw module files provide for versioning import dependencies imported in your .claw file.
+Claw module files provide for versioning import dependencies imported in your `.claw` file and access control lists (ACLs) for what can use your `.claw` file.
 
-Claw modules are roughly based on the Go language modules, but are not equivalent due to the differences in supporting versioning for an IDL and support for a complete language.
+`clawc` determines what version of the `.claw` file to use by first looking for the latest release version with highest number and if that doesn't exist, using the highest committed version in master/main. 
 
-Therefore, we only have a tiny subset of what Go modules provide.
+It is important to remember that `.claw` compilation is version independent from a project's version. For example, if you import a `.claw` file from project A that has current revision v3.4.2 to use against project A version v1.3.2, this should be fine. You will have later data models, but these should be backwards compatible due to the nature of an IDL. 
 
-`claw.mod` files are not required if all `.claw` files can be located within the same repository. If your `.claw` file has imports that start with `./` and `../`, then you don't require a module file. 
+We thought about Claw having its own version numbers, separate from the repository, but that was just going to lead to a lot of commits that didn't update the version. When we introduce an RPC service layer, we will require a major revision number to target for service definitions.
 
-In theory, you can also use `./` and `../` imports with multiple repos in the local file system, but this can get ugly pretty fast.
+An IDL such as Claw should never have changes made that remove anything. They should always be forward compatibile. If you need to create new cleaned up version, you really need a `v2/` folder.
 
-All module files require publically accessible github.com repos at the moment. Eventually I'll add support for private repos, then other git repos, etc... Right now, I'm concentrating on getting this working and keeping that simple.
+`claw.mod` allows staticing your module file to specific versions of its dependencies to avoid these types of problems. 
+
+The other major use case for the `claw.mod` is supporting ACLs. When I publish my `.claw` file, I may not want others to import it. It may be that I want it for my use only so that I can re-write the defintions in a non-backwards compatible way without worrying about breaking other users. 
+
+By default, a `.claw` file is not importable by any other `.claw` file. To allow it to be imported, you must declare it to be publically accessible or list the packages that can import it. This prevents unintentional side effects. Note however that this does no prevent the language specific packages that are generated from being used.
+
+`claw.mod` files are not required.
 
 ## General syntax example of claw.mod file
 
 ```claw.mod
-module github.com/repo/vehicles
-
-claw 0.1
-
 require (
 	github.com/johnsiilver/trucks v1.1.1
-	github.com/johnsiilver/cars v0.0.0-20220321173239-a90fa8a75705
+	github.com/johnsiilver/cars v0.2.5
 	github.com/johnsiilver/motorcycles v1.1.0
+)
+
+acls (
+	github.com/johnsiilver/vehicles/*
+	github.com/djustice/vehicles/toyota
 )
 ```
 
 This example has all the major components of the `claw.mod` file:
 
-* `module <path>` is the name of this module. It must be the same as the `package` declaration in the `.claw` file.
-* `claw <version>` is the version of the clawc compiler required to compile this .claw file.
-* `require ()` provides a list of required modules. These should be the same as the import statements in the `.claw` file, except they contain version numbers afterwards. Imports that use `./` or `../` do not show up here. Neither do any other modules that are within the same repository. All `claw.mod` files in a single repository must use the same version of an imported module.
+* `require()` provides a list of required modules at some version. You only need to put in imports that need to be statically required.
+* `acls()` provides a list of package paths that are allowed. This is either the fully qualified name or can end with a `/*` to note that any package underneath can import this.
 
-## General syntax example of replace.mod file
+The other option that can exist here is `acls = public` instead of `acls ()` which means anything can import this. As an owner, this mean this should:
 
-```replace.mod
-replace (
-    github.com/johnsiilver/motorcycles => ../../directory/of/module
-)
-```
-
-* `replace ()` provides the ability to replace a required module with the module on the local filesystem. This allows you to do local development on a dependent module while working on this module. THIS IS NOT REQUIRED IF THE OTHER MODULE IS IN THE SAME REPOSITORY.
-
-For the replace to work, the module must be imported in `claw.mod`.
-
-The `claw mod init` command will also supply a .gitignore file that will ignore `replace.mod`. This prevents accidental checkin. If a .gitignore exists, it will be checked for `replace.mod` and it if doesn't exist, it will append it.
+* Never be removed at any version going forward to alway allow backwards compatibility. Remember, the user may have written records based on this to disk somewhere for long term storage long after your project is dead.
+* Onlly backwards compatible changes, aka never remove anything, only add things.
