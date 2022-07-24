@@ -18,7 +18,7 @@ The other major use case for the `claw.mod` is supporting ACLs. When I publish m
 
 By default, a `.claw` file is not importable by any other `.claw` file. To allow it to be imported, you must declare it to be publically accessible or list the packages that can import it. This prevents unintentional side effects. Note however that this does no prevent the language specific packages that are generated from being used.
 
-`claw.mod` files are not required.
+`claw.mod` files are not required and only affect compilation from the directory specified. `claw.mod` files in other dependencies are ignored.
 
 ## General syntax example of claw.mod file
 
@@ -27,6 +27,10 @@ require (
 	github.com/johnsiilver/trucks v1.1.1
 	github.com/johnsiilver/cars v0.2.5
 	github.com/johnsiilver/motorcycles v1.1.0
+)
+
+replace (
+	github.com/badactor/motorcycles => github.com/johnsiilver/motorcycles
 )
 
 acls (
@@ -38,6 +42,8 @@ acls (
 This example has all the major components of the `claw.mod` file:
 
 * `require()` provides a list of required modules at some version. You only need to put in imports that need to be statically required.
+* `replace()` provides for replacing a package that is imported with another package. This allows replacing a bad actor with a good copy. This differs from our local.replace file where
+we replace locations for development and paths have to be local file paths. It is different that a global.replace, which specifies that the package location has moved. In our example, we replace one packag with another and specify the version for the replacemenbt in `require`.
 * `acls()` provides a list of package paths that are allowed. This is either the fully qualified name or can end with a `/*` to note that any package underneath can import this.
 
 The other option that can exist here is `acls = public` instead of `acls ()` which means anything can import this. As an owner, this mean this should:
