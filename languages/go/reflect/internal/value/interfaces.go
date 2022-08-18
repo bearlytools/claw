@@ -17,33 +17,20 @@ type PackageDescr interface {
 	PackageName() string
 	// FullPath returns the full path of the package.
 	FullPath() string
-
 	// Imports is a list of imported claw files.
 	Imports() []PackageDescr
-
 	// Enums is a list of the Enum declarations.
-	Enums() []EnumGroup
-	// Messages is a list of the top-level message declarations.
+	Enums() EnumGroups
+	// Structs is a list of the top-level message declarations.
 	Structs() []StructDescr
-
-	doNotImplement
-}
-
-// StructDescrs gives access to the descriptions of a package's struct objects.
-type StructDescrs interface {
-	// Len reports the number of messages.
-	Len() int
-	// Get returns the ith StructDescr. It panics if out of bounds.
-	Get(i int) StructDescr
-	// ByName returns the StructDescr for a message named s.
-	// It returns nil if not found.
-	ByName(s string) StructDescr
 
 	doNotImplement
 }
 
 // EnumGroup describes a single set of enum values defined in a claw package.
 type EnumGroup interface {
+	// Name is the name of the EnumGroup.
+	Name() string
 	// Len reports the number of enum values.
 	Len() int
 	// Get returns the ith EnumValue. It panics if out of bounds.
@@ -51,6 +38,8 @@ type EnumGroup interface {
 	// ByName returns the EnumValue for an enum named s.
 	// It returns nil if not found.
 	ByName(s string) EnumValueDescr
+	// ByValue gets the Enum by its value.
+	ByValue(i int) EnumValueDescr
 	// Size returns the size in bits of the enumerator.
 	Size() uint8 // Either 8 or 16
 
@@ -116,6 +105,10 @@ type List interface {
 	// is not a valid element type for this list, this will panic.
 	Append(Value)
 
+	// New returns a newly allocated and mutable empty Struct value. This can
+	// only be used if the List represents a list of Struct values.
+	New() Struct
+
 	doNotImplement
 }
 
@@ -126,7 +119,7 @@ type Struct interface {
 	// type information for the message.
 	Descriptor() StructDescr
 
-	// New returns a newly allocated and mutable empty message.
+	// New returns a newly allocated and mutable empty Struct.
 	New() Struct
 
 	// Range iterates over every populated field in an undefined order,
@@ -173,14 +166,29 @@ type Struct interface {
 
 	// NewField returns a new value that is assignable to the field
 	// for the given descriptor. For scalars, this returns the default value.
-	// For lists, maps, and messages, this returns a new, empty, mutable value.
+	// For lists and Structs, this returns a new, empty, mutable value.
 	NewField(FieldDescr) Value
 
 	realType() *structs.Struct
 }
 
+// StructDescrs gives access to the descriptions of a package's struct objects.
+type StructDescrs interface {
+	// Len reports the number of messages.
+	Len() int
+	// Get returns the ith StructDescr. It panics if out of bounds.
+	Get(i int) StructDescr
+	// ByName returns the StructDescr for a Struct named s.
+	// It returns nil if not found.
+	ByName(s string) StructDescr
+
+	doNotImplement
+}
+
 // StructDescr describes a claw struct object.
 type StructDescr interface {
+	// StructName is the name of the struct.
+	StructName() string
 	// Package will be return name package name this struct was defined in.
 	Package() string
 	// FullPath will return the full path of the package as used in Go import statements.
@@ -201,4 +209,10 @@ type FieldDescr interface {
 	FieldNum() uint16
 	// IsEnum indicates if this field is an enumerator.
 	IsEnum() bool
+	// EnumGroup returns the EnumGroup associated with this field.
+	// This is only valid if IsEnum() is true.
+	EnumGroup() EnumGroup
+	// ItemType returns the name of a Struct if the field is a list of Struct values.
+	// If not, this panics.
+	ItemType() string
 }

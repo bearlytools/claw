@@ -2,12 +2,15 @@
 
 ## Introduction
 
-A Claw replace file provide for replacing a claw import with a file either in another repo or on the local file system. 
+A Claw replace file provide for replacing a claw import with a package either in another repo or on the local file system. 
 
-There are two ways to replace a dependency:
+There are three ways to replace a dependency:
 
+* `claw.mod` `replace` directive
 * local.replace
 * global.replace
+
+`claw.mod` directive is covered in our section on modules. This is used to replace a bad actor's package. Here we will talk about `local.replace` and `global.replace`.
 
 ## local.replace
 
@@ -47,7 +50,5 @@ A `global.replace` indicates to `clawc` that any imports of this package should 
 The syntax is:
 
 ```global.replace
-with (
-    github.com/newrepo/path/to/package
-)
+with github.com/newrepo/path/to/package
 ```

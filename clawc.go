@@ -5,12 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/bearlytools/claw/internal/conversions"
-	"github.com/bearlytools/claw/internal/idl"
+	"github.com/bearlytools/claw/internal/imports"
 	"github.com/bearlytools/claw/internal/render"
-	"github.com/johnsiilver/halfpike"
+	"github.com/bearlytools/claw/internal/writer"
+
+	osfs "github.com/gopherfs/fs/io/os"
 
 	// Registers the golang renderer.
 	_ "github.com/bearlytools/claw/internal/render/golang"
@@ -28,45 +28,33 @@ func main() {
 		path = args[0]
 	}
 
-	clawFile := ""
-	files, err := os.ReadDir(path)
+	// Mount our filesystem for reading.
+	fs, err := osfs.New()
 	if err != nil {
-		exitf("could not read the directory: %s", err)
+		panic(err)
 	}
-	for _, f := range files {
-		if f.IsDir() {
-			continue
-		}
-		if filepath.Ext(f.Name()) == ".claw" {
-			if clawFile != "" {
-				exitf("error: there is more than one .claw file in the directory")
-			}
-			clawFile = f.Name()
-		}
-	}
-	if clawFile == "" {
-		exitf("error: did not find a .claw file in the path")
-	}
-	fp := filepath.Join(path, clawFile)
-	content, err := os.ReadFile(fp)
+
+	clawFile, err := imports.FindClawFile(fs, path)
 	if err != nil {
-		exitf("error: problem reading file %s: %s", fp, err)
-	}
-	file := idl.New()
-
-	if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), file); err != nil {
-		exit(err)
+		exitf("problem finding .claw file: %s", err)
 	}
 
-	if err := file.Validate(); err != nil {
-		exit(err)
+	config := imports.NewConfig()
+	if err := config.Read(ctx, clawFile); err != nil {
+		exitf("error: %s\n", err)
 	}
 
-	results, err := render.Render(context.Background(), file, render.Go)
+	rendered, err := render.Render(ctx, config, render.Go)
 	if err != nil {
 		exit(err)
 	}
-	os.Stdout.Write(results[0].Native)
+	wr, err := writer.New(config)
+	if err != nil {
+		exit(err)
+	}
+	if err := wr.Write(ctx, rendered); err != nil {
+		exit(err)
+	}
 }
 
 func exit(i ...any) {

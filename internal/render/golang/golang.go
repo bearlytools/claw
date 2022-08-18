@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"fmt"
 	"text/template"
 
 	"github.com/bearlytools/claw/internal/idl"
+	"github.com/bearlytools/claw/internal/imports"
 	"github.com/bearlytools/claw/internal/render"
 )
 
@@ -28,13 +30,31 @@ func init() {
 	render.Supported[render.Go] = Renderer{}
 }
 
+type templateData struct {
+	Path   string
+	Config *imports.Config
+	File   *idl.File
+}
+
 // Renderer implements render.Renderer for the Go language.
 type Renderer struct{}
 
 // Render implements render.Renderer.Render().
-func (r Renderer) Render(ctx context.Context, file *idl.File) ([]byte, error) {
+func (r Renderer) Render(ctx context.Context, config *imports.Config, path string) ([]byte, error) {
 	buff := bytes.Buffer{}
-	if err := templates.ExecuteTemplate(&buff, "claw.tmpl", file); err != nil {
+
+	f, ok := config.Imports[path]
+	if !ok {
+		return nil, fmt.Errorf("could not find import path %q in config.Imports", path)
+	}
+
+	data := templateData{
+		Path:   path,
+		Config: config,
+		File:   f,
+	}
+
+	if err := templates.ExecuteTemplate(&buff, "claw.tmpl", data); err != nil {
 		return nil, err
 	}
 	return buff.Bytes(), nil

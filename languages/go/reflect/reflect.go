@@ -1,7 +1,6 @@
 package reflect
 
 import (
-	"github.com/bearlytools/claw/internal/field"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
 	"github.com/bearlytools/claw/languages/go/structs"
 )
@@ -34,22 +33,8 @@ type EnumGroups = value.EnumGroups
 // lists of bytes/string or list of structs.
 type List = value.List
 
-// Kind represents the field's kind, which in Claw nomenclature would be its type.
-type Kind kind
-
-type kind struct {
-	clawType field.Type
-}
-
-func (k Kind) IsValid() bool {
-	return k.clawType != field.FTUnknown
-}
-
-func (k Kind) String() string {
-	return k.clawType.String()
-}
-
 type XXXPackageDescrImpl = value.PackageDescrImpl
+type XXXEnumGroupsImpl = value.EnumGroupsImpl
 type XXXEnumGroupImpl = value.EnumGroupImpl
 type XXXEnumValueDescrImpl = value.EnumValueDescrImpl
 type XXXStructDescrImpl = value.StructDescrImpl

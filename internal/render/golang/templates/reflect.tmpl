@@ -1,19 +1,10 @@
-{{- $file := . }}
-var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
-    Name: "{{ $file.Package }}",
-    Path: "{{ $file.FullPath }}",
-    {{- if .Imports.Imports }}
-    ImportDescrs: []reflect.PackageDescr {
-    {{- range $index, $value := .Imports.Imports }}
-        {{ $value.Name }}.XXXPackageDescr,
-    {{- end }} {{/* end .Imports range */}} 
-    },
-    {{- end }} {{/* end Imports if */}} 
-    {{- if .Enums }}
-    EnumDescrs: []reflect.EnumGroup{
-    {{- range .Enums }}
+{{- $file := .File }}
+{{- if $file.Enums }}
+var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
+    List:   []reflect.EnumGroup{
+        {{- range $file.Enums }}
         reflect.XXXEnumGroupImpl{
-            Name: "{{ .Name }}",
+            GroupName: "{{ .Name }}",
             GroupLen: {{ .Len }},
             EnumSize: {{ .Size }},
             Descrs: []reflect.EnumValueDescr{
@@ -25,12 +16,35 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
                 {{- end }}
             },
         },
-    {{- end }} {{/* end Enum range */}} 
+        {{- end }} {{/* end Enum range */}} 
     },
+    Lookup: map[string]reflect.EnumGroup{},
+}
+
+func init() {
+    x := XXXEnumGroups.(reflect.XXXEnumGroupsImpl)
+    for _, g := range x.List {
+        x.Lookup[g.Name()] = g
+    }
+}
+{{- end }} {{/* end Enum if */}} 
+
+var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
+    Name: "{{ $file.Package }}",
+    Path: "{{ $file.FullPath }}",
+    {{- if .File.Imports.Imports }}
+    ImportDescrs: []reflect.PackageDescr {
+    {{- range $index, $value := .File.Imports.Imports }}
+        {{ $value.Name }}.XXXPackageDescr,
+    {{- end }} {{/* end .Imports range */}} 
+    },
+    {{- end }} {{/* end Imports if */}} 
+    {{- if .File.Enums }}
+    EnumGroupsDescrs: XXXEnumGroups,
     {{- end }} {{/* end Enum if */}} 
-    {{- if .Structs }}
+    {{- if .File.Structs }}
     StructsDescrs: []reflect.StructDescr{
-    {{- range .Structs }}
+    {{- range .File.Structs }}
         reflect.XXXStructDescrImpl{
             Name: "{{ .Name }}",
             Pkg: "{{ $file.Package }}",
@@ -38,11 +52,20 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
             FieldList: []reflect.FieldDescr{
                 {{- $struct := . }}
                 {{- range .Fields }}
-                reflect.XXXFieldDescrImpl{FD: mapping{{ $struct.Name }}.ByName("{{ .Name }}")},
+                reflect.XXXFieldDescrImpl{
+                    FD: mapping{{ $struct.Name }}.ByName("{{ .Name }}"),
+                    {{- if .IsEnum }}
+                    EG: XXXEnumGroups.ByName("{{ .IdentName }}"),
+                    {{- end }}
+                },
                 {{- end }}
             },
         },
     {{- end }} {{/* end Structs range */}} 
     },
     {{- end }} {{/* end Structs if */}} 
+}
+
+func init() {
+    runtime.RegisterPackage(XXXPackageDescr)
 }

@@ -13,8 +13,6 @@ import (
 type FieldDescr struct {
 	// Name is the name of the field as described in the .claw file.
 	Name string
-	// GoName is the name of field, if required.
-	GoName string
 	// Type is the type of field.
 	Type field.Type
 	// FieldNum is the field number in the Struct.

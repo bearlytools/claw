@@ -1,7 +1,7 @@
 
 // Everything below this line is internal details.
-{{- $file := . }}
-{{- range .Structs }}
+{{- $file := .File }}
+{{- range $file.Structs }}
 var mapping{{ .Name }} = &mapping.Map{
     Name: "{{ .Name }}",
     Pkg: "{{ $file.Package }}",

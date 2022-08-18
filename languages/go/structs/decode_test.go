@@ -18,10 +18,9 @@ import (
 func TestDecodeBool(t *testing.T) {
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
-			&mapping.FieldDescr{
-				Name:   "bool",
-				GoName: "Bool",
-				Type:   field.FTBool,
+			{
+				Name: "bool",
+				Type: field.FTBool,
 			},
 		},
 	}
@@ -116,7 +115,7 @@ func TestDecodeNum(t *testing.T) {
 	for i, ft := range field.NumberTypes {
 		mappings[i] = &mapping.Map{
 			Fields: []*mapping.FieldDescr{
-				&mapping.FieldDescr{Type: ft},
+				{Type: ft},
 			},
 		}
 		switch ft {
@@ -158,7 +157,7 @@ func TestDecodeNum(t *testing.T) {
 			size[i] = 32
 		case field.FTFloat64:
 			want[i] = float64(math.SmallestNonzeroFloat64)
-			encoded[i] = numFieldInBytes[float64](math.SmallestNonzeroFloat64, mappings[i])
+			encoded[i] = numFieldInBytes(math.SmallestNonzeroFloat64, mappings[i])
 			size[i] = 64
 		}
 	}
@@ -413,10 +412,9 @@ func bytesFieldInBytes(value []byte, dataMap *mapping.Map) []byte {
 func TestDecodeBytes(t *testing.T) {
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
-			&mapping.FieldDescr{
-				Name:   "bytes",
-				GoName: "Bytes",
-				Type:   field.FTBytes,
+			{
+				Name: "bytes",
+				Type: field.FTBytes,
 			},
 		},
 	}
@@ -524,10 +522,9 @@ func boolListInBytes(howMany uint64) []byte {
 func TestDecodeListBool(t *testing.T) {
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
-			&mapping.FieldDescr{
-				Name:   "listBool",
-				GoName: "ListBool",
-				Type:   field.FTListBools,
+			{
+				Name: "listBool",
+				Type: field.FTListBools,
 			},
 		},
 	}
@@ -615,10 +612,9 @@ func TestDecodeListBool(t *testing.T) {
 func TestDecodeListBytes(t *testing.T) {
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
-			&mapping.FieldDescr{
-				Name:   "listBytes",
-				GoName: "ListBytes",
-				Type:   field.FTListBytes,
+			{
+				Name: "listBytes",
+				Type: field.FTListBytes,
 			},
 		},
 	}
@@ -729,7 +725,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListUint8:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []uint8{math.MaxUint8, 0, 1, 2, 3, 4, 5, 6, 9, 10} // store 10 values
@@ -749,7 +745,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListUint16:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []uint16{math.MaxUint16, 0, 1, 2, 3} // store 5 values
@@ -766,7 +762,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListUint32:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []uint32{math.MaxUint32, 0, 1} // store 3 values
@@ -783,7 +779,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListUint64:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []uint64{math.MaxUint64, 0} // store 2 values
@@ -799,7 +795,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListInt8:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []int8{math.MaxInt8, math.MinInt8, 1, 2, 3, 4, 5, 6, 9, 10} // store 10 values
@@ -819,7 +815,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListInt16:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []int16{math.MaxInt8, math.MinInt16, 1, 2, 3} // store 5 values
@@ -836,7 +832,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListInt32:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []int32{math.MaxInt32, math.MinInt32, 1} // store 3 values
@@ -853,7 +849,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListInt64:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []int64{math.MaxInt64, math.MinInt64} // store 2 values
@@ -870,7 +866,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListFloat32:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []float32{math.MaxFloat32, math.SmallestNonzeroFloat32, 1.1} // store 3 values
@@ -887,7 +883,7 @@ func TestDecodeListNum(t *testing.T) {
 		case field.FTListFloat64:
 			mappings[i] = &mapping.Map{
 				Fields: []*mapping.FieldDescr{
-					&mapping.FieldDescr{Type: ft},
+					{Type: ft},
 				},
 			}
 			vals := []float64{math.MaxFloat32, math.SmallestNonzeroFloat64} // store 2 values

@@ -12,15 +12,18 @@ import (
 	"github.com/bearlytools/claw/languages/go/structs/header"
 )
 
+// _ PackageDescr is simply used to make sure we are implementing our interface.
+var _ PackageDescr = PackageDescrImpl{}
+
 // PackageDescrImpl is the implementation of PackageDescr.
 type PackageDescrImpl struct {
 	doNotImplement
 
-	Name          string
-	Path          string
-	ImportDescrs  []PackageDescr
-	EnumDescrs    []EnumGroup
-	StructsDescrs []StructDescr
+	Name             string
+	Path             string
+	ImportDescrs     []PackageDescr
+	EnumGroupsDescrs EnumGroups
+	StructsDescrs    []StructDescr
 }
 
 // PackageName returns the name of the package.
@@ -39,8 +42,8 @@ func (p PackageDescrImpl) Imports() []PackageDescr {
 }
 
 // Enums is a list of the Enum declarations.
-func (p PackageDescrImpl) Enums() []EnumGroup {
-	return p.EnumDescrs
+func (p PackageDescrImpl) Enums() EnumGroups {
+	return p.EnumGroupsDescrs
 }
 
 // Messages is a list of the top-level message declarations.
@@ -48,18 +51,26 @@ func (p PackageDescrImpl) Structs() []StructDescr {
 	return p.StructsDescrs
 }
 
+// _ EnumGroup is simply used to make sure we are implementing our interface.
+var _ EnumGroup = EnumGroupImpl{}
+
 // EnumGroupImpl implements EnumGroup.
 type EnumGroupImpl struct {
 	doNotImplement
 
-	// Name is the name of the EnumGroup.
-	Name string
+	// GroupName is the name of the EnumGroup.
+	GroupName string
 	// GroupLen is how many enumerated values are in this group.
 	GroupLen int
 	// EnumSize is the bit size, 8 or 16, that the values are.
 	EnumSize uint8
 	// Descrs hold the valuye descriptors.
 	Descrs []EnumValueDescr
+}
+
+// Name is the name of the enum group.
+func (e EnumGroupImpl) Name() string {
+	return e.GroupName
 }
 
 // Len reports the number of enum values.
@@ -87,10 +98,49 @@ func (e EnumGroupImpl) ByName(s string) EnumValueDescr {
 	return nil
 }
 
+func (e EnumGroupImpl) ByValue(i int) EnumValueDescr {
+	for _, descr := range e.Descrs {
+		if descr.Number() == uint16(i) {
+			return descr
+		}
+	}
+	return nil
+}
+
 // Size returns the size in bits of the enumerator.
 func (e EnumGroupImpl) Size() uint8 {
 	return e.EnumSize
 }
+
+// _ EnumGroups is simply used to make sure we are implementing our interface.
+var _ EnumGroups = EnumGroupsImpl{}
+
+// EnumGroupsImpl implements reflect.EnumGroups.
+type EnumGroupsImpl struct {
+	doNotImplement
+
+	List   []EnumGroup
+	Lookup map[string]EnumGroup
+}
+
+// Len reports the number of enum types.
+func (e EnumGroupsImpl) Len() int {
+	return len(e.List)
+}
+
+// Get returns the ith EnumDescriptor. It panics if out of bounds.
+func (e EnumGroupsImpl) Get(i int) EnumGroup {
+	return e.List[i]
+}
+
+// ByName returns the EnumDescriptor for an enum named s.
+// It returns nil if not found.
+func (e EnumGroupsImpl) ByName(s string) EnumGroup {
+	return e.Lookup[s]
+}
+
+// _ EnumValueDescrImpl is simply used to make sure we are implementing our interface.
+var _ EnumValueDescr = EnumValueDescrImpl{}
 
 // EnumValueDescrImpl implements EnumValueDescr.
 type EnumValueDescrImpl struct {
@@ -110,8 +160,8 @@ func (e EnumValueDescrImpl) Number() uint16 {
 	return e.EnumNumber
 }
 
-// _StructDescr is simply used to make sure we are implementing our interface.
-var _StructDescr StructDescr = StructDescrImpl{}
+// _ StructDescr is simply used to make sure we are implementing our interface.
+var _ StructDescr = StructDescrImpl{}
 
 // StructDescrImpl implements StructDescr.
 type StructDescrImpl struct {
@@ -135,6 +185,11 @@ func NewStructDescrImpl(m *mapping.Map) StructDescrImpl {
 	return descr
 }
 
+// Struct Name will be the name of the struct.
+func (s StructDescrImpl) StructName() string {
+	return s.Name
+}
+
 // Package will be return name package name this struct was defined in.
 func (s StructDescrImpl) Package() string {
 	return s.Pkg
@@ -150,12 +205,14 @@ func (s StructDescrImpl) Fields() []FieldDescr {
 	return s.FieldList
 }
 
-// _FieldDescrImpl is simply used to make sure we are implementing our interface.
-var _FieldDescrImpl FieldDescr = FieldDescrImpl{}
+// _ FieldDescr is simply used to make sure we are implementing our interface.
+var _ FieldDescr = FieldDescrImpl{}
 
 // FieldDescrImpl describes a field inside a Struct type.
 type FieldDescrImpl struct {
 	FD *mapping.FieldDescr
+	SD StructDescr
+	EG EnumGroup
 }
 
 // Name returns the name of the field.
@@ -178,9 +235,40 @@ func (f FieldDescrImpl) IsEnum() bool {
 	return f.FD.IsEnum
 }
 
+// EnumGroup returns the EnumGroup for the field. If the field is not an enum, this
+// will panic. Use IsEnum() if you want to check before calling this.
+func (f FieldDescrImpl) EnumGroup() EnumGroup {
+	if f.EG == nil {
+		panic("called EnumGroup on field that was not an Enum")
+	}
+	return f.EG
+}
+
+type ItemType struct {
+	Name    string
+	Path    string
+	Mapping mapping.Map
+}
+
+// ItemType returns the Struct type in a []Struct. If this is not a []Struct, then
+// this will panic.
+func (f FieldDescrImpl) ItemType() string {
+	if f.FD.Type != field.FTListStructs {
+		panic("cannot call ItemType() on non list of Struct")
+	}
+	return f.FD.Mapping.Name
+}
+
+// _ List is simply used to make sure we are implementing our interface.
+var _ List = ListBools{}
+
 type ListBools struct {
 	b *structs.Bools
 	doNotImplement
+}
+
+func NewListBools(b *structs.Bools) ListBools {
+	return ListBools{b: b}
 }
 
 func (l ListBools) Type() field.Type {
@@ -202,6 +290,13 @@ func (l ListBools) Set(i int, v Value) {
 func (l ListBools) Append(v Value) {
 	l.b.Append(v.Bool())
 }
+
+func (l ListBools) New() Struct {
+	panic("Listbools does not support New()")
+}
+
+// _ List is simply used to make sure we are implementing our interface.
+var _ List = ListNumbers[uint8]{}
 
 type ListNumbers[N Number] struct {
 	n  *structs.Numbers[N]
@@ -260,6 +355,13 @@ func (l ListNumbers[N]) Append(v Value) {
 	l.n.Append(v.Any().(N))
 }
 
+func (l ListNumbers[N]) New() Struct {
+	panic("ListNumbers does not support New()")
+}
+
+// _ List is simply used to make sure we are implementing our interface.
+var _ List = ListBytes{}
+
 type ListBytes struct {
 	b *structs.Bytes
 	doNotImplement
@@ -288,6 +390,13 @@ func (l ListBytes) Set(i int, v Value) {
 func (l ListBytes) Append(v Value) {
 	l.b.Append(v.Bytes())
 }
+
+func (l ListBytes) New() Struct {
+	panic("ListBytes does not support New()")
+}
+
+// _ List is simply used to make sure we are implementing our interface.
+var _ List = ListStrings{}
 
 type ListStrings struct {
 	b *structs.Bytes
@@ -318,13 +427,31 @@ func (l ListStrings) Append(v Value) {
 	l.b.Append(conversions.UnsafeGetBytes(v.String()))
 }
 
+func (l ListStrings) New() Struct {
+	panic("ListStrings does not support New()")
+}
+
+// _ List is simply used to make sure we are implementing our interface.
+var _ List = ListStructs{}
+
 type ListStructs struct {
-	l *structs.Structs
+	l  *structs.Structs
+	sd StructDescrImpl
 	doNotImplement
 }
 
 func NewListStructs(l *structs.Structs) ListStructs {
-	return ListStructs{l: l}
+	m := l.Map()
+
+	sd := StructDescrImpl{
+		Name: m.Name,
+		Pkg:  m.Pkg,
+		Path: m.Path,
+	}
+	for _, fd := range m.Fields {
+		sd.FieldList = append(sd.FieldList, FieldDescrImpl{FD: fd})
+	}
+	return ListStructs{l: l, sd: sd}
 }
 
 func (l ListStructs) Type() field.Type {
@@ -337,19 +464,10 @@ func (l ListStructs) Len() int {
 
 func (l ListStructs) Get(i int) Value {
 	v := l.l.Get(i)
-	m := l.l.Map()
 
-	sd := StructDescrImpl{
-		Name: m.Name,
-		Pkg:  m.Pkg,
-		Path: m.Path,
-	}
-	for _, fd := range m.Fields {
-		sd.FieldList = append(sd.FieldList, FieldDescrImpl{FD: fd})
-	}
 	s := StructImpl{
 		s:     v,
-		descr: sd,
+		descr: l.sd,
 	}
 	return ValueOfStruct(s)
 }
@@ -365,6 +483,13 @@ func (l ListStructs) Append(v Value) {
 		panic(err)
 	}
 }
+
+func (l ListStructs) New() Struct {
+	return NewStruct(l.l.New(), l.sd)
+}
+
+// _ Struct is simply used to make sure we are implementing our interface.
+var _ Struct = StructImpl{}
 
 type StructImpl struct {
 	s     *structs.Struct
@@ -547,34 +672,34 @@ func GetValue(s *structs.Struct, fieldNum uint16) Value {
 		return ValueOfBool(b)
 	case field.FTInt8:
 		n := structs.MustGetNumber[int8](s, fieldNum)
-		return ValueOfNumber[int8](n)
+		return ValueOfNumber(n)
 	case field.FTInt16:
 		n := structs.MustGetNumber[int16](s, fieldNum)
-		return ValueOfNumber[int16](n)
+		return ValueOfNumber(n)
 	case field.FTInt32:
 		n := structs.MustGetNumber[int32](s, fieldNum)
-		return ValueOfNumber[int32](n)
+		return ValueOfNumber(n)
 	case field.FTInt64:
 		n := structs.MustGetNumber[int64](s, fieldNum)
-		return ValueOfNumber[int64](n)
+		return ValueOfNumber(n)
 	case field.FTUint8:
 		n := structs.MustGetNumber[uint8](s, fieldNum)
-		return ValueOfNumber[uint8](n)
+		return ValueOfNumber(n)
 	case field.FTUint16:
 		n := structs.MustGetNumber[uint16](s, fieldNum)
-		return ValueOfNumber[uint16](n)
+		return ValueOfNumber(n)
 	case field.FTUint32:
 		n := structs.MustGetNumber[uint32](s, fieldNum)
-		return ValueOfNumber[uint32](n)
+		return ValueOfNumber(n)
 	case field.FTUint64:
 		n := structs.MustGetNumber[uint64](s, fieldNum)
-		return ValueOfNumber[uint64](n)
+		return ValueOfNumber(n)
 	case field.FTFloat32:
 		n := structs.MustGetNumber[float32](s, fieldNum)
-		return ValueOfNumber[float32](n)
+		return ValueOfNumber(n)
 	case field.FTFloat64:
 		n := structs.MustGetNumber[float64](s, fieldNum)
-		return ValueOfNumber[float64](n)
+		return ValueOfNumber(n)
 	case field.FTBytes:
 		b := structs.MustGetBytes(s, fieldNum)
 		return ValueOfBytes(*b)
@@ -598,34 +723,34 @@ func GetValue(s *structs.Struct, fieldNum uint16) Value {
 		return ValueOfList(ListBools{b: l})
 	case field.FTListInt8:
 		l := structs.MustGetListNumber[int8](s, fieldNum)
-		return ValueOfList(NewListNumbers[int8](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListInt16:
 		l := structs.MustGetListNumber[int16](s, fieldNum)
-		return ValueOfList(NewListNumbers[int16](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListInt32:
 		l := structs.MustGetListNumber[int32](s, fieldNum)
-		return ValueOfList(NewListNumbers[int32](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListInt64:
 		l := structs.MustGetListNumber[int64](s, fieldNum)
-		return ValueOfList(NewListNumbers[int64](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListUint8:
 		l := structs.MustGetListNumber[uint8](s, fieldNum)
-		return ValueOfList(NewListNumbers[uint8](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListUint16:
 		l := structs.MustGetListNumber[uint16](s, fieldNum)
-		return ValueOfList(NewListNumbers[uint16](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListUint32:
 		l := structs.MustGetListNumber[uint32](s, fieldNum)
-		return ValueOfList(NewListNumbers[uint32](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListUint64:
 		l := structs.MustGetListNumber[uint64](s, fieldNum)
-		return ValueOfList(NewListNumbers[uint64](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListFloat32:
 		l := structs.MustGetListNumber[float32](s, fieldNum)
-		return ValueOfList(NewListNumbers[float32](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListFloat64:
 		l := structs.MustGetListNumber[float64](s, fieldNum)
-		return ValueOfList(NewListNumbers[float64](l))
+		return ValueOfList(NewListNumbers(l))
 	case field.FTListBytes:
 		l := structs.MustGetListBytes(s, fieldNum)
 		return ValueOfList(NewListBytes(l))

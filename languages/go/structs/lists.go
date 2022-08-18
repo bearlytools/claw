@@ -937,6 +937,11 @@ func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, err
 	return d, nil
 }
 
+// New creates a new *Struct that can be stored in Structs.
+func (s *Structs) New() *Struct {
+	return New(0, s.mapping)
+}
+
 // Reset resets all the internal fields to their zero value. This should only be used
 // when recycling the Structs as it does not reset parent size counters.
 func (s *Structs) Reset() {
@@ -1017,7 +1022,7 @@ func (s *Structs) Set(index int, value *Struct) error {
 		return fmt.Errorf("cannot add a *Struct to a list of structs that is attached to another field")
 	}
 
-	// If the mapping pointers are pointing to the same place, then the Structs aren't the same.
+	// If the mapping pointers are not pointing to the same place, then the Structs aren't the same.
 	if value.mapping != s.mapping {
 		return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", index)
 

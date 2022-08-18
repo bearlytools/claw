@@ -1,4 +1,4 @@
-{{- range $enumsIndex, $enumGroup := .Enums }}
+{{- range $enumsIndex, $enumGroup := .File.Enums }}
 type {{  $enumGroup.Name }} {{  $enumGroup.GoType }}
 
 // String implements fmt.Stringer.
@@ -10,14 +10,14 @@ func (x {{  $enumGroup.Name }}) String() string {
 // This should only be used by the reflect package and is has no compatibility promises 
 // like all XXX fields.
 func (x {{ $enumGroup.Name }}) XXXEnumGroup() reflect.EnumGroup {
-    return XXXPackageDescr.Enums()[{{ $enumsIndex }}]
+    return XXXEnumGroups.Get({{ $enumsIndex }})
 }
 
 // XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
 // This should only be used by the reflect package and is has no compatibility promises 
 // like all XXX fields.
 func (x {{ $enumGroup.Name }}) XXXEnumValueDescr() reflect.EnumValueDescr {
-    return XXXPackageDescr.Enums()[{{ $enumsIndex }}].Get(int(x))
+    return XXXEnumGroups.Get({{ $enumsIndex }}).ByValue(int(x))
 }
 
 {{ $enum := . }}

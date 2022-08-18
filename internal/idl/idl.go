@@ -3,6 +3,7 @@ package idl
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
 	"path"
 	"strconv"
@@ -16,27 +17,42 @@ import (
 
 // Option is an option for the file.
 type Option struct {
+	// Name is the name of the Option.
 	Name string
+	// Args are all the arguments to the Option.
 	Args []string
 }
 
 // File represents the collected information from a .claw file.
 type File struct {
-	Package    string
-	FullPath   string
-	Version    int
-	Options    map[string]Option
+	// Package is the name of the package.
+	Package string
+	// FullPath is the full path to the package.
+	FullPath string
+	// Version is the version of the Claw language.
+	Version int
+	// Options defines options that were defined on the file.
+	Options map[string]Option
+	// Identifers hold types that are defined in this file.
 	Identifers map[string]any
-	Imports    Import
+	// External holds externally defined types that are imported here.
+	External map[string]any
+	// Imports are all the package imports.
+	Imports Import
+
+	// RepoVersion is the version of the file in the repo.
+	RepoVersion string
+	// SHA256 is the file's SHA256 hash value.
+	SHA256 string
 }
 
 // New is the constructor for File.
 func New() *File {
 	return &File{
 		Identifers: map[string]any{},
+		External:   map[string]any{},
 		Options:    map[string]Option{},
 		Version:    -1,
-		//hp: halfpike.NewParser(input, val Validator) (*Parser, error)
 	}
 }
 
@@ -147,7 +163,7 @@ func (f *File) ParsePackage(ctx context.Context, p *halfpike.Parser) halfpike.Pa
 		return p.Errorf("[Line %d] error: %w", line.LineNum, err)
 	}
 
-	if err := validPackage(line.Items[1].Val); err != nil {
+	if err := ValidPackage(line.Items[1].Val); err != nil {
 		return p.Errorf("[Line %d] error: %w", line.LineNum, err)
 	}
 	f.Package = line.Items[1].Val
@@ -284,6 +300,16 @@ func NewImport() Import {
 	return Import{Imports: map[string]ImportEntry{}}
 }
 
+func (i *Import) ByPkgName(name string) (ImportEntry, error) {
+	for _, imp := range i.Imports {
+		if imp.Name == name {
+			return imp, nil
+		}
+	}
+	return ImportEntry{}, fmt.Errorf("package %q was not found", name)
+}
+
+// parse is used to parse the line from raw text using halfpike.
 func (i *Import) parse(p *halfpike.Parser) error {
 	l := p.Next()
 	if len(l.Items) < 3 {
@@ -305,8 +331,9 @@ func (i *Import) parse(p *halfpike.Parser) error {
 	for {
 		l := p.Next()
 		if p.EOF(l) {
-			return fmt.Errorf("[Line %d]: Malformed import, EOF reached before closing '}'", l.LineNum)
+			return fmt.Errorf("[Line %d]: Malformed import(2), EOF reached before closing '}'", l.LineNum)
 		}
+
 		if l.Items[0].Val == ")" {
 			if err := commentOrEOL(l, 1); err != nil {
 				return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
@@ -328,14 +355,15 @@ func (i *Import) parse(p *halfpike.Parser) error {
 			i.Imports[imp.Name] = imp
 			continue
 		case 2:
-			if err := validPackage(l.Items[0].Val); err != nil {
+			if err := ValidPackage(l.Items[0].Val); err != nil {
 				return fmt.Errorf("[Line %d]: bad package rename %q: %w", l.LineNum, l.Items[0].Val, err)
 			}
 			p, err := validImportPath(l.Items[1].Val)
 			if err != nil {
 				return fmt.Errorf("[Line %d]: import statement path looks malformed: %q", l.LineNum, l.Items[1].Val)
 			}
-			imp := ImportEntry{Path: pkgFromImpPath(p), Name: l.Items[0].Val}
+
+			imp := ImportEntry{Path: p, Name: l.Items[0].Val}
 			if _, ok := i.Imports[imp.Name]; ok {
 				return fmt.Errorf("[Line %d]: duplicate import with name %q", l.LineNum, imp.Name)
 			}
@@ -450,15 +478,16 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 
 	for {
 		l = p.Next()
-		if p.EOF(l) {
-			return fmt.Errorf("[Line %d]: Malformed Enum, EOF reached before closing '}'", l.LineNum)
-		}
 		if l.Items[0].Val == "}" {
 			if err := commentOrEOL(l, 1); err != nil {
 				return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
 			}
 			break
 		}
+		if p.EOF(l) {
+			return fmt.Errorf("[Line %d]: Malformed Enum, EOF reached before closing '}'", l.LineNum)
+		}
+
 		if len(l.Items) < 3 {
 			return fmt.Errorf("[Line %d]: Malformed Enum entry", l.LineNum)
 		}
@@ -570,15 +599,18 @@ func (s *Struct) fields(p *halfpike.Parser) error {
 	var l halfpike.Line
 	for {
 		l = p.Next()
-		if p.EOF(l) {
-			return fmt.Errorf("[Line %d]: Malformed Struct, EOF reached before closing '}'", l.LineNum)
-		}
+
 		if l.Items[0].Val == "}" {
 			if err := commentOrEOL(l, 1); err != nil {
 				return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
 			}
 			break
 		}
+
+		if p.EOF(l) {
+			return fmt.Errorf("[Line %d]: Malformed Struct(1), EOF reached before closing '}'", l.LineNum)
+		}
+
 		p.Backup()
 		if err := s.field(p); err != nil {
 			return err
@@ -690,8 +722,14 @@ func (s *Struct) field(p *halfpike.Parser) error {
 			isList = true
 		}
 
+		log.Println("ft: ", ft)
+
+		// See if field type is an identifer of an Enum or Struct.
+		ident, ok := s.file.Identifers[ft]
+
+		switch {
 		// We have a Struct field that has itself as a type or is duplicate of an existing type.
-		if s.Name == ft {
+		case s.Name == ft:
 			_, ok := s.file.Identifers[ft]
 			if ok {
 				return fmt.Errorf("[Line %d]: found duplicate top level identifier %q", l.LineNum, ft)
@@ -704,13 +742,8 @@ func (s *Struct) field(p *halfpike.Parser) error {
 			} else {
 				f.Type = field.FTStruct
 			}
-		} else {
-			// See if field type is an identifer of an Enum or Struct.
-			ident, ok := s.file.Identifers[ft]
-			if !ok {
-				return fmt.Errorf("[Line %d]: Struct %q has field %q with unknown type %q", l.LineNum, s.Name, f.Name, ft)
-			}
-
+		// This means the type is defined within this file.
+		case ok:
 			switch v := ident.(type) {
 			case Enum:
 				f.IdentName = ft
@@ -742,6 +775,26 @@ func (s *Struct) field(p *halfpike.Parser) error {
 			default:
 				panic(fmt.Sprintf("bug: we have an identifier %q that is not Enum or Struct, was %T", f.Name, ident))
 			}
+		// This indicates that they type is defined as an external dependency or is incorrect.
+		default:
+			if ft == "cars.Car" {
+				log.Println("WE ARE HERE?")
+			}
+			// This checks that the type comes from an outside file we have imported.
+			if strings.Count(strings.Trim(ft, "."), ".") != 1 {
+				return fmt.Errorf("[Line %d]: Struct %q has field %q with unknown type %q", l.LineNum, s.Name, f.Name, ft)
+			}
+			sp := strings.Split(ft, ".")
+			// Make sure we actually import the package that this external type references.
+			if _, err := s.file.Imports.ByPkgName(sp[0]); err != nil {
+				return fmt.Errorf("[Line %d]: found type %q, but %q is not a package we see imported", l.LineNum, ft, sp[0])
+			}
+
+			// Mark this as an external identifier that we have to fill in later.
+			s.file.External[ft] = nil
+
+			f.IdentName = ft
+			f.Type = field.FTUnknown
 		}
 	}
 
@@ -806,7 +859,8 @@ func commentOrEOL(line halfpike.Line, from int) error {
 	return nil
 }
 
-func validPackage(pkgName string) error {
+// ValidPackage determines if a package name is valid.
+func ValidPackage(pkgName string) error {
 	runes := []rune(pkgName)
 	if unicode.IsUpper(runes[0]) {
 		return fmt.Errorf("package name cannot start with an uppercase letter")
@@ -824,7 +878,7 @@ func validPackage(pkgName string) error {
 		if r == underscore {
 			continue
 		}
-		return fmt.Errorf("package name contains character %v which is invalid for a package name", r)
+		return fmt.Errorf("package name contains character %s which is invalid for a package name", string(r))
 	}
 	return nil
 }
@@ -851,6 +905,8 @@ func validateIdent(ident string) error {
 	return nil
 }
 
+// validImport path validates that the import path in the .claw file is the right format
+// and returns the path without the quotes.
 func validImportPath(p string) (string, error) {
 	if !strings.HasPrefix(p, `"`) || !strings.HasSuffix(p, `"`) {
 		return "", fmt.Errorf("invalid import path %q must be contained in double quotes", p)

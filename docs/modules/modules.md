@@ -18,7 +18,7 @@ The other major use case for the `claw.mod` is supporting ACLs. When I publish m
 
 By default, a `.claw` file is not importable by any other `.claw` file. To allow it to be imported, you must declare it to be publically accessible or list the packages that can import it. This prevents unintentional side effects. Note however that this does no prevent the language specific packages that are generated from being used.
 
-`claw.mod` files are not required and only affect compilation from the directory specified. `claw.mod` files in other dependencies are ignored.
+`claw.mod` files are required for the path where `clawc` is invoked. We may at some point in the future relax this and allow a user to set an env for a root directory.  We use the module directive to understand where the module will reside in a vcs, which lets us know if we need to fetch remotely or locally. `claw.mod` files in other dependencies are ignored and could potentially be in an incorrect state.
 
 ## General syntax example of claw.mod file
 

@@ -1,27 +1,27 @@
 {{- $zeroValueCompression := false }} 
-{{- if .Options.NoZeroValueCompression }}
+{{- if .File.Options.NoZeroValueCompression }}
 {{- $zeroValueCompression = false }} 
 {{- else }}
 {{- $zeroValueCompression = true }}
 {{- end }}
 
-{{- range $structsIndex, $struct := .Structs }}
-type {{ .Name }} struct {
+{{- range $structsIndex, $struct := .File.Structs }}
+type {{ $struct.Name }} struct {
    s *structs.Struct
 }
 
-// New{{ .Name }} creates a new instance of {{ .Name }}.
-func New{{ .Name }}() {{ .Name }} {
-    s := structs.New(0, mapping{{.Name}})
+// New{{ $struct.Name }} creates a new instance of {{ $struct.Name }}.
+func New{{ $struct.Name }}() {{ $struct.Name }} {
+    s := structs.New(0, mapping{{ $struct.Name }})
     {{- if $zeroValueCompression }}
     s.XXXSetNoZeroTypeCompression()
     {{- end }}
-    return {{ .Name }}{
+    return {{ $struct.Name }}{
         s: s,
     }
 }
 
-{{- range $index, $field := .Fields }}
+{{- range $index, $field := $struct.Fields }}
 {{- if eq $field.TypeAsString "Bool" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() bool {
