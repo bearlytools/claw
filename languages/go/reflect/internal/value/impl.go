@@ -5,7 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/bearlytools/claw/internal/conversions"
-	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/internal/pragma"
 	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/structs"

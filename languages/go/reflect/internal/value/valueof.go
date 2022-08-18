@@ -8,7 +8,7 @@ import (
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
-	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/structs"
 )
 

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/johnsiilver/halfpike"
 	"golang.org/x/exp/slices"
 )

@@ -6,7 +6,7 @@ package mapping
 import (
 	"fmt"
 
-	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/field"
 )
 
 // FieldDescr describes a field.

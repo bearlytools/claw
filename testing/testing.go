@@ -10,7 +10,7 @@ import (
     "github.com/bearlytools/claw/languages/go/structs"
     "github.com/bearlytools/claw/languages/go/types/list"
     "github.com/bearlytools/claw/internal/conversions"
-    "github.com/bearlytools/claw/internal/field"
+    "github.com/bearlytools/claw/languages/go/field"
 )
 
 // Forces "list" to be imported, even if nothing is using it.

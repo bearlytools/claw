@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/reflect"
 )
 

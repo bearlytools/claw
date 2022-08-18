@@ -1,3 +1,4 @@
+// Package field details field types used by the Claw format.
 package field
 
 //go:generate stringer -type=Type -linecomment
@@ -79,6 +80,7 @@ var ListTypes = []Type{
 	FTListStructs,
 }
 
+// NumericListTypes is a list of field types that represent a number.
 var NumericListTypes = []Type{
 	FTListInt8,
 	FTListInt16,

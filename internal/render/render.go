@@ -117,7 +117,7 @@ var findImports = []importCheck{
 	{"github.com/bearlytools/claw/languages/go/structs", "structs."},
 	{"github.com/bearlytools/claw/languages/go/types/list", "list."},
 	{"github.com/bearlytools/claw/internal/conversions", "conversions."},
-	{"github.com/bearlytools/claw/internal/field", "field."},
+	{"github.com/bearlytools/claw/languages/go/field", "field."},
 }
 
 // cleanImports is a crap way to do this, but it does work and I'm being lazy.

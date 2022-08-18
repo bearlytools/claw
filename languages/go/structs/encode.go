@@ -6,7 +6,7 @@ import (
 	"log"
 	"sync/atomic"
 
-	"github.com/bearlytools/claw/internal/field"
+	"github.com/bearlytools/claw/languages/go/field"
 )
 
 // Marshal writes out the Struct to an io.Writer.
