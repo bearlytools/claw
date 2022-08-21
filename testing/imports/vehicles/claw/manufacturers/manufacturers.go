@@ -7,11 +7,8 @@ package manufacturers
 import (
     "github.com/bearlytools/claw/languages/go/reflect"
     "github.com/bearlytools/claw/languages/go/reflect/runtime"
-    "github.com/bearlytools/claw/languages/go/types/list"
+    
 )
-
-// Forces "list" to be imported, even if nothing is using it.
-var _ = list.Bools{}
 
 // SyntaxVersion is the major version of the Claw language that is being rendered.
 const SyntaxVersion = 0
