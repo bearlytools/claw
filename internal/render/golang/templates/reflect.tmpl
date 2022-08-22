@@ -1,5 +1,6 @@
 {{- $file := .File }}
 {{- if $file.Enums }}
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     List:   []reflect.EnumGroup{
         {{- range $file.Enums }}
@@ -29,6 +30,7 @@ func init() {
 }
 {{- end }} {{/* end Enum if */}} 
 
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     Name: "{{ $file.Package }}",
     Path: "{{ $file.FullPath }}",
@@ -53,7 +55,7 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
                 {{- $struct := . }}
                 {{- range .Fields }}
                 reflect.XXXFieldDescrImpl{
-                    FD: mapping{{ $struct.Name }}.ByName("{{ .Name }}"),
+                    FD: XXXMapping{{ $struct.Name }}.ByName("{{ .Name }}"),
                     {{- if .IsEnum }}
                     EG: XXXEnumGroups.ByName("{{ .IdentName }}"),
                     {{- end }}

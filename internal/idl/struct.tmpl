@@ -1,0 +1,413 @@
+{{- $zeroValueCompression := false }} 
+{{- if .File.Options.NoZeroValueCompression }}
+{{- $zeroValueCompression = false }} 
+{{- else }}
+{{- $zeroValueCompression = true }}
+{{- end }}
+
+type {{ .Name }} struct {
+   s *structs.Struct
+}
+
+// New{{ .Name }} creates a new instance of {{ .Name }}.
+func New{{ .Name }}() {{ .Name }} {
+    s := structs.New(0, XXXMapping{{ .Name }})
+    {{- if $zeroValueCompression }}
+    s.XXXSetNoZeroTypeCompression()
+    {{- end }}
+    return {{ .Name }}{
+        s: s,
+    }
+}
+
+// XXXNewFrom creates a new {{ .Name }} from our internal Struct representation.
+// As with all things marked XXX*, this should not be used and has not compatibility
+// guarantees.
+//
+// Deprecated: This is not actually deprecated, but it should not be used directly nor
+// show up in any documentation.
+func XXXNewFrom(s *structs.Struct) {{ .Name }} {
+    return {{ .Name }}{s: s}
+}
+
+{{- $struct := . }}
+
+{{- range $index, $field := .Fields }}
+{{- if eq $field.TypeAsString "Bool" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() bool {
+    return structs.MustGetBool(x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value bool) {
+    return structs.MustSetBool(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Int8" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() int8 {
+    return structs.MustGetNumber[int8](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int8) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Int16" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() int16 {
+    return structs.MustGetNumber[int16](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int16) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Int32" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() int32 {
+    return structs.MustGetNumber[int32](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int32) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Int64" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() int64 {
+    return structs.MustGetNumber[int64](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int64) {
+    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Uint8" }}
+{{- if $field.IdentName }} {{/* It is a Enum */}}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
+    return {{ $field.IdentName }}(structs.MustGetNumber[uint8](x.s, {{ $field.Index }}))
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, uint8(value))
+}
+{{- else }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() uint8 {
+    return structs.MustGetNumber[uint8](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint8) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+{{- end }}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Uint16" }}
+{{ if $field.IdentName }} {{/* It is a Enum */}}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
+    return {{ $field.IdentName }}(structs.MustGetNumber[uint8](x.s, {{ $field.Index }}))
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, uint16(value))
+}
+{{- else }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() uint16 {
+    return structs.MustGetNumber[uint16](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint16) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+{{- end }}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Uint32" }}
+func (x {{ $struct.Name }}) {{ $field.Name }}() uint32 {
+    return structs.MustGetNumber[uint32](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint32) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Uint64" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() uint64 {
+    return structs.MustGetNumber[uint64](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint64) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Float32" }}
+func (x {{ $struct.Name }}) {{ $field.Name }}() float32 {
+    return structs.MustGetNumber[float32](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float32) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Float64" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() float64 {
+    return structs.MustGetNumber[float64](x.s, {{ $field.Index }})
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float64) {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "String" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() string {
+    ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    return conversions.ByteSlice2String(*ptr)
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value string) {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, {{ $field.Index }}, b, true)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Bytes" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() []byte {
+    ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    return *ptr
+}
+
+func (x {{ $struct.Name }}) SafeGet{{ $field.Name }}() []byte {
+    ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    b := make([]byte, len(*ptr))
+    copy(b, *ptr)
+    return b
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value []byte) {
+    structs.MustSetBytes(x.s, {{ $field.Index }}, value, false)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "Struct" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
+    s := structs.MustGetStruct(x.s, {{ $field.Index }})
+    {{- if $field.IsExternal }}
+    return {{ $field.Package }}.XXXNewFrom(s)
+    {{- else }}
+    return {{ $field.IdentName }}{s: s} 
+    {{- end }}
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
+    structs.MustSetStruct(x.s, {{ $field.Index }}, value.XXXGetStruct())
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "ListBools" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() list.Bools {
+    return list.XXXFromBools(MustGetListBool(x.s, {{ $field.Index }}))
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Bools) {
+    MustSetListBool(x.s, {{ $field.Index }}, value.XXXBools())
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "ListUint8" "ListUint16" "ListUint32" "ListUint64" "ListInt8" "ListInt16" "ListInt32" "ListInt64" "ListFloat32" "ListFloat64"}}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() lists.Numbers[.GoListType] {
+    n := MustGetListNumber[.GoListType](x.s, {{ $field.Index }})
+    return list.XXXFromNumbers(n) 
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value lists.Numbers[.GoListType]) {
+    n := value.XXXNumbers()
+    MustSetListNumber(x.s, {{ $field.Index }}, n)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "ListBytes" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.Bytes {
+    b := MustGetListBytes(x.s, {{ $field.Index }})
+    return list.XXXFromBytes(b) 
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.Bytes) {
+    b := value.XXXBytes()
+    MustSetListBytes(x.s, {{ $field.Index }}, b)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "ListStrings" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.String {
+    b := MustGetListBytes(x.s, {{ $field.Index }})
+    return &lists.XXXFromStrings(b)
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.String) {
+    MustSetListBytes(x.s, {{ $field.Index }}, value.XXXBytes())
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+{{- end }}
+
+{{- else if eq $field.TypeAsString "ListStructs" }}
+
+func (x {{ $struct.Name }}) {{ $field.Name }}() []{{ $field.IdentName }} {
+    l := structs.MustGetListStruct(x.s, {{ $field.Index }})
+    vals := make([]{{ $field.IdentName }}, l.Len())
+
+    for i := range vals {
+        {{- if $field.IsExternal }}
+        vals[i] = {{ $field.Package }}.XXXNewFrom(l.Get(i))
+        {{- else }}
+        vals[i] = {{ $field.IdentName }}{s: l.Get(i)}
+        {{- end }}
+    }
+    return vals
+}
+
+func (x {{ $struct.Name }}) Append{{ $field.Name }}(values ...{{ $field.IdentName }}) {
+    vals := make([]*structs.Struct, len(values))
+    for i, val := range values {
+        vals[i] = val.XXXGetStruct()
+    }
+    structs.MustAppendListStruct(x.s, {{ $field.Index }}, vals...)
+}
+
+{{- if eq $zeroValueCompression false }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.IsSet({{ $field.Index }})
+}
+
+{{- else }}
+{{/* This means it has a type defined in an external file, which is a Struct or Enum */}}
+
+
+{{- end }}
+
+{{- end }} {{/* End if eq $field.Type */}}
+{{- end }} {{/* End range $index, $field := .Fields */}}
+
+// ClawStruct returns a reflection type representing the Struct.
+func (x {{ $struct.Name }}) ClawStruct() reflect.Struct{
+   return reflect.XXXNewStruct(x.s)
+}
+
+// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
+// this should not be used and has no compatibility guarantees.
+//
+// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
+func (x {{ $struct.Name }}) XXXGetStruct() *structs.Struct {
+    return x.s
+}

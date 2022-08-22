@@ -8,11 +8,15 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"text/template"
 	"unicode"
 
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/johnsiilver/halfpike"
+	"github.com/kylelemons/godebug/pretty"
 	"golang.org/x/exp/slices"
+
+	_ "embed"
 )
 
 // Option is an option for the file.
@@ -36,7 +40,7 @@ type File struct {
 	// Identifers hold types that are defined in this file.
 	Identifers map[string]any
 	// External holds externally defined types that are imported here.
-	External map[string]any
+	External map[string]*File
 	// Imports are all the package imports.
 	Imports Import
 
@@ -50,7 +54,7 @@ type File struct {
 func New() *File {
 	return &File{
 		Identifers: map[string]any{},
-		External:   map[string]any{},
+		External:   map[string]*File{},
 		Options:    map[string]Option{},
 		Version:    -1,
 	}
@@ -83,11 +87,6 @@ func (f *File) Validate() error {
 	}
 
 	return nil
-}
-
-// Start is the start point for reading the IDL.
-func (f *File) Start(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
-	return f.ParsePackage
 }
 
 // Structs returns all Structs that were decoded.
@@ -130,6 +129,42 @@ func (f *File) Enums() chan Enum {
 		}
 	}()
 	return ch
+}
+
+// PkgImports returns a deduped list of all Claw packages that need importing.
+// This DOES NOT include packages needed for Claw decoding.
+func (f *File) PkgImports() chan string {
+	ch := make(chan string, 1)
+
+	seen := map[string]bool{}
+
+	go func() {
+		defer close(ch)
+		for _, v := range f.External {
+			if seen[v.FullPath] {
+				continue
+			}
+			seen[v.FullPath] = true
+			ch <- v.FullPath
+		}
+		for _, v := range f.Imports.Imports {
+			if seen[v.Path] {
+				continue
+			}
+			seen[v.Path] = true
+			ch <- v.Path
+		}
+	}()
+	return ch
+}
+
+/////////////////////////////////
+// Everything below this is IDL parsing
+/////////////////////////////////
+
+// Start is the start point for reading the IDL.
+func (f *File) Start(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
+	return f.ParsePackage
 }
 
 func (f *File) SkipLinesWithComments(p *halfpike.Parser) {
@@ -529,17 +564,6 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 	return nil
 }
 
-type Struct struct {
-	Name   string
-	Fields []StructField
-
-	file *File
-}
-
-func NewStruct(file *File) Struct {
-	return Struct{file: file}
-}
-
 // StructField represents a field in a Struct.
 type StructField struct {
 	// Name is the name of the field.
@@ -548,8 +572,18 @@ type StructField struct {
 	Index uint16
 	// Type is the type of the field.
 	Type field.Type
+	// IsExternal indicates this field type was defined external to the file that has
+	// the containing Struct.
+	IsExternal bool
+	// Package is the name of the package this field type is defined in, but only if
+	// IsExternal is set.
+	Package string
 	// IsEnum indicates if the field represents an enumerator.
 	IsEnum bool
+	// IsList indicates if the field represents a list of items. This can normally
+	// be determined by the .Type, but if the field type is defined externally, we won't
+	// have that information available yet and we need to note it is a list.
+	IsList bool
 	// IdentName is the name of the Struct or Enum that goes in this field. If not a Struct or Enum,
 	// this is empty.
 	IdentName string
@@ -557,8 +591,108 @@ type StructField struct {
 	SelfReferential bool
 }
 
+// IdentInFile removes returns the IdentName, removing a package identifier if it
+// proceeds it in .IdentName.
+func (s StructField) IdentInFile() string {
+	sp := strings.Split(s.IdentName, ".")
+	switch len(sp) {
+	case 1:
+		return sp[0]
+	case 2:
+		return sp[1]
+	}
+	panic(fmt.Sprintf("StructField name %q is invalid, having more than 1 dot", s.IdentName))
+}
+
 func (s StructField) TypeAsString() string {
 	return field.TypeToString(s.Type)
+}
+
+// Struct represents a Claw Struct type in the file.
+type Struct struct {
+	// Name is the name of the Struct type.
+	Name string
+	// Fields are the fields in the Struct.
+	Fields []StructField
+
+	// File has all the information in the File.
+	File *File
+}
+
+// NewStruct creates a new Struct type.
+func NewStruct(file *File) Struct {
+	return Struct{File: file}
+}
+
+//go:embed struct.tmpl
+var structTmplData string
+var structTmpl = template.Must(template.New("struct").Parse(structTmplData))
+
+// Render renders the Struct in its Go form.
+func (s Struct) Render() (string, error) {
+	// Integrate all externally defined types.
+	for i, f := range s.Fields {
+		// This means a field was externally defined, we need to put in the type info.
+		if f.Type == field.FTUnknown {
+			file := s.File.External[f.IdentName]
+			sp := strings.Split(f.IdentName, ".")
+			if len(sp) != 2 {
+				return "", fmt.Errorf("Struct %s had field %s of type %s that looks external but isn't?", s.Name, f.Name, f.IdentName)
+			}
+			f.Package = sp[0]
+
+			ident := file.Identifers[sp[1]]
+			switch v := ident.(type) {
+			case Enum:
+				f.IsEnum = true
+				switch v.Size {
+				case 8:
+					if f.IsList {
+						f.Type = field.FTListUint8
+					} else {
+						f.Type = field.FTUint8
+					}
+				case 16:
+					if f.IsList {
+						f.Type = field.FTListUint16
+					} else {
+						f.Type = field.FTUint16
+					}
+				default:
+					return "", fmt.Errorf("Struct %s had field %s of type Enum that had invalid size %d", s.Name, f.Name, v.Size)
+				}
+			case Struct:
+				if f.IsList {
+					f.Type = field.FTListStructs
+				} else {
+					f.Type = field.FTStruct
+				}
+			default:
+				return "", fmt.Errorf("Struct %s had field %s defined externally that was an invalid type %T", s.Name, f.Name, ident)
+			}
+			f.IsExternal = true
+			s.Fields[i] = f
+		}
+	}
+	if s.Name == "Vehicle" {
+		config := pretty.Config{PrintStringers: true, TrackCycles: true}
+		for _, f := range s.Fields {
+			//log.Println(config.Sprint(f))
+			if f.Type == field.FTUnknown {
+				//log.Println("=======================================")
+				//for k, v := range s.File.External {
+				//	log.Printf("%s: %s", k, config.Sprint(v))
+				//}
+				//log.Println("=======================================")
+				log.Println("type might be: ", config.Sprint(s.File.External[f.IdentName]))
+			}
+		}
+	}
+	b := strings.Builder{}
+	if err := structTmpl.Execute(&b, s); err != nil {
+		return "", err
+	}
+	return b.String(), nil
 }
 
 func (s *Struct) parse(p *halfpike.Parser) error {
@@ -725,12 +859,12 @@ func (s *Struct) field(p *halfpike.Parser) error {
 		log.Println("ft: ", ft)
 
 		// See if field type is an identifer of an Enum or Struct.
-		ident, ok := s.file.Identifers[ft]
+		ident, ok := s.File.Identifers[ft]
 
 		switch {
 		// We have a Struct field that has itself as a type or is duplicate of an existing type.
 		case s.Name == ft:
-			_, ok := s.file.Identifers[ft]
+			_, ok := s.File.Identifers[ft]
 			if ok {
 				return fmt.Errorf("[Line %d]: found duplicate top level identifier %q", l.LineNum, ft)
 			}
@@ -777,24 +911,22 @@ func (s *Struct) field(p *halfpike.Parser) error {
 			}
 		// This indicates that they type is defined as an external dependency or is incorrect.
 		default:
-			if ft == "cars.Car" {
-				log.Println("WE ARE HERE?")
-			}
 			// This checks that the type comes from an outside file we have imported.
 			if strings.Count(strings.Trim(ft, "."), ".") != 1 {
 				return fmt.Errorf("[Line %d]: Struct %q has field %q with unknown type %q", l.LineNum, s.Name, f.Name, ft)
 			}
 			sp := strings.Split(ft, ".")
 			// Make sure we actually import the package that this external type references.
-			if _, err := s.file.Imports.ByPkgName(sp[0]); err != nil {
+			if _, err := s.File.Imports.ByPkgName(sp[0]); err != nil {
 				return fmt.Errorf("[Line %d]: found type %q, but %q is not a package we see imported", l.LineNum, ft, sp[0])
 			}
 
 			// Mark this as an external identifier that we have to fill in later.
-			s.file.External[ft] = nil
+			s.File.External[ft] = nil
 
 			f.IdentName = ft
 			f.Type = field.FTUnknown
+			f.IsList = isList
 		}
 	}
 
@@ -810,6 +942,8 @@ func (s *Struct) field(p *halfpike.Parser) error {
 	if i > math.MaxUint16 {
 		return fmt.Errorf("[Line %d]: Struct %q has field %q with a field number > that a uint16 can hold, %q", l.LineNum, s.Name, f.Name, fieldNum)
 	}
+	log.Println("FieldName: ", f.Name)
+
 	f.Index = uint16(i)
 	s.Fields = append(s.Fields, f)
 	if err := commentOrEOL(l, 3); err != nil {

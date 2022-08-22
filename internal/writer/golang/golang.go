@@ -30,29 +30,43 @@ func (w *Writer) WriteFiles(ctx context.Context, config *imports.Config, renders
 		return err
 	}
 
+	wg := sync.WaitGroup{}
+	errs := newErrs()
 	for _, r := range renders {
+		r := r
 		log.Println("rendering: ", r.Path)
-		if config.InRootRepo(r.Path) {
-			p, err := config.Abs(r.Path)
-			if err != nil {
-				return err
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if config.InRootRepo(r.Path) {
+				p, err := config.Abs(r.Path)
+				if err != nil {
+					errs.add(err)
+					return
+				}
+				p = filepath.Join(p, r.Package+".go")
+				if err := w.fs.WriteFile(p, r.Native, 0600); err != nil {
+					errs.add(fmt.Errorf("problem writing package(%s) to local file(%s): %w", r.Package, p, err))
+					return
+				}
 			}
-			p = filepath.Join(p, r.Package+".go")
-			if err := w.fs.WriteFile(p, r.Native, 0600); err != nil {
-				return fmt.Errorf("problem writing package(%s) to local file(%s): %w", r.Package, p, err)
-			}
-		}
+		}()
 	}
+	wg.Wait()
+
 	log.Println("done")
-	return nil
+	return errs.get()
 }
 
+// getImports is going to grab any file that the Claw file imports and is not in the
+// current Git repo via the "go get" command.
 func (w *Writer) getImports(ctx context.Context, config *imports.Config) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	wg := sync.WaitGroup{}
-	errCh := make(chan error, 1)
+	errs := newErrs()
 	for _, imp := range config.Imports {
 		imp := imp
 		wg.Add(1)
@@ -65,20 +79,17 @@ func (w *Writer) getImports(ctx context.Context, config *imports.Config) error {
 			}
 
 			if err := w.goGet(ctx, imp.FullPath, imp.RepoVersion); err != nil {
-				select {
-				case errCh <- err:
-				default:
-				}
+				errs.add(err)
 				cancel()
 			}
 		}()
 	}
 	wg.Wait()
-	close(errCh)
 
-	return <-errCh
+	return errs.get()
 }
 
+// goGet uses the "go get" command to fetch a package at some version.
 func (w *Writer) goGet(ctx context.Context, pkg, version string) error {
 	p, err := exec.LookPath("go")
 	if err != nil {
@@ -125,4 +136,28 @@ func sameFile(path string, size int64, sum256 string) (bool, error) {
 		return false, nil
 	}
 	return true, nil
+}
+
+type goErrors struct {
+	ch chan error
+}
+
+func newErrs() goErrors {
+	return goErrors{ch: make(chan error, 1)}
+}
+
+func (g goErrors) add(err error) {
+	select {
+	case g.ch <- err:
+	default:
+	}
+}
+
+func (g goErrors) get() error {
+	select {
+	case e := <-g.ch:
+		return e
+	default:
+		return nil
+	}
 }

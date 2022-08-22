@@ -2,7 +2,8 @@
 // Everything below this line is internal details.
 {{- $file := .File }}
 {{- range $file.Structs }}
-var mapping{{ .Name }} = &mapping.Map{
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXMapping{{ .Name }} = &mapping.Map{
     Name: "{{ .Name }}",
     Pkg: "{{ $file.Package }}",
     Path: "{{ $file.FullPath }}",
@@ -13,11 +14,15 @@ var mapping{{ .Name }} = &mapping.Map{
             Type: field.{{ $field.Type }},
             IsEnum: {{ $field.IsEnum }},
             FieldNum: {{ $index }},
-            {{- if gt $field.Type 14 }}
+            {{- if or (gt $field.Type 14) (gt $field.Type 54) }}
             {{- if $field.SelfReferential }}
             SelfReferential: true,
             {{- else }}
-            Mapping: mapping{{ $field.IdentName }},
+            {{ if $field.IsExternal }}
+            Mapping: {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }},
+            {{- else }}
+            Mapping: Mapping{{ $field.IdentName }},
+            {{- end }}
             {{- end }}
             {{- end }}
         },

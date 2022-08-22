@@ -12,10 +12,10 @@ import (
     "github.com/bearlytools/claw/languages/go/types/list"
     "github.com/bearlytools/claw/internal/conversions"
     "github.com/bearlytools/claw/languages/go/field"
+    {{ range .File.PkgImports }}
+    "{{ . }}"
+    {{- end }}
 )
-
-// Forces "list" to be imported, even if nothing is using it.
-var _ = list.Bools{}
 
 // SyntaxVersion is the major version of the Claw language that is being rendered.
 const SyntaxVersion = {{ .File.Version }}

@@ -15,5 +15,5 @@ Enum Type uint8 {
 Struct Vehicle {
 	Type Type @0
 	Car cars.Car @1
-	Truck trucks.Truck @2
+	Truck []trucks.Truck @2
 }

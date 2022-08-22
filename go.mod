@@ -3,11 +3,12 @@ module github.com/bearlytools/claw
 go 1.18
 
 require (
+	github.com/bearlytools/test_claw_imports v0.0.0-20220821214007-2f4ab575f4dc
 	github.com/johnsiilver/golib v1.1.1
 	github.com/johnsiilver/halfpike v0.3.4
 	github.com/kylelemons/godebug v1.1.0
 	github.com/pkg/errors v0.9.1
-	golang.org/x/exp v0.0.0-20220321173239-a90fa8a75705
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 )
 
 require (
@@ -25,9 +26,8 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
-	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf // indirect
+	golang.org/x/net v0.0.0-20220812174116-3211cb980234 // indirect
+	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
 	google.golang.org/genproto v0.0.0-20200904004341-0bd0a958aa1d // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
@@ -35,5 +35,4 @@ require (
 require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/gopherfs/fs v0.0.0-20220204202500-4538e04c7abb
-	golang.org/x/text v0.3.7 // indirect
 )
