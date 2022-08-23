@@ -13,6 +13,9 @@ import (
 // SyntaxVersion is the major version of the Claw language that is being rendered.
 const SyntaxVersion = 0
 
+var _package = "manufacturers"
+var _packagePath = "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
+
 
 type Manufacturer uint8
 
@@ -59,8 +62,8 @@ var ManufacturerByValue = map[uint8 ]string{
  
 
 // Everything below this line is internal details.
-var _package = "manufacturers"
 
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     List:   []reflect.EnumGroup{
         reflect.XXXEnumGroupImpl{
@@ -97,6 +100,7 @@ func init() {
     }
 }  
 
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     Name: "manufacturers",
     Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers", 
