@@ -42,7 +42,7 @@ var wantCars = &idl.File{
 			Size: 8,
 		},
 	},
-	External: map[string]interface{}{
+	External: map[string]*idl.File{
 		"manufacturers.Manufacturer": wantManufacturer,
 	},
 	Imports: idl.Import{
@@ -68,7 +68,7 @@ var wantManufacturer = &idl.File{
 			Size: 8,
 		},
 	},
-	External: map[string]interface{}{},
+	External: map[string]*idl.File{},
 	Imports: idl.Import{
 		Imports: map[string]idl.ImportEntry(nil),
 	},
@@ -116,7 +116,7 @@ var wantTrucks = &idl.File{
 			},
 		},
 	},
-	External: map[string]interface{}{
+	External: map[string]*idl.File{
 		"manufacturers.Manufacturer": wantManufacturer,
 	},
 	Imports: idl.Import{
@@ -171,7 +171,7 @@ var wantRoot = &idl.File{
 			},
 		},
 	},
-	External: map[string]interface{}{
+	External: map[string]*idl.File{
 		"cars.Car":     wantCars,
 		"trucks.Truck": wantTrucks,
 	},

@@ -20,8 +20,10 @@ import (
 // SyntaxVersion is the major version of the Claw language that is being rendered.
 const SyntaxVersion = {{ .File.Version }}
 
+var _package = "{{ .File.Package }}"
+var _packagePath = "{{ .File.FullPath }}"
+
 {{ template "enums.tmpl" . }}
 {{ template "structs.tmpl" . }}
 {{ template "mappings.tmpl" . }}
-var _package = "{{ .File.Package }}"
 {{ template "reflect.tmpl" . }}

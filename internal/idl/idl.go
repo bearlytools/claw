@@ -13,7 +13,6 @@ import (
 
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/johnsiilver/halfpike"
-	"github.com/kylelemons/godebug/pretty"
 	"golang.org/x/exp/slices"
 
 	_ "embed"
@@ -576,10 +575,14 @@ type StructField struct {
 	// the containing Struct.
 	IsExternal bool
 	// Package is the name of the package this field type is defined in, but only if
-	// IsExternal is set.
+	// IsExternal is set. This is not the path to the package, see FullPath for that.
 	Package string
+	// FullPath is the path to this package. This is only set if IsExternal is set.
+	FullPath string
 	// IsEnum indicates if the field represents an enumerator.
 	IsEnum bool
+	// EnumName is the name of the Enum grounp this belongs to.
+	EnumName string
 	// IsList indicates if the field represents a list of items. This can normally
 	// be determined by the .Type, but if the field type is defined externally, we won't
 	// have that information available yet and we need to note it is a list.
@@ -640,6 +643,12 @@ func (s Struct) Render() (string, error) {
 				return "", fmt.Errorf("Struct %s had field %s of type %s that looks external but isn't?", s.Name, f.Name, f.IdentName)
 			}
 			f.Package = sp[0]
+			imp, err := s.File.Imports.ByPkgName(sp[0])
+			if err != nil {
+				panic(err)
+			}
+			f.FullPath = imp.Path
+			f.IsExternal = true
 
 			ident := file.Identifers[sp[1]]
 			switch v := ident.(type) {
@@ -670,22 +679,7 @@ func (s Struct) Render() (string, error) {
 			default:
 				return "", fmt.Errorf("Struct %s had field %s defined externally that was an invalid type %T", s.Name, f.Name, ident)
 			}
-			f.IsExternal = true
 			s.Fields[i] = f
-		}
-	}
-	if s.Name == "Vehicle" {
-		config := pretty.Config{PrintStringers: true, TrackCycles: true}
-		for _, f := range s.Fields {
-			//log.Println(config.Sprint(f))
-			if f.Type == field.FTUnknown {
-				//log.Println("=======================================")
-				//for k, v := range s.File.External {
-				//	log.Printf("%s: %s", k, config.Sprint(v))
-				//}
-				//log.Println("=======================================")
-				log.Println("type might be: ", config.Sprint(s.File.External[f.IdentName]))
-			}
 		}
 	}
 	b := strings.Builder{}

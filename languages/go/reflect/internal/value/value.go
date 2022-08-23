@@ -8,6 +8,7 @@ import (
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/internal/pragma"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/structs"
 	"github.com/bearlytools/claw/languages/go/structs/header"
 )
@@ -25,8 +26,8 @@ type Value struct {
 	ptr    unsafe.Pointer
 	isEnum bool
 
-	list    List
-	aStruct Struct
+	list    interfaces.List
+	aStruct interfaces.Struct
 }
 
 // Bool returns the boolean value stored in Value. If Value is not a bool type, this will panic.
@@ -58,7 +59,7 @@ func (v Value) Bytes() []byte {
 }
 
 // Enum returns the enumerated value stored in Value. If Value is not an Enum type, this will panic.
-func (v Value) Enum() Enum {
+func (v Value) Enum() interfaces.Enum {
 	panic("not implemented")
 }
 
@@ -209,7 +210,7 @@ func (v Value) Uint() uint64 {
 }
 
 // List returns the List value stored in Value. If Value is not some list type, this will panic.
-func (v Value) List() List {
+func (v Value) List() interfaces.List {
 	if v.list == nil {
 		panic("type is not a list type")
 	}
@@ -217,7 +218,7 @@ func (v Value) List() List {
 }
 
 // Struct returns the Struct value stored in Value. If Value is not a Struct type, this will panic.
-func (v Value) Struct() Struct {
+func (v Value) Struct() interfaces.Struct {
 	if v.aStruct == nil {
 		panic("type is not a struct type")
 	}
@@ -226,7 +227,7 @@ func (v Value) Struct() Struct {
 }
 
 // getNumber gets a number value at fieldNum.
-func getNumber[N Number](v Value, isFloat bool) (N, error) {
+func getNumber[N interfaces.Number](v Value, isFloat bool) (N, error) {
 	if v.ptr == nil {
 		b := v.h[3:8]
 		if isFloat {
@@ -245,7 +246,7 @@ func getNumber[N Number](v Value, isFloat bool) (N, error) {
 
 // XXXNewStruct wraps our internal *structs.Struct objects in the reflect.Struct type.
 // This is used in our generated code to implement the ClawStruct() method.
-func XXXNewStruct(v *structs.Struct) Struct {
+func XXXNewStruct(v *structs.Struct) interfaces.Struct {
 	descr := NewStructDescrImpl(v.Map())
 	return StructImpl{s: v, descr: descr}
 }

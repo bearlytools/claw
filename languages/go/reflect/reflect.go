@@ -1,6 +1,7 @@
 package reflect
 
 import (
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
 	"github.com/bearlytools/claw/languages/go/structs"
 )
@@ -12,26 +13,26 @@ type ClawStruct interface {
 }
 
 // PackageDescr is used to describe a claw package and its contents.
-type PackageDescr = value.PackageDescr
+type PackageDescr = interfaces.PackageDescr
 
 // StructDescrs gives access to the descriptions of a package's struct objects.
-type StructDescrs = value.StructDescr
+type StructDescrs = interfaces.StructDescr
 
 // EnumGroup describes a single set of enum values defined in a claw package.
-type EnumGroup = value.EnumGroup
+type EnumGroup = interfaces.EnumGroup
 
 // EnumValueDescr describes an enumerated value.
-type EnumValueDescr = value.EnumValueDescr
+type EnumValueDescr = interfaces.EnumValueDescr
 
 // Enum is the refection interface for a concrete enum value.
-type Enum = value.Enum
+type Enum = interfaces.Enum
 
 // EnumGroups describes enum groups in a package.
-type EnumGroups = value.EnumGroups
+type EnumGroups = interfaces.EnumGroups
 
 // List provides access to one of Claw's list types from the int family, uint family,
 // lists of bytes/string or list of structs.
-type List = value.List
+type List = interfaces.List
 
 type XXXPackageDescrImpl = value.PackageDescrImpl
 type XXXEnumGroupsImpl = value.EnumGroupsImpl

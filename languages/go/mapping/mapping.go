@@ -9,7 +9,8 @@ import (
 	"github.com/bearlytools/claw/languages/go/field"
 )
 
-// FieldDescr describes a field.
+// FieldDescr describes a field. FieldDescr are created when the IDL renders to a file
+// and are generated from information in the idl.File and idl.Struct types.
 type FieldDescr struct {
 	// Name is the name of the field as described in the .claw file.
 	Name string
@@ -20,7 +21,14 @@ type FieldDescr struct {
 	// IsEnum indicates if the field is an enumerated type. This can only be true
 	// if the Type is FTUint8 or FTUint16
 	IsEnum bool
-
+	// EnumGroup is the name of the enumeration group this belongs to. This will be
+	// either the name of the group in this file or the [package].[group].
+	EnumGroup string
+	// Package is the package name . This is only provided if this is an external package.
+	Package string
+	// FullPath is the path to the package as defined by the import statement.
+	// This is only provided if this is an external package.
+	FullPath string
 	// SelfReferential indicates if an FTStruct or FTListStruct is the same as the containing Struct.
 	// If true, Mapping is not set.
 	SelfReferential bool

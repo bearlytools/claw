@@ -4,15 +4,16 @@ import (
 	"fmt"
 
 	"github.com/bearlytools/claw/internal/conversions"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
 	"github.com/bearlytools/claw/languages/go/structs"
 )
 
 // Number represents all int, uint and float types.
-type Number value.Number
+type Number interfaces.Number
 
 // Value holds a Claw value type for use in reflection.
-type Value = value.Value
+type Value = interfaces.Value
 
 // ValueOfBool will return the value v as a Value type.
 func ValueOfBool(v bool) Value {

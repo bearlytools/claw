@@ -2,18 +2,18 @@ package value
 
 import (
 	"fmt"
+	"log"
 	"unsafe"
 
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/internal/pragma"
 	"github.com/bearlytools/claw/languages/go/mapping"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/runtime"
 	"github.com/bearlytools/claw/languages/go/structs"
 	"github.com/bearlytools/claw/languages/go/structs/header"
 )
-
-// _ PackageDescr is simply used to make sure we are implementing our interface.
-var _ PackageDescr = PackageDescrImpl{}
 
 // PackageDescrImpl is the implementation of PackageDescr.
 type PackageDescrImpl struct {
@@ -21,9 +21,9 @@ type PackageDescrImpl struct {
 
 	Name             string
 	Path             string
-	ImportDescrs     []PackageDescr
-	EnumGroupsDescrs EnumGroups
-	StructsDescrs    []StructDescr
+	ImportDescrs     []interfaces.PackageDescr
+	EnumGroupsDescrs interfaces.EnumGroups
+	StructsDescrs    []interfaces.StructDescr
 }
 
 // PackageName returns the name of the package.
@@ -37,22 +37,19 @@ func (p PackageDescrImpl) FullPath() string {
 }
 
 // Imports is a list of imported claw files.
-func (p PackageDescrImpl) Imports() []PackageDescr {
+func (p PackageDescrImpl) Imports() []interfaces.PackageDescr {
 	return p.ImportDescrs
 }
 
 // Enums is a list of the Enum declarations.
-func (p PackageDescrImpl) Enums() EnumGroups {
+func (p PackageDescrImpl) Enums() interfaces.EnumGroups {
 	return p.EnumGroupsDescrs
 }
 
 // Messages is a list of the top-level message declarations.
-func (p PackageDescrImpl) Structs() []StructDescr {
+func (p PackageDescrImpl) Structs() []interfaces.StructDescr {
 	return p.StructsDescrs
 }
-
-// _ EnumGroup is simply used to make sure we are implementing our interface.
-var _ EnumGroup = EnumGroupImpl{}
 
 // EnumGroupImpl implements EnumGroup.
 type EnumGroupImpl struct {
@@ -65,7 +62,7 @@ type EnumGroupImpl struct {
 	// EnumSize is the bit size, 8 or 16, that the values are.
 	EnumSize uint8
 	// Descrs hold the valuye descriptors.
-	Descrs []EnumValueDescr
+	Descrs []interfaces.EnumValueDescr
 }
 
 // Name is the name of the enum group.
@@ -79,13 +76,13 @@ func (e EnumGroupImpl) Len() int {
 }
 
 // Get returns the ith EnumValue. It panics if out of bounds.
-func (e EnumGroupImpl) Get(i int) EnumValueDescr {
+func (e EnumGroupImpl) Get(i int) interfaces.EnumValueDescr {
 	return e.Descrs[i]
 }
 
 // ByName returns the EnumValue for an enum named s.
 // It returns nil if not found.
-func (e EnumGroupImpl) ByName(s string) EnumValueDescr {
+func (e EnumGroupImpl) ByName(s string) interfaces.EnumValueDescr {
 	// Enums are usually small and reflection is the slow path. For now,
 	// I'm going to simply use a for loop for what I think will be the majority of
 	// cases. Go's map implementation is pretty gretat, but I think this will be
@@ -98,7 +95,7 @@ func (e EnumGroupImpl) ByName(s string) EnumValueDescr {
 	return nil
 }
 
-func (e EnumGroupImpl) ByValue(i int) EnumValueDescr {
+func (e EnumGroupImpl) ByValue(i int) interfaces.EnumValueDescr {
 	for _, descr := range e.Descrs {
 		if descr.Number() == uint16(i) {
 			return descr
@@ -112,15 +109,12 @@ func (e EnumGroupImpl) Size() uint8 {
 	return e.EnumSize
 }
 
-// _ EnumGroups is simply used to make sure we are implementing our interface.
-var _ EnumGroups = EnumGroupsImpl{}
-
 // EnumGroupsImpl implements reflect.EnumGroups.
 type EnumGroupsImpl struct {
 	doNotImplement
 
-	List   []EnumGroup
-	Lookup map[string]EnumGroup
+	List   []interfaces.EnumGroup
+	Lookup map[string]interfaces.EnumGroup
 }
 
 // Len reports the number of enum types.
@@ -129,18 +123,15 @@ func (e EnumGroupsImpl) Len() int {
 }
 
 // Get returns the ith EnumDescriptor. It panics if out of bounds.
-func (e EnumGroupsImpl) Get(i int) EnumGroup {
+func (e EnumGroupsImpl) Get(i int) interfaces.EnumGroup {
 	return e.List[i]
 }
 
 // ByName returns the EnumDescriptor for an enum named s.
 // It returns nil if not found.
-func (e EnumGroupsImpl) ByName(s string) EnumGroup {
+func (e EnumGroupsImpl) ByName(s string) interfaces.EnumGroup {
 	return e.Lookup[s]
 }
-
-// _ EnumValueDescrImpl is simply used to make sure we are implementing our interface.
-var _ EnumValueDescr = EnumValueDescrImpl{}
 
 // EnumValueDescrImpl implements EnumValueDescr.
 type EnumValueDescrImpl struct {
@@ -160,9 +151,6 @@ func (e EnumValueDescrImpl) Number() uint16 {
 	return e.EnumNumber
 }
 
-// _ StructDescr is simply used to make sure we are implementing our interface.
-var _ StructDescr = StructDescrImpl{}
-
 // StructDescrImpl implements StructDescr.
 type StructDescrImpl struct {
 	doNotImplement
@@ -170,7 +158,7 @@ type StructDescrImpl struct {
 	Name      string
 	Pkg       string
 	Path      string
-	FieldList []FieldDescr
+	FieldList []interfaces.FieldDescr
 }
 
 func NewStructDescrImpl(m *mapping.Map) StructDescrImpl {
@@ -180,7 +168,24 @@ func NewStructDescrImpl(m *mapping.Map) StructDescrImpl {
 		Path: m.Path,
 	}
 	for _, fd := range m.Fields {
-		descr.FieldList = append(descr.FieldList, FieldDescrImpl{FD: fd})
+		var pkgDescr interfaces.PackageDescr
+		if fd.IsEnum {
+			if fd.FullPath == "" {
+				pkgDescr = runtime.PackageDescr(m.Path)
+			} else {
+				log.Println("enumerator FullPath: ", fd.FullPath)
+				pkgDescr = runtime.PackageDescr(fd.FullPath)
+			}
+			log.Println("Looking for EnumGroup: ", fd.EnumGroup)
+			eg := pkgDescr.Enums().ByName(fd.EnumGroup)
+			if eg == nil {
+				panic(fmt.Sprintf("bug: EnumGroup %s could not be found in runtime[%s]", fd.EnumGroup, fd.FullPath))
+			}
+			fd := FieldDescrImpl{FD: fd, EG: eg}
+			descr.FieldList = append(descr.FieldList, fd)
+		} else {
+			descr.FieldList = append(descr.FieldList, FieldDescrImpl{FD: fd})
+		}
 	}
 	return descr
 }
@@ -201,18 +206,15 @@ func (s StructDescrImpl) FullPath() string {
 }
 
 // Fields will return a list of field descriptions.
-func (s StructDescrImpl) Fields() []FieldDescr {
+func (s StructDescrImpl) Fields() []interfaces.FieldDescr {
 	return s.FieldList
 }
-
-// _ FieldDescr is simply used to make sure we are implementing our interface.
-var _ FieldDescr = FieldDescrImpl{}
 
 // FieldDescrImpl describes a field inside a Struct type.
 type FieldDescrImpl struct {
 	FD *mapping.FieldDescr
-	SD StructDescr
-	EG EnumGroup
+	SD interfaces.StructDescr
+	EG interfaces.EnumGroup
 }
 
 // Name returns the name of the field.
@@ -237,7 +239,7 @@ func (f FieldDescrImpl) IsEnum() bool {
 
 // EnumGroup returns the EnumGroup for the field. If the field is not an enum, this
 // will panic. Use IsEnum() if you want to check before calling this.
-func (f FieldDescrImpl) EnumGroup() EnumGroup {
+func (f FieldDescrImpl) EnumGroup() interfaces.EnumGroup {
 	if f.EG == nil {
 		panic("called EnumGroup on field that was not an Enum")
 	}
@@ -259,9 +261,6 @@ func (f FieldDescrImpl) ItemType() string {
 	return f.FD.Mapping.Name
 }
 
-// _ List is simply used to make sure we are implementing our interface.
-var _ List = ListBools{}
-
 type ListBools struct {
 	b *structs.Bools
 	doNotImplement
@@ -279,32 +278,29 @@ func (l ListBools) Len() int {
 	return l.b.Len()
 }
 
-func (l ListBools) Get(i int) Value {
+func (l ListBools) Get(i int) interfaces.Value {
 	return ValueOfBool(l.b.Get(i))
 }
 
-func (l ListBools) Set(i int, v Value) {
+func (l ListBools) Set(i int, v interfaces.Value) {
 	l.b.Set(i, v.Bool())
 }
 
-func (l ListBools) Append(v Value) {
+func (l ListBools) Append(v interfaces.Value) {
 	l.b.Append(v.Bool())
 }
 
-func (l ListBools) New() Struct {
+func (l ListBools) New() interfaces.Struct {
 	panic("Listbools does not support New()")
 }
 
-// _ List is simply used to make sure we are implementing our interface.
-var _ List = ListNumbers[uint8]{}
-
-type ListNumbers[N Number] struct {
+type ListNumbers[N interfaces.Number] struct {
 	n  *structs.Numbers[N]
 	ty field.Type
 	doNotImplement
 }
 
-func NewListNumbers[N Number](n *structs.Numbers[N]) ListNumbers[N] {
+func NewListNumbers[N interfaces.Number](n *structs.Numbers[N]) ListNumbers[N] {
 	var ty field.Type
 	var t N
 
@@ -343,24 +339,21 @@ func (l ListNumbers[N]) Len() int {
 	return l.n.Len()
 }
 
-func (l ListNumbers[N]) Get(i int) Value {
+func (l ListNumbers[N]) Get(i int) interfaces.Value {
 	return ValueOfNumber(l.n.Get(i))
 }
 
-func (l ListNumbers[N]) Set(i int, v Value) {
+func (l ListNumbers[N]) Set(i int, v interfaces.Value) {
 	l.n.Set(i, v.Any().(N))
 }
 
-func (l ListNumbers[N]) Append(v Value) {
+func (l ListNumbers[N]) Append(v interfaces.Value) {
 	l.n.Append(v.Any().(N))
 }
 
-func (l ListNumbers[N]) New() Struct {
+func (l ListNumbers[N]) New() interfaces.Struct {
 	panic("ListNumbers does not support New()")
 }
-
-// _ List is simply used to make sure we are implementing our interface.
-var _ List = ListBytes{}
 
 type ListBytes struct {
 	b *structs.Bytes
@@ -379,24 +372,21 @@ func (l ListBytes) Len() int {
 	return l.b.Len()
 }
 
-func (l ListBytes) Get(i int) Value {
+func (l ListBytes) Get(i int) interfaces.Value {
 	return ValueOfBytes(l.b.Get(i))
 }
 
-func (l ListBytes) Set(i int, v Value) {
+func (l ListBytes) Set(i int, v interfaces.Value) {
 	l.b.Set(i, v.Bytes())
 }
 
-func (l ListBytes) Append(v Value) {
+func (l ListBytes) Append(v interfaces.Value) {
 	l.b.Append(v.Bytes())
 }
 
-func (l ListBytes) New() Struct {
+func (l ListBytes) New() interfaces.Struct {
 	panic("ListBytes does not support New()")
 }
-
-// _ List is simply used to make sure we are implementing our interface.
-var _ List = ListStrings{}
 
 type ListStrings struct {
 	b *structs.Bytes
@@ -415,24 +405,21 @@ func (l ListStrings) Len() int {
 	return l.b.Len()
 }
 
-func (l ListStrings) Get(i int) Value {
+func (l ListStrings) Get(i int) interfaces.Value {
 	return ValueOfString(conversions.ByteSlice2String(l.b.Get(i)))
 }
 
-func (l ListStrings) Set(i int, v Value) {
+func (l ListStrings) Set(i int, v interfaces.Value) {
 	l.b.Set(i, conversions.UnsafeGetBytes(v.String()))
 }
 
-func (l ListStrings) Append(v Value) {
+func (l ListStrings) Append(v interfaces.Value) {
 	l.b.Append(conversions.UnsafeGetBytes(v.String()))
 }
 
-func (l ListStrings) New() Struct {
+func (l ListStrings) New() interfaces.Struct {
 	panic("ListStrings does not support New()")
 }
-
-// _ List is simply used to make sure we are implementing our interface.
-var _ List = ListStructs{}
 
 type ListStructs struct {
 	l  *structs.Structs
@@ -462,7 +449,7 @@ func (l ListStructs) Len() int {
 	return l.l.Len()
 }
 
-func (l ListStructs) Get(i int) Value {
+func (l ListStructs) Get(i int) interfaces.Value {
 	v := l.l.Get(i)
 
 	s := StructImpl{
@@ -472,46 +459,45 @@ func (l ListStructs) Get(i int) Value {
 	return ValueOfStruct(s)
 }
 
-func (l ListStructs) Set(i int, v Value) {
-	if err := l.l.Set(i, v.aStruct.realType()); err != nil {
+func (l ListStructs) Set(i int, v interfaces.Value) {
+	realV := v.(Value)
+	if err := l.l.Set(i, RealStruct(realV.aStruct)); err != nil {
 		panic(err)
 	}
 }
 
-func (l ListStructs) Append(v Value) {
-	if err := l.l.Append(v.Struct().realType()); err != nil {
+func (l ListStructs) Append(v interfaces.Value) {
+	impl := v.Struct().(StructImpl)
+	if err := l.l.Append(RealStruct(impl)); err != nil {
 		panic(err)
 	}
 }
 
-func (l ListStructs) New() Struct {
+func (l ListStructs) New() interfaces.Struct {
 	return NewStruct(l.l.New(), l.sd)
 }
 
-// _ Struct is simply used to make sure we are implementing our interface.
-var _ Struct = StructImpl{}
-
 type StructImpl struct {
 	s     *structs.Struct
-	descr StructDescr
+	descr interfaces.StructDescr
 }
 
-func NewStruct(s *structs.Struct, descr StructDescr) StructImpl {
+func NewStruct(s *structs.Struct, descr interfaces.StructDescr) StructImpl {
 	return StructImpl{s: s, descr: descr}
 }
 
-func (s StructImpl) Descriptor() StructDescr {
+func (s StructImpl) Descriptor() interfaces.StructDescr {
 	return s.descr
 }
 
-func (s StructImpl) New() Struct {
+func (s StructImpl) New() interfaces.Struct {
 	n := s.s.NewFrom()
 	return NewStruct(n, s.descr)
 }
 
 func (s StructImpl) ClawInternal(pragma.DoNotImplement) {}
 
-func (s StructImpl) Range(f func(FieldDescr, Value) bool) {
+func (s StructImpl) Range(f func(interfaces.FieldDescr, interfaces.Value) bool) {
 	for _, fdescr := range s.descr.Fields() {
 		ok := f(fdescr, s.Get(fdescr))
 		if !ok {
@@ -520,23 +506,23 @@ func (s StructImpl) Range(f func(FieldDescr, Value) bool) {
 	}
 }
 
-func (s StructImpl) Get(descr FieldDescr) Value {
+func (s StructImpl) Get(descr interfaces.FieldDescr) interfaces.Value {
 	return GetValue(s.s, descr.FieldNum())
 }
 
-func (s StructImpl) Has(descr FieldDescr) bool {
+func (s StructImpl) Has(descr interfaces.FieldDescr) bool {
 	return s.s.IsSet(descr.FieldNum())
 }
 
-func (s StructImpl) Clear(desc FieldDescr) {
+func (s StructImpl) Clear(desc interfaces.FieldDescr) {
 	structs.DeleteField(s.s, desc.FieldNum())
 }
 
-func (s StructImpl) Set(descr FieldDescr, v Value) {
+func (s StructImpl) Set(descr interfaces.FieldDescr, v interfaces.Value) {
 	structs.SetField(s.s, descr.FieldNum(), v.Any())
 }
 
-func (s StructImpl) NewField(descr FieldDescr) Value {
+func (s StructImpl) NewField(descr interfaces.FieldDescr) interfaces.Value {
 	switch descr.Type() {
 	case field.FTBool:
 		h := header.New()
@@ -658,12 +644,13 @@ func (s StructImpl) NewField(descr FieldDescr) Value {
 	}
 }
 
-func (s StructImpl) realType() *structs.Struct {
-	return s.s
+func RealStruct(s interfaces.Struct) *structs.Struct {
+	i := s.(StructImpl)
+	return i.s
 }
 
 // GetValue allows us to get a Value from the internal Struct representation.
-func GetValue(s *structs.Struct, fieldNum uint16) Value {
+func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
 	sf := s.Fields()[fieldNum]
 
 	switch sf.Header.FieldType() {

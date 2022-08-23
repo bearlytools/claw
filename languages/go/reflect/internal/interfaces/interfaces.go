@@ -1,10 +1,12 @@
-package value
+package interfaces
 
 import (
 	"github.com/bearlytools/claw/languages/go/field"
-	"github.com/bearlytools/claw/languages/go/structs"
+	"github.com/bearlytools/claw/languages/go/internal/pragma"
 	"golang.org/x/exp/constraints"
 )
+
+type doNotImplement pragma.DoNotImplement
 
 // Number represents all int, uint and float types.
 type Number interface {
@@ -115,7 +117,7 @@ type List interface {
 type Struct interface {
 	doNotImplement
 
-	// Descriptor returns message descriptor, which contains only the protobuf
+	// Descriptor returns message descriptor, which contains only the Claw
 	// type information for the message.
 	Descriptor() StructDescr
 
@@ -168,8 +170,6 @@ type Struct interface {
 	// for the given descriptor. For scalars, this returns the default value.
 	// For lists and Structs, this returns a new, empty, mutable value.
 	NewField(FieldDescr) Value
-
-	realType() *structs.Struct
 }
 
 // StructDescrs gives access to the descriptions of a package's struct objects.
@@ -215,4 +215,29 @@ type FieldDescr interface {
 	// ItemType returns the name of a Struct if the field is a list of Struct values.
 	// If not, this panics.
 	ItemType() string
+}
+
+// Value represents a read-only Claw value. This can be used to retrieve a value or
+// set a value.
+type Value interface {
+	// Bool returns the boolean value stored in Value. If Value is not a bool type, this will panic.
+	Bool() bool
+	// Bytes returns the Bytes value stored in Value. If Value is not a Bytes type, this will panic.
+	Bytes() []byte
+	// Enum returns the enumerated value stored in Value. If Value is not an Enum type, this will panic.
+	Enum() Enum
+	// Float returns the Float value stored in Value. If Value is not a Float type, this will panic.
+	Float() float64
+	// Int returns the integer value stored in Value. If Value is not an integer type, this will panic.
+	Int() int64
+	// Any decodes the value into the any type. If the value isn't valid, this panics.
+	Any() any
+	// String returns the string value stored in Value. If Value is not a string type, this will panic.
+	String() string
+	// Uint returns the unsigned integer value stored in Value. If Value is not an unsigned integer type, this will panic.
+	Uint() uint64
+	// List returns the List value stored in Value. If Value is not some list type, this will panic.
+	List() List
+	// Struct returns the Struct value stored in Value. If Value is not a Struct type, this will panic.
+	Struct() Struct
 }

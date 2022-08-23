@@ -9,6 +9,7 @@ import (
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/languages/go/field"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/structs"
 )
 
@@ -64,11 +65,11 @@ func ValueOfEnum[N ~uint8 | ~uint16](v N) Value {
 }
 
 // value.ValueOfNumber will return Value representing a number type.
-func ValueOfNumber[N Number](v N) Value {
+func ValueOfNumber[N interfaces.Number](v N) Value {
 	return numberValue(v)
 }
 
-func numberValue[N Number](v N) Value {
+func numberValue[N interfaces.Number](v N) Value {
 	size := 0
 	ft := field.FTUnknown
 	isFloat := false
@@ -133,14 +134,14 @@ func numberValue[N Number](v N) Value {
 }
 
 // ValueOfList returns a Value that represents List.
-func ValueOfList(v List) Value {
+func ValueOfList(v interfaces.List) Value {
 	return Value{
 		list: v,
 	}
 }
 
 // ValueOfStruct returns a Value that represents a Struct.
-func ValueOfStruct(v Struct) Value {
+func ValueOfStruct(v interfaces.Struct) Value {
 	return Value{
 		aStruct: v,
 	}
