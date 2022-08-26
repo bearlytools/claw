@@ -19,6 +19,9 @@ import (
 // SyntaxVersion is the major version of the Claw language that is being rendered.
 const SyntaxVersion = 0
 
+var _package = "vehicles"
+var _packagePath = "github.com/bearlytools/claw/testing/imports/vehicles/claw"
+
 
 type Type uint8
 
@@ -136,11 +139,14 @@ func (x Vehicle) XXXGetStruct() *structs.Struct {
 
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.
+//
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Vehicle) XXXDescr() reflect.StructDescr {
     return XXXPackageDescr.Structs()[0]
 } 
 
 // Everything below this line is internal details.
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingVehicle = &mapping.Map{
     Name: "Vehicle",
     Pkg: "vehicles",
@@ -149,18 +155,25 @@ var XXXMappingVehicle = &mapping.Map{
         {
             Name: "Type",
             Type: field.FTUint8,
+            Package: "vehicles",
+            FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
             IsEnum: true,
+            EnumGroup: "Type",
             FieldNum: 0,
         },
         {
             Name: "Car",
             Type: field.FTStruct,
+            Package: "cars",
+            FullPath: "github.com/bearlytools/test_claw_imports/cars/claw",
             IsEnum: false,
             FieldNum: 1,
         },
         {
             Name: "Truck",
             Type: field.FTListStructs,
+            Package: "trucks",
+            FullPath: "github.com/bearlytools/test_claw_imports/trucks",
             IsEnum: false,
             FieldNum: 2,
             
@@ -168,8 +181,8 @@ var XXXMappingVehicle = &mapping.Map{
         },
     },
 }
-var _package = "vehicles"
 
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     List:   []reflect.EnumGroup{
         reflect.XXXEnumGroupImpl{
@@ -202,6 +215,7 @@ func init() {
     }
 }  
 
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     Name: "vehicles",
     Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw",

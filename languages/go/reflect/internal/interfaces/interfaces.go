@@ -36,12 +36,12 @@ type EnumGroup interface {
 	// Len reports the number of enum values.
 	Len() int
 	// Get returns the ith EnumValue. It panics if out of bounds.
-	Get(i int) EnumValueDescr
+	Get(i uint16) Enum
 	// ByName returns the EnumValue for an enum named s.
 	// It returns nil if not found.
-	ByName(s string) EnumValueDescr
+	ByName(s string) Enum
 	// ByValue gets the Enum by its value.
-	ByValue(i int) EnumValueDescr
+	ByValue(i uint16) Enum
 	// Size returns the size in bits of the enumerator.
 	Size() uint8 // Either 8 or 16
 
@@ -61,17 +61,21 @@ type EnumGroups interface {
 	doNotImplement
 }
 
-// EnumValueDescr describes an enumerated value.
-type EnumValueDescr interface {
+// Enum describes an enumerated value.
+type Enum interface {
 	// Name returns the name of the Enum value.
 	Name() string
 	// Number returns the enum number value.
 	Number() uint16
+	// Size is the size in bits that the enum is in. This is either 8 or 16.
+	Size() uint8
 
 	doNotImplement
 }
 
+// TODO(jdoak): Remove this?
 // Enum is the refection interface for a concrete enum value.
+/*
 type Enum interface {
 	Descriptor() EnumValueDescr
 	// Number returns the number value of the enum. This value could be a sized for
@@ -84,6 +88,7 @@ type Enum interface {
 
 	doNotImplement
 }
+*/
 
 // List provides access to one of Claw's list types from the int family, uint family,
 // lists of bytes/string or list of structs.
@@ -195,6 +200,12 @@ type StructDescr interface {
 	FullPath() string
 	// Fields will return a list of field descriptions.
 	Fields() []FieldDescr
+	// FieldDescrByName returns the FieldDescr by the name of the field. If the field
+	// is not found, this will be nil.
+	FieldDescrByName(name string) FieldDescr
+	// FieldDescrByIndex returns the FieldDescr by index. If the index is out of bounds this
+	// will panic.
+	FieldDescrByIndex(index int) FieldDescr
 
 	doNotImplement
 }

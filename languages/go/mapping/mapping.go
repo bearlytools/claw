@@ -24,10 +24,9 @@ type FieldDescr struct {
 	// EnumGroup is the name of the enumeration group this belongs to. This will be
 	// either the name of the group in this file or the [package].[group].
 	EnumGroup string
-	// Package is the package name . This is only provided if this is an external package.
+	// Package is the package name.
 	Package string
 	// FullPath is the path to the package as defined by the import statement.
-	// This is only provided if this is an external package.
 	FullPath string
 	// SelfReferential indicates if an FTStruct or FTListStruct is the same as the containing Struct.
 	// If true, Mapping is not set.

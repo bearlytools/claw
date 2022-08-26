@@ -71,8 +71,10 @@ func (f fieldWant) Compare(got interfaces.FieldDescr) string {
 			b.WriteString(fmt.Sprintf("-EnumGroup().Size(): %v\n+EnumGroup.Size: %v\n", got.EnumGroup().Size(), f.EnumGroup.Size))
 		}
 	}
-	if f.ItemType != got.ItemType() {
-		b.WriteString(fmt.Sprintf("-ItemType: %s\n+ItemType: %s\n", got.ItemType(), f.ItemType))
+	if f.Type == field.FTListStructs {
+		if f.ItemType != got.ItemType() {
+			b.WriteString(fmt.Sprintf("-ItemType: %s\n+ItemType: %s\n", got.ItemType(), f.ItemType))
+		}
 	}
 	return b.String()
 }
@@ -91,14 +93,15 @@ func TestGetStructDecr(t *testing.T) {
 			},
 		},
 		{
-			Name:     "Cars",
+			Name:     "Car",
 			Type:     field.FTStruct,
 			FieldNum: 1,
 		},
 		{
-			Name:     "Trucks",
+			Name:     "Truck",
 			Type:     field.FTListStructs,
-			FieldNum: 1,
+			FieldNum: 2,
+			ItemType: "Truck",
 		},
 	}
 
@@ -112,12 +115,44 @@ func TestGetStructDecr(t *testing.T) {
 	v.SetCar(car)
 
 	cs := v.ClawStruct()
-	for i, f := range cs.Descriptor().Fields() {
-		log.Println("field: ", i)
+	csDescr := cs.Descriptor()
+	for i, f := range csDescr.Fields() {
 		if diff := vehiclesWant[i].Compare(f); diff != "" {
 			t.Errorf("TestGetStructDecr: -want/+got:\n%s", diff)
 		}
 	}
+
+	carDescr := csDescr.FieldDescrByName("Car")
+	carStruct := cs.Get(carDescr).Struct()
+	yearDescr := carStruct.Descriptor().FieldDescrByName("Year")
+	mfgDescr := carStruct.Descriptor().FieldDescrByName("Manufacturer")
+
+	//carDescr := cs.Get(cs.Descriptor().Fields()[1]).Struct().Descriptor()
+	//carYearDescr := carDescr.Fields()
+	// Get the car values.
+	year := carStruct.Get(yearDescr)
+	if year.Uint() != 2010 {
+		t.Errorf("TestGetStructDecr: could not extract Vehicle.Car.Year: got %d, want %d", year.Uint(), 2010)
+	}
+	mfg := carStruct.Get(mfgDescr)
+	if mfg.Enum().Number() != uint16(manufacturers.Toyota) {
+		t.Errorf("TestGetStructDecr: could not extract Vehicle.Car.Manufacturer: got %d, want %d", mfg.Enum(), manufacturers.Toyota)
+	}
+	/*
+		carStructVald := cs.NewField(cs.Descriptor().Fields()[1])
+		val.Struct().NewField()
+	*/
+
+	/*
+		trucksDescr := cs.Descriptor().Fields()[2]
+		reflect.ValueOfList()
+
+		st := reflect.ValueOfStruct(cs)
+		st.Struct().Set(
+			cs.Descriptor().Fields()[2],
+
+		)
+	*/
 
 	/*
 		type Struct interface {

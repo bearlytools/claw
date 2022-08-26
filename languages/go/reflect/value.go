@@ -31,8 +31,8 @@ func ValueOfString(v string) Value {
 }
 
 // ValueOfEnum will return the value v as a Value type.
-func ValueOfEnum[N uint8 | uint16](v N) Value {
-	return value.ValueOfEnum(v)
+func ValueOfEnum[N uint8 | uint16](v N, enumGroup EnumGroup) Value {
+	return value.ValueOfEnum(v, enumGroup)
 }
 
 // ValueOfNumber will return the value v as a Value type.

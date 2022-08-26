@@ -22,9 +22,10 @@ var boolMask = bits.Mask[uint64](24, 25)
 type Value struct {
 	// h works like normal for all non-list and non-aStruct types. In those cases,
 	// list and aStruct should be referenced.
-	h      header.Generic
-	ptr    unsafe.Pointer
-	isEnum bool
+	h         header.Generic
+	ptr       unsafe.Pointer
+	isEnum    bool
+	enumGroup interfaces.EnumGroup
 
 	list    interfaces.List
 	aStruct interfaces.Struct
@@ -60,7 +61,11 @@ func (v Value) Bytes() []byte {
 
 // Enum returns the enumerated value stored in Value. If Value is not an Enum type, this will panic.
 func (v Value) Enum() interfaces.Enum {
-	panic("not implemented")
+	if !v.isEnum {
+		panic("Enum() called on non enum value")
+	}
+
+	return v.enumGroup.ByValue(uint16(v.h.Final40()))
 }
 
 // Float returns the Float value stored in Value. If Value is not a Float type, this will panic.

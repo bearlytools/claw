@@ -581,8 +581,6 @@ type StructField struct {
 	FullPath string
 	// IsEnum indicates if the field represents an enumerator.
 	IsEnum bool
-	// EnumName is the name of the Enum grounp this belongs to.
-	EnumName string
 	// IsList indicates if the field represents a list of items. This can normally
 	// be determined by the .Type, but if the field type is defined externally, we won't
 	// have that information available yet and we need to note it is a list.
@@ -679,9 +677,13 @@ func (s Struct) Render() (string, error) {
 			default:
 				return "", fmt.Errorf("Struct %s had field %s defined externally that was an invalid type %T", s.Name, f.Name, ident)
 			}
-			s.Fields[i] = f
+		} else {
+			f.FullPath = s.File.FullPath
+			f.Package = s.File.Package
 		}
+		s.Fields[i] = f
 	}
+
 	b := strings.Builder{}
 	if err := structTmpl.Execute(&b, s); err != nil {
 		return "", err

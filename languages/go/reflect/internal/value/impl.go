@@ -3,6 +3,8 @@ package value
 import (
 	"fmt"
 	"log"
+	"strings"
+	"unicode"
 	"unsafe"
 
 	"github.com/bearlytools/claw/internal/conversions"
@@ -62,7 +64,7 @@ type EnumGroupImpl struct {
 	// EnumSize is the bit size, 8 or 16, that the values are.
 	EnumSize uint8
 	// Descrs hold the valuye descriptors.
-	Descrs []interfaces.EnumValueDescr
+	Descrs []interfaces.Enum
 }
 
 // Name is the name of the enum group.
@@ -76,13 +78,13 @@ func (e EnumGroupImpl) Len() int {
 }
 
 // Get returns the ith EnumValue. It panics if out of bounds.
-func (e EnumGroupImpl) Get(i int) interfaces.EnumValueDescr {
+func (e EnumGroupImpl) Get(i uint16) interfaces.Enum {
 	return e.Descrs[i]
 }
 
 // ByName returns the EnumValue for an enum named s.
 // It returns nil if not found.
-func (e EnumGroupImpl) ByName(s string) interfaces.EnumValueDescr {
+func (e EnumGroupImpl) ByName(s string) interfaces.Enum {
 	// Enums are usually small and reflection is the slow path. For now,
 	// I'm going to simply use a for loop for what I think will be the majority of
 	// cases. Go's map implementation is pretty gretat, but I think this will be
@@ -95,7 +97,7 @@ func (e EnumGroupImpl) ByName(s string) interfaces.EnumValueDescr {
 	return nil
 }
 
-func (e EnumGroupImpl) ByValue(i int) interfaces.EnumValueDescr {
+func (e EnumGroupImpl) ByValue(i uint16) interfaces.Enum {
 	for _, descr := range e.Descrs {
 		if descr.Number() == uint16(i) {
 			return descr
@@ -133,22 +135,28 @@ func (e EnumGroupsImpl) ByName(s string) interfaces.EnumGroup {
 	return e.Lookup[s]
 }
 
-// EnumValueDescrImpl implements EnumValueDescr.
-type EnumValueDescrImpl struct {
+// EnumImpl implements EnumValueDescr.
+type EnumImpl struct {
 	doNotImplement
 
 	EnumName   string
 	EnumNumber uint16
+	EnumSize   uint8
 }
 
 // Name returns the name of the Enum value.
-func (e EnumValueDescrImpl) Name() string {
+func (e EnumImpl) Name() string {
 	return e.EnumName
 }
 
 // Number returns the enum number value.
-func (e EnumValueDescrImpl) Number() uint16 {
+func (e EnumImpl) Number() uint16 {
 	return e.EnumNumber
+}
+
+// Size returns the size of the value, either 8 or 16 bits.
+func (e EnumImpl) Size() uint8 {
+	return e.EnumSize
 }
 
 // StructDescrImpl implements StructDescr.
@@ -177,9 +185,29 @@ func NewStructDescrImpl(m *mapping.Map) StructDescrImpl {
 				pkgDescr = runtime.PackageDescr(fd.FullPath)
 			}
 			log.Println("Looking for EnumGroup: ", fd.EnumGroup)
-			eg := pkgDescr.Enums().ByName(fd.EnumGroup)
+			sp := strings.Split(fd.EnumGroup, ".")
+
+			var egName string
+			if len(sp) == 1 {
+				egName = fd.EnumGroup
+			} else {
+				pkgName := sp[0]
+				egName = sp[1]
+				var np interfaces.PackageDescr
+				for _, imp := range pkgDescr.Imports() {
+					if imp.PackageName() == pkgName {
+						np = imp
+						break
+					}
+				}
+				if np == nil {
+					panic(fmt.Sprintf("pkg %s, struct %s, field %s: could not locate reflect reference for enum", m.Path, m.Name, fd.Name))
+				}
+				pkgDescr = np
+			}
+			eg := pkgDescr.Enums().ByName(egName)
 			if eg == nil {
-				panic(fmt.Sprintf("bug: EnumGroup %s could not be found in runtime[%s]", fd.EnumGroup, fd.FullPath))
+				panic(fmt.Sprintf("bug: EnumGroup %s could not be found in runtime[%s]", egName, pkgDescr.FullPath()))
 			}
 			fd := FieldDescrImpl{FD: fd, EG: eg}
 			descr.FieldList = append(descr.FieldList, fd)
@@ -208,6 +236,28 @@ func (s StructDescrImpl) FullPath() string {
 // Fields will return a list of field descriptions.
 func (s StructDescrImpl) Fields() []interfaces.FieldDescr {
 	return s.FieldList
+}
+
+// FieldDescrByName returns the FieldDescr by the name of the field. If the field
+// is not found, this will be nil.
+func (s StructDescrImpl) FieldDescrByName(name string) interfaces.FieldDescr {
+	if name == "" || unicode.IsLower(rune(name[0])) {
+		panic("cannot call FieldDescrByName if name is the empty string or starts with a lower case letter")
+	}
+	for _, fd := range s.FieldList {
+		log.Printf("%s == %s", name, fd.Name())
+		if fd.Name() == name {
+			log.Println("return")
+			return fd
+		}
+	}
+	return nil
+}
+
+// FieldDescByIndex returns the FieldDescr by index. If the index is out of bounds this
+// will panic.
+func (s StructDescrImpl) FieldDescrByIndex(index int) interfaces.FieldDescr {
+	return s.FieldList[index]
 }
 
 // FieldDescrImpl describes a field inside a Struct type.
@@ -256,7 +306,7 @@ type ItemType struct {
 // this will panic.
 func (f FieldDescrImpl) ItemType() string {
 	if f.FD.Type != field.FTListStructs {
-		panic("cannot call ItemType() on non list of Struct")
+		panic(fmt.Sprintf("cannot call ItemType() on non list of Struct(%s)", f.FD.Type))
 	}
 	return f.FD.Mapping.Name
 }
@@ -548,10 +598,16 @@ func (s StructImpl) NewField(descr interfaces.FieldDescr) interfaces.Value {
 	case field.FTUint8:
 		h := header.New()
 		h.SetFieldType(field.FTUint8)
+		if descr.IsEnum() {
+			return Value{h: h, isEnum: true, enumGroup: descr.EnumGroup()}
+		}
 		return Value{h: h}
 	case field.FTUint16:
 		h := header.New()
 		h.SetFieldType(field.FTUint16)
+		if descr.IsEnum() {
+			return Value{h: h, isEnum: true, enumGroup: descr.EnumGroup()}
+		}
 		return Value{h: h}
 	case field.FTUint32:
 		h := header.New()
@@ -644,6 +700,7 @@ func (s StructImpl) NewField(descr interfaces.FieldDescr) interfaces.Value {
 	}
 }
 
+// RealStruct extracts the *structs.Struct that holds all the data (not a reflect.Struct).
 func RealStruct(s interfaces.Struct) *structs.Struct {
 	i := s.(StructImpl)
 	return i.s
@@ -671,9 +728,21 @@ func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
 		return ValueOfNumber(n)
 	case field.FTUint8:
 		n := structs.MustGetNumber[uint8](s, fieldNum)
+		descr := s.Map().Fields[fieldNum]
+		if descr.IsEnum {
+			pkgDescr := runtime.PackageDescr(descr.FullPath)
+			eg := pkgDescr.Enums().ByName(descr.EnumGroup)
+			return ValueOfEnum(n, eg)
+		}
 		return ValueOfNumber(n)
 	case field.FTUint16:
 		n := structs.MustGetNumber[uint16](s, fieldNum)
+		descr := s.Map().Fields[fieldNum]
+		if descr.IsEnum {
+			pkgDescr := runtime.PackageDescr(descr.FullPath)
+			eg := pkgDescr.Enums().ByName(descr.EnumGroup)
+			return ValueOfEnum(n, eg)
+		}
 		return ValueOfNumber(n)
 	case field.FTUint32:
 		n := structs.MustGetNumber[uint32](s, fieldNum)

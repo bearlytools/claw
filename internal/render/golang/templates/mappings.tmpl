@@ -12,9 +12,11 @@ var XXXMapping{{ .Name }} = &mapping.Map{
         {
             Name: "{{ $field.Name }}",
             Type: field.{{ $field.Type }},
+            Package: "{{ $field.Package }}",
+            FullPath: "{{ $field.FullPath }}",
             IsEnum: {{ $field.IsEnum }},
             {{- if $field.IsEnum }}
-            EnumGroup: {{ $field.IdentName }},
+            EnumGroup: "{{ $field.IdentName }}",
             {{- end }}
             FieldNum: {{ $index }},
             {{- if or (gt $field.Type 14) (gt $field.Type 54) }}
@@ -23,8 +25,6 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             {{- else }}
             {{ if $field.IsExternal }}
             Mapping: {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }},
-            Package: {{ $field.Package }},
-            FullPath: {{ $field.FullPath }},
             {{- else }}
             Mapping: Mapping{{ $field.IdentName }},
             {{- end }}

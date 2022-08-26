@@ -35,7 +35,7 @@ func (x Manufacturer) XXXEnumGroup() reflect.EnumGroup {
 // This should only be used by the reflect package and is has no compatibility promises 
 // like all XXX fields.
 func (x Manufacturer) XXXEnumValueDescr() reflect.EnumValueDescr {
-    return XXXEnumGroups.Get(0).ByValue(int(x))
+    return XXXEnumGroups.Get(0).ByValue(uint16(x))
 }
 
 

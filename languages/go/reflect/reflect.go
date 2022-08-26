@@ -22,7 +22,7 @@ type StructDescrs = interfaces.StructDescr
 type EnumGroup = interfaces.EnumGroup
 
 // EnumValueDescr describes an enumerated value.
-type EnumValueDescr = interfaces.EnumValueDescr
+type EnumValueDescr = interfaces.Enum
 
 // Enum is the refection interface for a concrete enum value.
 type Enum = interfaces.Enum
@@ -37,7 +37,7 @@ type List = interfaces.List
 type XXXPackageDescrImpl = value.PackageDescrImpl
 type XXXEnumGroupsImpl = value.EnumGroupsImpl
 type XXXEnumGroupImpl = value.EnumGroupImpl
-type XXXEnumValueDescrImpl = value.EnumValueDescrImpl
+type XXXEnumValueDescrImpl = value.EnumImpl
 type XXXStructDescrImpl = value.StructDescrImpl
 type XXXFieldDescrImpl = value.FieldDescrImpl
 

@@ -58,9 +58,10 @@ func valueOfBytes(v []byte, isString bool) Value {
 }
 
 // ValueOfEnum returns a Value that represents an enumerator.
-func ValueOfEnum[N ~uint8 | ~uint16](v N) Value {
+func ValueOfEnum[N ~uint8 | ~uint16](v N, enumGroup interfaces.EnumGroup) Value {
 	e := numberValue(v)
 	e.isEnum = true
+	e.enumGroup = enumGroup
 	return e
 }
 
