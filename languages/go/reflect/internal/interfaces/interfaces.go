@@ -24,7 +24,7 @@ type PackageDescr interface {
 	// Enums is a list of the Enum declarations.
 	Enums() EnumGroups
 	// Structs is a list of the top-level message declarations.
-	Structs() []StructDescr
+	Structs() StructDescrs
 
 	doNotImplement
 }
@@ -119,6 +119,7 @@ type List interface {
 	doNotImplement
 }
 
+// Struct represents a Struct
 type Struct interface {
 	doNotImplement
 
@@ -185,7 +186,7 @@ type StructDescrs interface {
 	Get(i int) StructDescr
 	// ByName returns the StructDescr for a Struct named s.
 	// It returns nil if not found.
-	ByName(s string) StructDescr
+	ByName(name string) StructDescr
 
 	doNotImplement
 }

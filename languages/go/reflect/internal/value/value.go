@@ -1,6 +1,7 @@
 package value
 
 import (
+	"log"
 	"math"
 	"unsafe"
 
@@ -65,6 +66,8 @@ func (v Value) Enum() interfaces.Enum {
 		panic("Enum() called on non enum value")
 	}
 
+	log.Println("enumGroup: ", v.enumGroup)
+	log.Printf("enumGroup.ByValue(%v): ", v.h.Final40())
 	return v.enumGroup.ByValue(uint16(v.h.Final40()))
 }
 

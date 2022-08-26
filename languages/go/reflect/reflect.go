@@ -38,6 +38,7 @@ type XXXPackageDescrImpl = value.PackageDescrImpl
 type XXXEnumGroupsImpl = value.EnumGroupsImpl
 type XXXEnumGroupImpl = value.EnumGroupImpl
 type XXXEnumValueDescrImpl = value.EnumImpl
+type XXXStructDescrsImpl = value.StructDescrsImpl
 type XXXStructDescrImpl = value.StructDescrImpl
 type XXXFieldDescrImpl = value.FieldDescrImpl
 

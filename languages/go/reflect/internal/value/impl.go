@@ -25,7 +25,7 @@ type PackageDescrImpl struct {
 	Path             string
 	ImportDescrs     []interfaces.PackageDescr
 	EnumGroupsDescrs interfaces.EnumGroups
-	StructsDescrs    []interfaces.StructDescr
+	StructsDescrs    interfaces.StructDescrs
 }
 
 // PackageName returns the name of the package.
@@ -49,7 +49,7 @@ func (p PackageDescrImpl) Enums() interfaces.EnumGroups {
 }
 
 // Messages is a list of the top-level message declarations.
-func (p PackageDescrImpl) Structs() []interfaces.StructDescr {
+func (p PackageDescrImpl) Structs() interfaces.StructDescrs {
 	return p.StructsDescrs
 }
 
@@ -157,6 +157,34 @@ func (e EnumImpl) Number() uint16 {
 // Size returns the size of the value, either 8 or 16 bits.
 func (e EnumImpl) Size() uint8 {
 	return e.EnumSize
+}
+
+// StructDescrsImpl implements interfaces.StructDescrs. This stores a list of Struct
+// inside a package.
+type StructDescrsImpl struct {
+	doNotImplement
+	Descrs []interfaces.StructDescr
+}
+
+// Len reports the number of messages.
+func (s StructDescrsImpl) Len() int {
+	return len(s.Descrs)
+}
+
+// Get returns the ith StructDescr. It panics if out of bounds.
+func (s StructDescrsImpl) Get(i int) interfaces.StructDescr {
+	return s.Descrs[i]
+}
+
+// ByName returns the StructDescr for a Struct named s.
+// It returns nil if not found.
+func (s StructDescrsImpl) ByName(name string) interfaces.StructDescr {
+	for _, v := range s.Descrs {
+		if v.StructName() == name {
+			return v
+		}
+	}
+	return nil
 }
 
 // StructDescrImpl implements StructDescr.
@@ -730,8 +758,19 @@ func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
 		n := structs.MustGetNumber[uint8](s, fieldNum)
 		descr := s.Map().Fields[fieldNum]
 		if descr.IsEnum {
+			// TODO(jdoak): This split dynamic that I'm having to do is error prone.
+			// This should be simplified. Better yet, we really should have lookup
+			// tables that use slice index numbers to packages to make things way faster.
+			var egName string
+			sp := strings.Split(descr.EnumGroup, ".")
+			if len(sp) == 1 {
+				egName = sp[0]
+			} else {
+				egName = sp[1]
+			}
+
 			pkgDescr := runtime.PackageDescr(descr.FullPath)
-			eg := pkgDescr.Enums().ByName(descr.EnumGroup)
+			eg := pkgDescr.Enums().ByName(egName)
 			return ValueOfEnum(n, eg)
 		}
 		return ValueOfNumber(n)

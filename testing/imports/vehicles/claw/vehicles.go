@@ -41,7 +41,7 @@ func (x Type) XXXEnumGroup() reflect.EnumGroup {
 // This should only be used by the reflect package and is has no compatibility promises 
 // like all XXX fields.
 func (x Type) XXXEnumValueDescr() reflect.EnumValueDescr {
-    return XXXEnumGroups.Get(0).ByValue(int(x))
+    return XXXEnumGroups.Get(0).ByValue(uint16(x))
 }
 
 
@@ -244,6 +244,11 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
             },
         },  
     },  
+}
+
+// PackageDescr returns a PackageDescr for this package.
+func PackageDescr() reflect.PackageDescr {
+    return XXXPackageDescr
 }
 
 func init() {

@@ -105,6 +105,8 @@ func TestGetStructDecr(t *testing.T) {
 		},
 	}
 
+	//carsPkgDescr := cars.PackageDescr()
+
 	car := cars.NewCar()
 	car.SetYear(2010)
 	car.SetManufacturer(manufacturers.Toyota)

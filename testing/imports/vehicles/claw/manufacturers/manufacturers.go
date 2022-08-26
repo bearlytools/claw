@@ -109,6 +109,11 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     },  
 }
 
+// PackageDescr returns a PackageDescr for this package.
+func PackageDescr() reflect.PackageDescr {
+    return XXXPackageDescr
+}
+
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
 }

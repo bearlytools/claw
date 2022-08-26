@@ -45,27 +45,34 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     EnumGroupsDescrs: XXXEnumGroups,
     {{- end }} {{/* end Enum if */}} 
     {{- if .File.Structs }}
-    StructsDescrs: []reflect.StructDescr{
-    {{- range .File.Structs }}
-        reflect.XXXStructDescrImpl{
-            Name: "{{ .Name }}",
-            Pkg: "{{ $file.Package }}",
-            Path: "{{ $file.FullPath }}",
-            FieldList: []reflect.FieldDescr{
-                {{- $struct := . }}
-                {{- range .Fields }}
-                reflect.XXXFieldDescrImpl{
-                    FD: XXXMapping{{ $struct.Name }}.ByName("{{ .Name }}"),
-                    {{- if .IsEnum }}
-                    EG: XXXEnumGroups.ByName("{{ .IdentName }}"),
+    StructsDescrs: reflect.XXXStructDescrsImpl{
+        Descrs: []reflect.StructDescr{
+            {{- range .File.Structs }}
+            reflect.XXXStructDescrImpl{
+                Name: "{{ .Name }}",
+                Pkg: "{{ $file.Package }}",
+                Path: "{{ $file.FullPath }}",
+                FieldList: []reflect.FieldDescr{
+                    {{- $struct := . }}
+                    {{- range .Fields }}
+                    reflect.XXXFieldDescrImpl{
+                        FD: XXXMapping{{ $struct.Name }}.ByName("{{ .Name }}"),
+                        {{- if .IsEnum }}
+                        EG: XXXEnumGroups.ByName("{{ .IdentName }}"),
+                        {{- end }}
+                    },
                     {{- end }}
                 },
-                {{- end }}
             },
+            {{- end }} {{/* end range Structs */}}
         },
-    {{- end }} {{/* end Structs range */}} 
     },
     {{- end }} {{/* end Structs if */}} 
+}
+
+// PackageDescr returns a PackageDescr for this package.
+func PackageDescr() reflect.PackageDescr {
+    return XXXPackageDescr
 }
 
 func init() {
