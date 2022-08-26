@@ -105,7 +105,9 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     Name: "manufacturers",
     Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers", 
     EnumGroupsDescrs: XXXEnumGroups, 
-    StructsDescrs: []reflect.StructDescr{  
+    StructsDescrs: reflect.XXXStructDescrsImpl{
+        Descrs: []reflect.StructDescr{ 
+        },
     },  
 }
 
