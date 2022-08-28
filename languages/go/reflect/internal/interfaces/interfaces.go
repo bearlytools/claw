@@ -193,6 +193,8 @@ type StructDescrs interface {
 
 // StructDescr describes a claw struct object.
 type StructDescr interface {
+	doNotImplement
+
 	// StructName is the name of the struct.
 	StructName() string
 	// Package will be return name package name this struct was defined in.
@@ -207,8 +209,8 @@ type StructDescr interface {
 	// FieldDescrByIndex returns the FieldDescr by index. If the index is out of bounds this
 	// will panic.
 	FieldDescrByIndex(index int) FieldDescr
-
-	doNotImplement
+	// New creates a new empty Struct described by this StructDescr.
+	New() Struct
 }
 
 // FieldDescr describes a field in a claw Struct.

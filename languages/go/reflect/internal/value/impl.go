@@ -195,13 +195,17 @@ type StructDescrImpl struct {
 	Pkg       string
 	Path      string
 	FieldList []interfaces.FieldDescr
+
+	m *mapping.Map
 }
 
+// NewStructDescrImpl creates a new StructDescrImpl
 func NewStructDescrImpl(m *mapping.Map) StructDescrImpl {
 	descr := StructDescrImpl{
 		Name: m.Name,
 		Pkg:  m.Pkg,
 		Path: m.Path,
+		m:    m,
 	}
 	for _, fd := range m.Fields {
 		var pkgDescr interfaces.PackageDescr
@@ -244,6 +248,15 @@ func NewStructDescrImpl(m *mapping.Map) StructDescrImpl {
 		}
 	}
 	return descr
+}
+
+// New creates a new interfaces.Struct based on this StructDescrImpl.
+func (s StructDescrImpl) New() interfaces.Struct {
+	v := structs.New(0, s.m)
+	return StructImpl{
+		s:     v,
+		descr: s,
+	}
 }
 
 // Struct Name will be the name of the struct.

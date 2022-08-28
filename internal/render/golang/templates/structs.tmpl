@@ -6,7 +6,7 @@
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x {{ $struct.Name }}) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs()[{{ $structsIndex }}]
+    return XXXPackageDescr.Structs().Get({{ $structsIndex }})
 }
 
 {{- end }} {{/* End range .Structs */}}

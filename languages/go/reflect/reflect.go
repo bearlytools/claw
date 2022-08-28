@@ -1,6 +1,7 @@
 package reflect
 
 import (
+	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
 	"github.com/bearlytools/claw/languages/go/structs"
@@ -15,13 +16,22 @@ type ClawStruct interface {
 // PackageDescr is used to describe a claw package and its contents.
 type PackageDescr = interfaces.PackageDescr
 
-// StructDescrs gives access to the descriptions of a package's struct objects.
-type StructDescrs = interfaces.StructDescr
+// Struct represents a concrete value of a Claw Struct.
+type Struct = interfaces.Struct
 
-// EnumGroup describes a single set of enum values defined in a claw package.
+// StructDescrs gives access to the descriptions of a package's Claw Structs.
+type StructDescrs = interfaces.StructDescrs
+
+// StructDescr is a descriptor of a Claw Struct.
+type StructDescr = interfaces.StructDescr
+
+// FieldDescr is a descriptor of a Claw Struct field.
+type FieldDescr = interfaces.FieldDescr
+
+// EnumGroup describes a single set of enum values defined in a Claw package.
 type EnumGroup = interfaces.EnumGroup
 
-// EnumValueDescr describes an enumerated value.
+// EnumValueDescr is a descriptor for an enumerated value.
 type EnumValueDescr = interfaces.Enum
 
 // Enum is the refection interface for a concrete enum value.
@@ -44,4 +54,12 @@ type XXXFieldDescrImpl = value.FieldDescrImpl
 
 func XXXNewStruct(v *structs.Struct) Struct {
 	return value.XXXNewStruct(v)
+}
+
+func XXXNewStructDescrsImpl(structs []StructDescr) StructDescrs {
+	return value.StructDescrsImpl{Descrs: structs}
+}
+
+func XXXNewStructDescrImpl(m *mapping.Map) StructDescr {
+	return value.NewStructDescrImpl(m)
 }

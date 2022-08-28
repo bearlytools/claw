@@ -91,13 +91,22 @@ func cloneRepo(pkgPath string, version string) (repoPath, ver string, err error)
 	var repo *git.Repository
 
 	log.Println("fp: ", fp)
+	var downloadRepo = true
 	// This is already downloaded, so we can just update it.
 	if _, err := os.Stat(fp); err == nil {
 		repo, err = git.PlainOpen(fp)
-		if err != nil {
-			return "", "", fmt.Errorf("problem opening git repo at %q: %w", fp, err)
+		if err == nil {
+			downloadRepo = false
+			log.Println("successfully found: ", fp)
+		} else {
+			log.Printf("problem opening existing git repo at %q: %s", fp, err)
+			if err := os.RemoveAll(fp); err != nil {
+				log.Printf("cannot remove directory %s: %s", fp, err)
+			}
 		}
-	} else {
+	}
+	if downloadRepo {
+		log.Println("have to fetch repo")
 		domain := sp[0]
 		user := sp[1]
 		repoName := sp[2]
@@ -115,6 +124,7 @@ func cloneRepo(pkgPath string, version string) (repoPath, ver string, err error)
 		if err != nil {
 			return "", "", fmt.Errorf("problem cloning %q: %w", u.String(), err)
 		}
+		log.Println("cloned:", u.String())
 
 		// We haven't downloaded it, so we need to clone it and checkout our version.
 		err = os.MkdirAll(fp, 0700)

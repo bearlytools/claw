@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/bearlytools/claw/languages/go/field"
+	"github.com/bearlytools/claw/languages/go/reflect"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	vehicles "github.com/bearlytools/claw/testing/imports/vehicles/claw"
 	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
@@ -105,8 +106,7 @@ func TestGetStructDecr(t *testing.T) {
 		},
 	}
 
-	//carsPkgDescr := cars.PackageDescr()
-
+	// Setup a vehicle the normal way.
 	car := cars.NewCar()
 	car.SetYear(2010)
 	car.SetManufacturer(manufacturers.Toyota)
@@ -116,105 +116,51 @@ func TestGetStructDecr(t *testing.T) {
 	v.SetType(vehicles.Car)
 	v.SetCar(car)
 
-	cs := v.ClawStruct()
-	csDescr := cs.Descriptor()
-	for i, f := range csDescr.Fields() {
-		if diff := vehiclesWant[i].Compare(f); diff != "" {
-			t.Errorf("TestGetStructDecr: -want/+got:\n%s", diff)
+	// Setup a vehicle the reflect way.
+	vehiclesPkgDescr := vehicles.PackageDescr()
+	vehicleDescr := vehiclesPkgDescr.Structs().ByName("Vehicle")
+	mfgPkgDescr := manufacturers.PackageDescr()
+	carsPkgDescr := cars.PackageDescr()
+	carDescr := carsPkgDescr.Structs().ByName("Car")
+	carValue := carDescr.New()
+	carValue.Set(carDescr.FieldDescrByName("Year"), reflect.ValueOfNumber[uint16](2010))
+	carValue.Set(carDescr.FieldDescrByName("Manufacturer"), reflect.ValueOfEnum[uint8](1, mfgPkgDescr.Enums().ByName("Manufacturer")))
+	carValue.Set(
+		carDescr.FieldDescrByName("Model"),
+		reflect.ValueOfNumber[uint8](uint8(carsPkgDescr.Enums().ByName("Model").ByName("Venza").Number())),
+	)
+	/*
+		reflect.ValueOfEnum[uint8](
+				uint8(carsPkgDescr.Enums().ByName("Model").ByName("Venza").Number()),
+				carsPkgDescr.Enums().ByName("Model"),
+			),
+	*/
+	vehicleValue := vehicleDescr.New()
+	vehicleValue.Set(vehicleDescr.FieldDescrByName("Car"), reflect.ValueOfStruct(carValue))
+
+	for x, cs := range []interfaces.Struct{v.ClawStruct(), vehicleValue} {
+		csDescr := cs.Descriptor()
+		for i, f := range csDescr.Fields() {
+			if diff := vehiclesWant[i].Compare(f); diff != "" {
+				if x == 0 {
+					t.Errorf("TestGetStructDecr(normalSetup): fieldDescriptors -want/+got:\n%s", diff)
+				} else {
+					t.Errorf("TestGetStructDecr(reflectSetup): fieldDescriptors -want/+got:\n%s", diff)
+				}
+			}
+		}
+		carFD := csDescr.FieldDescrByName("Car")
+		carStruct := cs.Get(carFD).Struct()
+		yearDescr := carStruct.Descriptor().FieldDescrByName("Year")
+		mfgDescr := carStruct.Descriptor().FieldDescrByName("Manufacturer")
+
+		year := carStruct.Get(yearDescr)
+		if year.Uint() != 2010 {
+			t.Errorf("TestGetStructDecr: could not extract Vehicle.Car.Year: got %d, want %d", year.Uint(), 2010)
+		}
+		mfg := carStruct.Get(mfgDescr)
+		if mfg.Enum().Number() != uint16(manufacturers.Toyota) {
+			t.Errorf("TestGetStructDecr: could not extract Vehicle.Car.Manufacturer: got %d, want %d", mfg.Enum(), manufacturers.Toyota)
 		}
 	}
-
-	carDescr := csDescr.FieldDescrByName("Car")
-	carStruct := cs.Get(carDescr).Struct()
-	yearDescr := carStruct.Descriptor().FieldDescrByName("Year")
-	mfgDescr := carStruct.Descriptor().FieldDescrByName("Manufacturer")
-
-	//carDescr := cs.Get(cs.Descriptor().Fields()[1]).Struct().Descriptor()
-	//carYearDescr := carDescr.Fields()
-	// Get the car values.
-	year := carStruct.Get(yearDescr)
-	if year.Uint() != 2010 {
-		t.Errorf("TestGetStructDecr: could not extract Vehicle.Car.Year: got %d, want %d", year.Uint(), 2010)
-	}
-	mfg := carStruct.Get(mfgDescr)
-	if mfg.Enum().Number() != uint16(manufacturers.Toyota) {
-		t.Errorf("TestGetStructDecr: could not extract Vehicle.Car.Manufacturer: got %d, want %d", mfg.Enum(), manufacturers.Toyota)
-	}
-	/*
-		carStructVald := cs.NewField(cs.Descriptor().Fields()[1])
-		val.Struct().NewField()
-	*/
-
-	/*
-		trucksDescr := cs.Descriptor().Fields()[2]
-		reflect.ValueOfList()
-
-		st := reflect.ValueOfStruct(cs)
-		st.Struct().Set(
-			cs.Descriptor().Fields()[2],
-
-		)
-	*/
-
-	/*
-		type Struct interface {
-			doNotImplement
-
-			// Descriptor returns message descriptor, which contains only the protobuf
-			// type information for the message.
-			Descriptor() StructDescr
-
-			// New returns a newly allocated and mutable empty Struct.
-			New() Struct
-
-			// Range iterates over every populated field in an undefined order,
-			// calling f for each field descriptor and value encountered.
-			// Range returns immediately if f returns false.
-			// While iterating, mutating operations may only be performed
-			// on the current field descriptor.
-			Range(f func(FieldDescr, Value) bool)
-
-			// Has reports whether a field is populated. This always works for list type fields
-			// and Struct fields. With scalar values, this can be interpreted in two ways. If
-			// NoZeroValueCompression is on, then this will report if the value has been set or not.
-			// If it hasn't, this will report true for all scalar values, string and bytes types, as
-			// there is no way to determine if the zero value was set.
-			Has(FieldDescr) bool
-
-			// Clear clears the field such that a subsequent Has call reports false.
-			//
-			// Clearing an extension field clears both the extension type and value
-			// associated with the given field number.
-			//
-			// Clear is a mutating operation and unsafe for concurrent use.
-			Clear(FieldDescr)
-
-			// Get retrieves the value for a field.
-			//
-			// For unpopulated scalars, it returns the default value, where
-			// the default value of a bytes scalar is guaranteed to be a copy.
-			// For unpopulated composite types, it returns an empty, read-only view
-			// of the value; to obtain a mutable reference, use Mutable.
-			Get(FieldDescr) Value
-
-			// Set stores the value for a field.
-			//
-			// For a field belonging to a oneof, it implicitly clears any other field
-			// that may be currently set within the same oneof.
-			// For extension fields, it implicitly stores the provided ExtensionType.
-			// When setting a composite type, it is unspecified whether the stored value
-			// aliases the source's memory in any way. If the composite value is an
-			// empty, read-only value, then it panics.
-			//
-			// Set is a mutating operation and unsafe for concurrent use.
-			Set(FieldDescr, Value)
-
-			// NewField returns a new value that is assignable to the field
-			// for the given descriptor. For scalars, this returns the default value.
-			// For lists and Structs, this returns a new, empty, mutable value.
-			NewField(FieldDescr) Value
-
-			realType() *structs.Struct
-		}
-	*/
 }

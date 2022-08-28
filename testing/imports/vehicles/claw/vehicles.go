@@ -142,7 +142,7 @@ func (x Vehicle) XXXGetStruct() *structs.Struct {
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Vehicle) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs()[0]
+    return XXXPackageDescr.Structs().Get(0)
 } 
 
 // Everything below this line is internal details.
@@ -225,24 +225,26 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
         trucks.XXXPackageDescr,  
     }, 
     EnumGroupsDescrs: XXXEnumGroups, 
-    StructsDescrs: []reflect.StructDescr{
-        reflect.XXXStructDescrImpl{
-            Name: "Vehicle",
-            Pkg: "vehicles",
-            Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
-            FieldList: []reflect.FieldDescr{
-                reflect.XXXFieldDescrImpl{
-                    FD: XXXMappingVehicle.ByName("Type"),
-                    EG: XXXEnumGroups.ByName("Type"),
+    StructsDescrs: reflect.XXXStructDescrsImpl{
+        Descrs: []reflect.StructDescr{
+            reflect.XXXStructDescrImpl{
+                Name: "Vehicle",
+                Pkg: "vehicles",
+                Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
+                FieldList: []reflect.FieldDescr{
+                    reflect.XXXFieldDescrImpl{
+                        FD: XXXMappingVehicle.ByName("Type"),
+                        EG: XXXEnumGroups.ByName("Type"),
+                    },
+                    reflect.XXXFieldDescrImpl{
+                        FD: XXXMappingVehicle.ByName("Car"),
+                    },
+                    reflect.XXXFieldDescrImpl{
+                        FD: XXXMappingVehicle.ByName("Truck"),
+                    },
                 },
-                reflect.XXXFieldDescrImpl{
-                    FD: XXXMappingVehicle.ByName("Car"),
-                },
-                reflect.XXXFieldDescrImpl{
-                    FD: XXXMappingVehicle.ByName("Truck"),
-                },
-            },
-        },  
+            }, 
+        },
     },  
 }
 
