@@ -5,6 +5,8 @@
 package manufacturers
 
 import (
+    "sync"
+
     "github.com/bearlytools/claw/languages/go/reflect"
     "github.com/bearlytools/claw/languages/go/reflect/runtime"
     
@@ -111,18 +113,31 @@ var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     ),  
 }
 
-// Initializes all of the package's externally defined field defs.
-func init() {
-    if err := XXXPackageDescr.XXXInit(); err != nil {
-        panic(err)
-    }
-}
-
 // PackageDescr returns a PackageDescr for this package.
 func PackageDescr() reflect.PackageDescr {
     return XXXPackageDescr
 }
 
+// Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+}
+
+var haveInit sync.Once
+
+// XXXInit initializes reflect descriptors that depend on external references after those
+// references have been loaded.
+func XXXInit() {
+    haveInit.Do(
+        func() {
+            if err := XXXPackageDescr.XXXInit(); err != nil {
+                panic(err)
+            }
+        },
+    )
+}
+
+// This init should always be the last init() in the file.
+func init() {
+    XXXInit()
 }

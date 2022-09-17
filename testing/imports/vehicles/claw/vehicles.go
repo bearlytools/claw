@@ -11,8 +11,8 @@ import (
     "github.com/bearlytools/claw/languages/go/structs"
     "github.com/bearlytools/claw/languages/go/field"
     
-    "github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/test_claw_imports/cars/claw"
+    "github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
@@ -216,7 +216,7 @@ func init() {
 }  
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
+var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     Name: "vehicles",
     Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
     ImportDescrs: []reflect.PackageDescr {
@@ -230,6 +230,13 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
             reflect.XXXNewStructDescrImpl(XXXMappingVehicle), 
         },
     ),  
+}
+
+// Initializes all of the package's externally defined field defs.
+func init() {
+    if err := XXXPackageDescr.XXXInit(); err != nil {
+        panic(err)
+    }
 }
 
 // PackageDescr returns a PackageDescr for this package.
