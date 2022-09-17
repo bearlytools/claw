@@ -39,6 +39,8 @@ github.com/bearlytools/test_claw_imports v0.0.0-20220826172444-ea5a356c719a h1:Y
 github.com/bearlytools/test_claw_imports v0.0.0-20220826172444-ea5a356c719a/go.mod h1:C4LMNvoJz6aqUukjB0+Nh4bsn1KJV/vLbs81AGrCLFY=
 github.com/bearlytools/test_claw_imports v0.0.0-20220826175416-c454d9b846e5 h1:yZLyndP0RAvTemwccyQ1OZjAsZHsOlo8sEqP/v94aLs=
 github.com/bearlytools/test_claw_imports v0.0.0-20220826175416-c454d9b846e5/go.mod h1:8Uym8uG1G+qrpkLXZR9Srw4t9zDsE655bO3t6e+6fX4=
+github.com/bearlytools/test_claw_imports v0.0.0-20220828193114-e67bbcec37f1 h1:vpYESUQHhIvZZLFw+14NIkZyBHbW1zXoHI3+jixLH9g=
+github.com/bearlytools/test_claw_imports v0.0.0-20220828193114-e67bbcec37f1/go.mod h1:PDA7wBEbUr9cQJLJ8vsK0XjYfQiGAv6Mong3iyQtLOo=
 github.com/beeker1121/goque v2.1.0+incompatible/go.mod h1:L6dOWBhDOnxUVQsb0wkLve0VCnt2xJW/MI8pdRX4ANw=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=

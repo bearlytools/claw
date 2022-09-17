@@ -1,6 +1,8 @@
 package value
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"math"
 	"unsafe"
@@ -130,9 +132,21 @@ func (v Value) Int() int64 {
 }
 
 // Any decodes the value into the any type. If the value isn't valid, this panics.
+// Here are a list of the decodes:
+//
+//   - Enumerators will decode into the interfaces.Enum type
+//   - Bool will decode to the bool type
+//   - Numbers(int*, uint*, float*) decode into their Go equivalent
+//   - String into the string type
+//   - Bytes into the []byte type
+//   - Struct into reflect.Struct
+//   - List of bools into []bool
+//   - List of Numbers into []<go number type>
+//   - List of String into []string
+//   - List of Bytes into [][]byte
+//   - List of Struct into a []reflect.Struct
 func (v Value) Any() any {
-	panic("not all types implemented yet")
-	if v.h == nil {
+	if v.h == nil && v.aStruct == nil && v.enumGroup == nil && v.list == nil {
 		return nil
 	}
 
@@ -167,19 +181,93 @@ func (v Value) Any() any {
 		return v.String()
 	case field.FTBytes:
 		return v.Bytes()
-	default:
-		panic("eh")
+	case field.FTStruct:
+		return v.aStruct
+	case field.FTListBools:
+		return boolSliceFromValue(v)
+	case field.FTListInt8:
+		return numberSliceFromValue[int8](v)
+	case field.FTListInt16:
+		return numberSliceFromValue[int16](v)
+	case field.FTListInt32:
+		return numberSliceFromValue[int32](v)
+	case field.FTListInt64:
+		return numberSliceFromValue[int64](v)
+	case field.FTListUint8:
+		return numberSliceFromValue[uint8](v)
+	case field.FTListUint16:
+		return numberSliceFromValue[uint16](v)
+	case field.FTListUint32:
+		return numberSliceFromValue[uint32](v)
+	case field.FTListUint64:
+		return numberSliceFromValue[uint64](v)
+	case field.FTListFloat32:
+		return numberSliceFromValue[float32](v)
+	case field.FTListFloat64:
+		return numberSliceFromValue[float64](v)
+	case field.FTListBytes:
+		return bytesSliceFromValue(v)
+	case field.FTListStrings:
+		return stringSliceFromValue(v)
+	case field.FTListStructs:
+		return structSliceFromValue(v)
 	}
+
+	panic(fmt.Sprintf("unsupportted type %v", v.h.FieldType()))
 }
 
-// String returns the string value stored in Value. If Value is not a string type, this will panic.
+// String returns the string value stored in Value. String returns the string v's underlying
+// value, as a string. String is a special case because of Go's String method convention.
+// Unlike the other getters, it does not panic if v's Kind is not String. Instead, it returns
+// a string of the form "<T value>" where T is v's type. The fmt package treats Values
+// specially. It does not call their String method implicitly but instead prints the
+// concrete values they hold.
 func (v Value) String() string {
 	if v.h == nil {
-		panic("Value is empty value")
+		return "<invalid Value>"
 	}
 
-	x := (*[]byte)(v.ptr)
-	return string(*x)
+	// If it is an enumerator, print the enumerator name.
+	if v.isEnum {
+		return v.Enum().Name()
+	}
+
+	// There are two types that require special attention, Struct and []Struct.
+	switch v.h.FieldType() {
+	case field.FTStruct:
+		buff := bytes.Buffer{}
+		buff.WriteRune('{')
+		start := true
+		v.aStruct.Range(
+			func(fd interfaces.FieldDescr, v interfaces.Value) bool {
+				if !start {
+					buff.WriteString(", ")
+				}
+				buff.WriteString(fmt.Sprintf("%s: %s", fd.Name(), v.String()))
+				start = false
+				return true
+			},
+		)
+		buff.WriteRune('}')
+		return buff.String()
+	case field.FTListStructs:
+		buff := bytes.Buffer{}
+		buff.WriteRune('[')
+
+		for i := 0; i < v.list.Len(); i++ {
+			if i != 0 {
+				buff.WriteString(", ")
+			}
+			buff.WriteString(v.String())
+		}
+
+		buff.WriteRune(']')
+		return buff.String()
+	}
+
+	// For enverything else, convert to the Go type and let Go's fmt.Sprint() handle the
+	// string conversion.
+	return fmt.Sprint(v.Any())
 }
 
 // Uint returns the unsigned integer value stored in Value. If Value is not an unsigned integer type, this will panic.
@@ -232,6 +320,74 @@ func (v Value) Struct() interfaces.Struct {
 	}
 
 	return v.aStruct
+}
+
+func boolSliceFromValue(v Value) []bool {
+	if v.list.Len() == 0 {
+		return nil
+	}
+
+	x := make([]bool, v.list.Len())
+	for i := 0; i < v.list.Len(); i++ {
+		x[i] = v.list.Get(i).Bool()
+	}
+	return x
+}
+
+func numberSliceFromValue[N interfaces.Number](v Value) []N {
+	var a N
+
+	x := make([]N, v.list.Len())
+
+	for i := 0; i < v.list.Len(); i++ {
+		switch any(a).(type) {
+		case int8, int16, int32, int64:
+			x[i] = N(v.list.Get(i).Int())
+		case uint8, uint16, uint32, uint64:
+			x[i] = N(v.list.Get(i).Uint())
+		case float32, float64:
+			x[i] = N(v.list.Get(i).Float())
+		default:
+			panic(fmt.Sprintf("unsupported type %T", a))
+		}
+	}
+	return x
+}
+
+func bytesSliceFromValue(v Value) [][]byte {
+	if v.list.Len() == 0 {
+		return nil
+	}
+
+	x := make([][]byte, v.list.Len())
+	for i := 0; i < v.list.Len(); i++ {
+		x[i] = v.list.Get(i).Bytes()
+	}
+	return x
+}
+
+func stringSliceFromValue(v Value) []string {
+	if v.list.Len() == 0 {
+		return nil
+	}
+
+	x := make([]string, v.list.Len())
+	for i := 0; i < v.list.Len(); i++ {
+		x[i] = v.list.Get(i).String()
+	}
+	return x
+}
+
+func structSliceFromValue(v Value) []interfaces.Struct {
+	if v.list.Len() == 0 {
+		return nil
+	}
+
+	x := make([]interfaces.Struct, v.list.Len())
+	for i := 0; i < v.list.Len(); i++ {
+		x[i] = v.list.Get(i).Struct()
+	}
+	return x
 }
 
 // getNumber gets a number value at fieldNum.

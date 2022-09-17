@@ -68,6 +68,9 @@ func ByteSlice2String(bs []byte) string {
 // UnsafeGetBytes retrieves the underlying []byte held in string "s" without doing
 // a copy. Do not modify the []byte or suffer the consequences.
 func UnsafeGetBytes(s string) []byte {
+	if s == "" {
+		return nil
+	}
 	return (*[0x7fff0000]byte)(unsafe.Pointer(
 		(*reflect.StringHeader)(unsafe.Pointer(&s)).Data),
 	)[:len(s):len(s)]

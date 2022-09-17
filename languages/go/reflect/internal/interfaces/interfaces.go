@@ -34,6 +34,7 @@ type EnumGroup interface {
 	// Name is the name of the EnumGroup.
 	Name() string
 	// Len reports the number of enum values.
+	// TODO(jdoak): Change this to be uint16
 	Len() int
 	// Get returns the ith EnumValue. It panics if out of bounds.
 	Get(i uint16) Enum

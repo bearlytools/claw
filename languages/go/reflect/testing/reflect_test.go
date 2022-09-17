@@ -124,7 +124,13 @@ func TestGetStructDecr(t *testing.T) {
 	carDescr := carsPkgDescr.Structs().ByName("Car")
 	carValue := carDescr.New()
 	carValue.Set(carDescr.FieldDescrByName("Year"), reflect.ValueOfNumber[uint16](2010))
-	carValue.Set(carDescr.FieldDescrByName("Manufacturer"), reflect.ValueOfEnum[uint8](1, mfgPkgDescr.Enums().ByName("Manufacturer")))
+
+	enumValue := reflect.ValueOfEnum[uint8](1, mfgPkgDescr.Enums().ByName("Manufacturer"))
+	for _, field := range carDescr.Fields() {
+		log.Println("field is: ", field.Name())
+	}
+	log.Println("here: ", carDescr.FieldDescrByName("Manufacturer"))
+	carValue.Set(carDescr.FieldDescrByName("Manufacturer"), enumValue)
 	carValue.Set(
 		carDescr.FieldDescrByName("Model"),
 		reflect.ValueOfNumber[uint8](uint8(carsPkgDescr.Enums().ByName("Model").ByName("Venza").Number())),

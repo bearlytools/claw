@@ -55,6 +55,16 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     {{- end }} {{/* end Structs if */}} 
 }
 
+// Initializes all of the package's enumerator defs for our structs that rely
+// on enumerators defined outside this package.
+func init() {
+    v := XXPackageDescr.StructDescrs.(value.StructDescrs)
+    if err := v.Init(); err != nil {
+        panic(err)
+    }
+    XXPackageDescr.StructDescrs = v
+}
+
 // PackageDescr returns a PackageDescr for this package.
 func PackageDescr() reflect.PackageDescr {
     return XXXPackageDescr
