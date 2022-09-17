@@ -101,7 +101,7 @@ func init() {
 }  
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
+var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     Name: "manufacturers",
     Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers", 
     EnumGroupsDescrs: XXXEnumGroups, 
@@ -109,6 +109,13 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
         []reflect.StructDescr { 
         },
     ),  
+}
+
+// Initializes all of the package's externally defined field defs.
+func init() {
+    if err := XXXPackageDescr.XXXInit(); err != nil {
+        panic(err)
+    }
 }
 
 // PackageDescr returns a PackageDescr for this package.
