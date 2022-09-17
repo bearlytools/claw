@@ -26,6 +26,10 @@ type PackageDescr interface {
 	// Structs is a list of the top-level message declarations.
 	Structs() StructDescrs
 
+	// XXXInit runs runtime initalizations that deal with external dependencies.
+	// As with all XXX methods, this is intended for internal use only.
+	XXXInit() error
+
 	doNotImplement
 }
 
@@ -188,6 +192,10 @@ type StructDescrs interface {
 	// ByName returns the StructDescr for a Struct named s.
 	// It returns nil if not found.
 	ByName(name string) StructDescr
+
+	// XXXInit initializes external field descriptor references. Like
+	// all XXX methods, this is intended for internal use only.
+	XXXInit() error
 
 	doNotImplement
 }

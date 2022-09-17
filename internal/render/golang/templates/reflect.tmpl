@@ -31,7 +31,7 @@ func init() {
 {{- end }} {{/* end Enum if */}} 
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
+var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     Name: "{{ $file.Package }}",
     Path: "{{ $file.FullPath }}",
     {{- if .File.Imports.Imports }}
@@ -55,14 +55,11 @@ var XXXPackageDescr reflect.PackageDescr = reflect.XXXPackageDescrImpl{
     {{- end }} {{/* end Structs if */}} 
 }
 
-// Initializes all of the package's enumerator defs for our structs that rely
-// on enumerators defined outside this package.
+// Initializes all of the package's externally defined field defs.
 func init() {
-    v := XXPackageDescr.StructDescrs.(value.StructDescrs)
-    if err := v.Init(); err != nil {
+    if err := XXXPackageDescr.XXXInit(); err != nil {
         panic(err)
     }
-    XXPackageDescr.StructDescrs = v
 }
 
 // PackageDescr returns a PackageDescr for this package.
