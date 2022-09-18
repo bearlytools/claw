@@ -26,10 +26,6 @@ type PackageDescr interface {
 	// Structs is a list of the top-level message declarations.
 	Structs() StructDescrs
 
-	// XXXInit runs runtime initalizations that deal with external dependencies.
-	// As with all XXX methods, this is intended for internal use only.
-	XXXInit() error
-
 	doNotImplement
 }
 

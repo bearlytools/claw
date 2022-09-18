@@ -85,7 +85,7 @@ var XXXStructDescr{{ .Name }} = &reflect.XXXStructDescrImpl{
 }
 {{- end }}
 
-var XXXStructDescrs = map[string]*reflect.XXXStructDescrsImpl{
+var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
     {{- range $file.Structs }}
     "{{ .Name }}":  XXXStructDescr{{ .Name }},
     {{- end }}
