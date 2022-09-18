@@ -5,8 +5,6 @@
 package manufacturers
 
 import (
-    "sync"
-
     "github.com/bearlytools/claw/languages/go/reflect"
     "github.com/bearlytools/claw/languages/go/reflect/runtime"
     
