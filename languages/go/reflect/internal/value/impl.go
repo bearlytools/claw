@@ -56,18 +56,6 @@ func (p *PackageDescrImpl) Structs() interfaces.StructDescrs {
 	return p.StructsDescrs
 }
 
-func (p *PackageDescrImpl) XXXInit() error {
-	var err error
-	p.initOnce.Do(
-		func() {
-			log.Println("Package Init() ran for package: ", p.Name)
-			err = p.StructsDescrs.XXXInit()
-		},
-	)
-
-	return err
-}
-
 // EnumGroupImpl implements EnumGroup.
 type EnumGroupImpl struct {
 	doNotImplement
