@@ -37,7 +37,7 @@ func (x Maker) XXXEnumGroup() reflect.EnumGroup {
 // This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x Maker) XXXEnumValueDescr() reflect.EnumValueDescr {
-	return XXXEnumGroups.Get(0).ByValue(int(x))
+	return XXXEnumGroups.Get(0).ByValue(uint16(x))
 }
 
 const (
@@ -162,7 +162,7 @@ func (x Car) IsSetPreviousVersions() bool {
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.
 func (x Car) XXXDescr() reflect.StructDescr {
-	return XXXPackageDescr.Structs()[0]
+	return XXXPackageDescr.Structs().Get(0)
 }
 
 // ClawStruct returns a reflection type representing the Struct.

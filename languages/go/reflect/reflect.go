@@ -2,6 +2,7 @@ package reflect
 
 import (
 	"github.com/bearlytools/claw/languages/go/mapping"
+	"github.com/bearlytools/claw/languages/go/reflect/enums"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
 	"github.com/bearlytools/claw/languages/go/structs"
@@ -45,9 +46,9 @@ type EnumGroups = interfaces.EnumGroups
 type List = interfaces.List
 
 type XXXPackageDescrImpl = value.PackageDescrImpl
-type XXXEnumGroupsImpl = value.EnumGroupsImpl
-type XXXEnumGroupImpl = value.EnumGroupImpl
-type XXXEnumValueDescrImpl = value.EnumImpl
+type XXXEnumGroupsImpl = enums.EnumGroupsImpl
+type XXXEnumGroupImpl = enums.EnumGroupImpl
+type XXXEnumValueDescrImpl = enums.EnumImpl
 type XXXStructDescrsImpl = value.StructDescrsImpl
 type XXXStructDescrImpl = value.StructDescrImpl
 type XXXFieldDescrImpl = value.FieldDescrImpl

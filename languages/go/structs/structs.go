@@ -17,6 +17,7 @@ import (
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/mapping"
+	"github.com/bearlytools/claw/languages/go/reflect/enums"
 	"github.com/bearlytools/claw/languages/go/structs/header"
 )
 
@@ -949,11 +950,29 @@ func SetField(s *Struct, fieldNum uint16, value any) {
 		v := value.(int64)
 		MustSetNumber(s, fieldNum, v)
 	case field.FTUint8:
-		v := value.(uint8)
-		MustSetNumber(s, fieldNum, v)
+		switch v := value.(type) {
+		case uint8:
+			MustSetNumber(s, fieldNum, v)
+		case enums.EnumImpl:
+			if v.EnumSize != 8 {
+				panic(fmt.Sprintf("setting a Uint8 field with a Enum that has size: %d", v.EnumSize))
+			}
+			MustSetNumber(s, fieldNum, uint8(v.EnumNumber))
+		default:
+			panic(fmt.Sprintf("setting a Uint8 field with a %T", value))
+		}
 	case field.FTUint16:
-		v := value.(uint16)
-		MustSetNumber(s, fieldNum, v)
+		switch v := value.(type) {
+		case uint16:
+			MustSetNumber(s, fieldNum, v)
+		case enums.EnumImpl:
+			if v.EnumSize != 16 {
+				panic(fmt.Sprintf("setting a Uint16 field with a Enum that has size: %d", v.EnumSize))
+			}
+			MustSetNumber(s, fieldNum, v.EnumNumber)
+		default:
+			panic(fmt.Sprintf("setting a Uint16 field with a %T", value))
+		}
 	case field.FTUint32:
 		v := value.(uint32)
 		MustSetNumber(s, fieldNum, v)

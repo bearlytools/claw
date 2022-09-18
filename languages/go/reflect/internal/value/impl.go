@@ -56,6 +56,7 @@ func (p *PackageDescrImpl) Structs() interfaces.StructDescrs {
 	return p.StructsDescrs
 }
 
+/*
 // EnumGroupImpl implements EnumGroup.
 type EnumGroupImpl struct {
 	doNotImplement
@@ -145,6 +146,9 @@ type EnumImpl struct {
 	EnumName   string
 	EnumNumber uint16
 	EnumSize   uint8
+
+	// EnumGroup holds the enum gropu that this enum belongs to.
+	EnumGroup EnumGroupImpl
 }
 
 // Name returns the name of the Enum value.
@@ -161,6 +165,7 @@ func (e EnumImpl) Number() uint16 {
 func (e EnumImpl) Size() uint8 {
 	return e.EnumSize
 }
+*/
 
 // StructDescrsImpl implements interfaces.StructDescrs. This stores a list of Struct
 // inside a package.
