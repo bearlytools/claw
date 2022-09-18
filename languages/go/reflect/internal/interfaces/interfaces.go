@@ -189,10 +189,6 @@ type StructDescrs interface {
 	// It returns nil if not found.
 	ByName(name string) StructDescr
 
-	// XXXInit initializes external field descriptor references. Like
-	// all XXX methods, this is intended for internal use only.
-	XXXInit() error
-
 	doNotImplement
 }
 

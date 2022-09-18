@@ -126,33 +126,3 @@ func PackageDescr() reflect.PackageDescr {
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
 }
-
-var haveInit sync.Once
-
-// XXXInit initializes reflect descriptors that depend on external references after those
-// references have been loaded.
-func XXXInit() {
-    haveInit.Do(
-        func() {
-            {{- range $file.PkgImports }}
-                {
-                    pDescr := runtime.PackageDescr("{{.}}")
-                    if pDescr == nil {
-                        panic("empty package descriptor for {{.}}")
-                    }
-                    if err := pDescr.XXXInit(); err != nil {
-                        panic(err)
-                    }
-                }
-            {{- end }}
-            if err := XXXPackageDescr.XXXInit(); err != nil {
-                panic(err)
-            }
-        },
-    )
-}
-
-// This init should always be the last init() in the file.
-func init() {
-    XXXInit()
-}
