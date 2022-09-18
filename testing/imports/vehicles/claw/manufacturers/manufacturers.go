@@ -101,7 +101,7 @@ var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     },
 } 
 
-var XXXStructDescrs = map[string]*reflect.XXXStructDescrsImpl{
+var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
 }
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
