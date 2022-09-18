@@ -65,52 +65,50 @@ var ManufacturerByValue = map[uint8 ]string{
 
 // Everything below this line is internal details.
 
+
+
+var XXXEnumGroupManufacturer = reflect.XXXEnumGroupImpl{
+    GroupName: "Manufacturer",
+    GroupLen: 4,
+    EnumSize: 8,
+    Descrs: []reflect.EnumValueDescr{
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "Unknown",
+            EnumNumber: 0,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "Toyota",
+            EnumNumber: 1,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "Ford",
+            EnumNumber: 2,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "Tesla",
+            EnumNumber: 3,
+        },
+    },
+}  
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     List:   []reflect.EnumGroup{
-        reflect.XXXEnumGroupImpl{
-            GroupName: "Manufacturer",
-            GroupLen: 4,
-            EnumSize: 8,
-            Descrs: []reflect.EnumValueDescr{
-                reflect.XXXEnumValueDescrImpl{
-                    EnumName: "Unknown",
-                    EnumNumber: 0,
-                },
-                reflect.XXXEnumValueDescrImpl{
-                    EnumName: "Toyota",
-                    EnumNumber: 1,
-                },
-                reflect.XXXEnumValueDescrImpl{
-                    EnumName: "Ford",
-                    EnumNumber: 2,
-                },
-                reflect.XXXEnumValueDescrImpl{
-                    EnumName: "Tesla",
-                    EnumNumber: 3,
-                },
-            },
-        },  
+        XXXEnumGroupManufacturer,
     },
-    Lookup: map[string]reflect.EnumGroup{},
-}
+    Lookup: map[string]reflect.EnumGroup{
+        "Manufacturer": XXXEnumGroupManufacturer,
+    },
+} 
 
-func init() {
-    x := XXXEnumGroups.(reflect.XXXEnumGroupsImpl)
-    for _, g := range x.List {
-        x.Lookup[g.Name()] = g
-    }
-}  
+var XXXStructDescrs = map[string]*reflect.XXXStructDescrsImpl{
+}
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     Name: "manufacturers",
     Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers", 
-    EnumGroupsDescrs: XXXEnumGroups, 
-    StructsDescrs: reflect.XXXNewStructDescrsImpl(
-        []reflect.StructDescr { 
-        },
-    ),  
+    EnumGroupsDescrs: XXXEnumGroups,   
 }
 
 // PackageDescr returns a PackageDescr for this package.
