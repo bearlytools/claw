@@ -120,22 +120,3 @@ func PackageDescr() reflect.PackageDescr {
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
 }
-
-var haveInit sync.Once
-
-// XXXInit initializes reflect descriptors that depend on external references after those
-// references have been loaded.
-func XXXInit() {
-    haveInit.Do(
-        func() {
-            if err := XXXPackageDescr.XXXInit(); err != nil {
-                panic(err)
-            }
-        },
-    )
-}
-
-// This init should always be the last init() in the file.
-func init() {
-    XXXInit()
-}
