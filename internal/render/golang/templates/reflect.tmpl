@@ -24,10 +24,12 @@ var XXXEnumGroup{{ .Name }} = reflect.XXXEnumGroupImpl{
     GroupLen: {{ .Len }},
     EnumSize: {{ .Size }},
     Descrs: []reflect.EnumValueDescr{
+        {{- $size := .Size }}
         {{- range .OrderByValues }}
         reflect.XXXEnumValueDescrImpl{
             EnumName: "{{ .Name }}",
             EnumNumber: {{ .Value }},
+            EnumSize: {{ $size}},
         },
         {{- end }}
     },

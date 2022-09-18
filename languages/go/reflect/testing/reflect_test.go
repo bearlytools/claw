@@ -125,15 +125,18 @@ func TestGetStructDecr(t *testing.T) {
 	carValue := carDescr.New()
 	carValue.Set(carDescr.FieldDescrByName("Year"), reflect.ValueOfNumber[uint16](2010))
 
-	enumValue := reflect.ValueOfEnum[uint8](1, mfgPkgDescr.Enums().ByName("Manufacturer"))
-	for _, field := range carDescr.Fields() {
-		log.Println("field is: ", field.Name())
-	}
+	enumNumber := mfgPkgDescr.Enums().ByName("Manufacturer").ByValue(1).Number()
 	log.Println("here: ", carDescr.FieldDescrByName("Manufacturer"))
-	carValue.Set(carDescr.FieldDescrByName("Manufacturer"), enumValue)
+	log.Printf("%#+v", reflect.ValueOfEnum(uint8(enumNumber), mfgPkgDescr.Enums().ByName("Manufacturer")))
+	carValue.Set(
+		carDescr.FieldDescrByName("Manufacturer"),
+		reflect.ValueOfEnum(uint8(enumNumber), mfgPkgDescr.Enums().ByName("Manufacturer")),
+	)
+
+	enumNumber = carsPkgDescr.Enums().ByName("Model").ByName("Venza").Number()
 	carValue.Set(
 		carDescr.FieldDescrByName("Model"),
-		reflect.ValueOfNumber[uint8](uint8(carsPkgDescr.Enums().ByName("Model").ByName("Venza").Number())),
+		reflect.ValueOfEnum(uint8(enumNumber), carsPkgDescr.Enums().ByName("Model")),
 	)
 	/*
 		reflect.ValueOfEnum[uint8](

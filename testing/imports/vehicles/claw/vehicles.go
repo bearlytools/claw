@@ -11,8 +11,8 @@ import (
     "github.com/bearlytools/claw/languages/go/structs"
     "github.com/bearlytools/claw/languages/go/field"
     
-    "github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/test_claw_imports/trucks"
+    "github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
@@ -203,7 +203,7 @@ var XXXEnumGroupType = reflect.XXXEnumGroupImpl{
             EnumNumber: 2,
         },
     },
-}  
+}
 
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{

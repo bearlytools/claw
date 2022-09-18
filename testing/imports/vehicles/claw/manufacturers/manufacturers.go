@@ -73,18 +73,22 @@ var XXXEnumGroupManufacturer = reflect.XXXEnumGroupImpl{
         reflect.XXXEnumValueDescrImpl{
             EnumName: "Unknown",
             EnumNumber: 0,
+            EnumSize: 8,
         },
         reflect.XXXEnumValueDescrImpl{
             EnumName: "Toyota",
             EnumNumber: 1,
+            EnumSize: 8,
         },
         reflect.XXXEnumValueDescrImpl{
             EnumName: "Ford",
             EnumNumber: 2,
+            EnumSize: 8,
         },
         reflect.XXXEnumValueDescrImpl{
             EnumName: "Tesla",
             EnumNumber: 3,
+            EnumSize: 8,
         },
     },
 }
