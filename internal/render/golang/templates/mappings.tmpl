@@ -14,6 +14,9 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             Type: field.{{ $field.Type }},
             Package: "{{ $field.Package }}",
             FullPath: "{{ $field.FullPath }}",
+            {{- if eq $field.Type 14 }}
+            StructName: "{{ $field.IdentName }}",
+            {{- end }}
             IsEnum: {{ $field.IsEnum }},
             {{- if $field.IsEnum }}
             EnumGroup: "{{ $field.IdentName }}",

@@ -5,6 +5,8 @@
 package vehicles
 
 import (
+    "sync"
+
     "github.com/bearlytools/claw/languages/go/mapping"
     "github.com/bearlytools/claw/languages/go/reflect"
     "github.com/bearlytools/claw/languages/go/reflect/runtime"
@@ -232,18 +234,58 @@ var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     ),  
 }
 
-// Initializes all of the package's externally defined field defs.
-func init() {
-    if err := XXXPackageDescr.XXXInit(); err != nil {
-        panic(err)
-    }
-}
-
 // PackageDescr returns a PackageDescr for this package.
 func PackageDescr() reflect.PackageDescr {
     return XXXPackageDescr
 }
 
+// Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+}
+
+var haveInit sync.Once
+
+// XXXInit initializes reflect descriptors that depend on external references after those
+// references have been loaded.
+func XXXInit() {
+    haveInit.Do(
+        func() {
+                {
+                    pDescr := runtime.PackageDescr("github.com/bearlytools/test_claw_imports/cars/claw")
+                    if pDescr == nil {
+                        panic("empty package descriptor for github.com/bearlytools/test_claw_imports/cars/claw")
+                    }
+                    if err := pDescr.XXXInit(); err != nil {
+                        panic(err)
+                    }
+                }
+                {
+                    pDescr := runtime.PackageDescr("github.com/bearlytools/test_claw_imports/trucks")
+                    if pDescr == nil {
+                        panic("empty package descriptor for github.com/bearlytools/test_claw_imports/trucks")
+                    }
+                    if err := pDescr.XXXInit(); err != nil {
+                        panic(err)
+                    }
+                }
+                {
+                    pDescr := runtime.PackageDescr("github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers")
+                    if pDescr == nil {
+                        panic("empty package descriptor for github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers")
+                    }
+                    if err := pDescr.XXXInit(); err != nil {
+                        panic(err)
+                    }
+                }
+            if err := XXXPackageDescr.XXXInit(); err != nil {
+                panic(err)
+            }
+        },
+    )
+}
+
+// This init should always be the last init() in the file.
+func init() {
+    XXXInit()
 }

@@ -89,24 +89,19 @@ func (f *File) Validate() error {
 }
 
 // Structs returns all Structs that were decoded.
-func (f *File) Structs() chan Struct {
-	ch := make(chan Struct, 1)
-
+func (f *File) Structs() []Struct {
 	if f.Identifers == nil {
-		close(ch)
-		return ch
+		return nil
 	}
 
-	go func() {
-		defer close(ch)
-		for _, i := range f.Identifers {
-			switch v := i.(type) {
-			case Struct:
-				ch <- v
-			}
+	var ret []Struct
+	for _, i := range f.Identifers {
+		switch v := i.(type) {
+		case Struct:
+			ret = append(ret, v)
 		}
-	}()
-	return ch
+	}
+	return ret
 }
 
 // Enums returns all Enums that were decoded.
@@ -592,7 +587,7 @@ type StructField struct {
 	SelfReferential bool
 }
 
-// IdentInFile removes returns the IdentName, removing a package identifier if it
+// IdentInFile returns the IdentName, removing a package identifier if it
 // proceeds it in .IdentName.
 func (s StructField) IdentInFile() string {
 	sp := strings.Split(s.IdentName, ".")

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"unicode"
 	"unsafe"
 
@@ -26,6 +27,8 @@ type PackageDescrImpl struct {
 	ImportDescrs     []interfaces.PackageDescr
 	EnumGroupsDescrs interfaces.EnumGroups
 	StructsDescrs    interfaces.StructDescrs
+
+	initOnce sync.Once
 }
 
 // PackageName returns the name of the package.
@@ -54,7 +57,15 @@ func (p *PackageDescrImpl) Structs() interfaces.StructDescrs {
 }
 
 func (p *PackageDescrImpl) XXXInit() error {
-	return p.StructsDescrs.XXXInit()
+	var err error
+	p.initOnce.Do(
+		func() {
+			log.Println("Package Init() ran for package: ", p.Name)
+			err = p.StructsDescrs.XXXInit()
+		},
+	)
+
+	return err
 }
 
 // EnumGroupImpl implements EnumGroup.
@@ -170,18 +181,6 @@ type StructDescrsImpl struct {
 	Descrs []interfaces.StructDescr
 }
 
-// XXXInit initializes all underlying StructDescr. See value.StructDescr.Init()
-// for more information.
-func (s StructDescrsImpl) XXXInit() error {
-	for _, desc := range s.Descrs {
-		v := desc.(StructDescrImpl)
-		if err := v.Init(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Len reports the number of messages.
 func (s StructDescrsImpl) Len() int {
 	return len(s.Descrs)
@@ -212,49 +211,57 @@ type StructDescrImpl struct {
 	Path      string
 	FieldList []interfaces.FieldDescr
 
-	m *mapping.Map
+	Mapping *mapping.Map
 }
 
+// TODO(jdoak): Remove this.
 // NewStructDescrImpl creates a new StructDescrImpl
 func NewStructDescrImpl(m *mapping.Map) *StructDescrImpl {
+	defer log.Println("\tDONE")
 	descr := &StructDescrImpl{
-		Name: m.Name,
-		Pkg:  m.Pkg,
-		Path: m.Path,
-		m:    m,
+		Name:    m.Name,
+		Pkg:     m.Pkg,
+		Path:    m.Path,
+		Mapping: m,
 	}
 
 	descr.FieldList = make([]interfaces.FieldDescr, len(m.Fields))
 
 	// Load all non-enum fields and locally defined enum definitions.
 	for i, fd := range m.Fields {
+		log.Printf("\tNew: field(%s)", fd.Name)
 		// Only load fields that reference local types, as external fields
 		// have not loaded yet.
-		if fd.FullPath != "" {
+		if fd.Package != m.Pkg {
+			log.Printf("\tNewStructDescrImpl: pkg(%s), struct(%s), skipping field(%s)", m.Pkg, m.Name, fd.Name)
 			continue
 		}
 
 		pkgDescr := runtime.PackageDescr(m.Path)
+		if pkgDescr == nil {
+			panic(fmt.Sprintf("pkg(%s), struct(%s), can't find package descriptor(%s)", m.Pkg, m.Name, m.Path))
+		}
 		if fd.IsEnum {
-			log.Println("Looking for local EnumGroup: ", fd.EnumGroup)
+			log.Println("\tLooking for local EnumGroup: ", fd.EnumGroup)
 			sp := strings.Split(fd.EnumGroup, ".")
 
 			// We only care about locally defined enums.
 			if len(sp) != 1 {
-				continue
+				panic(fmt.Sprintf("\tbug: can't have FullPath == '' and enum name %s", fd.EnumGroup))
 			}
 
 			egName := fd.EnumGroup
 			eg := pkgDescr.Enums().ByName(egName)
 			if eg == nil {
-				panic(fmt.Sprintf("bug: EnumGroup %s could not be found in runtime[%s]", egName, pkgDescr.FullPath()))
+				panic(fmt.Sprintf("\tbug: EnumGroup %s could not be found in runtime[%s]", egName, pkgDescr.FullPath()))
 			}
 			fd := FieldDescrImpl{FD: fd, EG: eg}
 			descr.FieldList[i] = fd
-		} else { // We are a Struct
+		} else {
+			log.Println("\tLooking for local type: ", fd.Name)
 			v := pkgDescr.Structs().ByName(fd.Name)
 			if v == nil {
-				panic(fmt.Sprintf("pkg(%s), struct(%s), field(%s): can't find in external package %s", pkgDescr.PackageName(), m.Name, fd.Name, pkgDescr.PackageName()))
+				panic(fmt.Sprintf("\tpkg(%s), struct(%s), field(%s): can't find in internal package %s", pkgDescr.PackageName(), m.Name, fd.Name, pkgDescr.PackageName()))
 			}
 			descr.FieldList[i] = FieldDescrImpl{
 				FD: fd,
@@ -265,52 +272,43 @@ func NewStructDescrImpl(m *mapping.Map) *StructDescrImpl {
 	return descr
 }
 
+// TODO(jdoak): Remove this.
 // Init initializes the StructDescrImpl's externally defined reflection types.
 // Unfortunately, we need data from other packages and this isn't available until after
 // compile time. We could static this in the repo as static code, but it makes the
 // templates more unwieldy.
 func (s *StructDescrImpl) Init() error {
+	//panic("THIS APPREARS to be running for internal and external references")
 	log.Println("Init() ran for struct: ", s.Name)
-	for i, fd := range s.m.Fields {
+	for i, fd := range s.Mapping.Fields {
 		// Ignore any fields that have already been defined.
 		if s.FieldList[i] != nil {
+			log.Println("skipping field: ", s.FieldList[i].Name())
 			continue
 		}
 		pkgDescr := runtime.PackageDescr(fd.FullPath)
 
 		if fd.IsEnum {
-			log.Println("enumerator FullPath: ", fd.FullPath)
+			log.Println("external enumerator FullPath: ", fd.FullPath)
 			sp := strings.Split(fd.EnumGroup, ".")
 			if len(sp) == 1 {
 				continue
 			}
-			log.Println("Looking for EnumGroup: ", fd.EnumGroup)
+			log.Println("Looking for external EnumGroup: ", fd.EnumGroup)
 
-			pkgName := sp[0]
+			//pkgName := sp[0]
 			egName := sp[1]
-			var np interfaces.PackageDescr
-			for _, imp := range pkgDescr.Imports() {
-				if imp.PackageName() == pkgName {
-					np = imp
-					break
-				}
-			}
-			if np == nil {
-				return fmt.Errorf("bug: pkg %s, struct %s, field %s: could not locate reflect reference for enum", s.m.Path, s.m.Name, fd.Name)
-			}
-			pkgDescr = np
-
 			eg := pkgDescr.Enums().ByName(egName)
 			if eg == nil {
-				return fmt.Errorf("bug: EnumGroup %s could not be found in runtime[%s]", egName, pkgDescr.FullPath())
+				return fmt.Errorf("bug(emumerator): pkg %s, struct %s, field %s: could not locate reflect reference for enum", s.Mapping.Path, s.Mapping.Name, fd.Name)
 			}
+
 			s.FieldList[i] = FieldDescrImpl{FD: fd, EG: eg}
 		} else { // It is a Struct
 			log.Println("field FullPath: ", fd.FullPath)
-			pd := runtime.PackageDescr(fd.FullPath)
-			v := pd.Structs().ByName(fd.Name)
+			v := pkgDescr.Structs().ByName(fd.Name)
 			if v == nil {
-				return fmt.Errorf("pkg(%s), struct(%s), field(%s): can't find in external package %s", pkgDescr.PackageName(), s.Name, fd.Name, pd.PackageName())
+				return fmt.Errorf("bug(Struct): pkg(%s), struct(%s), field(%s): can't find in external package %s", pkgDescr.PackageName(), s.Name, fd.Name, pkgDescr.PackageName())
 			}
 			s.FieldList[i] = FieldDescrImpl{
 				FD: fd,
@@ -323,7 +321,7 @@ func (s *StructDescrImpl) Init() error {
 
 // New creates a new interfaces.Struct based on this StructDescrImpl.
 func (s StructDescrImpl) New() interfaces.Struct {
-	v := structs.New(0, s.m)
+	v := structs.New(0, s.Mapping)
 	return StructImpl{
 		s:     v,
 		descr: s,

@@ -56,9 +56,11 @@ func XXXNewStruct(v *structs.Struct) Struct {
 	return value.XXXNewStruct(v)
 }
 
+/*
 func XXXNewStructDescrsImpl(structs []StructDescr) StructDescrs {
 	return value.StructDescrsImpl{Descrs: structs}
 }
+*/
 
 func XXXNewStructDescrImpl(m *mapping.Map) StructDescr {
 	return value.NewStructDescrImpl(m)

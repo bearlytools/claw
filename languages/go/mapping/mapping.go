@@ -18,6 +18,9 @@ type FieldDescr struct {
 	Type field.Type
 	// FieldNum is the field number in the Struct.
 	FieldNum uint16
+	// StructName is the name of the struct type if Type == FTStruct.
+	// This will be either the name of the Struct in this file or [package].[group].
+	StructName string
 	// IsEnum indicates if the field is an enumerated type. This can only be true
 	// if the Type is FTUint8 or FTUint16
 	IsEnum bool

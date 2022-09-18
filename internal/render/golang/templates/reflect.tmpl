@@ -1,65 +1,120 @@
+{{/*
+dot(.)/pipeline starts as:
+
+type templateData struct {
+	Path   string
+	Config *imports.Config
+	File   *idl.File
+}
+
+*/}}
+{{- $templateData := . }}
 {{- $file := .File }}
+
 {{- if $file.Enums }}
+
+{{/* 
+Statically setup each EnumGroup so they can be added diredtly to XXXEnumGroups
+without having to use an init().
+*/}}
+
+{{- range $file.Enums }}
+var XXXEnumGroup{{ .Name }} = reflect.XXXEnumGroupImpl{
+    GroupName: "{{ .Name }}",
+    GroupLen: {{ .Len }},
+    EnumSize: {{ .Size }},
+    Descrs: []reflect.EnumValueDescr{
+        {{- range .OrderByValues }}
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "{{ .Name }}",
+            EnumNumber: {{ .Value }},
+        },
+        {{- end }}
+    },
+}
+{{- end }} {{/* end Enum range */}} 
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     List:   []reflect.EnumGroup{
         {{- range $file.Enums }}
-        reflect.XXXEnumGroupImpl{
-            GroupName: "{{ .Name }}",
-            GroupLen: {{ .Len }},
-            EnumSize: {{ .Size }},
-            Descrs: []reflect.EnumValueDescr{
-                {{- range .OrderByValues }}
-                reflect.XXXEnumValueDescrImpl{
-                    EnumName: "{{ .Name }}",
-                    EnumNumber: {{ .Value }},
-                },
-                {{- end }}
-            },
-        },
-        {{- end }} {{/* end Enum range */}} 
+        XXXEnumGroup{{ .Name }},
+        {{- end }}
     },
-    Lookup: map[string]reflect.EnumGroup{},
-}
-
-func init() {
-    x := XXXEnumGroups.(reflect.XXXEnumGroupsImpl)
-    for _, g := range x.List {
-        x.Lookup[g.Name()] = g
-    }
+    Lookup: map[string]reflect.EnumGroup{
+        {{- range $file.Enums }}
+        "{{ .Name }}": XXXEnumGroup{{ .Name }},
+        {{- end }}
+    },
 }
 {{- end }} {{/* end Enum if */}} 
+
+{{- range $index, $struct := $file.Structs }}
+var XXXStructDescr{{ .Name }} = &reflect.XXXStructDescrImpl{
+    Name:      "{{  $struct.Name }}",
+    Pkg:       XXXMapping{{  $struct.Name }}.Pkg,
+    Path:      XXXMapping{{  $struct.Name }}.Path,
+    Mapping:   XXXMapping{{ $struct.Name }},
+    FieldList: []reflect.FieldDescr {
+        {{- range $i, $field :=  $struct.Fields }}
+        {{ if $field.IsExternal }}
+        reflect.XXXFieldDescrImpl{
+            FD: XXXMapping{{ $struct.Name }}.Fields[{{ $i}}],
+            {{- if $field.IsEnum }}
+            EG: {{ $field.Package }}.XXXEnumGroup{{ $field.IdentInFile }},
+            {{- else }}
+            {{- if $field.IdentName }}
+            SD: {{ $field.Package }}.XXXStructDescr{{ $field.IdentInFile}},
+            {{- end }}
+            {{- end }}
+        },
+        {{ else }}
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMapping{{ $struct.Name }}.Fields[{{ $i }}],
+            {{- if $field.IsEnum }}
+            EG: XXXEnumGroup{{ $field.IdentName }},
+            {{- else }}
+            {{- with $field.IdentName }}
+            SD: XXXStructDescr{{ . }},
+            {{- end }} {{/* with $field.IdentName */}}
+            {{- end }} {{/* if $field.IsEnum */}}
+        },
+        {{- end}} {{/* if .IsExternal */}}
+        {{- end }} {{/* range $i, $field :=  $struct.Fields */}}
+    },
+}
+{{- end }}
+
+var XXXStructDescrs = map[string]*reflect.XXXStructDescrsImpl{
+    {{- range $file.Structs }}
+    "{{ .Name }}":  XXXStructDescr{{ .Name }},
+    {{- end }}
+}
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     Name: "{{ $file.Package }}",
     Path: "{{ $file.FullPath }}",
-    {{- if .File.Imports.Imports }}
+    {{- if $file.Imports.Imports }}
     ImportDescrs: []reflect.PackageDescr {
-    {{- range $index, $value := .File.Imports.Imports }}
+    {{- range $index, $value := $file.Imports.Imports }}
         {{ $value.Name }}.XXXPackageDescr,
     {{- end }} {{/* end .Imports range */}} 
     },
     {{- end }} {{/* end Imports if */}} 
-    {{- if .File.Enums }}
+    {{- if $file.Enums }}
     EnumGroupsDescrs: XXXEnumGroups,
-    {{- end }} {{/* end Enum if */}} 
-    {{- if .File.Structs }}
-    StructsDescrs: reflect.XXXNewStructDescrsImpl(
-        []reflect.StructDescr {
-        {{- range .File.Structs  }}
-            reflect.XXXNewStructDescrImpl(XXXMapping{{ .Name }}),
-        {{- end }} 
+    {{- end }} {{/* end Enum if */}}
+    {{- $structs := $file.Structs}}
+    {{- if $structs }}
+    StructsDescrs: reflect.XXXStructDescrsImpl{
+        Descrs: []reflect.StructDescr{
+            {{- range $structs }}
+            XXXStructDescr{{ .Name }},
+            {{- end }}
         },
-    ),
-    {{- end }} {{/* end Structs if */}} 
-}
-
-// Initializes all of the package's externally defined field defs.
-func init() {
-    if err := XXXPackageDescr.XXXInit(); err != nil {
-        panic(err)
-    }
+    },
+    {{- end }} {{/* if $file.Identifers */}} 
 }
 
 // PackageDescr returns a PackageDescr for this package.
@@ -67,6 +122,37 @@ func PackageDescr() reflect.PackageDescr {
     return XXXPackageDescr
 }
 
+// Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+}
+
+var haveInit sync.Once
+
+// XXXInit initializes reflect descriptors that depend on external references after those
+// references have been loaded.
+func XXXInit() {
+    haveInit.Do(
+        func() {
+            {{- range $file.PkgImports }}
+                {
+                    pDescr := runtime.PackageDescr("{{.}}")
+                    if pDescr == nil {
+                        panic("empty package descriptor for {{.}}")
+                    }
+                    if err := pDescr.XXXInit(); err != nil {
+                        panic(err)
+                    }
+                }
+            {{- end }}
+            if err := XXXPackageDescr.XXXInit(); err != nil {
+                panic(err)
+            }
+        },
+    )
+}
+
+// This init should always be the last init() in the file.
+func init() {
+    XXXInit()
 }
