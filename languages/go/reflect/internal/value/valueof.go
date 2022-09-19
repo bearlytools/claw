@@ -143,6 +143,9 @@ func ValueOfList(v interfaces.List) Value {
 
 // ValueOfStruct returns a Value that represents a Struct.
 func ValueOfStruct(v interfaces.Struct) Value {
+	if v == nil {
+		panic("v cannot be nil")
+	}
 	return Value{
 		aStruct: v,
 	}

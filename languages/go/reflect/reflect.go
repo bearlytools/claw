@@ -1,11 +1,9 @@
 package reflect
 
 import (
-	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/reflect/enums"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
-	"github.com/bearlytools/claw/languages/go/structs"
 )
 
 // ClawStruct indicates that the type represents a Claw Struct.
@@ -53,16 +51,18 @@ type XXXStructDescrsImpl = value.StructDescrsImpl
 type XXXStructDescrImpl = value.StructDescrImpl
 type XXXFieldDescrImpl = value.FieldDescrImpl
 
+/*
 func XXXNewStruct(v *structs.Struct) Struct {
 	return value.XXXNewStruct(v)
 }
+*/
 
 /*
 func XXXNewStructDescrsImpl(structs []StructDescr) StructDescrs {
 	return value.StructDescrsImpl{Descrs: structs}
 }
-*/
 
 func XXXNewStructDescrImpl(m *mapping.Map) StructDescr {
 	return value.NewStructDescrImpl(m)
 }
+*/

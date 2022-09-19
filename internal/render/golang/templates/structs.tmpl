@@ -1,5 +1,5 @@
 {{- range $structsIndex, $struct := .File.Structs }}
-{{ $struct.Render }}
+{{ $struct.Render }} {{/* The Struct object in the IDL renders its own template */}}
 
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.

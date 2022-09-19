@@ -926,6 +926,10 @@ func DeleteListBytes(s *Struct, fieldNum uint16) error {
 	return nil
 }
 
+type structer interface {
+	Struct() *Struct
+}
+
 // SetField sets the field value at fieldNum to value. If value isn't valid for that field,
 // this will panic.
 func SetField(s *Struct, fieldNum uint16, value any) {
@@ -992,8 +996,14 @@ func SetField(s *Struct, fieldNum uint16, value any) {
 		v := value.(string)
 		MustSetBytes(s, fieldNum, conversions.UnsafeGetBytes(v), true)
 	case field.FTStruct:
-		v := value.(*Struct)
-		MustSetStruct(s, fieldNum, v)
+		switch v := value.(type) {
+		case structer:
+			MustSetStruct(s, fieldNum, v.Struct())
+		case *Struct:
+			MustSetStruct(s, fieldNum, v)
+		default:
+			panic(fmt.Sprintf("tried to set a struct field with type %T", value))
+		}
 	case field.FTListBools:
 		v := value.(*Bools)
 		MustSetListBool(s, fieldNum, v)

@@ -46,6 +46,9 @@ type enumGroupWant struct {
 }
 
 func (f fieldWant) Compare(got interfaces.FieldDescr) string {
+	if got == nil {
+		panic("can't Compare(nil)")
+	}
 	b := strings.Builder{}
 
 	if f.Name != got.Name() {
@@ -110,7 +113,7 @@ func TestGetStructDecr(t *testing.T) {
 	car := cars.NewCar()
 	car.SetYear(2010)
 	car.SetManufacturer(manufacturers.Toyota)
-	car.SetModel(cars.Vienza)
+	car.SetModel(cars.Venza)
 
 	v := vehicles.NewVehicle()
 	v.SetType(vehicles.Car)
@@ -126,8 +129,6 @@ func TestGetStructDecr(t *testing.T) {
 	carValue.Set(carDescr.FieldDescrByName("Year"), reflect.ValueOfNumber[uint16](2010))
 
 	enumNumber := mfgPkgDescr.Enums().ByName("Manufacturer").ByValue(1).Number()
-	log.Println("here: ", carDescr.FieldDescrByName("Manufacturer"))
-	log.Printf("%#+v", reflect.ValueOfEnum(uint8(enumNumber), mfgPkgDescr.Enums().ByName("Manufacturer")))
 	carValue.Set(
 		carDescr.FieldDescrByName("Manufacturer"),
 		reflect.ValueOfEnum(uint8(enumNumber), mfgPkgDescr.Enums().ByName("Manufacturer")),
@@ -138,18 +139,16 @@ func TestGetStructDecr(t *testing.T) {
 		carDescr.FieldDescrByName("Model"),
 		reflect.ValueOfEnum(uint8(enumNumber), carsPkgDescr.Enums().ByName("Model")),
 	)
-	/*
-		reflect.ValueOfEnum[uint8](
-				uint8(carsPkgDescr.Enums().ByName("Model").ByName("Venza").Number()),
-				carsPkgDescr.Enums().ByName("Model"),
-			),
-	*/
+
 	vehicleValue := vehicleDescr.New()
+
 	vehicleValue.Set(vehicleDescr.FieldDescrByName("Car"), reflect.ValueOfStruct(carValue))
 
+	log.Printf("yes: %#+v", vehicleValue.Get(vehicleDescr.FieldDescrByName("Car")))
 	for x, cs := range []interfaces.Struct{v.ClawStruct(), vehicleValue} {
 		csDescr := cs.Descriptor()
 		for i, f := range csDescr.Fields() {
+			log.Printf("comparing vehiclesWant[%d]", i)
 			if diff := vehiclesWant[i].Compare(f); diff != "" {
 				if x == 0 {
 					t.Errorf("TestGetStructDecr(normalSetup): fieldDescriptors -want/+got:\n%s", diff)

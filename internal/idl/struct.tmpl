@@ -401,7 +401,8 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 
 // ClawStruct returns a reflection type representing the Struct.
 func (x {{ $struct.Name }}) ClawStruct() reflect.Struct{
-   return reflect.XXXNewStruct(x.s)
+    descr := XXXStructDescr{{ $struct.Name }}
+    return reflect.XXXNewStruct(x.s, descr)
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,

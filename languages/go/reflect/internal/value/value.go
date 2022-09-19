@@ -154,6 +154,10 @@ func (v Value) Any() any {
 		return v.Enum()
 	}
 
+	if v.aStruct != nil {
+		return v.aStruct
+	}
+
 	switch v.h.FieldType() {
 	case field.FTBool:
 		return v.Bool()
@@ -181,8 +185,6 @@ func (v Value) Any() any {
 		return v.String()
 	case field.FTBytes:
 		return v.Bytes()
-	case field.FTStruct:
-		return v.aStruct
 	case field.FTListBools:
 		return boolSliceFromValue(v)
 	case field.FTListInt8:
@@ -410,7 +412,6 @@ func getNumber[N interfaces.Number](v Value, isFloat bool) (N, error) {
 
 // XXXNewStruct wraps our internal *structs.Struct objects in the reflect.Struct type.
 // This is used in our generated code to implement the ClawStruct() method.
-func XXXNewStruct(v *structs.Struct) interfaces.Struct {
-	descr := NewStructDescrImpl(v.Map())
+func XXXNewStruct(v *structs.Struct, descr interfaces.StructDescr) interfaces.Struct {
 	return StructImpl{s: v, descr: descr}
 }

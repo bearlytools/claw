@@ -207,6 +207,7 @@ type StructDescrImpl struct {
 	Mapping *mapping.Map
 }
 
+/*
 // TODO(jdoak): Remove this.
 // NewStructDescrImpl creates a new StructDescrImpl
 func NewStructDescrImpl(m *mapping.Map) *StructDescrImpl {
@@ -311,6 +312,7 @@ func (s *StructDescrImpl) Init() error {
 	}
 	return nil
 }
+*/
 
 // New creates a new interfaces.Struct based on this StructDescrImpl.
 func (s StructDescrImpl) New() interfaces.Struct {
@@ -801,6 +803,11 @@ func (s StructImpl) NewField(descr interfaces.FieldDescr) interfaces.Value {
 	default:
 		panic(fmt.Sprintf("bug: unsupported type %s", descr.Type()))
 	}
+}
+
+// Struct extracts the *structs.Struct that holds all the data (not a reflect.Struct).
+func (s StructImpl) Struct() *structs.Struct {
+	return s.s
 }
 
 // RealStruct extracts the *structs.Struct that holds all the data (not a reflect.Struct).

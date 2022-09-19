@@ -11,8 +11,8 @@ import (
     "github.com/bearlytools/claw/languages/go/structs"
     "github.com/bearlytools/claw/languages/go/field"
     
-    "github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/test_claw_imports/cars/claw"
+    "github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
@@ -193,14 +193,17 @@ var XXXEnumGroupType = reflect.XXXEnumGroupImpl{
         reflect.XXXEnumValueDescrImpl{
             EnumName: "Unknown",
             EnumNumber: 0,
+            EnumSize: 8,
         },
         reflect.XXXEnumValueDescrImpl{
             EnumName: "Car",
             EnumNumber: 1,
+            EnumSize: 8,
         },
         reflect.XXXEnumValueDescrImpl{
             EnumName: "Truck",
             EnumNumber: 2,
+            EnumSize: 8,
         },
     },
 }
