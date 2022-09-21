@@ -9,8 +9,8 @@ import (
 
 // ClawStruct indicates that the type represents a Claw Struct.
 type ClawStruct interface {
-	// ClawReflect returns the reflect.Struct for a Claw Struct.
-	ClawReflect() Struct
+	// ClawStruct returns the reflect.Struct for a Claw Struct.
+	ClawStruct() Struct
 }
 
 // PackageDescr is used to describe a claw package and its contents.
@@ -44,25 +44,20 @@ type EnumGroups = interfaces.EnumGroups
 // lists of bytes/string or list of structs.
 type List = interfaces.List
 
-type XXXPackageDescrImpl = value.PackageDescrImpl
-type XXXEnumGroupsImpl = enums.EnumGroupsImpl
-type XXXEnumGroupImpl = enums.EnumGroupImpl
-type XXXEnumValueDescrImpl = enums.EnumImpl
-type XXXStructDescrsImpl = value.StructDescrsImpl
-type XXXStructDescrImpl = value.StructDescrImpl
-type XXXFieldDescrImpl = value.FieldDescrImpl
+// The following types expose internal types for in generated claw files. Like all
+// XXX* types, these are for internal use only.
+type (
+	XXXPackageDescrImpl   = value.PackageDescrImpl
+	XXXEnumGroupsImpl     = enums.EnumGroupsImpl
+	XXXEnumGroupImpl      = enums.EnumGroupImpl
+	XXXEnumValueDescrImpl = enums.EnumImpl
+	XXXStructDescrsImpl   = value.StructDescrsImpl
+	XXXStructDescrImpl    = value.StructDescrImpl
+	XXXFieldDescrImpl     = value.FieldDescrImpl
+)
 
+// XXXNewStruct creates a new reflect.Struct from an internal Struct representation and
+// a StructDescr. Like all XXX* methods, this is for internal use only.
 func XXXNewStruct(v *structs.Struct, descr interfaces.StructDescr) Struct {
 	return value.XXXNewStruct(v, descr)
 }
-
-// TODO(jdoak): Remove
-/*
-func XXXNewStructDescrsImpl(structs []StructDescr) StructDescrs {
-	return value.StructDescrsImpl{Descrs: structs}
-}
-
-func XXXNewStructDescrImpl(m *mapping.Map) StructDescr {
-	return value.NewStructDescrImpl(m)
-}
-*/

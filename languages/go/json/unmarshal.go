@@ -40,7 +40,7 @@ func newDecoder(r io.Reader) *decoder {
 
 // decode is used to decode data in dec into v. It is the entry point for using a decoder.
 func (d *decoder) decode(dec *json.Decoder, v reflect.ClawStruct) error {
-	clawStruct := v.ClawReflect()
+	clawStruct := v.ClawStruct()
 	if d.fields == nil {
 		d.prep(clawStruct)
 	}
@@ -106,7 +106,8 @@ func (d *decoder) decodeStruct(m map[string]any, r reflect.Struct) error {
 				if err != nil {
 					return err
 				}
-				r.Set(fd, reflect.ValueOfEnum(uint8(i)))
+
+				r.Set(fd, reflect.ValueOfEnum(uint8(i), fd.EnumGroup()))
 			}
 			if err := setNumber[uint32](fd, val, r); err != nil {
 				return fmt.Errorf("received field %q in Struct %q, %w", key, d.descr.StructName(), err)
@@ -117,7 +118,7 @@ func (d *decoder) decodeStruct(m map[string]any, r reflect.Struct) error {
 				if err != nil {
 					return err
 				}
-				r.Set(fd, reflect.ValueOfEnum(uint16(i)))
+				r.Set(fd, reflect.ValueOfEnum(uint16(i), fd.EnumGroup()))
 			}
 			if err := setNumber[uint16](fd, val, r); err != nil {
 				return fmt.Errorf("received field %q in Struct %q, %w", key, d.descr.StructName(), err)
@@ -258,7 +259,7 @@ func (d *decoder) decodeStruct(m map[string]any, r reflect.Struct) error {
 func setNumber[N number](fd reflect.FieldDescr, val any, r reflect.Struct) error {
 	n, ok := val.(json.Number)
 	if !ok {
-		return fmt.Errorf("not an int8", val)
+		return fmt.Errorf("not a number, was %T", val)
 	}
 	var t N
 	switch any(t).(type) {

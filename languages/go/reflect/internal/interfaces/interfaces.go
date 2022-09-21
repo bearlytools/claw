@@ -135,7 +135,8 @@ type Struct interface {
 	// calling f for each field descriptor and value encountered.
 	// Range returns immediately if f returns false.
 	// While iterating, mutating operations may only be performed
-	// on the current field descriptor.
+	// on the current field descriptor. If the Value is nil, that means the
+	// field's value was not set.
 	Range(f func(FieldDescr, Value) bool)
 
 	// Has reports whether a field is populated. This always works for list type fields

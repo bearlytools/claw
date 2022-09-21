@@ -1,7 +1,7 @@
 package json
 
 import (
-	"bytes"
+	"bufio"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -15,8 +15,8 @@ import (
 // Array is used to write out an array of JSON objects.
 type Array struct {
 	options Options
-	w       io.Writer
-	total   int
+	w       *bufio.Writer
+	entries int
 }
 
 // NewArray creates a new Array writer that writes to w. You can reuse the Array instead
@@ -31,30 +31,24 @@ func NewArray(options Options, w io.Writer) (*Array, error) {
 
 // Reset resets the Array with a new io.Writer.
 func (a *Array) Reset(w io.Writer) error {
-	a.w = w
-	n, err := w.Write([]byte(`{`))
-	if err != nil {
-		return err
-	}
-	a.total = n
+	a.w = bufio.NewWriter(w)
 	return nil
 }
 
 // Write writes the Struct to the io.Writer.
 func (a *Array) Write(v reflect.ClawStruct) error {
-	n, err := a.options.Write(a.w, v)
+	err := a.options.write(a.w, v, a.entries)
 	if err != nil {
 		return err
 	}
-	a.total += n
+	a.entries++
 	return nil
 }
 
 // Close closes the Array for writing and writes out the closing }.
-func (a *Array) Close() (n int, err error) {
-	n, err = a.w.Write([]byte(`}`))
-	a.total += n
-	return a.total, err
+func (a *Array) Close() error {
+	a.w.Write([]byte(`]`))
+	return a.w.Flush()
 }
 
 // Options provides options for writing Claw output to JSON.
@@ -63,145 +57,167 @@ type Options struct {
 	UseEnumNumbers bool
 }
 
-func (o *Options) Write(w io.Writer, v reflect.ClawStruct) (n int, err error) {
-	return o.writeStruct(v.ClawReflect(), w)
+func (o *Options) write(w *bufio.Writer, v reflect.ClawStruct, entry int) error {
+	if entry == 0 {
+		w.Write([]byte(`[`))
+	} else {
+		w.WriteRune(',')
+	}
+	if err := o.writeStruct(w, v.ClawStruct()); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (o Options) writeStruct(r reflect.Struct, w io.Writer) (n int, err error) {
-	buff := &bytes.Buffer{}
+func (o Options) writeStruct(w *bufio.Writer, r reflect.Struct) error {
 	i := -1
-	buff.WriteRune('{')
+	w.WriteRune('{')
 
+	var err error
 	r.Range(
 		func(fd reflect.FieldDescr, v reflect.Value) bool {
+			if v == nil { // Value wasn't set.
+				return true
+			}
+
 			i++
 			if i != 0 {
-				buff.WriteRune(',')
+				w.WriteRune(',')
 			}
-			writeFieldName(fd, buff)
+			writeFieldName(fd, w)
 
 			switch fd.Type() {
 			case field.FTBool:
-				writeBool(v.Bool(), buff)
+				writeBool(v.Bool(), w)
 			case field.FTInt8, field.FTInt16, field.FTInt32, field.FTInt64:
-				writeInt(buff, v.Int())
+				writeInt(w, v.Int())
 			case field.FTUint8, field.FTUint16:
-				if fd.IsEnum() {
-					if o.UseEnumNumbers {
-						writeUint(buff, v.Uint())
-					} else {
-						writeString(buff, v.Enum().Descriptor().Name())
-					}
+				if fd.IsEnum() && o.UseEnumNumbers {
+					writeString(w, v.Enum().Name())
 				} else {
-					writeUint(buff, v.Uint())
+					writeUint(w, v.Uint())
 				}
 			case field.FTUint32, field.FTUint64:
-				writeUint(buff, v.Uint())
+				writeUint(w, v.Uint())
 			case field.FTFloat32:
-				writeFloat(buff, 32, v.Float())
+				writeFloat(w, 32, v.Float())
 			case field.FTFloat64:
-				writeFloat(buff, 64, v.Float())
+				writeFloat(w, 64, v.Float())
 			case field.FTBytes:
-				writeBytes(buff, v.Bytes())
+				writeBytes(w, v.Bytes())
 			case field.FTString:
-				writeString(buff, v.String())
+				writeString(w, v.String())
 			case field.FTStruct:
-				_, err = o.writeStruct(v.Struct(), w)
+				err = o.writeStruct(w, v.Struct())
 				if err != nil {
 					return false
 				}
 			case field.FTListBools:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					writeBool(v.Bool(), buff)
+					writeBool(v.Bool(), w)
 				}
-				buff.WriteRune(']')
+				w.WriteRune(']')
 			case field.FTListInt8, field.FTListInt16, field.FTListInt32, field.FTListInt64:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					writeInt(buff, v.Int())
+					writeInt(w, v.Int())
 
 				}
-				buff.WriteRune(']')
-			case field.FTListUint8, field.FTListUint16, field.FTListUint32, field.FTListUint64:
+				w.WriteRune(']')
+			case field.FTListUint8, field.FTListUint16:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					writeUint(buff, v.Uint())
-
+					if fd.IsEnum() && o.UseEnumNumbers {
+						writeUint(w, v.Uint())
+					} else {
+						writeString(w, v.Enum().Name())
+					}
 				}
-				buff.WriteRune(']')
+				w.WriteRune(']')
+			case field.FTListUint32, field.FTListUint64:
+				l := v.List()
+				w.WriteRune('[')
+				for i := 0; i < l.Len(); i++ {
+					if i < 0 {
+						w.WriteRune(',')
+					}
+					v := l.Get(i)
+					writeUint(w, v.Uint())
+				}
+				w.WriteRune(']')
 			case field.FTListFloat32:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					writeFloat(buff, 32, v.Float())
+					writeFloat(w, 32, v.Float())
 				}
-				buff.WriteRune(']')
+				w.WriteRune(']')
 			case field.FTListFloat64:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					writeFloat(buff, 32, v.Float())
+					writeFloat(w, 32, v.Float())
 				}
-				buff.WriteRune(']')
+				w.WriteRune(']')
 			case field.FTListBytes:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					writeBytes(buff, v.Bytes())
+					writeBytes(w, v.Bytes())
 				}
-				buff.WriteRune(']')
+				w.WriteRune(']')
 			case field.FTListStrings:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					writeString(buff, v.String())
+					writeString(w, v.String())
 				}
-				buff.WriteRune(']')
+				w.WriteRune(']')
 			case field.FTListStructs:
 				l := v.List()
-				buff.WriteRune('[')
+				w.WriteRune('[')
 				for i := 0; i < l.Len(); i++ {
 					if i < 0 {
-						buff.WriteRune(',')
+						w.WriteRune(',')
 					}
 					v := l.Get(i)
-					if _, err = o.writeStruct(v.Struct(), w); err != nil {
+					if err = o.writeStruct(w, v.Struct()); err != nil {
 						return false
 					}
 				}
-				buff.WriteRune(']')
+				w.WriteRune(']')
 			default:
 				err = fmt.Errorf("problem: encountered unsupported field type: %s", fd.Type())
 				return false
@@ -210,48 +226,47 @@ func (o Options) writeStruct(r reflect.Struct, w io.Writer) (n int, err error) {
 		},
 	)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	buff.WriteRune('}')
-	_, err = w.Write(buff.Bytes())
-	return buff.Len(), err
+	w.WriteRune('}')
+	return w.Flush()
 }
 
-func writeFieldName(fd reflect.FieldDescr, buff *bytes.Buffer) {
-	buff.WriteRune('"')
-	buff.WriteString(fd.Name())
-	buff.WriteString(`":`)
+func writeFieldName(fd reflect.FieldDescr, w *bufio.Writer) {
+	w.WriteRune('"')
+	w.WriteString(fd.Name())
+	w.WriteString(`":`)
 }
 
-func writeBool(b bool, buff *bytes.Buffer) {
+func writeBool(b bool, w *bufio.Writer) {
 	if b {
-		buff.WriteString("true")
+		w.WriteString("true")
 		return
 	}
-	buff.WriteString("false")
+	w.WriteString("false")
 }
 
-func writeInt(buff *bytes.Buffer, n int64) {
-	buff.WriteString(strconv.FormatInt(n, 10))
+func writeInt(w *bufio.Writer, n int64) {
+	w.WriteString(strconv.FormatInt(n, 10))
 }
 
-func writeUint(buff *bytes.Buffer, n uint64) {
-	buff.WriteString(strconv.FormatUint(n, 10))
+func writeUint(w *bufio.Writer, n uint64) {
+	w.WriteString(strconv.FormatUint(n, 10))
 }
 
 // writeFloat writes the floating point value to buff in string format.
 // This code is borrowed from protojson, which borrowed it from encoding/json.
-func writeFloat(buff *bytes.Buffer, bitSize uint8, n float64) {
+func writeFloat(w *bufio.Writer, bitSize uint8, n float64) {
 	switch {
 	case math.IsNaN(n):
-		buff.WriteString(`"NaN"`)
+		w.WriteString(`"NaN"`)
 		return
 	case math.IsInf(n, +1):
-		buff.WriteString(`"Infinity"`)
+		w.WriteString(`"Infinity"`)
 		return
 	case math.IsInf(n, -1):
-		buff.WriteString(`"-Infinity"`)
+		w.WriteString(`"-Infinity"`)
 		return
 	}
 
@@ -272,14 +287,14 @@ func writeFloat(buff *bytes.Buffer, bitSize uint8, n float64) {
 			out = out[:n-1]
 		}
 	}
-	buff.Write(out)
+	w.Write(out)
 }
 
-func writeBytes(buff *bytes.Buffer, b []byte) {
+func writeBytes(w *bufio.Writer, b []byte) {
 	encoded := base64.StdEncoding.EncodeToString(b)
-	buff.WriteString(`"` + encoded + `"`)
+	w.WriteString(`"` + encoded + `"`)
 }
 
-func writeString(buff *bytes.Buffer, s string) {
-	buff.WriteString(`"` + s + `"`)
+func writeString(w *bufio.Writer, s string) {
+	w.WriteString(`"` + s + `"`)
 }

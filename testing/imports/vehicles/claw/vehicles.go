@@ -126,7 +126,8 @@ func (x Vehicle) AppendTruck(values ...trucks.Truck) {
 
 // ClawStruct returns a reflection type representing the Struct.
 func (x Vehicle) ClawStruct() reflect.Struct{
-   return reflect.XXXNewStruct(x.s)
+    descr := XXXStructDescrVehicle
+    return reflect.XXXNewStruct(x.s, descr)
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
@@ -135,7 +136,7 @@ func (x Vehicle) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Vehicle) XXXGetStruct() *structs.Struct {
     return x.s
-}
+} 
 
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.
