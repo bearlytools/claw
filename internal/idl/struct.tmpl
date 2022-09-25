@@ -39,8 +39,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() bool {
     return structs.MustGetBool(x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value bool) {
-    return structs.MustSetBool(x.s, {{ $field.Index }}, value)
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value bool) {{ $struct.Name }} {
+    structs.MustSetBool(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -55,8 +56,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() int8 {
     return structs.MustGetNumber[int8](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int8) {
-    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int8) {{ $struct.Name }} {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -71,8 +73,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() int16 {
     return structs.MustGetNumber[int16](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int16) {
-    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int16) {{ $struct.Name }} {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -87,8 +90,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() int32 {
     return structs.MustGetNumber[int32](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int32) {
-    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int32) {{ $struct.Name }} {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -103,8 +107,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() int64 {
     return structs.MustGetNumber[int64](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int64) {
-    return structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int64) {{ $struct.Name }} {
+    structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -120,8 +125,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
     return {{ $field.IdentName }}(structs.MustGetNumber[uint8](x.s, {{ $field.Index }}))
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, uint8(value))
+    return x
 }
 {{- else }}
 
@@ -129,8 +135,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() uint8 {
     return structs.MustGetNumber[uint8](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint8) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint8) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 {{- end }}
 
@@ -149,6 +156,7 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
 
 func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
     structs.MustSetNumber(x.s, {{ $field.Index }}, uint16(value))
+    return x
 }
 {{- else }}
 
@@ -156,8 +164,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() uint16 {
     return structs.MustGetNumber[uint16](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint16) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint16) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 {{- end }}
 
@@ -172,8 +181,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() uint32 {
     return structs.MustGetNumber[uint32](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint32) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint32) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -188,8 +198,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() uint64 {
     return structs.MustGetNumber[uint64](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint64) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint64) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -203,8 +214,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() float32 {
     return structs.MustGetNumber[float32](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float32) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float32) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -219,8 +231,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() float64 {
     return structs.MustGetNumber[float64](x.s, {{ $field.Index }})
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float64) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float64) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, value)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -236,9 +249,10 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() string {
     return conversions.ByteSlice2String(*ptr)
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value string) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value string) {{ $struct.Name }} {
     b := conversions.UnsafeGetBytes(value)
     structs.MustSetBytes(x.s, {{ $field.Index }}, b, true)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -261,8 +275,9 @@ func (x {{ $struct.Name }}) SafeGet{{ $field.Name }}() []byte {
     return b
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value []byte) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value []byte) {{ $struct.Name }} {
     structs.MustSetBytes(x.s, {{ $field.Index }}, value, false)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -282,8 +297,9 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
     {{- end }}
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {{ $struct.Name }} {
     structs.MustSetStruct(x.s, {{ $field.Index }}, value.XXXGetStruct())
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -295,11 +311,12 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- else if eq $field.TypeAsString "ListBools" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() list.Bools {
-    return list.XXXFromBools(MustGetListBool(x.s, {{ $field.Index }}))
+    return list.XXXFromBools(structs.MustGetListBool(x.s, {{ $field.Index }}))
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Bools) {
-    MustSetListBool(x.s, {{ $field.Index }}, value.XXXBools())
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Bools) {{ $struct.Name }} {
+    structs.MustSetListBool(x.s, {{ $field.Index }}, value.XXXBools())
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -310,15 +327,29 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 
 {{- else if eq $field.TypeAsString "ListUint8" "ListUint16" "ListUint32" "ListUint64" "ListInt8" "ListInt16" "ListInt32" "ListInt64" "ListFloat32" "ListFloat64"}}
 
-func (x {{ $struct.Name }}) {{ $field.Name }}() lists.Numbers[.GoListType] {
-    n := MustGetListNumber[.GoListType](x.s, {{ $field.Index }})
+{{- if $field.IdentName }} {{/* It is a Enum */}}
+func (x {{ $struct.Name }}) {{ $field.Name }}() list.Enums[{{ $field.GoListType }}] {
+    n := structs.MustGetListNumber[{{ .GoListType }}](x.s, {{ $field.Index }})
+    return list.XXXEnumsFromNumbers(n) 
+}
+
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Enums[{{ $field.GoListType }}]) {{ $struct.Name }} {
+    n := value.XXXNumbers()
+    structs.MustSetListNumber(x.s, {{ $field.Index }}, n)
+    return x
+}
+{{- else }}
+func (x {{ $struct.Name }}) {{ $field.Name }}() list.Numbers[{{ $field.GoListType }}] {
+    n := structs.MustGetListNumber[{{ .GoListType }}](x.s, {{ $field.Index }})
     return list.XXXFromNumbers(n) 
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value lists.Numbers[.GoListType]) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Numbers[{{ $field.GoListType }}]) {{ $struct.Name }} {
     n := value.XXXNumbers()
-    MustSetListNumber(x.s, {{ $field.Index }}, n)
+    structs.MustSetListNumber(x.s, {{ $field.Index }}, n)
+    return x
 }
+{{- end }}
 
 {{- if eq $zeroValueCompression false }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
@@ -329,13 +360,14 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- else if eq $field.TypeAsString "ListBytes" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.Bytes {
-    b := MustGetListBytes(x.s, {{ $field.Index }})
+    b := structs.MustGetListBytes(x.s, {{ $field.Index }})
     return list.XXXFromBytes(b) 
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.Bytes) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.Bytes) {{ $struct.Name }} {
     b := value.XXXBytes()
-    MustSetListBytes(x.s, {{ $field.Index }}, b)
+    structs.MustSetListBytes(x.s, {{ $field.Index }}, b)
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}
@@ -347,12 +379,13 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- else if eq $field.TypeAsString "ListStrings" }}
 
 func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.String {
-    b := MustGetListBytes(x.s, {{ $field.Index }})
+    b := structs.MustGetListBytes(x.s, {{ $field.Index }})
     return &lists.XXXFromStrings(b)
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.String) {
-    MustSetListBytes(x.s, {{ $field.Index }}, value.XXXBytes())
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.String) {{ $struct.Name }} {
+    structs.MustSetListBytes(x.s, {{ $field.Index }}, value.XXXBytes())
+    return x
 }
 
 {{- if eq $zeroValueCompression false }}

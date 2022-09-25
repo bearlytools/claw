@@ -676,12 +676,12 @@ func (b *Bytes) Range(ctx context.Context, from, to int) chan []byte {
 }
 
 // Set a number in position "index" to "value".
-func (b *Bytes) Set(index int, value []byte) error {
+func (b *Bytes) Set(index int, value []byte) {
 	if index >= b.Len() {
 		panic(fmt.Sprintf("slice out of bounds: index %d in slice of size %d", index, b.Len()))
 	}
 	if len(value) > math.MaxUint32 {
-		return fmt.Errorf("cannot set a value > %dKiB", math.MaxUint32/1024)
+		panic(fmt.Sprintf("cannot set a value > %dKiB", math.MaxUint32/1024))
 	}
 	// Record the current size of this value and end padding.  Get new value size and new
 	// padding needed. Calculate our new data size.
@@ -694,7 +694,6 @@ func (b *Bytes) Set(index int, value []byte) error {
 	atomic.StoreInt64(&b.padding, PaddingNeeded(b.dataSize))
 
 	b.set(index, value)
-	return nil
 }
 
 func (b *Bytes) set(index int, value []byte) {
@@ -705,10 +704,10 @@ func (b *Bytes) set(index int, value []byte) {
 }
 
 // Append appends values to the list of []byte.
-func (b *Bytes) Append(values ...[]byte) error {
+func (b *Bytes) Append(values ...[]byte) {
 	for _, v := range values {
 		if len(v) > math.MaxUint32 {
-			return fmt.Errorf("cannot set a value > %dKiB", math.MaxUint32/1024)
+			panic(fmt.Sprintf("cannot set a value > %dKiB", math.MaxUint32/1024))
 		}
 	}
 
@@ -739,7 +738,6 @@ func (b *Bytes) Append(values ...[]byte) error {
 		log.Println("adding new append data size: ", b.dataSize+b.padding)
 		XXXAddToTotal(b.s, b.dataSize+b.padding) // data size + entry header size
 	}
-	return nil
 }
 
 // Slice converts this into a standard [][]byte. The values aren't linked, so changing
@@ -834,17 +832,17 @@ func (s Strings) Range(ctx context.Context, from, to int) chan string {
 }
 
 // Set a number in position "index" to "value".
-func (s Strings) Set(index int, value string) error {
-	return s.l.Set(index, conversions.UnsafeGetBytes(value))
+func (s Strings) Set(index int, value string) {
+	s.l.Set(index, conversions.UnsafeGetBytes(value))
 }
 
 // Append appends values to the list of []byte.
-func (s Strings) Append(values ...string) error {
+func (s Strings) Append(values ...string) {
 	x := make([][]byte, len(values))
 	for i, v := range values {
 		x[i] = conversions.UnsafeGetBytes(v)
 	}
-	return s.l.Append(x...)
+	s.l.Append(x...)
 }
 
 // Slice converts this into a standard []string. The values aren't linked, so changing

@@ -3,6 +3,9 @@
 // promise and should not be used.
 package list
 
+// Note: This wraps values in the structs package that is not for direct use by a user.
+// This only deals with lists of scalar values, not []Struct.
+
 import (
 	"context"
 
@@ -54,13 +57,15 @@ func (b Bools) Range(ctx context.Context, from, to int) chan bool {
 }
 
 // Set a boolean in position "pos" to "val".
-func (b Bools) Set(index int, val bool) {
+func (b Bools) Set(index int, val bool) Bools {
 	b.b.Set(index, val)
+	return b
 }
 
 // Append appends values to the list of bools.
-func (b Bools) Append(i ...bool) {
+func (b Bools) Append(i ...bool) Bools {
 	b.b.Append(i...)
+	return b
 }
 
 // Slice converts this into a standard []bool. The values aren't linked, so changing
@@ -108,13 +113,15 @@ func (n Numbers[N]) Range(ctx context.Context, from, to int) chan N {
 }
 
 // Set a number in position "index" to "value".
-func (n Numbers[N]) Set(index int, value N) {
+func (n Numbers[N]) Set(index int, value N) Numbers[N] {
 	n.n.Set(index, value)
+	return n
 }
 
 // Append appends values to the list of numbers.
-func (n Numbers[N]) Append(i ...N) {
+func (n Numbers[N]) Append(i ...N) Numbers[N] {
 	n.n.Append(i...)
+	return n
 }
 
 // Slice converts this into a standard []I, where I is a number value. The values aren't linked, so changing
@@ -167,13 +174,15 @@ func (b *Bytes) Range(ctx context.Context, from, to int) chan []byte {
 }
 
 // Set a number in position "index" to "value".
-func (b *Bytes) Set(index int, value []byte) error {
-	return b.b.Set(index, value)
+func (b *Bytes) Set(index int, value []byte) *Bytes {
+	b.b.Set(index, value)
+	return b
 }
 
 // Append appends values to the list of []byte.
-func (b *Bytes) Append(values ...[]byte) error {
-	return b.b.Append()
+func (b *Bytes) Append(values ...[]byte) *Bytes {
+	b.b.Append()
+	return b
 }
 
 // Slice converts this into a standard [][]byte. The values aren't linked, so changing
@@ -242,17 +251,19 @@ func (s Strings) Range(ctx context.Context, from, to int) chan string {
 }
 
 // Set a number in position "index" to "value".
-func (s Strings) Set(index int, value string) error {
-	return s.b.Set(index, conversions.UnsafeGetBytes(value))
+func (s Strings) Set(index int, value string) Strings {
+	s.b.Set(index, conversions.UnsafeGetBytes(value))
+	return s
 }
 
 // Append appends values to the list of []byte.
-func (s Strings) Append(values ...string) error {
+func (s Strings) Append(values ...string) Strings {
 	x := make([][]byte, len(values))
 	for i, v := range values {
 		x[i] = conversions.UnsafeGetBytes(v)
 	}
-	return s.b.Append(x...)
+	s.b.Append(x...)
+	return s
 }
 
 // Slice converts this into a standard []string. The values aren't linked, so changing
@@ -270,4 +281,66 @@ func (s Strings) Slice() []string {
 		index++
 	}
 	return x
+}
+
+// Enum represents an enum entry in a list.
+type Enum interface {
+	~uint8 | ~uint16
+	String() string
+}
+
+// Enums represents a list of enums.
+type Enums[E Enum] struct {
+	n *structs.Numbers[E]
+}
+
+// NewEnums creates a new Enums.
+func NewEnums[E Enum]() Enums[E] {
+	return Enums[E]{n: structs.NewNumbers[E]()}
+}
+
+// Internal use only.
+func XXXEnumsFromNumbers[E Enum](n *structs.Numbers[E]) Enums[E] {
+	return Enums[E]{n: n}
+}
+
+// Internal use only.
+func (n Enums[E]) XXXNumbers() *structs.Numbers[E] {
+	return n.n
+}
+
+// Len returns the number of items in this list.
+func (n Enums[E]) Len() int {
+	return n.n.Len()
+}
+
+// Get gets a number stored at the index.
+func (n Enums[E]) Get(index int) E {
+	return n.n.Get(index)
+}
+
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (n Enums[E]) Range(ctx context.Context, from, to int) chan E {
+	return n.n.Range(ctx, from, to)
+}
+
+// Set a number in position "index" to "value".
+func (n Enums[E]) Set(index int, value E) Enums[E] {
+	n.n.Set(index, value)
+	return n
+}
+
+// Append appends values to the list of numbers.
+func (n Enums[E]) Append(i ...E) Enums[E] {
+	n.n.Append(i...)
+	return n
+}
+
+// Slice converts this into a standard []I, where I is a Enum. The values aren't linked, so changing
+// []I or calling n.Set(...) will have no affect on the other. If there are no
+// entries, this returns a nil slice.
+func (n Enums[E]) Slice() []E {
+	return n.n.Slice()
 }

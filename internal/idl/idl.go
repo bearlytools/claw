@@ -587,6 +587,19 @@ type StructField struct {
 	SelfReferential bool
 }
 
+// GoListType will return the list type: "uint8", "int8", "<Enum Name>", ... for use in
+// templates. If called on a non-list type, this will panic.
+func (s StructField) GoListType() string {
+	if !s.IsList {
+		panic(fmt.Sprintf("bug: field name %s is not a list", s.Name))
+	}
+	if s.IdentName != "" {
+		return s.IdentName
+	}
+
+	return field.GoType(s.Type)
+}
+
 // IdentInFile returns the IdentName, removing a package identifier if it
 // proceeds it in .IdentName.
 func (s StructField) IdentInFile() string {
@@ -876,6 +889,7 @@ func (s *Struct) field(p *halfpike.Parser) error {
 				case 8:
 					if isList {
 						f.Type = field.FTListUint8
+						f.IsList = true
 						f.IsEnum = true
 					} else {
 						f.Type = field.FTUint8
@@ -884,8 +898,11 @@ func (s *Struct) field(p *halfpike.Parser) error {
 				case 16:
 					if isList {
 						f.Type = field.FTListUint16
+						f.IsList = true
+						f.IsEnum = true
 					} else {
 						f.Type = field.FTUint16
+						f.IsEnum = true
 					}
 				default:
 					panic(fmt.Sprintf("bug: got an Enum with size %d", v.Size))

@@ -14,23 +14,22 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             Type: field.{{ $field.Type }},
             Package: "{{ $field.Package }}",
             FullPath: "{{ $field.FullPath }}",
-            {{- if eq $field.Type 14 }}
+            FieldNum: {{ $index }},
+            IsEnum: {{ $field.IsEnum }},
+            {{- if $field.SelfReferential }}
+            SelfReferential: true,
+            {{- end }}
+            {{- if eq $field.TypeAsString "Struct" }}
             StructName: "{{ $field.IdentName }}",
             {{- end }}
-            IsEnum: {{ $field.IsEnum }},
             {{- if $field.IsEnum }}
             EnumGroup: "{{ $field.IdentName }}",
             {{- end }}
-            FieldNum: {{ $index }},
-            {{- if or (gt $field.Type 14) (gt $field.Type 54) }}
-            {{- if $field.SelfReferential }}
-            SelfReferential: true,
-            {{- else }}
+            {{- if or (eq $field.TypeAsString "Struct") (eq $field.TypeAsString "ListStruct") }}
             {{ if $field.IsExternal }}
             Mapping: {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }},
             {{- else }}
             Mapping: Mapping{{ $field.IdentName }},
-            {{- end }}
             {{- end }}
             {{- end }}
         },

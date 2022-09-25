@@ -37,8 +37,7 @@ func (x Manufacturer) XXXEnumGroup() reflect.EnumGroup {
 func (x Manufacturer) XXXEnumValueDescr() reflect.EnumValueDescr {
     return XXXEnumGroups.Get(0).ByValue(uint16(x))
 }
-
-
+// This is a set of all constants representing enumerated values for enum Manufacturer.
 const (
     Unknown Manufacturer = 0
     Toyota Manufacturer = 1
@@ -46,6 +45,7 @@ const (
     Tesla Manufacturer = 3
 )
 
+// ManufacturerByName converts a string representing the enumerator into a Manufacturer.
 var ManufacturerByName = map[string]Manufacturer{
     "Ford": 2,
     "Tesla": 3,
@@ -53,7 +53,8 @@ var ManufacturerByName = map[string]Manufacturer{
     "Unknown": 0,
 }
 
-var ManufacturerByValue = map[uint8 ]string{
+// ManufacturerByValue converts a uint8 representing a Manufacturer into its string name.
+var ManufacturerByValue = map[uint8]string{
     0: "Unknown",
     1: "Toyota",
     2: "Ford",

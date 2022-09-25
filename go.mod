@@ -3,7 +3,7 @@ module github.com/bearlytools/claw
 go 1.18
 
 require (
-	github.com/bearlytools/test_claw_imports v0.0.0-20220919143037-d26e15c6394e
+	github.com/bearlytools/test_claw_imports v0.0.0-20220925001542-3ca7b84685d5
 	github.com/johnsiilver/golib v1.1.1
 	github.com/johnsiilver/halfpike v0.3.4
 	github.com/kylelemons/godebug v1.1.0

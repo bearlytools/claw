@@ -16,4 +16,7 @@ Struct Vehicle {
 	Type Type @0
 	Car cars.Car @1
 	Truck []trucks.Truck @2
+
+	Types []Type @3
+	Bools []bool @4
 }

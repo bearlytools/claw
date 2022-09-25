@@ -1,6 +1,8 @@
 // Package field details field types used by the Claw format.
 package field
 
+import "fmt"
+
 //go:generate stringer -type=Type -linecomment
 
 // Type represents the type of data that is held in a byte field.
@@ -97,4 +99,65 @@ var NumericListTypes = []Type{
 // TypeToString returns the type as a string WITHOUT the leading "FT".
 func TypeToString(t Type) string {
 	return t.String()[2:]
+}
+
+// GoType will return the Go string representation of a type.
+// So a FTListUint64 will return "[]uint64".  If the type isn't
+// based on a basic Go type, this will panic. So you can't do FTListStruct.
+func GoType(t Type) string {
+	switch t {
+	case FTBool:
+		return "bool"
+	case FTInt8:
+		return "int8"
+	case FTInt16:
+		return "int16"
+	case FTInt32:
+		return "int32"
+	case FTInt64:
+		return "int64"
+	case FTUint8:
+		return "uint8"
+	case FTUint16:
+		return "uint16"
+	case FTUint32:
+		return "uint32"
+	case FTUint64:
+		return "uint64"
+	case FTFloat32:
+		return "float32"
+	case FTFloat64:
+		return "float64"
+	case FTString:
+		return "string"
+	case FTBytes:
+		return "[]bytes"
+	case FTListBools:
+		return "[]bool"
+	case FTListInt8:
+		return "[]int8"
+	case FTListInt16:
+		return "[]int16"
+	case FTListInt32:
+		return "[]int32"
+	case FTListInt64:
+		return "[]int64"
+	case FTListUint8:
+		return "[]uint8"
+	case FTListUint16:
+		return "[]uint16"
+	case FTListUint32:
+		return "[]uint32"
+	case FTListUint64:
+		return "[]uint64"
+	case FTListFloat32:
+		return "[]float32"
+	case FTListFloat64:
+		return "[]float64"
+	case FTListBytes:
+		return "[][]byte"
+	case FTListStrings:
+		return "[]string"
+	}
+	panic(fmt.Sprintf("unsupported type: %T", t))
 }

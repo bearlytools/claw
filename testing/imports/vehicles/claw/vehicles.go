@@ -9,6 +9,7 @@ import (
     "github.com/bearlytools/claw/languages/go/reflect"
     "github.com/bearlytools/claw/languages/go/reflect/runtime"
     "github.com/bearlytools/claw/languages/go/structs"
+    "github.com/bearlytools/claw/languages/go/types/list"
     "github.com/bearlytools/claw/languages/go/field"
     
     "github.com/bearlytools/test_claw_imports/cars/claw"
@@ -43,21 +44,22 @@ func (x Type) XXXEnumGroup() reflect.EnumGroup {
 func (x Type) XXXEnumValueDescr() reflect.EnumValueDescr {
     return XXXEnumGroups.Get(0).ByValue(uint16(x))
 }
-
-
+// This is a set of all constants representing enumerated values for enum Type.
 const (
     Unknown Type = 0
     Car Type = 1
     Truck Type = 2
 )
 
+// TypeByName converts a string representing the enumerator into a Type.
 var TypeByName = map[string]Type{
     "Car": 1,
     "Truck": 2,
     "Unknown": 0,
 }
 
-var TypeByValue = map[uint8 ]string{
+// TypeByValue converts a uint8 representing a Type into its string name.
+var TypeByValue = map[uint8]string{
     0: "Unknown",
     1: "Car",
     2: "Truck",
@@ -92,8 +94,9 @@ func (x Vehicle) Type() Type {
     return Type(structs.MustGetNumber[uint8](x.s, 0))
 }
 
-func (x Vehicle) SetType(value Type) {
+func (x Vehicle) SetType(value Type) Vehicle {
     structs.MustSetNumber(x.s, 0, uint8(value))
+    return x
 } 
 
 func (x Vehicle) Car() cars.Car {
@@ -101,8 +104,9 @@ func (x Vehicle) Car() cars.Car {
     return cars.XXXNewFrom(s)
 }
 
-func (x Vehicle) SetCar(value cars.Car) {
+func (x Vehicle) SetCar(value cars.Car) Vehicle {
     structs.MustSetStruct(x.s, 1, value.XXXGetStruct())
+    return x
 } 
 
 func (x Vehicle) Truck() []trucks.Truck {
@@ -123,6 +127,25 @@ func (x Vehicle) AppendTruck(values ...trucks.Truck) {
     structs.MustAppendListStruct(x.s, 2, vals...)
 }
   
+func (x Vehicle) Types() list.Enums[Type] {
+    n := structs.MustGetListNumber[Type](x.s, 3)
+    return list.XXXEnumsFromNumbers(n) 
+}
+
+func (x Vehicle) SetTypes(value list.Enums[Type]) Vehicle {
+    n := value.XXXNumbers()
+    structs.MustSetListNumber(x.s, 3, n)
+    return x
+} 
+
+func (x Vehicle) Bools() list.Bools {
+    return list.XXXFromBools(structs.MustGetListBool(x.s, 4))
+}
+
+func (x Vehicle) SetBools(value list.Bools) Vehicle {
+    structs.MustSetListBool(x.s, 4, value.XXXBools())
+    return x
+}  
 
 // ClawStruct returns a reflection type representing the Struct.
 func (x Vehicle) ClawStruct() reflect.Struct{
@@ -158,28 +181,45 @@ var XXXMappingVehicle = &mapping.Map{
             Type: field.FTUint8,
             Package: "vehicles",
             FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
+            FieldNum: 0,
             IsEnum: true,
             EnumGroup: "Type",
-            FieldNum: 0,
         },
         {
             Name: "Car",
             Type: field.FTStruct,
             Package: "cars",
             FullPath: "github.com/bearlytools/test_claw_imports/cars/claw",
-            StructName: "cars.Car",
-            IsEnum: false,
             FieldNum: 1,
+            IsEnum: false,
+            StructName: "cars.Car",
+            
+            Mapping: cars.XXXMappingCar,
         },
         {
             Name: "Truck",
             Type: field.FTListStructs,
             Package: "trucks",
             FullPath: "github.com/bearlytools/test_claw_imports/trucks",
-            IsEnum: false,
             FieldNum: 2,
-            
-            Mapping: trucks.XXXMappingTruck,
+            IsEnum: false,
+        },
+        {
+            Name: "Types",
+            Type: field.FTListUint8,
+            Package: "vehicles",
+            FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
+            FieldNum: 3,
+            IsEnum: true,
+            EnumGroup: "Type",
+        },
+        {
+            Name: "Bools",
+            Type: field.FTListBools,
+            Package: "vehicles",
+            FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
+            FieldNum: 4,
+            IsEnum: false,
         },
     },
 }
@@ -240,7 +280,16 @@ var XXXStructDescrVehicle = &reflect.XXXStructDescrImpl{
             FD: XXXMappingVehicle.Fields[2],
             SD: trucks.XXXStructDescrTruck,
         },
-          
+         
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingVehicle.Fields[3],
+            EG: XXXEnumGroupType, 
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingVehicle.Fields[4],  
+        },  
     },
 }
 

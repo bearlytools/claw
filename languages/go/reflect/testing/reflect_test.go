@@ -14,6 +14,7 @@ import (
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/reflect"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/types/list"
 	vehicles "github.com/bearlytools/claw/testing/imports/vehicles/claw"
 	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 	cars "github.com/bearlytools/test_claw_imports/cars/claw"
@@ -110,14 +111,23 @@ func TestGetStructDecr(t *testing.T) {
 	}
 
 	// Setup a vehicle the normal way.
-	car := cars.NewCar()
-	car.SetYear(2010)
-	car.SetManufacturer(manufacturers.Toyota)
-	car.SetModel(cars.Venza)
-
-	v := vehicles.NewVehicle()
-	v.SetType(vehicles.Car)
-	v.SetCar(car)
+	v := vehicles.NewVehicle().
+		SetType(vehicles.Car).
+		SetCar(cars.NewCar().
+			SetYear(2010).
+			SetManufacturer(manufacturers.Toyota).
+			SetModel(cars.Venza),
+		).
+		SetBools(list.NewBools().Append(
+			true, false, true,
+		),
+		).
+		SetTypes(
+			list.NewEnums[vehicles.Type]().Append(
+				vehicles.Car,
+				vehicles.Truck,
+			),
+		)
 
 	// Setup a vehicle the reflect way.
 	vehiclesPkgDescr := vehicles.PackageDescr()

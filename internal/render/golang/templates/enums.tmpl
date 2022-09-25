@@ -20,20 +20,23 @@ func (x {{ $enumGroup.Name }}) XXXEnumValueDescr() reflect.EnumValueDescr {
     return XXXEnumGroups.Get({{ $enumsIndex }}).ByValue(uint16(x))
 }
 
-{{ $enum := . }}
+{{- $enum := . }}
+// This is a set of all constants representing enumerated values for enum {{ $enum.Name }}.
 const (
 {{- range $index, $value := .OrderByValues }}
     {{ $value.Name }} {{ $enum.Name }} = {{ $value.Value }}
 {{- end }}
 )
 
+// {{ .Name }}ByName converts a string representing the enumerator into a {{ .Name }}.
 var {{ .Name }}ByName = map[string]{{ .Name }}{
 {{- range $index, $value := $enum.OrderByNames }}
     "{{ $value.Name }}": {{ $value.Value }},
 {{- end }}
 }
 
-var {{ .Name }}ByValue = map[{{ $enum.GoType }} ]string{
+// {{ .Name }}ByValue converts a {{ $enum.GoType }} representing a {{ .Name}} into its string name.
+var {{ .Name }}ByValue = map[{{ $enum.GoType }}]string{
 {{- range $index, $value := $enum.OrderByValues}}
     {{ $value.Value }}: "{{ $value.Name }}",
 {{- end }}
