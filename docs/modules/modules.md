@@ -8,17 +8,15 @@ Claw module files provide for versioning import dependencies imported in your `.
 
 It is important to remember that `.claw` compilation is version independent from a project's version. For example, if you import a `.claw` file from project A that has current revision v3.4.2 to use against project A version v1.3.2, this should be fine. You will have later data models, but these should be backwards compatible due to the nature of an IDL. 
 
-We thought about Claw having its own version numbers, separate from the repository, but that was just going to lead to a lot of commits that didn't update the version. When we introduce an RPC service layer, we will require a major revision number to target for service definitions.
-
 An IDL such as Claw should never have changes made that remove anything. They should always be forward compatibile. If you need to create new cleaned up version, you really need a `v2/` folder.
 
-`claw.mod` allows staticing your module file to specific versions of its dependencies to avoid these types of problems. 
+`claw.mod` allows staticing your module file to specific versions of its dependencies in case someone does make a backwards incompatible change.
 
 The other major use case for the `claw.mod` is supporting ACLs. When I publish my `.claw` file, I may not want others to import it. It may be that I want it for my use only so that I can re-write the defintions in a non-backwards compatible way without worrying about breaking other users. 
 
 By default, a `.claw` file is not importable by any other `.claw` file. To allow it to be imported, you must declare it to be publically accessible or list the packages that can import it. This prevents unintentional side effects. Note however that this does no prevent the language specific packages that are generated from being used.
 
-`claw.mod` files are required for the path where `clawc` is invoked. We may at some point in the future relax this and allow a user to set an env for a root directory.  We use the module directive to understand where the module will reside in a vcs, which lets us know if we need to fetch remotely or locally. `claw.mod` files in other dependencies are ignored and could potentially be in an incorrect state.
+`claw.mod` files are required for the path where `clawc` is invoked. We may at some point in the future relax this and allow a user to set an env for a root directory.  We use the module directive to understand where the module will reside in a vcs, which lets us know if we need to fetch remotely or locally. `claw.mod` files in dependencies are only used to check acls.  Everything else in the claw.mod is ignored.
 
 ## General syntax example of claw.mod file
 
