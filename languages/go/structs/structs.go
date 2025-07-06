@@ -595,6 +595,7 @@ func SetListBool(s *Struct, fieldNum uint16, value *Bools) error {
 	XXXAddToTotal(s, len(value.data))
 	return nil
 }
+
 func MustSetListBool(s *Struct, fieldNum uint16, value *Bools) {
 	err := SetListBool(s, fieldNum, value)
 	if err != nil {
@@ -1107,7 +1108,7 @@ func XXXAddToTotal[N int64 | int | uint | uint64](s *Struct, value N) {
 	}
 	v := atomic.AddInt64(s.structTotal, int64(value))
 	s.header.SetFinal40(uint64(v))
-	var ptr = s.parent
+	ptr := s.parent
 	for {
 		if ptr == nil {
 			return

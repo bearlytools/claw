@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/gopherfs/fs"
+	osfs "github.com/gopherfs/fs/io/os"
+
 	"github.com/bearlytools/claw/internal/imports"
 	"github.com/bearlytools/claw/internal/render"
 	"github.com/bearlytools/claw/internal/writer/golang"
-	"github.com/gopherfs/fs"
-	osfs "github.com/gopherfs/fs/io/os"
 )
 
 var supported = map[render.Lang]WriteFiles{
@@ -22,7 +23,7 @@ var supported = map[render.Lang]WriteFiles{
 // WriteFiles writes a file to some location based on the language.
 type WriteFiles interface {
 	SetFS(fs.Writer)
-	WriteFiles(context.Context, *imports.Config, []render.Rendered) error
+	WriteFiles(context.Context, imports.ConfigProvider, []render.Rendered) error
 }
 
 // Runtime init check that both render and writer both support the same languages and
@@ -37,7 +38,7 @@ func init() {
 }
 
 type Writer struct {
-	config *imports.Config
+	config imports.ConfigProvider
 	fs     fs.Writer
 }
 
@@ -51,7 +52,7 @@ func WithFS(fs fs.Writer) writerOption {
 }
 
 // New creates a new Writer.
-func New(config *imports.Config, options ...writerOption) (*Writer, error) {
+func New(config imports.ConfigProvider, options ...writerOption) (*Writer, error) {
 	fs, err := osfs.New()
 	if err != nil {
 		return nil, fmt.Errorf("could not create an osfs: %s", err)

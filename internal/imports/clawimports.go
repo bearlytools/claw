@@ -83,7 +83,7 @@ func (c *ClawImports) ParseDirective(ctx context.Context, p *halfpike.Parser) ha
 	}
 
 	if err := commentOrEOL(l, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%w", err)
 	}
 
 	// Get 'path: "path/to/imports"' line

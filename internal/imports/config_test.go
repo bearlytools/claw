@@ -36,6 +36,7 @@ var wantCars = &idl.File{
 					SelfReferential: false,
 				},
 			},
+			File: nil, // Will be set in init()
 		},
 		"Model": idl.Enum{
 			Name: "Model",
@@ -114,6 +115,7 @@ var wantTrucks = &idl.File{
 					SelfReferential: false,
 				},
 			},
+			File: nil, // Will be set in init()
 		},
 	},
 	External: map[string]*idl.File{
@@ -169,6 +171,7 @@ var wantRoot = &idl.File{
 					SelfReferential: false,
 				},
 			},
+			File: nil, // Will be set in init()
 		},
 	},
 	External: map[string]*idl.File{
@@ -213,4 +216,22 @@ var wantConfig = &Config{
 		Replace: nil,
 	},
 	GlobalReplace: map[string]Replace{},
+}
+
+func init() {
+	// Set up circular references for File fields in structs
+	if carStruct, ok := wantCars.Identifers["Car"].(idl.Struct); ok {
+		carStruct.File = wantCars
+		wantCars.Identifers["Car"] = carStruct
+	}
+
+	if truckStruct, ok := wantTrucks.Identifers["Truck"].(idl.Struct); ok {
+		truckStruct.File = wantTrucks
+		wantTrucks.Identifers["Truck"] = truckStruct
+	}
+
+	if vehicleStruct, ok := wantRoot.Identifers["Vehicle"].(idl.Struct); ok {
+		vehicleStruct.File = wantRoot
+		wantRoot.Identifers["Vehicle"] = vehicleStruct
+	}
 }

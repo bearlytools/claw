@@ -6,13 +6,21 @@ import (
 	"log"
 	"os"
 
+	osfs "github.com/gopherfs/fs/io/os"
+
 	"github.com/bearlytools/claw/internal/imports"
 )
 
 func main() {
 	ctx := context.Background()
 
-	clawPath, err := imports.FindClawFile("../../../testing/imports/vehicles/claw")
+	// Create filesystem
+	fs, err := osfs.New()
+	if err != nil {
+		exitf("failed to create filesystem: %s\n", err)
+	}
+
+	clawPath, err := imports.FindClawFile(fs, "../../../testing/imports/vehicles/claw")
 	if err != nil {
 		exitln(err)
 	}

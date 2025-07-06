@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bearlytools/claw/internal/idl"
 	"github.com/johnsiilver/halfpike"
+
+	"github.com/bearlytools/claw/internal/idl"
 )
 
 // LocalReplace represents the local.replace file and includes halfpike methods to decode the file.
@@ -74,7 +75,6 @@ func (l *LocalReplace) FindNext(ctx context.Context, p *halfpike.Parser) halfpik
 		}
 		return p.Errorf("[Line %d] do not understand this line", line.LineNum)
 	}
-	return nil
 }
 
 func (l *LocalReplace) ParseReplace(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
@@ -89,7 +89,7 @@ func (l *LocalReplace) ParseReplace(ctx context.Context, p *halfpike.Parser) hal
 	}
 
 	if err := commentOrEOL(line, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%w", err)
 	}
 
 	for {
@@ -105,7 +105,7 @@ func (l *LocalReplace) ParseReplace(ctx context.Context, p *halfpike.Parser) hal
 				return p.Errorf("error: cannot have a 'replace' directive with no statements")
 			}
 			if err := commentOrEOL(line, 1); err != nil {
-				return p.Errorf(err.Error())
+				return p.Errorf("%s", err.Error())
 			}
 			return l.FindNext
 		}
@@ -114,8 +114,6 @@ func (l *LocalReplace) ParseReplace(ctx context.Context, p *halfpike.Parser) hal
 			return p.Errorf("[Line %d] error: %s", line.LineNum, err)
 		}
 	}
-
-	return l.FindNext
 }
 
 func (l *LocalReplace) parseReplaceLine(line halfpike.Line) error {

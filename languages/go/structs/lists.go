@@ -10,13 +10,14 @@ import (
 	"math"
 	"sync/atomic"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/structs/header"
-	"golang.org/x/exp/constraints"
 )
 
 // Number represents all int, uint and float types.
@@ -1023,7 +1024,6 @@ func (s *Structs) Set(index int, value *Struct) error {
 	// If the mapping pointers are not pointing to the same place, then the Structs aren't the same.
 	if value.mapping != s.mapping {
 		return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", index)
-
 	}
 	s.data[index] = value
 

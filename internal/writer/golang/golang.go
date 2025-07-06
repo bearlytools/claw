@@ -11,9 +11,10 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/gopherfs/fs"
+
 	"github.com/bearlytools/claw/internal/imports"
 	"github.com/bearlytools/claw/internal/render"
-	"github.com/gopherfs/fs"
 )
 
 // Writer implements writer.WriteFiles for the Go language.
@@ -25,7 +26,7 @@ func (w *Writer) SetFS(fs fs.Writer) {
 	w.fs = fs
 }
 
-func (w *Writer) WriteFiles(ctx context.Context, config *imports.Config, renders []render.Rendered) error {
+func (w *Writer) WriteFiles(ctx context.Context, config imports.ConfigProvider, renders []render.Rendered) error {
 	if err := w.getImports(ctx, config); err != nil {
 		return err
 	}
@@ -46,7 +47,7 @@ func (w *Writer) WriteFiles(ctx context.Context, config *imports.Config, renders
 					return
 				}
 				p = filepath.Join(p, r.Package+".go")
-				if err := w.fs.WriteFile(p, r.Native, 0600); err != nil {
+				if err := w.fs.WriteFile(p, r.Native, 0o600); err != nil {
 					errs.add(fmt.Errorf("problem writing package(%s) to local file(%s): %w", r.Package, p, err))
 					return
 				}
@@ -61,13 +62,13 @@ func (w *Writer) WriteFiles(ctx context.Context, config *imports.Config, renders
 
 // getImports is going to grab any file that the Claw file imports and is not in the
 // current Git repo via the "go get" command.
-func (w *Writer) getImports(ctx context.Context, config *imports.Config) error {
+func (w *Writer) getImports(ctx context.Context, config imports.ConfigProvider) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	wg := sync.WaitGroup{}
 	errs := newErrs()
-	for _, imp := range config.Imports {
+	for _, imp := range config.GetImports() {
 		imp := imp
 		wg.Add(1)
 

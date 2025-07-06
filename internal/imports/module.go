@@ -9,8 +9,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/bearlytools/claw/internal/idl"
 	"github.com/johnsiilver/halfpike"
+
+	"github.com/bearlytools/claw/internal/idl"
 )
 
 // Module represents a claw.mod file and includes halpike methods to decode the file.
@@ -64,7 +65,7 @@ func (m *Module) ParseModule(ctx context.Context, p *halfpike.Parser) halfpike.P
 
 	m.Path = l.Items[1].Val
 	if err := commentOrEOL(l, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%s", err.Error())
 	}
 
 	return m.FindNext
@@ -117,7 +118,7 @@ func (m *Module) ParseRequire(ctx context.Context, p *halfpike.Parser) halfpike.
 	}
 
 	if err := commentOrEOL(line, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%s", err.Error())
 	}
 
 	for {
@@ -133,7 +134,7 @@ func (m *Module) ParseRequire(ctx context.Context, p *halfpike.Parser) halfpike.
 				return p.Errorf("error: cannot have a 'required' directive with no statements")
 			}
 			if err := commentOrEOL(line, 1); err != nil {
-				return p.Errorf(err.Error())
+				return p.Errorf("%s", err.Error())
 			}
 			return m.FindNext
 		}
@@ -142,7 +143,6 @@ func (m *Module) ParseRequire(ctx context.Context, p *halfpike.Parser) halfpike.
 			return p.Errorf("[Line %d] error: %s", line.LineNum, err)
 		}
 	}
-	panic("should never get to")
 }
 
 var verRegex = regexp.MustCompile(`v(\d+)\.(\d+)\.(\d+)`)
@@ -191,7 +191,7 @@ func (m *Module) ParseReplace(ctx context.Context, p *halfpike.Parser) halfpike.
 	}
 
 	if err := commentOrEOL(line, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%s", err.Error())
 	}
 
 	for {
@@ -207,7 +207,7 @@ func (m *Module) ParseReplace(ctx context.Context, p *halfpike.Parser) halfpike.
 				return p.Errorf("error: cannot have a 'replace' directive with no statements")
 			}
 			if err := commentOrEOL(line, 1); err != nil {
-				return p.Errorf(err.Error())
+				return p.Errorf("%s", err.Error())
 			}
 			return m.FindNext
 		}
@@ -216,8 +216,6 @@ func (m *Module) ParseReplace(ctx context.Context, p *halfpike.Parser) halfpike.
 			return p.Errorf("[Line %d] error: %s", line.LineNum, err)
 		}
 	}
-
-	return m.FindNext
 }
 
 func (m *Module) parseReplaceLine(line halfpike.Line) error {
@@ -254,7 +252,7 @@ func (m *Module) ParseACLs(ctx context.Context, p *halfpike.Parser) halfpike.Par
 		if line.Items[2].Val == "public" {
 			m.ACLs = append(m.ACLs, ACL{Path: "*"})
 			if err := commentOrEOL(line, 3); err != nil {
-				return p.Errorf(err.Error())
+				return p.Errorf("%s", err.Error())
 			}
 			return m.FindNext
 		}
@@ -266,7 +264,7 @@ func (m *Module) ParseACLs(ctx context.Context, p *halfpike.Parser) halfpike.Par
 	}
 
 	if err := commentOrEOL(line, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%s", err.Error())
 	}
 
 	for {
@@ -282,7 +280,7 @@ func (m *Module) ParseACLs(ctx context.Context, p *halfpike.Parser) halfpike.Par
 				return p.Errorf("error: cannot have a 'acls' directive with no statements")
 			}
 			if err := commentOrEOL(line, 1); err != nil {
-				return p.Errorf(err.Error())
+				return p.Errorf("%s", err.Error())
 			}
 			return m.FindNext
 		}
@@ -293,8 +291,6 @@ func (m *Module) ParseACLs(ctx context.Context, p *halfpike.Parser) halfpike.Par
 		}
 		m.ACLs = append(m.ACLs, ACL{Path: line.Items[0].Val})
 	}
-
-	return m.FindNext
 }
 
 func caseSensitiveCheck(want string, item string) error {

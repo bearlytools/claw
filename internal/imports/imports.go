@@ -13,18 +13,19 @@ import (
 	"strconv"
 	"strings"
 
+	osfs "github.com/gopherfs/fs/io/os"
+	"github.com/johnsiilver/halfpike"
+
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/internal/idl"
 	"github.com/bearlytools/claw/internal/imports/git"
 	"github.com/bearlytools/claw/internal/vcs"
-
-	osfs "github.com/gopherfs/fs/io/os"
-
-	"github.com/johnsiilver/halfpike"
 )
 
-// ImportFlow is a list of imports that have been imported in this import path.
-// It is used when going down the tree of imports to make sure we do not see ourselves
+// ImportFlow is a list of imports that have been imported in this import
+// path.
+// It is used when going down the tree of imports to make sure we do not see
+// ourselves
 // already in the path, which would indicate a cyclic import.
 type ImportFlow []string
 
@@ -254,20 +255,28 @@ func (c *Config) readConfig(ctx context.Context, clawModPath string) error {
 			return fmt.Errorf("there is a claw.mod directory, which is not allowed")
 		}
 		m := &Module{}
-		content, err := c.fs.ReadFile(clawModPath)
-		if err != nil {
-			return fmt.Errorf("error: problem reading file %s: %s", clawModPath, err)
+		content, readErr := c.fs.ReadFile(clawModPath)
+		if readErr != nil {
+			return fmt.Errorf("error: problem reading file %s: %s", clawModPath, readErr)
 		}
-		if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), m); err != nil {
-			return err
+		if parseErr := halfpike.Parse(ctx, conversions.ByteSlice2String(content), m); parseErr != nil {
+			return parseErr
 		}
 		c.Module = m
 		return nil
 	} else {
-		if err != fs.ErrNotExist {
-			return fmt.Errorf("problem reading claw.mod file: %w", err)
+		// Check if it's a "not exist" error
+		if errors.Is(err, fs.ErrNotExist) || strings.Contains(err.Error(), "no such file or directory") {
+			// If claw.mod doesn't exist, create a minimal default module
+			// Extract module path from the directory structure
+			dir := filepath.Dir(clawModPath)
+			modulePath := extractModulePathFromDir(dir)
+			c.Module = &Module{
+				Path: modulePath,
+			}
+			return nil
 		}
-		return err
+		return fmt.Errorf("problem reading claw.mod file: %w", err)
 	}
 }
 
@@ -279,12 +288,12 @@ func (c *Config) readLocalReplace(ctx context.Context, localReplacePath string, 
 			return fmt.Errorf("there is a local.replace directory, which is not allowed")
 		}
 
-		content, err := c.fs.ReadFile(localReplacePath)
-		if err != nil {
-			return fmt.Errorf("error: problem reading file %s: %s", localReplacePath, err)
+		content, readErr := c.fs.ReadFile(localReplacePath)
+		if readErr != nil {
+			return fmt.Errorf("error: problem reading file %s: %s", localReplacePath, readErr)
 		}
-		if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), &lr); err != nil {
-			return err
+		if parseErr := halfpike.Parse(ctx, conversions.ByteSlice2String(content), &lr); parseErr != nil {
+			return parseErr
 		}
 		c.LocalReplace = lr
 	} else {
@@ -457,4 +466,212 @@ type Replace struct {
 
 func (r Replace) IsZero() bool {
 	return reflect.ValueOf(r).IsZero()
+}
+
+// VendoredConfig is a Config that uses vendored dependencies instead of fetching them.
+type VendoredConfig struct {
+	*Config
+	vendorDir string
+}
+
+// NewVendoredConfig creates a new VendoredConfig that uses vendored dependencies.
+func NewVendoredConfig(vendorDir string) *VendoredConfig {
+	return &VendoredConfig{
+		Config:    NewConfig(),
+		vendorDir: vendorDir,
+	}
+}
+
+// Abs overrides the base method to return paths within the vendor directory.
+func (vc *VendoredConfig) Abs(p string) (string, error) {
+	// For vendored dependencies, return the path within the vendor directory
+	return filepath.Join(vc.vendorDir, p), nil
+}
+
+// InRootRepo is overridden for vendored configs to always return true,
+// preventing the writer from trying to do go get operations.
+func (vc *VendoredConfig) InRootRepo(pkgPath string) bool {
+	// For vendored dependencies, we always consider them "in the root repo"
+	// to prevent the writer from trying to fetch them via go get
+	return true
+}
+
+// Read reads the .claw file and uses vendored dependencies instead of fetching them.
+func (vc *VendoredConfig) Read(ctx context.Context, clawFilePath string) error {
+	dir := filepath.Dir(clawFilePath)
+
+	if vc.git == nil {
+		// Try to add git if its a git repo, but handle panics gracefully
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// Git failed, continue without it
+					vc.git = nil
+				}
+			}()
+			if git, err := vcs.NewGit(dir); err == nil {
+				vc.git = git
+			}
+		}()
+	}
+
+	if _, err := vc.fs.Stat(filepath.Join(dir, "global.replace")); err == nil {
+		return fmt.Errorf("cannot compile claw files for directory with global.replace")
+	}
+
+	content, err := vc.fs.ReadFile(clawFilePath)
+	if err != nil {
+		return fmt.Errorf("error: problem reading file %s: %s", clawFilePath, err)
+	}
+	file := idl.New()
+
+	if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), file); err != nil {
+		return err
+	}
+
+	if err := file.Validate(); err != nil {
+		return fmt.Errorf("problem validating root file %q: %w", clawFilePath, err)
+	}
+
+	clawMod := filepath.Join(dir, "claw.mod")
+	if err := vc.readConfig(ctx, clawMod); err != nil {
+		return fmt.Errorf("problem reading module file %q: %w", clawMod, err)
+	}
+
+	clawLocalReplace := filepath.Join(dir, "local.replace")
+	if err := vc.readLocalReplace(ctx, clawLocalReplace, vc.Root); err != nil {
+		return fmt.Errorf("problem reading local.replace: %w", err)
+	}
+
+	// Add all our replacements to our Imports, but set them to nil.
+	for _, r := range vc.LocalReplace.Replace {
+		vc.Imports[r.ToPath] = nil
+	}
+
+	for _, imp := range file.Imports.Imports {
+		log.Println("import: ", imp.Path)
+		var r Replace
+		// We don't need to grab this if it has already been gotten.
+		if _, ok := vc.Imports[file.FullPath]; ok {
+			r = vc.LocalReplace.ReplaceMe(imp.Path)
+			if r.IsZero() { // We already have it and its not a replacement.
+				continue
+			}
+
+			// This import is locally replaced, let's see if we have the replacement already loaded.
+			if vc.Imports[r.ToPath] != nil {
+				continue
+			}
+
+			// This is a stack copy, shouldn't affect the map entry.
+			// We change it to the replacement and now its time to go replace stuff.
+			imp.Name = path.Base(r.ToPath)
+			imp.Path = r.ToPath
+		}
+
+		// Add our import path to a copy of the list and send it down.
+		ctx = AppendImports(ctx, vc.Module.Path)
+		log.Printf("@VendoredRead(): %#+v", imp)
+		if err := vc.readVendored(ctx, imp.Path); err != nil {
+			return err
+		}
+	}
+	file.FullPath = vc.Module.Path
+	vc.Root = file
+	vc.Imports[vc.Module.Path] = file
+
+	// Now that we've done one pass and built our idl.File entries, we now need to go
+	// back and update all the FullPath entries and attach all external identifiers
+	// to the external identifier's idl.File.
+	return vc.populateExternals()
+}
+
+// readVendored reads a .claw file from the vendor directory instead of fetching it.
+func (vc *VendoredConfig) readVendored(ctx context.Context, pkgPath string) error {
+	// Check if already imported
+	if _, ok := vc.Imports[pkgPath]; ok {
+		return nil
+	}
+
+	// Check for circular imports
+	importFlow := ExtractImports(ctx)
+	for _, imp := range importFlow {
+		if imp == pkgPath {
+			return fmt.Errorf("%s", importFlow.String())
+		}
+	}
+
+	// Read from vendor directory
+	vendorPath := filepath.Join(vc.vendorDir, pkgPath)
+	clawFile, err := FindClawFile(vc.fs, vendorPath)
+	if err != nil {
+		return fmt.Errorf("problem finding .claw file in vendor directory %s: %w", vendorPath, err)
+	}
+
+	content, err := vc.fs.ReadFile(clawFile)
+	if err != nil {
+		return fmt.Errorf("error: problem reading vendored file %s: %s", clawFile, err)
+	}
+
+	file := idl.New()
+	if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), file); err != nil {
+		return err
+	}
+
+	if err := file.Validate(); err != nil {
+		return fmt.Errorf("problem validating vendored file %q: %w", clawFile, err)
+	}
+
+	vc.Imports[pkgPath] = file
+
+	// Process imports recursively
+	for _, imp := range file.Imports.Imports {
+		ctx = AppendImports(ctx, pkgPath)
+		if err := vc.readVendored(ctx, imp.Path); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ConfigProvider is an interface that provides configuration for compilation.
+type ConfigProvider interface {
+	InRootRepo(pkgPath string) bool
+	Abs(p string) (string, error)
+	GetImports() map[string]*idl.File
+}
+
+// GetImports returns the imports map for the base Config.
+func (c *Config) GetImports() map[string]*idl.File {
+	return c.Imports
+}
+
+// GetImports returns the imports map for the VendoredConfig.
+func (vc *VendoredConfig) GetImports() map[string]*idl.File {
+	return vc.Imports
+}
+
+// extractModulePathFromDir extracts a reasonable module path from a directory structure.
+func extractModulePathFromDir(dir string) string {
+	// For vendor directories, extract the path after "vendor/"
+	if strings.Contains(dir, "/vendor/") {
+		parts := strings.Split(dir, "/vendor/")
+		if len(parts) > 1 {
+			return parts[1]
+		}
+	}
+
+	// For regular directories, try to extract a reasonable path
+	// Look for patterns like github.com/user/repo
+	parts := strings.Split(dir, "/")
+	for i, part := range parts {
+		if strings.Contains(part, ".") && i+2 < len(parts) {
+			// Found what looks like a domain, construct path
+			return strings.Join(parts[i:], "/")
+		}
+	}
+
+	// Fallback to using the directory name as module path
+	return filepath.Base(dir)
 }

@@ -8,9 +8,10 @@ import (
 	"reflect"
 	"testing"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/mapping"
-	"golang.org/x/exp/constraints"
 )
 
 func TestGenericHeader(t *testing.T) {
@@ -52,7 +53,6 @@ func TestGenericHeader(t *testing.T) {
 	if h.Final40() != 240 {
 		t.Fatalf("TestGenericHeader(Final40()): got %d, want %d", h.Final40(), 240)
 	}
-
 }
 
 // TestBasicEncodeDecodeStruct is a more involved version of decode_test.go/TestDecodeStruct().
@@ -113,7 +113,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	// Set bool field.
-	if err := SetBool(root, 0, true); err != nil {
+	if err = SetBool(root, 0, true); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test bool field.
@@ -134,7 +134,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int8 field is %d", gotInt8)
 	}
 	// Set int8 field.
-	if err := SetNumber(root, 1, int8(-1)); err != nil {
+	if err = SetNumber(root, 1, int8(-1)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int8 field.
@@ -155,7 +155,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int16 field is %d", gotInt16)
 	}
 	// Set int16 field.
-	if err := SetNumber(root, 2, int16(-2)); err != nil {
+	if err = SetNumber(root, 2, int16(-2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int16 field.
@@ -176,7 +176,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int32 field is %d", gotInt32)
 	}
 	// Set int32 field.
-	if err := SetNumber(root, 3, int32(-3)); err != nil {
+	if err = SetNumber(root, 3, int32(-3)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int32 field.
@@ -197,7 +197,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): int64 field is %d", gotInt64)
 	}
 	// Set int64 field.
-	if err := SetNumber(root, 4, int64(-4)); err != nil {
+	if err = SetNumber(root, 4, int64(-4)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test int64 field.
@@ -218,7 +218,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint8 field is %d", gotUint8)
 	}
 	// Set uint8 field.
-	if err := SetNumber(root, 5, uint8(1)); err != nil {
+	if err = SetNumber(root, 5, uint8(1)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint8 field.
@@ -239,7 +239,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint16 field is %d", gotUint16)
 	}
 	// Set uint16 field.
-	if err := SetNumber(root, 6, uint16(2)); err != nil {
+	if err = SetNumber(root, 6, uint16(2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint16 field.
@@ -260,7 +260,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint32 field is %d", gotUint32)
 	}
 	// Set uint32 field.
-	if err := SetNumber(root, 7, uint32(3)); err != nil {
+	if err = SetNumber(root, 7, uint32(3)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint32 field.
@@ -281,7 +281,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): uint64 field is %d", gotUint64)
 	}
 	// Set uint64 field.
-	if err := SetNumber(root, 8, uint64(4)); err != nil {
+	if err = SetNumber(root, 8, uint64(4)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test uint64 field.
@@ -302,7 +302,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): float32 field is %v", gotFloat32)
 	}
 	// Set float32 field.
-	if err := SetNumber(root, 9, float32(1.2)); err != nil {
+	if err = SetNumber(root, 9, float32(1.2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test float32 field.
@@ -323,7 +323,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): float64 field is %v", gotFloat64)
 	}
 	// Set float64 field.
-	if err := SetNumber(root, 10, float64(1.2)); err != nil {
+	if err = SetNumber(root, 10, float64(1.2)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): unexpected error: %s", err)
 	}
 	// Test float64 field.
@@ -340,7 +340,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.structTotal, totalWithScalars)
 	}
 
-	if err := marshalCheck(root, int(totalWithScalars)); err != nil {
+	if err = marshalCheck(root, int(totalWithScalars)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding scalar fields): %s", err)
 	}
 
@@ -387,7 +387,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): structTotal(%d) is not divisible by 8", *root.structTotal)
 	}
 
-	if err := marshalCheck(root, int(totalWithBytes)); err != nil {
+	if err = marshalCheck(root, int(totalWithBytes)); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding bytes field): %s", err)
 	}
 
@@ -399,7 +399,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// Start Struct
 	////////////////////
 	sub := New(13, msg1Mapping)
-	if err := SetStruct(root, 12, sub); err != nil {
+	if err = SetStruct(root, 12, sub); err != nil {
 		panic(err)
 	}
 	totalWithStruct := totalWithBytes + 8
@@ -426,7 +426,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
 	}
 
-	if err := marshalCheck(root, totalWithStruct); err != nil {
+	if err = marshalCheck(root, totalWithStruct); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding sub Struct): %s", err)
 	}
 
@@ -442,7 +442,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		New(0, msg1Mapping),
 	}
 
-	if err := AppendListStruct(root, 13, structs...); err != nil {
+	if err = AppendListStruct(root, 13, structs...); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): AddListStruct() had error: %s", err)
 	}
 
@@ -470,7 +470,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if *root.structTotal != totalWithListStruct {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
 	}
-	if err := marshalCheck(root, totalWithListStruct); err != nil {
+	if err = marshalCheck(root, totalWithListStruct); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding list Struct): %s", err)
 	}
 
@@ -520,9 +520,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding Listbytes): root.Struct total was %d, want %d", *root.structTotal, totalWithListBytes)
 	}
 
-	if err := bytesList.Append([]byte("what"), []byte("ever")); err != nil {
-		t.Fatalf("TestBasicEncodeDecodeStruct(append Listbytes): error: %s", err)
-	}
+	bytesList.Append([]byte("what"), []byte("ever"))
 
 	totalWithListBytes += 16 // 2 * content(4 bytes each) + two entry headers(4 bytes)
 	if *root.structTotal != totalWithListBytes {
@@ -784,16 +782,16 @@ func marshalCheck[I constraints.Integer](msg *Struct, wantWritten I) error {
 func TestGetBool(t *testing.T) {
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
-			&mapping.FieldDescr{
+			{
 				Type: field.FTBool,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTFloat32,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTBool,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTBool,
 			},
 		},
@@ -869,10 +867,10 @@ func TestSetNumber(t *testing.T) {
 	// This is going to only handle cases not handled in GetNumber()
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
-			&mapping.FieldDescr{
+			{
 				Type: field.FTFloat32,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTFloat64,
 			},
 		},
@@ -908,19 +906,19 @@ func TestSetNumber(t *testing.T) {
 func TestGetNumber(t *testing.T) {
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
-			&mapping.FieldDescr{
+			{
 				Type: field.FTUint8,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTBool,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTInt8,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTUint64,
 			},
-			&mapping.FieldDescr{
+			{
 				Type: field.FTFloat32,
 			},
 		},

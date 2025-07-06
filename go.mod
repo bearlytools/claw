@@ -1,6 +1,6 @@
 module github.com/bearlytools/claw
 
-go 1.18
+go 1.24.3
 
 require (
 	github.com/bearlytools/test_claw_imports v0.0.0-20220925001542-3ca7b84685d5

@@ -2,6 +2,7 @@ package idl
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"math"
@@ -11,11 +12,10 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/johnsiilver/halfpike"
 	"golang.org/x/exp/slices"
 
-	_ "embed"
+	"github.com/bearlytools/claw/languages/go/field"
 )
 
 // Option is an option for the file.
@@ -174,9 +174,7 @@ func (f *File) SkipLinesWithComments(p *halfpike.Parser) {
 	}
 }
 
-var (
-	underscore = '_'
-)
+var underscore = '_'
 
 // ParseVersion finds the version
 func (f *File) ParsePackage(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
@@ -198,7 +196,7 @@ func (f *File) ParsePackage(ctx context.Context, p *halfpike.Parser) halfpike.Pa
 	f.Package = line.Items[1].Val
 
 	if err := commentOrEOL(line, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%s", err.Error())
 	}
 
 	return f.FindNext
@@ -237,7 +235,7 @@ func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseF
 		p.Backup()
 		i := NewImport()
 		if err := i.parse(p); err != nil {
-			return p.Errorf(err.Error())
+			return p.Errorf("%s", err.Error())
 		}
 		f.Imports = i
 		return f.FindNext
@@ -245,7 +243,7 @@ func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseF
 		p.Backup()
 		e := NewEnum()
 		if err := e.parse(p); err != nil {
-			return p.Errorf(err.Error())
+			return p.Errorf("%s", err.Error())
 		}
 		if _, ok := f.Identifers[e.Name]; ok {
 			return p.Errorf("Error: found two top level identifiers named %q", e.Name)
@@ -256,7 +254,7 @@ func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseF
 		p.Backup()
 		s := NewStruct(f)
 		if err := s.parse(p); err != nil {
-			return p.Errorf(err.Error())
+			return p.Errorf("%s", err.Error())
 		}
 		if _, ok := f.Identifers[s.Name]; ok {
 			return p.Errorf("Error: found two top level identifiers named %q", s.Name)
@@ -290,7 +288,7 @@ func (f *File) ParseVersion(ctx context.Context, p *halfpike.Parser) halfpike.Pa
 	}
 
 	if err := commentOrEOL(line, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%s", err.Error())
 	}
 
 	return f.FindNext
