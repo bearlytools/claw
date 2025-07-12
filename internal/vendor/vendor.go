@@ -2,7 +2,7 @@
 package vendor
 
 import (
-	"context"
+	"github.com/gostdlib/base/context"
 	"fmt"
 	"io/fs"
 	"os"

@@ -2,7 +2,7 @@
 package imports
 
 import (
-	"context"
+	"github.com/gostdlib/base/context"
 	"errors"
 	"fmt"
 	"io/fs"

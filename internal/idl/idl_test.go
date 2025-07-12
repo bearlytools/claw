@@ -1,7 +1,7 @@
 package idl
 
 import (
-	"context"
+	"github.com/gostdlib/base/context"
 	"log"
 	"testing"
 

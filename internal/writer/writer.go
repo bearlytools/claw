@@ -4,7 +4,7 @@
 package writer
 
 import (
-	"context"
+	"github.com/gostdlib/base/context"
 	"fmt"
 	"sync"
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"github.com/gostdlib/base/context"
 	"fmt"
 	"log"
 	"os"

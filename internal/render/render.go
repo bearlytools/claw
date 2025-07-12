@@ -4,7 +4,7 @@ package render
 
 import (
 	"bytes"
-	"context"
+	"github.com/gostdlib/base/context"
 	"fmt"
 	"sync"
 

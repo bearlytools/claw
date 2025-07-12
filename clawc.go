@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -16,6 +15,7 @@ import (
 	_ "github.com/bearlytools/claw/internal/render/golang"
 	"github.com/bearlytools/claw/internal/vendor"
 	"github.com/bearlytools/claw/internal/writer"
+	"github.com/gostdlib/base/context"
 )
 
 func main() {

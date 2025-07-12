@@ -3,7 +3,7 @@ package golang
 
 import (
 	"bytes"
-	"context"
+	"github.com/gostdlib/base/context"
 	"embed"
 	"fmt"
 	"text/template"

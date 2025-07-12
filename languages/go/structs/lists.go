@@ -19,6 +19,7 @@ import (
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/structs/header"
+	"github.com/gostdlib/base/context"
 )
 
 
@@ -32,7 +33,7 @@ type Bools struct {
 
 // NewBools creates a new Bool that will be stored in a Struct field.
 func NewBools(fieldNum uint16) *Bools {
-	b := pool.Get(boolPool).(*Bools)
+	b := boolPool.Get(context.Background())
 
 	h := NewGenericHeader()
 	h.SetFieldNum(fieldNum)
@@ -62,7 +63,7 @@ func NewBoolsFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bools, error) {
 	}
 	rightBound := (8 * wordsNeeded) + 8
 	sl := (*data)[0:rightBound]
-	b := pool.Get(boolPool).(*Bools)
+	b := boolPool.Get(context.Background())
 
 	b.data = sl
 	b.len = int(items)
@@ -499,7 +500,7 @@ type Bytes struct {
 // NewBytes returns a new Bytes for holding lists of bytes. This is used when creating a new list
 // not attached to a Struct yet.
 func NewBytes() *Bytes {
-	b := pool.Get(bytesPool).(*Bytes)
+	b := bytesPool.Get(context.Background())
 	if b.header == nil {
 		b.header = NewGenericHeader()
 	}
@@ -516,7 +517,7 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	if len(*data) < 16 { // list header(8) + entry header(4) + at least 4 byte (1 bytes of data + 3 padding)
 		return nil, fmt.Errorf("malformed list of bytes: must be at least 16 bytes in size")
 	}
-	b := pool.Get(bytesPool).(*Bytes)
+	b := bytesPool.Get(context.Background())
 	b.header = (*data)[:8]
 	*data = (*data)[8:] // Move past the header
 

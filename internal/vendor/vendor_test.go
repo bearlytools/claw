@@ -1,7 +1,7 @@
 package vendor
 
 import (
-	"context"
+	"github.com/gostdlib/base/context"
 	"crypto/sha256"
 	"fmt"
 	"os"
