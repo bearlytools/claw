@@ -108,6 +108,22 @@ func TestGetStructDecr(t *testing.T) {
 			FieldNum: 2,
 			ItemType: "Truck",
 		},
+		{
+			Name:     "Types",
+			Type:     field.FTListUint8,
+			FieldNum: 3,
+			IsEnum:   true,
+			EnumGroup: enumGroupWant{
+				Name: "Type",
+				Len:  3,
+				Size: 8,
+			},
+		},
+		{
+			Name:     "Bools",
+			Type:     field.FTListBools,
+			FieldNum: 4,
+		},
 	}
 
 	// Setup a vehicle the normal way.

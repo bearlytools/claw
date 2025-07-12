@@ -12,60 +12,15 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"golang.org/x/exp/constraints"
-
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
+	"github.com/bearlytools/claw/internal/typedetect"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/structs/header"
 )
 
-// Number represents all int, uint and float types.
-type Number interface {
-	constraints.Integer | constraints.Float
-}
-
-// isSignedInteger returns true if T is a signed integer type
-func isSignedInteger[T Number]() bool {
-	var t T
-	
-	// Set the high bit - if T is signed, this will be negative; if unsigned, positive
-	switch unsafe.Sizeof(t) {
-	case 1:
-		*(*uint8)(unsafe.Pointer(&t)) = 0x80 // high bit set
-		return t < 0
-	case 2:
-		*(*uint16)(unsafe.Pointer(&t)) = 0x8000 // high bit set
-		return t < 0
-	case 4:
-		*(*uint32)(unsafe.Pointer(&t)) = 0x80000000 // high bit set
-		return t < 0
-	case 8:
-		*(*uint64)(unsafe.Pointer(&t)) = 0x8000000000000000 // high bit set
-		return t < 0
-	default:
-		return false
-	}
-}
-
-// isFloat returns true if T is a floating point type
-func isFloat[T Number]() bool {
-	// Use NaN property: NaN != NaN only for floats
-	switch unsafe.Sizeof(T(0)) {
-	case 4:
-		nanBits := uint32(0x7FC00000) // float32 NaN
-		nan := *(*T)(unsafe.Pointer(&nanBits))
-		return nan != nan
-	case 8:
-		nanBits := uint64(0x7FF8000000000000) // float64 NaN
-		nan := *(*T)(unsafe.Pointer(&nanBits))
-		return nan != nan
-	default:
-		return false
-	}
-}
 
 // Bools is a wrapper around a list of boolean values.
 type Bools struct {
@@ -238,7 +193,7 @@ func (b *Bools) Encode() []byte {
 }
 
 // Numbers represents a list of numbers
-type Numbers[I Number] struct {
+type Numbers[I typedetect.Number] struct {
 	data        []byte
 	sizeInBytes uint8 // 1, 2, 3, 4
 	len         int
@@ -248,7 +203,7 @@ type Numbers[I Number] struct {
 }
 
 // NewNumbers is used to create a holder for a list of numbers not decoded from an existing []byte stream.
-func NewNumbers[I Number]() *Numbers[I] {
+func NewNumbers[I typedetect.Number]() *Numbers[I] {
 	var t I
 	size := unsafe.Sizeof(t)
 	
@@ -258,8 +213,8 @@ func NewNumbers[I Number]() *Numbers[I] {
 	var ft field.Type
 	
 	// Determine characteristics using unsafe helpers
-	isFloatType = isFloat[I]()
-	isSigned := isSignedInteger[I]()
+	isFloatType = typedetect.IsFloat[I]()
+	isSigned := typedetect.IsSignedInteger[I]()
 	
 	// Create new instance directly (pools don't work with custom types)
 	n = &Numbers[I]{}
@@ -321,7 +276,7 @@ func wordsRequiredToStore(items, sizeInBytes int) int {
 }
 
 // NewNumbersFromBytes returns a new Number value.
-func NewNumbersFromBytes[I Number](data *[]byte, s *Struct) (*Numbers[I], error) {
+func NewNumbersFromBytes[I typedetect.Number](data *[]byte, s *Struct) (*Numbers[I], error) {
 	l := len(*data)
 	if l < 8 {
 		return nil, fmt.Errorf("header was < 64 bits")
@@ -341,7 +296,7 @@ func NewNumbersFromBytes[I Number](data *[]byte, s *Struct) (*Numbers[I], error)
 	var isFloatType bool
 	
 	// Determine characteristics using unsafe helpers
-	isFloatType = isFloat[I]()
+	isFloatType = typedetect.IsFloat[I]()
 	
 	// Create new instance directly (pools don't work with custom types)
 	n = &Numbers[I]{}

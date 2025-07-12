@@ -203,6 +203,8 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/test_claw_imports/trucks",
             FieldNum: 2,
             IsEnum: false,
+            
+            Mapping: trucks.XXXMappingTruck,
         },
         {
             Name: "Types",
