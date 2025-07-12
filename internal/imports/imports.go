@@ -482,17 +482,30 @@ func NewVendoredConfig(vendorDir string) *VendoredConfig {
 	}
 }
 
-// Abs overrides the base method to return paths within the vendor directory.
+// Abs returns the appropriate path for a package - either vendor or original location.
+// For local packages (within current git repository), returns their original source path.
+// For external packages, returns the path within the vendor directory.
 func (vc *VendoredConfig) Abs(p string) (string, error) {
-	// For vendored dependencies, return the path within the vendor directory
+	// Check if this is a local package (same logic as readVendored)
+	if vc.git != nil && vc.git.InRepo(p) {
+		// Local package - use original location, not vendor
+		return vc.Config.Abs(p)
+	}
+	
+	// External package - return vendor path
 	return filepath.Join(vc.vendorDir, p), nil
 }
 
-// InRootRepo is overridden for vendored configs to always return true,
-// preventing the writer from trying to do go get operations.
+// InRootRepo returns true for local packages and true for vendored external packages.
+// This prevents the writer from trying to do go get operations on either type.
 func (vc *VendoredConfig) InRootRepo(pkgPath string) bool {
-	// For vendored dependencies, we always consider them "in the root repo"
-	// to prevent the writer from trying to fetch them via go get
+	// Check if this is a local package (same logic as readVendored)
+	if vc.git != nil && vc.git.InRepo(pkgPath) {
+		// Local package - delegate to the base method for accurate result
+		return vc.Config.InRootRepo(pkgPath)
+	}
+	
+	// External vendored package - always return true to prevent go get
 	return true
 }
 
@@ -586,7 +599,9 @@ func (vc *VendoredConfig) Read(ctx context.Context, clawFilePath string) error {
 	return vc.populateExternals()
 }
 
-// readVendored reads a .claw file from the vendor directory instead of fetching it.
+// readVendored reads a .claw file from the vendor directory or local filesystem.
+// For local packages (within the current git repository), reads from their original location.
+// For external packages, reads from the vendor directory.
 func (vc *VendoredConfig) readVendored(ctx context.Context, pkgPath string) error {
 	// Check if already imported
 	if _, ok := vc.Imports[pkgPath]; ok {
@@ -601,7 +616,19 @@ func (vc *VendoredConfig) readVendored(ctx context.Context, pkgPath string) erro
 		}
 	}
 
-	// Read from vendor directory
+	// Check if this is a local package (same logic as Config.read)
+	if vc.git != nil && vc.git.InRepo(pkgPath) {
+		// This is a local package - read from its original location, not vendor
+		localPath := strings.Join(strings.Split(pkgPath, vc.git.Origin())[1:], "")
+		localPath = strings.TrimPrefix(localPath, "/")
+		localPath = filepath.Join(vc.git.Root(), localPath)
+		
+		log.Println("reading local (not from vendor): ", pkgPath)
+		return vc.readLocal(ctx, pkgPath, localPath)
+	}
+
+	// External package - read from vendor directory
+	log.Println("reading from vendor: ", pkgPath)
 	vendorPath := filepath.Join(vc.vendorDir, pkgPath)
 	clawFile, err := FindClawFile(vc.fs, vendorPath)
 	if err != nil {
@@ -632,6 +659,43 @@ func (vc *VendoredConfig) readVendored(ctx context.Context, pkgPath string) erro
 		}
 	}
 
+	return nil
+}
+
+// readLocal reads a local .claw file and processes its imports using vendored logic.
+// This is similar to Config.readLocal but uses readVendored for recursive imports
+// to maintain the vendor/local distinction.
+func (vc *VendoredConfig) readLocal(ctx context.Context, pkgPath, localPath string) error {
+	clawFile, err := FindClawFile(vc.fs, localPath)
+	if err != nil {
+		return err
+	}
+	log.Println("local clawfile is: ", clawFile)
+	content, err := vc.fs.ReadFile(clawFile)
+	if err != nil {
+		return fmt.Errorf("could not read package(%s) that is local to the git repo at path %q", pkgPath, clawFile)
+	}
+
+	file := idl.New()
+
+	if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), file); err != nil {
+		return fmt.Errorf("problem parsing Claw package %q: %w", pkgPath, err)
+	}
+
+	if err := file.Validate(); err != nil {
+		return fmt.Errorf("problem parsing Claw package %q: %w", pkgPath, err)
+	}
+
+	vc.Imports[pkgPath] = file
+	for _, imp := range file.Imports.Imports {
+		log.Printf("@readLocal(vendored): %#+v", imp.Path)
+		// Use readVendored to maintain vendor/local logic for recursive imports
+		ctx = AppendImports(ctx, pkgPath)
+		if err := vc.readVendored(ctx, imp.Path); err != nil {
+			return err
+		}
+	}
+	log.Println("I made it (vendored local)")
 	return nil
 }
 

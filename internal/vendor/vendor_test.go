@@ -24,7 +24,12 @@ type mockVCSGit struct {
 }
 
 func (m *mockVCSGit) InRepo(pkgPath string) bool {
-	return m.inRepo
+	// If inRepo is explicitly set for simple testing, use it
+	if m.origin == "" {
+		return m.inRepo
+	}
+	// Otherwise, use realistic logic like the real implementation
+	return strings.HasPrefix(pkgPath, m.origin)
 }
 
 func (m *mockVCSGit) Root() string {
@@ -897,5 +902,58 @@ Struct DepStruct {
 	vendorDir := filepath.Join(tempDir, "vendor")
 	if _, err := os.Stat(vendorDir); os.IsNotExist(err) {
 		t.Error("VendorDependencies(): vendor directory was not created")
+	}
+}
+
+// TestShouldVendorPackage tests the shouldVendorPackage function
+func TestShouldVendorPackage(t *testing.T) {
+	tests := []struct {
+		desc    string
+		pkgPath string
+		inRepo  bool
+		gitNil  bool
+		want    bool
+	}{
+		{
+			desc:    "External package should be vendored",
+			pkgPath: "github.com/external/package",
+			inRepo:  false,
+			gitNil:  false,
+			want:    true,
+		},
+		{
+			desc:    "Local package should NOT be vendored",
+			pkgPath: "github.com/bearlytools/claw/internal/package",
+			inRepo:  true,
+			gitNil:  false,
+			want:    false,
+		},
+		{
+			desc:    "No git available - fallback to vendor everything",
+			pkgPath: "github.com/example/package",
+			inRepo:  false, // irrelevant when git is nil
+			gitNil:  true,
+			want:    true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			vm := &VendorManager{}
+			
+			if !test.gitNil {
+				vm.git = &mockVCSGit{
+					inRepo: test.inRepo,
+					origin: "github.com/bearlytools/claw",
+				}
+			}
+
+			got := vm.shouldVendorPackage(test.pkgPath)
+
+			if got != test.want {
+				t.Errorf("shouldVendorPackage(%q) = %v, want %v (inRepo=%v, gitNil=%v)", 
+					test.pkgPath, got, test.want, test.inRepo, test.gitNil)
+			}
+		})
 	}
 }

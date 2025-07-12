@@ -44,6 +44,7 @@ type DependencyNode struct {
 	OriginalContent []byte // Store the original .claw file content
 	ModuleFile      *imports.Module
 	IsLeaf          bool
+	ShouldVendor    bool   // Whether this package should be vendored
 }
 
 // DependencyGraph represents the complete dependency graph.
@@ -252,6 +253,7 @@ func (vm *VendorManager) processClawFile(ctx context.Context, clawPath, version 
 		ClawFile:        idlFile,
 		OriginalContent: clawFile.Content, // Store original content
 		ModuleFile:      moduleFile,
+		ShouldVendor:    vm.shouldVendorPackage(pkgPath),
 	}
 
 	graph.Nodes[pkgPath] = node
@@ -302,6 +304,19 @@ func (vm *VendorManager) applyReplaceDirectives(pkgPath, version string, rootMod
 
 func (vm *VendorManager) isLocalPath(path string) bool {
 	return strings.HasPrefix(path, "/") || strings.HasPrefix(path, "./") || strings.HasPrefix(path, "../")
+}
+
+// shouldVendorPackage determines if a package should be vendored.
+// Returns false for packages within the current Git repository (local).
+// Returns true only for external dependencies that should be vendored.
+func (vm *VendorManager) shouldVendorPackage(pkgPath string) bool {
+	// If git is not available, fall back to vendoring everything
+	if vm.git == nil {
+		return true
+	}
+	
+	// Only vendor packages that are NOT in the current repository
+	return !vm.git.InRepo(pkgPath)
 }
 
 func (vm *VendorManager) getLocalClawFile(path string) (git.ClawFile, error) {
@@ -461,10 +476,12 @@ func (vm *VendorManager) createVendorStructure(ctx context.Context, graph *Depen
 		return fmt.Errorf("failed to create vendor directory: %w", err)
 	}
 
-	// Copy all dependencies to vendor directory
+	// Copy only external dependencies to vendor directory (skip local packages)
 	for pkgPath, node := range graph.Nodes {
-		if err := vm.vendorPackage(ctx, pkgPath, node, localReplace); err != nil {
-			return fmt.Errorf("failed to vendor package %s: %w", pkgPath, err)
+		if node.ShouldVendor {
+			if err := vm.vendorPackage(ctx, pkgPath, node, localReplace); err != nil {
+				return fmt.Errorf("failed to vendor package %s: %w", pkgPath, err)
+			}
 		}
 	}
 
