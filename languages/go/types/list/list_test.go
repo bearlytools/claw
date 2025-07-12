@@ -784,9 +784,6 @@ func TestStringsIterators(t *testing.T) {
 }
 
 func TestEnums(t *testing.T) {
-	// TODO: Custom enum types have issues with the underlying structs package
-	// These tests are disabled until the structs.NewNumbers function supports custom types
-	/*
 	// Test with uint8-based enum
 	t.Run("TestEnum_uint8", func(t *testing.T) {
 		testEnums(t, []TestEnum{TestEnumUnknown, TestEnumFirst, TestEnumSecond, TestEnumThird})
@@ -796,7 +793,6 @@ func TestEnums(t *testing.T) {
 	t.Run("TestEnumU16_uint16", func(t *testing.T) {
 		testEnums(t, []TestEnumU16{TestEnumU16Unknown, TestEnumU16Alpha, TestEnumU16Beta})
 	})
-	*/
 }
 
 func testEnums[E Enum](t *testing.T, testValues []E) {
@@ -881,9 +877,6 @@ func testEnums[E Enum](t *testing.T, testValues []E) {
 }
 
 func TestEnumsIterators(t *testing.T) {
-	// TODO: Custom enum types have issues with the underlying structs package
-	// These tests are disabled until the structs.NewNumbers function supports custom types
-	/*
 	// Test iterators with TestEnum (uint8)
 	list := NewEnums[TestEnum]().Append(TestEnumFirst, TestEnumSecond, TestEnumThird, TestEnumUnknown)
 
@@ -935,7 +928,6 @@ func TestEnumsIterators(t *testing.T) {
 			}
 		}
 	}
-	*/
 }
 
 // TestIteratorCompatibility tests Go 1.24 iterator functionality across all types

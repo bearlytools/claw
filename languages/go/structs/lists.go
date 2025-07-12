@@ -10,6 +10,7 @@ import (
 	"math"
 	"slices"
 	"sync/atomic"
+	"unsafe"
 
 	"golang.org/x/exp/constraints"
 
@@ -24,6 +25,46 @@ import (
 // Number represents all int, uint and float types.
 type Number interface {
 	constraints.Integer | constraints.Float
+}
+
+// isSignedInteger returns true if T is a signed integer type
+func isSignedInteger[T Number]() bool {
+	var t T
+	
+	// Set the high bit - if T is signed, this will be negative; if unsigned, positive
+	switch unsafe.Sizeof(t) {
+	case 1:
+		*(*uint8)(unsafe.Pointer(&t)) = 0x80 // high bit set
+		return t < 0
+	case 2:
+		*(*uint16)(unsafe.Pointer(&t)) = 0x8000 // high bit set
+		return t < 0
+	case 4:
+		*(*uint32)(unsafe.Pointer(&t)) = 0x80000000 // high bit set
+		return t < 0
+	case 8:
+		*(*uint64)(unsafe.Pointer(&t)) = 0x8000000000000000 // high bit set
+		return t < 0
+	default:
+		return false
+	}
+}
+
+// isFloat returns true if T is a floating point type
+func isFloat[T Number]() bool {
+	// Use NaN property: NaN != NaN only for floats
+	switch unsafe.Sizeof(T(0)) {
+	case 4:
+		nanBits := uint32(0x7FC00000) // float32 NaN
+		nan := *(*T)(unsafe.Pointer(&nanBits))
+		return nan != nan
+	case 8:
+		nanBits := uint64(0x7FF8000000000000) // float64 NaN
+		nan := *(*T)(unsafe.Pointer(&nanBits))
+		return nan != nan
+	default:
+		return false
+	}
 }
 
 // Bools is a wrapper around a list of boolean values.
@@ -209,64 +250,64 @@ type Numbers[I Number] struct {
 // NewNumbers is used to create a holder for a list of numbers not decoded from an existing []byte stream.
 func NewNumbers[I Number]() *Numbers[I] {
 	var t I
-
+	size := unsafe.Sizeof(t)
+	
 	var n *Numbers[I]
 	var sizeInBytes uint8
-	var isFloat bool
+	var isFloatType bool
 	var ft field.Type
-	switch any(t).(type) {
-	case uint8:
-		n = pool.Get(nUint8Pool).(*Numbers[I])
+	
+	// Determine characteristics using unsafe helpers
+	isFloatType = isFloat[I]()
+	isSigned := isSignedInteger[I]()
+	
+	// Create new instance directly (pools don't work with custom types)
+	n = &Numbers[I]{}
+	
+	switch size {
+	case 1:
+		if isSigned {
+			ft = field.FTListInt8
+		} else {
+			ft = field.FTListUint8
+		}
 		sizeInBytes = 1
-		ft = field.FTListUint8
-	case uint16:
-		n = pool.Get(nUint16Pool).(*Numbers[I])
+	case 2:
+		if isSigned {
+			ft = field.FTListInt16
+		} else {
+			ft = field.FTListUint16
+		}
 		sizeInBytes = 2
-		ft = field.FTListUint16
-	case uint32:
-		n = pool.Get(nUint32Pool).(*Numbers[I])
+	case 4:
+		if isFloatType {
+			ft = field.FTListFloat32
+		} else if isSigned {
+			ft = field.FTListInt32
+		} else {
+			ft = field.FTListUint32
+		}
 		sizeInBytes = 4
-		ft = field.FTListUint32
-	case uint64:
-		n = pool.Get(nUint64Pool).(*Numbers[I])
+	case 8:
+		if isFloatType {
+			ft = field.FTListFloat64
+		} else if isSigned {
+			ft = field.FTListInt64
+		} else {
+			ft = field.FTListUint64
+		}
 		sizeInBytes = 8
-		ft = field.FTListUint64
-	case int8:
-		n = pool.Get(nInt8Pool).(*Numbers[I])
-		sizeInBytes = 1
-		ft = field.FTListInt8
-	case int16:
-		n = pool.Get(nInt16Pool).(*Numbers[I])
-		sizeInBytes = 2
-		ft = field.FTListInt16
-	case int32:
-		n = pool.Get(nInt32Pool).(*Numbers[I])
-		sizeInBytes = 4
-		ft = field.FTListInt32
-	case int64:
-		n = pool.Get(nInt64Pool).(*Numbers[I])
-		sizeInBytes = 8
-		ft = field.FTListInt64
-	case float32:
-		n = pool.Get(nFloat32Pool).(*Numbers[I])
-		sizeInBytes = 4
-		isFloat = true
-		ft = field.FTListFloat32
-	case float64:
-		n = pool.Get(nFloat64Pool).(*Numbers[I])
-		sizeInBytes = 8
-		isFloat = true
-		ft = field.FTListFloat64
 	default:
-		panic(fmt.Sprintf("unsupported number type %T", t))
+		panic(fmt.Sprintf("unsupported number type %T (size: %d bytes)", t, size))
 	}
+	
 	h := NewGenericHeader()
 	h.SetFieldType(ft)
-
+	
 	n.sizeInBytes = sizeInBytes
-	n.isFloat = isFloat
+	n.isFloat = isFloatType
 	n.data = h
-
+	
 	return n
 }
 
@@ -293,48 +334,32 @@ func NewNumbersFromBytes[I Number](data *[]byte, s *Struct) (*Numbers[I], error)
 	}
 
 	var t I
+	size := unsafe.Sizeof(t)
 
 	var n *Numbers[I]
 	var sizeInBytes uint8
-	var isFloat bool
-	switch any(t).(type) {
-	case uint8:
-		n = pool.Get(nUint8Pool).(*Numbers[I])
+	var isFloatType bool
+	
+	// Determine characteristics using unsafe helpers
+	isFloatType = isFloat[I]()
+	
+	// Create new instance directly (pools don't work with custom types)
+	n = &Numbers[I]{}
+	
+	switch size {
+	case 1:
 		sizeInBytes = 1
-	case uint16:
-		n = pool.Get(nUint16Pool).(*Numbers[I])
+	case 2:
 		sizeInBytes = 2
-	case uint32:
-		n = pool.Get(nUint32Pool).(*Numbers[I])
+	case 4:
 		sizeInBytes = 4
-	case uint64:
-		n = pool.Get(nUint64Pool).(*Numbers[I])
+	case 8:
 		sizeInBytes = 8
-	case int8:
-		n = pool.Get(nInt8Pool).(*Numbers[I])
-		sizeInBytes = 1
-	case int16:
-		n = pool.Get(nInt16Pool).(*Numbers[I])
-		sizeInBytes = 2
-	case int32:
-		n = pool.Get(nInt32Pool).(*Numbers[I])
-		sizeInBytes = 4
-	case int64:
-		n = pool.Get(nInt64Pool).(*Numbers[I])
-		sizeInBytes = 8
-	case float32:
-		n = pool.Get(nFloat32Pool).(*Numbers[I])
-		sizeInBytes = 4
-		isFloat = true
-	case float64:
-		n = pool.Get(nFloat64Pool).(*Numbers[I])
-		sizeInBytes = 8
-		isFloat = true
 	default:
-		panic(fmt.Sprintf("unsupported number type %T", t))
+		panic(fmt.Sprintf("unsupported number type %T (size: %d bytes)", t, size))
 	}
 	n.sizeInBytes = sizeInBytes
-	n.isFloat = isFloat
+	n.isFloat = isFloatType
 
 	requiredWords := wordsRequiredToStore(int(items), int(n.sizeInBytes))
 
