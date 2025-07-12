@@ -44,7 +44,7 @@ func (l *GlobalReplace) ParseWith(ctx context.Context, p *halfpike.Parser) halfp
 	l.Replacement = line.Items[1].Val
 
 	if err := commentOrEOL(line, 2); err != nil {
-		return p.Errorf(err.Error())
+		return p.Errorf("%s", err.Error())
 	}
 
 	return l.FindNext

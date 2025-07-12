@@ -1,7 +1,6 @@
 package structs
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"testing"
@@ -79,7 +78,7 @@ func TestBoolGetSetAppendRange(t *testing.T) {
 	}
 
 	var i int
-	for got := range list.Range(context.Background(), 1, list.Len()-2) {
+	for got := range list.Range(1, list.Len()-2) {
 		i++
 		if got != values[i] {
 			t.Fatalf("TestBoolGetSetAppendRange(Range): index %d, got %v, want %v", i, got, values[i])
@@ -164,7 +163,7 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 	}
 
 	var i int
-	for got := range list.Range(context.Background(), 1, list.Len()-2) {
+	for got := range list.Range(1, list.Len()-2) {
 		i++
 		if got != values[i] {
 			t.Fatalf("TestNumberGetSetAppendRange(Range): index %d, got %d, want %d", i, got, values[i])
@@ -223,7 +222,7 @@ func TestNumberFloat(t *testing.T) {
 
 		i := 0
 		want := append(test.values, test.appendValues...)
-		for got := range list.Range(context.Background(), 0, list.Len()) {
+		for got := range list.Range(0, list.Len()) {
 			if got != want[i] {
 				t.Fatalf("TestNumberFloat: index %d, got %v, want %v", i, got, want[i])
 			}
@@ -293,7 +292,7 @@ func TestBytes(t *testing.T) {
 
 	want := values[1 : len(values)-1]
 	i := 0
-	for got := range list.Range(context.Background(), 1, list.Len()-1) {
+	for got := range list.Range(1, list.Len()-1) {
 		if string(got) != want[i] {
 			t.Fatalf("TestBytes(Range): index %d, got %s, want %s", i, got, want[i])
 		}

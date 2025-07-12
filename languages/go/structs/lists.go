@@ -2,12 +2,13 @@ package structs
 
 import (
 	"bytes"
-	"context"
 	stdbinary "encoding/binary"
 	"fmt"
 	"io"
+	"iter"
 	"log"
 	"math"
+	"slices"
 	"sync/atomic"
 
 	"golang.org/x/exp/constraints"
@@ -96,42 +97,33 @@ func (b *Bools) Get(index int) bool {
 	return bits.GetBit(i, uint8(indexInSlice))
 }
 
-// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
-// Range until the returned channel closes or cancel the Context passed. Otherwise
-// you will have a goroutine leak.
-func (b *Bools) Range(ctx context.Context, from, to int) chan bool {
-	if b.len == 0 {
-		ch := make(chan bool)
-		close(ch)
-		return ch
-	}
-	if from > b.len-1 {
-		panic("Range 'from' argument is out of bounds")
-	}
-	if to > b.len {
-		panic("Range 'to' is out of bounds")
-	}
-	if from >= to {
-		panic("Range 'to' cannot be >= to 'from'")
-	}
+// All returns an iterator over all boolean values in the list.
+func (b *Bools) All() iter.Seq[bool] {
+	return b.Range(0, b.len)
+}
 
-	ch := make(chan bool, 1)
-
-	go func() {
-		defer close(ch)
+// Range ranges from "from" (inclusive) to "to" (exclusive).
+func (b *Bools) Range(from, to int) iter.Seq[bool] {
+	return func(yield func(bool) bool) {
+		if b.len == 0 {
+			return
+		}
+		if from > b.len-1 {
+			panic("Range 'from' argument is out of bounds")
+		}
+		if to > b.len {
+			panic("Range 'to' is out of bounds")
+		}
+		if from >= to {
+			panic("Range 'to' cannot be >= to 'from'")
+		}
 
 		for index := from; index < to; index++ {
-			result := b.Get(index)
-
-			select {
-			case <-ctx.Done():
+			if !yield(b.Get(index)) {
 				return
-			case ch <- result:
 			}
 		}
-	}()
-
-	return ch
+	}
 }
 
 // Set a boolean in position "pos" to "val".
@@ -192,12 +184,7 @@ func (b *Bools) Slice() []bool {
 	if b.len == 0 {
 		return nil
 	}
-	sl := make([]bool, b.len)
-
-	for i := 0; i < b.len; i++ {
-		sl[i] = b.Get(i)
-	}
-	return sl
+	return slices.Collect(b.All())
 }
 
 // Encode returns the []byte to write to output to represent this Bool. If it returns nil,
@@ -409,42 +396,33 @@ func (n *Numbers[I]) Get(index int) I {
 	panic("should never get here")
 }
 
-// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
-// Range until the returned channel closes or cancel the Context passed. Otherwise
-// you will have a goroutine leak.
-func (n *Numbers[I]) Range(ctx context.Context, from, to int) chan I {
-	if n.len == 0 {
-		ch := make(chan I)
-		close(ch)
-		return ch
-	}
-	if from > n.len-1 {
-		panic("Range 'from' argument is out of bounds")
-	}
-	if to > n.len {
-		panic("Range 'to' is out of bounds")
-	}
-	if from >= to {
-		panic("Range 'to' cannot be >= to 'from'")
-	}
+// All returns an iterator over all numeric values in the list.
+func (n *Numbers[I]) All() iter.Seq[I] {
+	return n.Range(0, n.len)
+}
 
-	ch := make(chan I, 1)
-
-	go func() {
-		defer close(ch)
+// Range ranges from "from" (inclusive) to "to" (exclusive).
+func (n *Numbers[I]) Range(from, to int) iter.Seq[I] {
+	return func(yield func(I) bool) {
+		if n.len == 0 {
+			return
+		}
+		if from > n.len-1 {
+			panic("Range 'from' argument is out of bounds")
+		}
+		if to > n.len {
+			panic("Range 'to' is out of bounds")
+		}
+		if from >= to {
+			panic("Range 'to' cannot be >= to 'from'")
+		}
 
 		for index := from; index < to; index++ {
-			result := n.Get(index)
-
-			select {
-			case <-ctx.Done():
+			if !yield(n.Get(index)) {
 				return
-			case ch <- result:
 			}
 		}
-	}()
-
-	return ch
+	}
 }
 
 // Set a number in position "index" to "value".
@@ -516,12 +494,7 @@ func (n *Numbers[I]) Slice() []I {
 	if n.len == 0 {
 		return nil
 	}
-
-	s := make([]I, n.len)
-	for v := range n.Range(context.Background(), 0, n.len) {
-		s = append(s, v)
-	}
-	return s
+	return slices.Collect(n.All())
 }
 
 // Encode returns the []byte to write to output to represent this Number. If it returns nil,
@@ -612,14 +585,6 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	return b, nil
 }
 
-// Reset resets all the internal fields to their zero value.
-func (b *Bytes) Reset() {
-	b.header = nil
-	b.data = nil
-	b.s = nil
-	b.dataSize = 0
-}
-
 // Len returns the number of items in the list.
 func (b *Bytes) Len() int {
 	return len(b.data)
@@ -638,42 +603,34 @@ func (b *Bytes) Get(index int) []byte {
 	return b.data[index][4:]
 }
 
-// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
-// Range until the returned channel closes or cancel the Context passed. Otherwise
-// you will have a goroutine leak. You should NOT modify the returned []byte slice.
-func (b *Bytes) Range(ctx context.Context, from, to int) chan []byte {
-	if b.Len() == 0 {
-		ch := make(chan []byte)
-		close(ch)
-		return ch
-	}
-	if from > b.Len()-1 {
-		panic("Range 'from' argument is out of bounds")
-	}
-	if to > b.Len() {
-		panic("Range 'to' is out of bounds")
-	}
-	if from >= to {
-		panic("Range 'to' cannot be >= to 'from'")
-	}
+// All returns an iterator over all byte slices in the list.
+// You should NOT modify the returned []byte slices.
+func (b *Bytes) All() iter.Seq[[]byte] {
+	return b.Range(0, b.Len())
+}
 
-	ch := make(chan []byte, 1)
-
-	go func() {
-		defer close(ch)
+// Range ranges from "from" (inclusive) to "to" (exclusive).
+func (b *Bytes) Range(from, to int) iter.Seq[[]byte] {
+	return func(yield func([]byte) bool) {
+		if b.Len() == 0 {
+			return
+		}
+		if from > b.Len()-1 {
+			panic("Range 'from' argument is out of bounds")
+		}
+		if to > b.Len() {
+			panic("Range 'to' is out of bounds")
+		}
+		if from >= to {
+			panic("Range 'to' cannot be >= to 'from'")
+		}
 
 		for index := from; index < to; index++ {
-			result := b.Get(index)
-
-			select {
-			case <-ctx.Done():
+			if !yield(b.Get(index)) {
 				return
-			case ch <- result:
 			}
 		}
-	}()
-
-	return ch
+	}
 }
 
 // Set a number in position "index" to "value".
@@ -793,12 +750,6 @@ func (s Strings) Bytes() *Bytes {
 	return s.l
 }
 
-// Reset resets all the internal fields to their zero value. Slices are not nilled, but are
-// set to their zero size to hold the capacity.
-func (s Strings) Reset() {
-	s.l.Reset()
-}
-
 // Len returns the number of items in the list.
 func (s Strings) Len() int {
 	return s.l.Len()
@@ -813,23 +764,20 @@ func (s Strings) Get(index int) string {
 	return conversions.ByteSlice2String(b)
 }
 
-// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
-// Range until the returned channel closes or cancel the Context passed. Otherwise
-// you will have a goroutine leak. You should NOT modify the returned []byte slice.
-func (s Strings) Range(ctx context.Context, from, to int) chan string {
-	ch := make(chan string, 1)
+// All returns an iterator over all strings in the list.
+func (s Strings) All() iter.Seq[string] {
+	return s.Range(0, s.Len())
+}
 
-	go func() {
-		defer close(ch)
-		for b := range s.l.Range(ctx, from, to) {
-			select {
-			case <-ctx.Done():
+// Range ranges from "from" (inclusive) to "to" (exclusive).
+func (s Strings) Range(from, to int) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for b := range s.l.Range(from, to) {
+			if !yield(conversions.ByteSlice2String(b)) {
 				return
-			case ch <- conversions.ByteSlice2String(b):
 			}
 		}
-	}()
-	return ch
+	}
 }
 
 // Set a number in position "index" to "value".
@@ -850,17 +798,10 @@ func (s Strings) Append(values ...string) {
 // []string or calling b.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
 func (s Strings) Slice() []string {
-	length := s.l.Len()
-	if length == 0 {
+	if s.l.Len() == 0 {
 		return nil
 	}
-	x := make([]string, length)
-	index := 0
-	for v := range s.Range(context.Background(), 0, length) {
-		x[index] = v
-		index++
-	}
-	return x
+	return slices.Collect(s.All())
 }
 
 // Structs represents a list of Struct.
@@ -969,42 +910,33 @@ func (s *Structs) Get(index int) *Struct {
 	return s.data[index]
 }
 
-// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
-// Range until the returned channel closes or cancel the Context passed. Otherwise
-// you will have a goroutine leak.
-func (s *Structs) Range(ctx context.Context, from, to int) chan *Struct {
-	if s.Len() == 0 {
-		ch := make(chan *Struct)
-		close(ch)
-		return ch
-	}
-	if from > s.Len()-1 {
-		panic("Range 'from' argument is out of bounds")
-	}
-	if to > s.Len() {
-		panic("Range 'to' is out of bounds")
-	}
-	if from >= to {
-		panic("Range 'to' cannot be >= to 'from'")
-	}
+// All returns an iterator over all structs in the list.
+func (s *Structs) All() iter.Seq[*Struct] {
+	return s.Range(0, s.Len())
+}
 
-	ch := make(chan *Struct, 1)
-
-	go func() {
-		defer close(ch)
+// Range ranges from "from" (inclusive) to "to" (exclusive).
+func (s *Structs) Range(from, to int) iter.Seq[*Struct] {
+	return func(yield func(*Struct) bool) {
+		if s.Len() == 0 {
+			return
+		}
+		if from > s.Len()-1 {
+			panic("Range 'from' argument is out of bounds")
+		}
+		if to > s.Len() {
+			panic("Range 'to' is out of bounds")
+		}
+		if from >= to {
+			panic("Range 'to' cannot be >= to 'from'")
+		}
 
 		for index := from; index < to; index++ {
-			result := s.Get(index)
-
-			select {
-			case <-ctx.Done():
+			if !yield(s.Get(index)) {
 				return
-			case ch <- result:
 			}
 		}
-	}()
-
-	return ch
+	}
 }
 
 // Set a number in position "index" to "value".

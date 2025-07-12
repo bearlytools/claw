@@ -2,7 +2,6 @@ package value
 
 import (
 	"fmt"
-	"iter"
 	"log"
 	"strings"
 	"sync"
@@ -653,22 +652,10 @@ func (s StructImpl) New() interfaces.Struct {
 
 func (s StructImpl) ClawInternal(pragma.DoNotImplement) {}
 
-// Fields returns an iterator over all field descriptors and values in the struct.
-func (s StructImpl) Fields() iter.Seq2[interfaces.FieldDescr, interfaces.Value] {
-	return func(yield func(interfaces.FieldDescr, interfaces.Value) bool) {
-		for _, fdescr := range s.descr.Fields() {
-			if !yield(fdescr, s.Get(fdescr)) {
-				return
-			}
-		}
-	}
-}
-
-// Range iterates over fields using a callback function (legacy method).
-// Consider using Fields() for better composability with Go 1.24 iterators.
 func (s StructImpl) Range(f func(interfaces.FieldDescr, interfaces.Value) bool) {
-	for fdescr, value := range s.Fields() {
-		if !f(fdescr, value) {
+	for _, fdescr := range s.descr.Fields() {
+		ok := f(fdescr, s.Get(fdescr))
+		if !ok {
 			return
 		}
 	}
