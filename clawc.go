@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -15,7 +16,6 @@ import (
 	_ "github.com/bearlytools/claw/internal/render/golang"
 	"github.com/bearlytools/claw/internal/vendor"
 	"github.com/bearlytools/claw/internal/writer"
-	"github.com/gostdlib/base/context"
 )
 
 func main() {
@@ -68,27 +68,36 @@ func main() {
 	}
 
 	// Step 3: Compile dependencies in order
+	originalClawFile := clawFile // Preserve the original file path
 	for _, pkgPath := range compilationOrder {
 		// Skip the root package for now - we'll compile it separately at the end
-		if strings.Contains(pkgPath, clawFile) {
+		if strings.Contains(pkgPath, originalClawFile) {
 			continue
 		}
 
-		vendorPkgDir := vendorManager.GetVendorPath(pkgPath)
-		// Find the .claw file in the vendor directory for this package
-		clawFile, err = findClawFileInDir(vendorPkgDir)
-		if err != nil {
-			exitf("failed to find .claw file in vendor directory %s: %s", vendorPkgDir, err)
-		}
+		// Check if this is a local dependency (within current git repo) or external
+		if isLocalDependency(vendorManager, pkgPath) {
+			// Local dependency - compile from the actual repository location
+			if compileErr := compileLocalDependency(ctx, vendorManager, pkgPath); compileErr != nil {
+				exitf("failed to compile local dependency %s: %s", pkgPath, compileErr)
+			}
+		} else {
+			// External dependency - compile from vendor directory
+			vendorPkgDir := vendorManager.GetVendorPath(pkgPath)
+			vendorClawFile, err := findClawFileInDir(vendorPkgDir)
+			if err != nil {
+				exitf("failed to find .claw file in vendor directory %s: %s", vendorPkgDir, err)
+			}
 
-		if compileErr := compileDependency(ctx, clawFile); compileErr != nil {
-			exitf("failed to compile dependency %s: %s", pkgPath, compileErr)
+			if compileErr := compileDependency(ctx, vendorClawFile); compileErr != nil {
+				exitf("failed to compile dependency %s: %s", pkgPath, compileErr)
+			}
 		}
 	}
 
 	// Step 4: Compile the main file using vendored dependencies
 	vendoredConfig := imports.NewVendoredConfig(vendorManager.GetVendorPath(""))
-	if readErr := vendoredConfig.Read(ctx, clawFile); readErr != nil {
+	if readErr := vendoredConfig.Read(ctx, originalClawFile); readErr != nil {
 		exitf("error: %s\n", readErr)
 	}
 
@@ -131,6 +140,64 @@ func compileDependency(ctx context.Context, vendorClawFile string) error {
 	}
 
 	return nil
+}
+
+// compileLocalDependency compiles a local dependency that's within the current git repository.
+func compileLocalDependency(ctx context.Context, vendorManager *vendor.VendorManager, pkgPath string) error {
+	// For local dependencies, we need to find the actual file system path
+	// and compile it directly without using vendor directory
+
+	// Get the git repo root
+	repoRoot := vendorManager.GetRepoRoot()
+
+	// Convert package path to file system path relative to repo root
+	// For github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers
+	// We want testing/imports/vehicles/claw/manufacturers
+	gitOrigin := vendorManager.GetGitOrigin()
+	if !strings.HasPrefix(pkgPath, gitOrigin) {
+		return fmt.Errorf("package path %s does not start with git origin %s", pkgPath, gitOrigin)
+	}
+
+	relPath := strings.TrimPrefix(pkgPath, gitOrigin+"/")
+	localPath := filepath.Join(repoRoot, relPath)
+
+	// Find the .claw file in the local directory
+	clawFile, err := findClawFileInDir(localPath)
+	if err != nil {
+		return fmt.Errorf("failed to find .claw file in local directory %s: %w", localPath, err)
+	}
+
+	// Create a regular config (not vendored) for local dependencies
+	config := &imports.Config{}
+	if err := config.Read(ctx, clawFile); err != nil {
+		return fmt.Errorf("error reading local dependency config: %w", err)
+	}
+
+	rendered, err := render.Render(ctx, config, render.Go)
+	if err != nil {
+		return fmt.Errorf("error rendering local dependency: %w", err)
+	}
+
+	wr, err := writer.New(config)
+	if err != nil {
+		return fmt.Errorf("error creating writer for local dependency: %w", err)
+	}
+
+	if err := wr.Write(ctx, rendered); err != nil {
+		return fmt.Errorf("error writing local dependency: %w", err)
+	}
+
+	return nil
+}
+
+// isLocalDependency checks if a package is within the current git repository
+func isLocalDependency(vendorManager *vendor.VendorManager, pkgPath string) bool {
+	origin := vendorManager.GetGitOrigin()
+	if origin == "" {
+		// No git info available, assume external
+		return false
+	}
+	return strings.HasPrefix(pkgPath, origin)
 }
 
 // findClawFileInDir finds the .claw file in a directory.

@@ -19,17 +19,17 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             {{- if $field.SelfReferential }}
             SelfReferential: true,
             {{- end }}
-            {{- if eq $field.TypeAsString "Struct" }}
+            {{- if eq $field.TypeAsString "struct" }}
             StructName: "{{ $field.IdentName }}",
             {{- end }}
             {{- if $field.IsEnum }}
             EnumGroup: "{{ $field.IdentName }}",
             {{- end }}
-            {{- if or (eq $field.TypeAsString "Struct") (eq $field.TypeAsString "ListStruct") }}
-            {{ if $field.IsExternal }}
+            {{- if and $field.IdentName (or (eq $field.TypeAsString "struct") (eq $field.TypeAsString "structs") (eq $field.TypeAsString "[]structs")) }}
+            {{- if $field.IsExternal }}
             Mapping: {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }},
             {{- else }}
-            Mapping: Mapping{{ $field.IdentName }},
+            Mapping: XXXMapping{{ $field.IdentInFile }},
             {{- end }}
             {{- end }}
         },

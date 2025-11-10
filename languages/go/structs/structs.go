@@ -9,13 +9,13 @@ import (
 	"io"
 	"log"
 	"math"
+	"reflect"
 	"sync/atomic"
 	"unsafe"
 
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
-	"github.com/bearlytools/claw/internal/typedetect"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/reflect/enums"
@@ -26,9 +26,6 @@ const (
 	// maxDataSize is the max number that can fit into the dataSize field, which is 40 bits.
 	maxDataSize = 1099511627775
 )
-
-// Number represents all int, uint and float types.
-type Number = typedetect.Number
 
 // GenericHeader is the header of struct.
 type GenericHeader = header.Generic
@@ -1149,46 +1146,142 @@ func validateFieldNum(fieldNum uint16, maps *mapping.Map, ftypes ...field.Type) 
 
 func numberToDescCheck[N Number](desc *mapping.FieldDescr) (size uint8, isFloat bool, err error) {
 	var t N
-	typeSize := unsafe.Sizeof(t)
-	
-	// Determine characteristics using unsafe helpers
-	isFloatType := typedetect.IsFloat[N]()
-	isSigned := typedetect.IsSignedInteger[N]()
-	
-	// Map size and characteristics to field types and validate
-	switch typeSize {
-	case 1:
-		if isSigned {
-			switch desc.Type {
-			case field.FTInt8, field.FTListInt8:
-			default:
-				return 0, false, fmt.Errorf("fieldNum is not a int8 or []int8 type, was %v", desc.Type)
-			}
-		} else {
+
+	// Try exact type match first (for basic types)
+	switch any(t).(type) {
+	case uint8:
+		switch desc.Type {
+		case field.FTUint8, field.FTListUint8:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint8 or []uint8 type, was %v", desc.Type)
+		}
+		size = 8
+	case uint16:
+		switch desc.Type {
+		case field.FTUint16, field.FTListUint16:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint16 or []uint16 type, was %v", desc.Type)
+		}
+		size = 16
+	case uint32:
+		switch desc.Type {
+		case field.FTUint32, field.FTListUint32:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint32 or []uint32 type, was %v", desc.Type)
+		}
+		size = 32
+	case uint64:
+		switch desc.Type {
+		case field.FTUint64, field.FTListUint64:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a uint64 or []uint64 type, was %v", desc.Type)
+		}
+		size = 64
+	case int8:
+		switch desc.Type {
+		case field.FTInt8, field.FTListInt8:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int8 or []int8 type, was %v", desc.Type)
+		}
+		size = 8
+	case int16:
+		switch desc.Type {
+		case field.FTInt16, field.FTListInt16:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int16 or []int16 type, was %v", desc.Type)
+		}
+		size = 16
+	case int32:
+		switch desc.Type {
+		case field.FTInt32, field.FTListInt32:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int32 or []int32 type, was %v", desc.Type)
+		}
+		size = 32
+	case int64:
+		switch desc.Type {
+		case field.FTInt64, field.FTListInt64:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a int64 or []int64 type, was %v", desc.Type)
+		}
+		size = 64
+	case float32:
+		switch desc.Type {
+		case field.FTFloat32, field.FTListFloat32:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a float32 or []float32 type, was %v", desc.Type)
+		}
+		size = 32
+		isFloat = true
+	case float64:
+		switch desc.Type {
+		case field.FTFloat64, field.FTListFloat64:
+		default:
+			return 0, false, fmt.Errorf("fieldNum is not a float64 or []float64 type, was %v", desc.Type)
+		}
+		size = 64
+		isFloat = true
+	default:
+		// For custom types (like enums), use reflection to get the underlying type
+		rv := reflect.ValueOf(t)
+		switch rv.Kind() {
+		case reflect.Uint8:
 			switch desc.Type {
 			case field.FTUint8, field.FTListUint8:
 			default:
 				return 0, false, fmt.Errorf("fieldNum is not a uint8 or []uint8 type, was %v", desc.Type)
 			}
-		}
-		size = 8
-	case 2:
-		if isSigned {
-			switch desc.Type {
-			case field.FTInt16, field.FTListInt16:
-			default:
-				return 0, false, fmt.Errorf("fieldNum is not a int16 or []int16 type, was %v", desc.Type)
-			}
-		} else {
+			size = 8
+		case reflect.Uint16:
 			switch desc.Type {
 			case field.FTUint16, field.FTListUint16:
 			default:
 				return 0, false, fmt.Errorf("fieldNum is not a uint16 or []uint16 type, was %v", desc.Type)
 			}
-		}
-		size = 16
-	case 4:
-		if isFloatType {
+			size = 16
+		case reflect.Uint32:
+			switch desc.Type {
+			case field.FTUint32, field.FTListUint32:
+			default:
+				return 0, false, fmt.Errorf("fieldNum is not a uint32 or []uint32 type, was %v", desc.Type)
+			}
+			size = 32
+		case reflect.Uint64:
+			switch desc.Type {
+			case field.FTUint64, field.FTListUint64:
+			default:
+				return 0, false, fmt.Errorf("fieldNum is not a uint64 or []uint64 type, was %v", desc.Type)
+			}
+			size = 64
+		case reflect.Int8:
+			switch desc.Type {
+			case field.FTInt8, field.FTListInt8:
+			default:
+				return 0, false, fmt.Errorf("fieldNum is not a int8 or []int8 type, was %v", desc.Type)
+			}
+			size = 8
+		case reflect.Int16:
+			switch desc.Type {
+			case field.FTInt16, field.FTListInt16:
+			default:
+				return 0, false, fmt.Errorf("fieldNum is not a int16 or []int16 type, was %v", desc.Type)
+			}
+			size = 16
+		case reflect.Int32:
+			switch desc.Type {
+			case field.FTInt32, field.FTListInt32:
+			default:
+				return 0, false, fmt.Errorf("fieldNum is not a int32 or []int32 type, was %v", desc.Type)
+			}
+			size = 32
+		case reflect.Int64:
+			switch desc.Type {
+			case field.FTInt64, field.FTListInt64:
+			default:
+				return 0, false, fmt.Errorf("fieldNum is not a int64 or []int64 type, was %v", desc.Type)
+			}
+			size = 64
+		case reflect.Float32:
 			switch desc.Type {
 			case field.FTFloat32, field.FTListFloat32:
 			default:
@@ -1196,23 +1289,7 @@ func numberToDescCheck[N Number](desc *mapping.FieldDescr) (size uint8, isFloat 
 			}
 			size = 32
 			isFloat = true
-		} else if isSigned {
-			switch desc.Type {
-			case field.FTInt32, field.FTListInt32:
-			default:
-				return 0, false, fmt.Errorf("fieldNum is not a int32 or []int32 type, was %v", desc.Type)
-			}
-			size = 32
-		} else {
-			switch desc.Type {
-			case field.FTUint32, field.FTListUint32:
-			default:
-				return 0, false, fmt.Errorf("fieldNum is not a uint32 or []uint32 type, was %v", desc.Type)
-			}
-			size = 32
-		}
-	case 8:
-		if isFloatType {
+		case reflect.Float64:
 			switch desc.Type {
 			case field.FTFloat64, field.FTListFloat64:
 			default:
@@ -1220,23 +1297,9 @@ func numberToDescCheck[N Number](desc *mapping.FieldDescr) (size uint8, isFloat 
 			}
 			size = 64
 			isFloat = true
-		} else if isSigned {
-			switch desc.Type {
-			case field.FTInt64, field.FTListInt64:
-			default:
-				return 0, false, fmt.Errorf("fieldNum is not a int64 or []int64 type, was %v", desc.Type)
-			}
-			size = 64
-		} else {
-			switch desc.Type {
-			case field.FTUint64, field.FTListUint64:
-			default:
-				return 0, false, fmt.Errorf("fieldNum is not a uint64 or []uint64 type, was %v", desc.Type)
-			}
-			size = 64
+		default:
+			return 0, false, fmt.Errorf("passed a number value of %T (kind: %v) that we do not support", t, rv.Kind())
 		}
-	default:
-		return 0, false, fmt.Errorf("passed a number value of %T that we do not support (size: %d bytes)", t, typeSize)
 	}
 	return size, isFloat, nil
 }

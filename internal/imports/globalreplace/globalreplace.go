@@ -1,7 +1,7 @@
 package globalreplace
 
 import (
-	"github.com/gostdlib/base/context"
+	"context"
 	"fmt"
 	"strings"
 

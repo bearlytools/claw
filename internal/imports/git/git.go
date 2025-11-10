@@ -1,7 +1,7 @@
 package git
 
 import (
-	"github.com/gostdlib/base/context"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"log"

@@ -663,3 +663,19 @@ func (vm *VendorManager) GetVendorPath(pkgPath string) string {
 	}
 	return filepath.Join(vm.vendorDir, pkgPath)
 }
+
+// GetRepoRoot returns the root directory of the git repository
+func (vm *VendorManager) GetRepoRoot() string {
+	if vm.git != nil {
+		return vm.git.Root()
+	}
+	return vm.rootDir
+}
+
+// GetGitOrigin returns the git origin URL (e.g., "github.com/bearlytools/claw")
+func (vm *VendorManager) GetGitOrigin() string {
+	if vm.git != nil {
+		return vm.git.Origin()
+	}
+	return ""
+}

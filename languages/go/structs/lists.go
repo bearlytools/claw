@@ -2,26 +2,29 @@ package structs
 
 import (
 	"bytes"
+	"context"
 	stdbinary "encoding/binary"
 	"fmt"
 	"io"
-	"iter"
 	"log"
 	"math"
-	"slices"
+	"reflect"
 	"sync/atomic"
-	"unsafe"
+
+	"golang.org/x/exp/constraints"
 
 	"github.com/bearlytools/claw/internal/binary"
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/internal/conversions"
-	"github.com/bearlytools/claw/internal/typedetect"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/structs/header"
-	"github.com/gostdlib/base/context"
 )
 
+// Number represents all int, uint and float types.
+type Number interface {
+	constraints.Integer | constraints.Float
+}
 
 // Bools is a wrapper around a list of boolean values.
 type Bools struct {
@@ -33,7 +36,7 @@ type Bools struct {
 
 // NewBools creates a new Bool that will be stored in a Struct field.
 func NewBools(fieldNum uint16) *Bools {
-	b := boolPool.Get(context.Background())
+	b := pool.Get(boolPool).(*Bools)
 
 	h := NewGenericHeader()
 	h.SetFieldNum(fieldNum)
@@ -63,7 +66,7 @@ func NewBoolsFromBytes(data *[]byte, s *Struct) (GenericHeader, *Bools, error) {
 	}
 	rightBound := (8 * wordsNeeded) + 8
 	sl := (*data)[0:rightBound]
-	b := boolPool.Get(context.Background())
+	b := pool.Get(boolPool).(*Bools)
 
 	b.data = sl
 	b.len = int(items)
@@ -94,33 +97,42 @@ func (b *Bools) Get(index int) bool {
 	return bits.GetBit(i, uint8(indexInSlice))
 }
 
-// All returns an iterator over all boolean values in the list.
-func (b *Bools) All() iter.Seq[bool] {
-	return b.Range(0, b.len)
-}
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (b *Bools) Range(ctx context.Context, from, to int) chan bool {
+	if b.len == 0 {
+		ch := make(chan bool)
+		close(ch)
+		return ch
+	}
+	if from > b.len-1 {
+		panic("Range 'from' argument is out of bounds")
+	}
+	if to > b.len {
+		panic("Range 'to' is out of bounds")
+	}
+	if from >= to {
+		panic("Range 'to' cannot be >= to 'from'")
+	}
 
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (b *Bools) Range(from, to int) iter.Seq[bool] {
-	return func(yield func(bool) bool) {
-		if b.len == 0 {
-			return
-		}
-		if from > b.len-1 {
-			panic("Range 'from' argument is out of bounds")
-		}
-		if to > b.len {
-			panic("Range 'to' is out of bounds")
-		}
-		if from >= to {
-			panic("Range 'to' cannot be >= to 'from'")
-		}
+	ch := make(chan bool, 1)
+
+	go func() {
+		defer close(ch)
 
 		for index := from; index < to; index++ {
-			if !yield(b.Get(index)) {
+			result := b.Get(index)
+
+			select {
+			case <-ctx.Done():
 				return
+			case ch <- result:
 			}
 		}
-	}
+	}()
+
+	return ch
 }
 
 // Set a boolean in position "pos" to "val".
@@ -181,7 +193,12 @@ func (b *Bools) Slice() []bool {
 	if b.len == 0 {
 		return nil
 	}
-	return slices.Collect(b.All())
+	sl := make([]bool, b.len)
+
+	for i := 0; i < b.len; i++ {
+		sl[i] = b.Get(i)
+	}
+	return sl
 }
 
 // Encode returns the []byte to write to output to represent this Bool. If it returns nil,
@@ -194,7 +211,7 @@ func (b *Bools) Encode() []byte {
 }
 
 // Numbers represents a list of numbers
-type Numbers[I typedetect.Number] struct {
+type Numbers[I Number] struct {
 	data        []byte
 	sizeInBytes uint8 // 1, 2, 3, 4
 	len         int
@@ -204,66 +221,106 @@ type Numbers[I typedetect.Number] struct {
 }
 
 // NewNumbers is used to create a holder for a list of numbers not decoded from an existing []byte stream.
-func NewNumbers[I typedetect.Number]() *Numbers[I] {
+func NewNumbers[I Number]() *Numbers[I] {
 	var t I
-	size := unsafe.Sizeof(t)
-	
+
 	var n *Numbers[I]
 	var sizeInBytes uint8
-	var isFloatType bool
+	var isFloat bool
 	var ft field.Type
-	
-	// Determine characteristics using unsafe helpers
-	isFloatType = typedetect.IsFloat[I]()
-	isSigned := typedetect.IsSignedInteger[I]()
-	
-	// Create new instance directly (pools don't work with custom types)
-	n = &Numbers[I]{}
-	
-	switch size {
-	case 1:
-		if isSigned {
-			ft = field.FTListInt8
-		} else {
-			ft = field.FTListUint8
-		}
+
+	// Check if we can use the pool (only for basic types)
+	switch any(t).(type) {
+	case uint8:
+		n = pool.Get(nUint8Pool).(*Numbers[I])
 		sizeInBytes = 1
-	case 2:
-		if isSigned {
-			ft = field.FTListInt16
-		} else {
-			ft = field.FTListUint16
-		}
+		ft = field.FTListUint8
+	case uint16:
+		n = pool.Get(nUint16Pool).(*Numbers[I])
 		sizeInBytes = 2
-	case 4:
-		if isFloatType {
-			ft = field.FTListFloat32
-		} else if isSigned {
-			ft = field.FTListInt32
-		} else {
-			ft = field.FTListUint32
-		}
+		ft = field.FTListUint16
+	case uint32:
+		n = pool.Get(nUint32Pool).(*Numbers[I])
 		sizeInBytes = 4
-	case 8:
-		if isFloatType {
-			ft = field.FTListFloat64
-		} else if isSigned {
-			ft = field.FTListInt64
-		} else {
-			ft = field.FTListUint64
-		}
+		ft = field.FTListUint32
+	case uint64:
+		n = pool.Get(nUint64Pool).(*Numbers[I])
 		sizeInBytes = 8
+		ft = field.FTListUint64
+	case int8:
+		n = pool.Get(nInt8Pool).(*Numbers[I])
+		sizeInBytes = 1
+		ft = field.FTListInt8
+	case int16:
+		n = pool.Get(nInt16Pool).(*Numbers[I])
+		sizeInBytes = 2
+		ft = field.FTListInt16
+	case int32:
+		n = pool.Get(nInt32Pool).(*Numbers[I])
+		sizeInBytes = 4
+		ft = field.FTListInt32
+	case int64:
+		n = pool.Get(nInt64Pool).(*Numbers[I])
+		sizeInBytes = 8
+		ft = field.FTListInt64
+	case float32:
+		n = pool.Get(nFloat32Pool).(*Numbers[I])
+		sizeInBytes = 4
+		isFloat = true
+		ft = field.FTListFloat32
+	case float64:
+		n = pool.Get(nFloat64Pool).(*Numbers[I])
+		sizeInBytes = 8
+		isFloat = true
+		ft = field.FTListFloat64
 	default:
-		panic(fmt.Sprintf("unsupported number type %T (size: %d bytes)", t, size))
+		// For custom types (like enums), check the underlying type using reflection
+		rv := reflect.ValueOf(t)
+		n = &Numbers[I]{} // Create directly without pool
+		switch rv.Kind() {
+		case reflect.Uint8:
+			sizeInBytes = 1
+			ft = field.FTListUint8
+		case reflect.Uint16:
+			sizeInBytes = 2
+			ft = field.FTListUint16
+		case reflect.Uint32:
+			sizeInBytes = 4
+			ft = field.FTListUint32
+		case reflect.Uint64:
+			sizeInBytes = 8
+			ft = field.FTListUint64
+		case reflect.Int8:
+			sizeInBytes = 1
+			ft = field.FTListInt8
+		case reflect.Int16:
+			sizeInBytes = 2
+			ft = field.FTListInt16
+		case reflect.Int32:
+			sizeInBytes = 4
+			ft = field.FTListInt32
+		case reflect.Int64:
+			sizeInBytes = 8
+			ft = field.FTListInt64
+		case reflect.Float32:
+			sizeInBytes = 4
+			isFloat = true
+			ft = field.FTListFloat32
+		case reflect.Float64:
+			sizeInBytes = 8
+			isFloat = true
+			ft = field.FTListFloat64
+		default:
+			panic(fmt.Sprintf("unsupported number type %T with kind %v", t, rv.Kind()))
+		}
 	}
-	
 	h := NewGenericHeader()
 	h.SetFieldType(ft)
-	
+
 	n.sizeInBytes = sizeInBytes
-	n.isFloat = isFloatType
+	n.isFloat = isFloat
 	n.data = h
-	
+
 	return n
 }
 
@@ -277,7 +334,7 @@ func wordsRequiredToStore(items, sizeInBytes int) int {
 }
 
 // NewNumbersFromBytes returns a new Number value.
-func NewNumbersFromBytes[I typedetect.Number](data *[]byte, s *Struct) (*Numbers[I], error) {
+func NewNumbersFromBytes[I Number](data *[]byte, s *Struct) (*Numbers[I], error) {
 	l := len(*data)
 	if l < 8 {
 		return nil, fmt.Errorf("header was < 64 bits")
@@ -290,32 +347,48 @@ func NewNumbersFromBytes[I typedetect.Number](data *[]byte, s *Struct) (*Numbers
 	}
 
 	var t I
-	size := unsafe.Sizeof(t)
 
 	var n *Numbers[I]
 	var sizeInBytes uint8
-	var isFloatType bool
-	
-	// Determine characteristics using unsafe helpers
-	isFloatType = typedetect.IsFloat[I]()
-	
-	// Create new instance directly (pools don't work with custom types)
-	n = &Numbers[I]{}
-	
-	switch size {
-	case 1:
+	var isFloat bool
+	switch any(t).(type) {
+	case uint8:
+		n = pool.Get(nUint8Pool).(*Numbers[I])
 		sizeInBytes = 1
-	case 2:
+	case uint16:
+		n = pool.Get(nUint16Pool).(*Numbers[I])
 		sizeInBytes = 2
-	case 4:
+	case uint32:
+		n = pool.Get(nUint32Pool).(*Numbers[I])
 		sizeInBytes = 4
-	case 8:
+	case uint64:
+		n = pool.Get(nUint64Pool).(*Numbers[I])
 		sizeInBytes = 8
+	case int8:
+		n = pool.Get(nInt8Pool).(*Numbers[I])
+		sizeInBytes = 1
+	case int16:
+		n = pool.Get(nInt16Pool).(*Numbers[I])
+		sizeInBytes = 2
+	case int32:
+		n = pool.Get(nInt32Pool).(*Numbers[I])
+		sizeInBytes = 4
+	case int64:
+		n = pool.Get(nInt64Pool).(*Numbers[I])
+		sizeInBytes = 8
+	case float32:
+		n = pool.Get(nFloat32Pool).(*Numbers[I])
+		sizeInBytes = 4
+		isFloat = true
+	case float64:
+		n = pool.Get(nFloat64Pool).(*Numbers[I])
+		sizeInBytes = 8
+		isFloat = true
 	default:
-		panic(fmt.Sprintf("unsupported number type %T (size: %d bytes)", t, size))
+		panic(fmt.Sprintf("unsupported number type %T", t))
 	}
 	n.sizeInBytes = sizeInBytes
-	n.isFloat = isFloatType
+	n.isFloat = isFloat
 
 	requiredWords := wordsRequiredToStore(int(items), int(n.sizeInBytes))
 
@@ -377,33 +450,42 @@ func (n *Numbers[I]) Get(index int) I {
 	panic("should never get here")
 }
 
-// All returns an iterator over all numeric values in the list.
-func (n *Numbers[I]) All() iter.Seq[I] {
-	return n.Range(0, n.len)
-}
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (n *Numbers[I]) Range(ctx context.Context, from, to int) chan I {
+	if n.len == 0 {
+		ch := make(chan I)
+		close(ch)
+		return ch
+	}
+	if from > n.len-1 {
+		panic("Range 'from' argument is out of bounds")
+	}
+	if to > n.len {
+		panic("Range 'to' is out of bounds")
+	}
+	if from >= to {
+		panic("Range 'to' cannot be >= to 'from'")
+	}
 
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (n *Numbers[I]) Range(from, to int) iter.Seq[I] {
-	return func(yield func(I) bool) {
-		if n.len == 0 {
-			return
-		}
-		if from > n.len-1 {
-			panic("Range 'from' argument is out of bounds")
-		}
-		if to > n.len {
-			panic("Range 'to' is out of bounds")
-		}
-		if from >= to {
-			panic("Range 'to' cannot be >= to 'from'")
-		}
+	ch := make(chan I, 1)
+
+	go func() {
+		defer close(ch)
 
 		for index := from; index < to; index++ {
-			if !yield(n.Get(index)) {
+			result := n.Get(index)
+
+			select {
+			case <-ctx.Done():
 				return
+			case ch <- result:
 			}
 		}
-	}
+	}()
+
+	return ch
 }
 
 // Set a number in position "index" to "value".
@@ -475,7 +557,12 @@ func (n *Numbers[I]) Slice() []I {
 	if n.len == 0 {
 		return nil
 	}
-	return slices.Collect(n.All())
+
+	s := make([]I, n.len)
+	for v := range n.Range(context.Background(), 0, n.len) {
+		s = append(s, v)
+	}
+	return s
 }
 
 // Encode returns the []byte to write to output to represent this Number. If it returns nil,
@@ -500,7 +587,7 @@ type Bytes struct {
 // NewBytes returns a new Bytes for holding lists of bytes. This is used when creating a new list
 // not attached to a Struct yet.
 func NewBytes() *Bytes {
-	b := bytesPool.Get(context.Background())
+	b := pool.Get(bytesPool).(*Bytes)
 	if b.header == nil {
 		b.header = NewGenericHeader()
 	}
@@ -517,7 +604,7 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	if len(*data) < 16 { // list header(8) + entry header(4) + at least 4 byte (1 bytes of data + 3 padding)
 		return nil, fmt.Errorf("malformed list of bytes: must be at least 16 bytes in size")
 	}
-	b := bytesPool.Get(context.Background())
+	b := pool.Get(bytesPool).(*Bytes)
 	b.header = (*data)[:8]
 	*data = (*data)[8:] // Move past the header
 
@@ -566,6 +653,14 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	return b, nil
 }
 
+// Reset resets all the internal fields to their zero value.
+func (b *Bytes) Reset() {
+	b.header = nil
+	b.data = nil
+	b.s = nil
+	b.dataSize = 0
+}
+
 // Len returns the number of items in the list.
 func (b *Bytes) Len() int {
 	return len(b.data)
@@ -584,34 +679,42 @@ func (b *Bytes) Get(index int) []byte {
 	return b.data[index][4:]
 }
 
-// All returns an iterator over all byte slices in the list.
-// You should NOT modify the returned []byte slices.
-func (b *Bytes) All() iter.Seq[[]byte] {
-	return b.Range(0, b.Len())
-}
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
+func (b *Bytes) Range(ctx context.Context, from, to int) chan []byte {
+	if b.Len() == 0 {
+		ch := make(chan []byte)
+		close(ch)
+		return ch
+	}
+	if from > b.Len()-1 {
+		panic("Range 'from' argument is out of bounds")
+	}
+	if to > b.Len() {
+		panic("Range 'to' is out of bounds")
+	}
+	if from >= to {
+		panic("Range 'to' cannot be >= to 'from'")
+	}
 
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (b *Bytes) Range(from, to int) iter.Seq[[]byte] {
-	return func(yield func([]byte) bool) {
-		if b.Len() == 0 {
-			return
-		}
-		if from > b.Len()-1 {
-			panic("Range 'from' argument is out of bounds")
-		}
-		if to > b.Len() {
-			panic("Range 'to' is out of bounds")
-		}
-		if from >= to {
-			panic("Range 'to' cannot be >= to 'from'")
-		}
+	ch := make(chan []byte, 1)
+
+	go func() {
+		defer close(ch)
 
 		for index := from; index < to; index++ {
-			if !yield(b.Get(index)) {
+			result := b.Get(index)
+
+			select {
+			case <-ctx.Done():
 				return
+			case ch <- result:
 			}
 		}
-	}
+	}()
+
+	return ch
 }
 
 // Set a number in position "index" to "value".
@@ -731,6 +834,12 @@ func (s Strings) Bytes() *Bytes {
 	return s.l
 }
 
+// Reset resets all the internal fields to their zero value. Slices are not nilled, but are
+// set to their zero size to hold the capacity.
+func (s Strings) Reset() {
+	s.l.Reset()
+}
+
 // Len returns the number of items in the list.
 func (s Strings) Len() int {
 	return s.l.Len()
@@ -745,20 +854,23 @@ func (s Strings) Get(index int) string {
 	return conversions.ByteSlice2String(b)
 }
 
-// All returns an iterator over all strings in the list.
-func (s Strings) All() iter.Seq[string] {
-	return s.Range(0, s.Len())
-}
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
+func (s Strings) Range(ctx context.Context, from, to int) chan string {
+	ch := make(chan string, 1)
 
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (s Strings) Range(from, to int) iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for b := range s.l.Range(from, to) {
-			if !yield(conversions.ByteSlice2String(b)) {
+	go func() {
+		defer close(ch)
+		for b := range s.l.Range(ctx, from, to) {
+			select {
+			case <-ctx.Done():
 				return
+			case ch <- conversions.ByteSlice2String(b):
 			}
 		}
-	}
+	}()
+	return ch
 }
 
 // Set a number in position "index" to "value".
@@ -779,10 +891,17 @@ func (s Strings) Append(values ...string) {
 // []string or calling b.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
 func (s Strings) Slice() []string {
-	if s.l.Len() == 0 {
+	length := s.l.Len()
+	if length == 0 {
 		return nil
 	}
-	return slices.Collect(s.All())
+	x := make([]string, length)
+	index := 0
+	for v := range s.Range(context.Background(), 0, length) {
+		x[index] = v
+		index++
+	}
+	return x
 }
 
 // Structs represents a list of Struct.
@@ -891,33 +1010,42 @@ func (s *Structs) Get(index int) *Struct {
 	return s.data[index]
 }
 
-// All returns an iterator over all structs in the list.
-func (s *Structs) All() iter.Seq[*Struct] {
-	return s.Range(0, s.Len())
-}
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (s *Structs) Range(ctx context.Context, from, to int) chan *Struct {
+	if s.Len() == 0 {
+		ch := make(chan *Struct)
+		close(ch)
+		return ch
+	}
+	if from > s.Len()-1 {
+		panic("Range 'from' argument is out of bounds")
+	}
+	if to > s.Len() {
+		panic("Range 'to' is out of bounds")
+	}
+	if from >= to {
+		panic("Range 'to' cannot be >= to 'from'")
+	}
 
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (s *Structs) Range(from, to int) iter.Seq[*Struct] {
-	return func(yield func(*Struct) bool) {
-		if s.Len() == 0 {
-			return
-		}
-		if from > s.Len()-1 {
-			panic("Range 'from' argument is out of bounds")
-		}
-		if to > s.Len() {
-			panic("Range 'to' is out of bounds")
-		}
-		if from >= to {
-			panic("Range 'to' cannot be >= to 'from'")
-		}
+	ch := make(chan *Struct, 1)
+
+	go func() {
+		defer close(ch)
 
 		for index := from; index < to; index++ {
-			if !yield(s.Get(index)) {
+			result := s.Get(index)
+
+			select {
+			case <-ctx.Done():
 				return
+			case ch <- result:
 			}
 		}
-	}
+	}()
+
+	return ch
 }
 
 // Set a number in position "index" to "value".

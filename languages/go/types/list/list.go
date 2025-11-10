@@ -7,7 +7,7 @@ package list
 // This only deals with lists of scalar values, not []Struct.
 
 import (
-	"iter"
+	"context"
 
 	"github.com/bearlytools/claw/internal/conversions"
 	"github.com/bearlytools/claw/languages/go/structs"
@@ -49,14 +49,11 @@ func (b Bools) Get(index int) bool {
 	return b.b.Get(index)
 }
 
-// All returns an iterator over all boolean values.
-func (b Bools) All() iter.Seq[bool] {
-	return b.b.All()
-}
-
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (b Bools) Range(from, to int) iter.Seq[bool] {
-	return b.b.Range(from, to)
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (b Bools) Range(ctx context.Context, from, to int) chan bool {
+	return b.b.Range(ctx, from, to)
 }
 
 // Set a boolean in position "pos" to "val".
@@ -74,7 +71,7 @@ func (b Bools) Append(i ...bool) Bools {
 // Slice converts this into a standard []bool. The values aren't linked, so changing
 // []bool or calling b.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
-func (b Bools) Slice() []bool {
+func (b *Bools) Slice() []bool {
 	return b.b.Slice()
 }
 
@@ -108,14 +105,11 @@ func (n Numbers[N]) Get(index int) N {
 	return n.n.Get(index)
 }
 
-// All returns an iterator over all numeric values.
-func (n Numbers[N]) All() iter.Seq[N] {
-	return n.n.All()
-}
-
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (n Numbers[N]) Range(from, to int) iter.Seq[N] {
-	return n.n.Range(from, to)
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (n Numbers[N]) Range(ctx context.Context, from, to int) chan N {
+	return n.n.Range(ctx, from, to)
 }
 
 // Set a number in position "index" to "value".
@@ -159,58 +153,43 @@ func (b Bytes) XXXBytes() *structs.Bytes {
 
 // Reset resets all the internal fields to their zero value.
 func (b *Bytes) Reset() {
-	// Instead of calling the underlying Reset() which breaks reusability,
-	// we reinitialize with a new Bytes instance
-	b.b = structs.NewBytes()
+	b.b.Reset()
 }
 
 // Len returns the number of items in the list.
-func (b Bytes) Len() int {
+func (b *Bytes) Len() int {
 	return b.b.Len()
 }
 
 // Get gets a []byte stored at the index.
-func (b Bytes) Get(index int) []byte {
+func (b *Bytes) Get(index int) []byte {
 	return b.b.Get(index)
 }
 
-// All returns an iterator over all byte slices.
-// You should NOT modify the returned []byte slices.
-func (b Bytes) All() iter.Seq[[]byte] {
-	return b.b.All()
-}
-
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-// You should NOT modify the returned []byte slices.
-func (b Bytes) Range(from, to int) iter.Seq[[]byte] {
-	return b.b.Range(from, to)
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
+func (b *Bytes) Range(ctx context.Context, from, to int) chan []byte {
+	return b.b.Range(ctx, from, to)
 }
 
 // Set a number in position "index" to "value".
-func (b Bytes) Set(index int, value []byte) Bytes {
+func (b *Bytes) Set(index int, value []byte) *Bytes {
 	b.b.Set(index, value)
 	return b
 }
 
 // Append appends values to the list of []byte.
-func (b Bytes) Append(values ...[]byte) Bytes {
-	b.b.Append(values...)
+func (b *Bytes) Append(values ...[]byte) *Bytes {
+	b.b.Append()
 	return b
 }
 
 // Slice converts this into a standard [][]byte. The values aren't linked, so changing
 // []bool or calling b.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
-func (b Bytes) Slice() [][]byte {
-	length := b.b.Len()
-	if length == 0 {
-		return nil
-	}
-	result := make([][]byte, length)
-	for i := 0; i < length; i++ {
-		result[i] = b.b.Get(i)
-	}
-	return result
+func (b *Bytes) Slice() [][]byte {
+	return b.b.Slice()
 }
 
 // String represents a list of strings.
@@ -234,10 +213,8 @@ func (s Strings) XXXBytes() *structs.Bytes {
 }
 
 // Reset resets all the internal fields to their zero value.
-func (s *Strings) Reset() {
-	// Instead of calling the underlying Reset() which breaks reusability,
-	// we reinitialize with a new Bytes instance
-	s.b = structs.NewBytes()
+func (s Strings) Reset() {
+	s.b.Reset()
 }
 
 // Len returns the number of items in the list.
@@ -254,26 +231,23 @@ func (s Strings) Get(index int) string {
 	return conversions.ByteSlice2String(b)
 }
 
-// All returns an iterator over all strings.
-func (s Strings) All() iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for b := range s.b.All() {
-			if !yield(conversions.ByteSlice2String(b)) {
-				return
-			}
-		}
-	}
-}
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak. You should NOT modify the returned []byte slice.
+func (s Strings) Range(ctx context.Context, from, to int) chan string {
+	ch := make(chan string, 1)
 
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (s Strings) Range(from, to int) iter.Seq[string] {
-	return func(yield func(string) bool) {
-		for b := range s.b.Range(from, to) {
-			if !yield(conversions.ByteSlice2String(b)) {
+	go func() {
+		defer close(ch)
+		for b := range s.b.Range(ctx, from, to) {
+			select {
+			case <-ctx.Done():
 				return
+			case ch <- conversions.ByteSlice2String(b):
 			}
 		}
-	}
+	}()
+	return ch
 }
 
 // Set a number in position "index" to "value".
@@ -302,7 +276,7 @@ func (s Strings) Slice() []string {
 	}
 	x := make([]string, length)
 	index := 0
-	for v := range s.Range(0, length) {
+	for v := range s.Range(context.Background(), 0, length) {
 		x[index] = v
 		index++
 	}
@@ -345,14 +319,11 @@ func (n Enums[E]) Get(index int) E {
 	return n.n.Get(index)
 }
 
-// All returns an iterator over all enum values.
-func (n Enums[E]) All() iter.Seq[E] {
-	return n.n.All()
-}
-
-// Range ranges from "from" (inclusive) to "to" (exclusive).
-func (n Enums[E]) Range(from, to int) iter.Seq[E] {
-	return n.n.Range(from, to)
+// Range ranges from "from" (inclusive) to "to" (exclusive). You must read values from
+// Range until the returned channel closes or cancel the Context passed. Otherwise
+// you will have a goroutine leak.
+func (n Enums[E]) Range(ctx context.Context, from, to int) chan E {
+	return n.n.Range(ctx, from, to)
 }
 
 // Set a number in position "index" to "value".

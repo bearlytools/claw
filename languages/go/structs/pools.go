@@ -2,9 +2,9 @@ package structs
 
 import (
 	"bytes"
+	"sync"
 
-	"github.com/gostdlib/base/concurrency/sync"
-	"github.com/gostdlib/base/context"
+	autopool "github.com/johnsiilver/golib/development/autopool/blend"
 )
 
 var ()
@@ -19,103 +19,160 @@ type StructsPool interface {
 	Put(*Struct)
 }
 
-var readers = sync.NewPool[*bytes.Reader](
-	context.Background(),
-	"readersPool",
-	func() *bytes.Reader {
+var readers = sync.Pool{
+	New: func() any {
 		return &bytes.Reader{}
 	},
-	sync.WithBuffer(100),
-)
+}
 
 var (
-	boolPool     *sync.Pool[*Bools]
-	nUint8Pool   *sync.Pool[*Numbers[uint8]]
-	nUint16Pool  *sync.Pool[*Numbers[uint16]]
-	nUint32Pool  *sync.Pool[*Numbers[uint32]]
-	nUint64Pool  *sync.Pool[*Numbers[uint64]]
-	nInt8Pool    *sync.Pool[*Numbers[int8]]
-	nInt16Pool   *sync.Pool[*Numbers[int16]]
-	nInt32Pool   *sync.Pool[*Numbers[int32]]
-	nInt64Pool   *sync.Pool[*Numbers[int64]]
-	nFloat32Pool *sync.Pool[*Numbers[float32]]
-	nFloat64Pool *sync.Pool[*Numbers[float64]]
-	bytesPool    *sync.Pool[*Bytes]
+	pool         = autopool.New()
+	boolPool     int
+	nUint8Pool   int
+	nUint16Pool  int
+	nUint32Pool  int
+	nUint64Pool  int
+	nInt8Pool    int
+	nInt16Pool   int
+	nInt32Pool   int
+	nInt64Pool   int
+	nFloat32Pool int
+	nFloat64Pool int
+	bytesPool    int
 )
 
 func init() {
-	ctx := context.Background()
-	
-	boolPool = sync.NewPool[*Bools](
-		ctx, "boolPool",
-		func() *Bools { return &Bools{} },
-		sync.WithBuffer(100),
+	boolPool = pool.Add(
+		func() any {
+			return &Bools{}
+		},
 	)
 
-	nUint8Pool = sync.NewPool[*Numbers[uint8]](
-		ctx, "nUint8Pool",
-		func() *Numbers[uint8] { return &Numbers[uint8]{} },
-		sync.WithBuffer(100),
+	nUint8Pool = pool.Add(
+		func() any {
+			return &Numbers[uint8]{}
+		},
 	)
 
-	nUint16Pool = sync.NewPool[*Numbers[uint16]](
-		ctx, "nUint16Pool",
-		func() *Numbers[uint16] { return &Numbers[uint16]{} },
-		sync.WithBuffer(100),
+	nUint16Pool = pool.Add(
+		func() any {
+			return &Numbers[uint16]{}
+		},
 	)
 
-	nUint32Pool = sync.NewPool[*Numbers[uint32]](
-		ctx, "nUint32Pool",
-		func() *Numbers[uint32] { return &Numbers[uint32]{} },
-		sync.WithBuffer(100),
+	nUint32Pool = pool.Add(
+		func() any {
+			return &Numbers[uint32]{}
+		},
 	)
 
-	nUint64Pool = sync.NewPool[*Numbers[uint64]](
-		ctx, "nUint64Pool",
-		func() *Numbers[uint64] { return &Numbers[uint64]{} },
-		sync.WithBuffer(100),
+	nUint64Pool = pool.Add(
+		func() any {
+			return &Numbers[uint64]{}
+		},
 	)
 
-	nInt8Pool = sync.NewPool[*Numbers[int8]](
-		ctx, "nInt8Pool",
-		func() *Numbers[int8] { return &Numbers[int8]{} },
-		sync.WithBuffer(100),
+	nInt8Pool = pool.Add(
+		func() any {
+			return &Numbers[int8]{}
+		},
 	)
 
-	nInt16Pool = sync.NewPool[*Numbers[int16]](
-		ctx, "nInt16Pool",
-		func() *Numbers[int16] { return &Numbers[int16]{} },
-		sync.WithBuffer(100),
+	nInt16Pool = pool.Add(
+		func() any {
+			return &Numbers[int16]{}
+		},
 	)
 
-	nInt32Pool = sync.NewPool[*Numbers[int32]](
-		ctx, "nInt32Pool",
-		func() *Numbers[int32] { return &Numbers[int32]{} },
-		sync.WithBuffer(100),
+	nInt32Pool = pool.Add(
+		func() any {
+			return &Numbers[int32]{}
+		},
 	)
 
-	nInt64Pool = sync.NewPool[*Numbers[int64]](
-		ctx, "nInt64Pool",
-		func() *Numbers[int64] { return &Numbers[int64]{} },
-		sync.WithBuffer(100),
+	nInt64Pool = pool.Add(
+		func() any {
+			return &Numbers[int64]{}
+		},
 	)
 
-	nFloat32Pool = sync.NewPool[*Numbers[float32]](
-		ctx, "nFloat32Pool",
-		func() *Numbers[float32] { return &Numbers[float32]{} },
-		sync.WithBuffer(100),
+	nFloat32Pool = pool.Add(
+		func() any {
+			return &Numbers[float32]{}
+		},
 	)
 
-	nFloat64Pool = sync.NewPool[*Numbers[float64]](
-		ctx, "nFloat64Pool",
-		func() *Numbers[float64] { return &Numbers[float64]{} },
-		sync.WithBuffer(100),
+	nFloat64Pool = pool.Add(
+		func() any {
+			return &Numbers[float64]{}
+		},
 	)
 
-	bytesPool = sync.NewPool[*Bytes](
-		ctx, "bytesPool",
-		func() *Bytes { return &Bytes{} },
-		sync.WithBuffer(100),
+	bytesPool = pool.Add(
+		func() any {
+			return &Bytes{}
+		},
 	)
 }
 
+/*
+// pool holds a few sync.Pool(s) that we can use for buffer reuse.
+var pool = &pools{
+	_32: &sync.Pool{
+		New: func() any {
+			return make([]byte, 4)
+		},
+	},
+	_64: &sync.Pool{
+		New: func() interface{} {
+			return make([]byte, 8)
+		},
+	},
+	_128: &sync.Pool{
+		New: func() interface{} {
+			return make([]byte, 16)
+		},
+	},
+	buff: &sync.Pool{
+		New: func() interface{} {
+			return make([]byte, 64)
+		},
+	},
+}
+
+type pools struct {
+	_32  *sync.Pool
+	_64  *sync.Pool
+	_128 *sync.Pool
+	buff *sync.Pool
+}
+
+func (p *pools) get32() []byte {
+	return p._32.Get().([]byte)
+}
+
+func (p *pools) get64() []byte {
+	return p._64.Get().([]byte)
+}
+
+func (p *pools) get128() []byte {
+	return p._128.Get().([]byte)
+}
+
+func (p *pools) getBuff() []byte {
+	return p.buff.Get().([]byte)
+}
+
+func (p *pools) put(b []byte) {
+	switch len(b) {
+	case 32:
+		p._32.Put(b)
+	case 64:
+		p._64.Put(b)
+	case 128:
+		p._128.Put(b)
+	default:
+		p.buff.Put(b)
+	}
+}
+*/

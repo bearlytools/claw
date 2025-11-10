@@ -1,7 +1,7 @@
 package golang
 
 import (
-	"github.com/gostdlib/base/context"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"

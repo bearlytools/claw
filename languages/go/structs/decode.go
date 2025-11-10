@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"github.com/bearlytools/claw/internal/bits"
 	"github.com/bearlytools/claw/languages/go/field"
 	"github.com/bearlytools/claw/languages/go/structs/header"
-	"github.com/gostdlib/base/context"
 )
 
 var dataSizeMask = bits.Mask[uint64](24, 64)
@@ -345,9 +345,9 @@ func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
 	}
 
 	// Structs use a Reader, so let's give it a reader.
-	r := readers.Get(context.Background())
+	r := readers.Get().(*bytes.Reader)
 	r.Reset(*buffer)
-	defer readers.Put(context.Background(), r)
+	defer readers.Put(r)
 
 	sub := New(fieldNum, m)
 	n, err := sub.unmarshal(r)

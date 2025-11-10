@@ -1,7 +1,7 @@
 package imports
 
 import (
-	"github.com/gostdlib/base/context"
+	"context"
 	"crypto/sha256"
 	"embed"
 	"fmt"

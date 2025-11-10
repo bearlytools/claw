@@ -1,9 +1,10 @@
 package idl
 
 import (
-	"github.com/gostdlib/base/context"
+	"context"
 	_ "embed"
 	"fmt"
+	"log"
 	"math"
 	"path"
 	"strconv"
@@ -857,6 +858,7 @@ func (s *Struct) field(p *halfpike.Parser) error {
 			isList = true
 		}
 
+		log.Println("ft: ", ft)
 
 		// See if field type is an identifer of an Enum or Struct.
 		ident, ok := s.File.Identifers[ft]
@@ -946,6 +948,7 @@ func (s *Struct) field(p *halfpike.Parser) error {
 	if i > math.MaxUint16 {
 		return fmt.Errorf("[Line %d]: Struct %q has field %q with a field number > that a uint16 can hold, %q", l.LineNum, s.Name, f.Name, fieldNum)
 	}
+	log.Println("FieldName: ", f.Name)
 
 	f.Index = uint16(i)
 	s.Fields = append(s.Fields, f)
