@@ -53,6 +53,12 @@ func main() {
 		}
 	}
 
+	// Convert clawFile to absolute path to avoid path resolution issues
+	clawFile, err = filepath.Abs(clawFile)
+	if err != nil {
+		exitf("failed to get absolute path for claw file: %s", err)
+	}
+
 	// Step 1: Vendor all dependencies
 	vendorManager, err := vendor.NewVendorManager(path)
 	if err != nil {

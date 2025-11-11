@@ -184,6 +184,7 @@ var XXXMappingVehicle = &mapping.Map{
             FieldNum: 0,
             IsEnum: true,
             EnumGroup: "Type",
+            // 14 is FTStruct and 54 is FTListStructs
         },
         {
             Name: "Car",
@@ -192,6 +193,8 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/test_claw_imports/cars/claw",
             FieldNum: 1,
             IsEnum: false,
+            // 14 is FTStruct and 54 is FTListStructs
+            Mapping: cars.XXXMappingCar,
         },
         {
             Name: "Truck",
@@ -200,6 +203,8 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/test_claw_imports/trucks",
             FieldNum: 2,
             IsEnum: false,
+            // 14 is FTStruct and 54 is FTListStructs
+            Mapping: trucks.XXXMappingTruck,
         },
         {
             Name: "Types",
@@ -209,6 +214,7 @@ var XXXMappingVehicle = &mapping.Map{
             FieldNum: 3,
             IsEnum: true,
             EnumGroup: "Type",
+            // 14 is FTStruct and 54 is FTListStructs
         },
         {
             Name: "Bools",
@@ -217,9 +223,11 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
             FieldNum: 4,
             IsEnum: false,
+            // 14 is FTStruct and 54 is FTListStructs
         },
     },
 }
+
 
 
 

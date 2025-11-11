@@ -66,6 +66,7 @@ var ManufacturerByValue = map[uint8]string{
 
 
 
+
 var XXXEnumGroupManufacturer = reflect.XXXEnumGroupImpl{
     GroupName: "Manufacturer",
     GroupLen: 4,
