@@ -6,6 +6,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/bearlytools/claw/internal/idl"
@@ -18,7 +19,10 @@ var f embed.FS
 var templates *template.Template
 
 func init() {
-	t, err := template.ParseFS(f, "templates/*.tmpl")
+	funcMap := template.FuncMap{
+		"title": strings.Title,
+	}
+	t, err := template.New("").Funcs(funcMap).ParseFS(f, "templates/*.tmpl")
 	if err != nil {
 		panic(err)
 	}

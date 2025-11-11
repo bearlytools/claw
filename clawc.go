@@ -24,10 +24,13 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 	path := ""
-	if len(args) == 0 {
+	switch len(args) {
+	case 0:
 		path = "."
-	} else {
+	case 1:
 		path = args[0]
+	default:
+		panic("you can 0 or 1 argument")
 	}
 
 	// Mount our filesystem for reading.
@@ -168,7 +171,7 @@ func compileLocalDependency(ctx context.Context, vendorManager *vendor.VendorMan
 	}
 
 	// Create a regular config (not vendored) for local dependencies
-	config := &imports.Config{}
+	config := imports.NewConfig()
 	if err := config.Read(ctx, clawFile); err != nil {
 		return fmt.Errorf("error reading local dependency config: %w", err)
 	}

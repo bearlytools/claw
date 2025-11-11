@@ -53,6 +53,42 @@ type DependencyGraph struct {
 	Edges map[string][]string // pkgPath -> list of dependencies
 }
 
+// findClawImports searches for claw.imports file starting from dir up to git root.
+func findClawImports(dir string, gitRoot string) (*imports.ClawImports, error) {
+	// Normalize paths for comparison
+	current := filepath.Clean(dir)
+	gitRoot = filepath.Clean(gitRoot)
+
+	for {
+		importsPath := filepath.Join(current, "claw.imports")
+		content, err := os.ReadFile(importsPath)
+		if err == nil {
+			// Found it, parse it
+			ci := &imports.ClawImports{}
+			ctx := context.Background()
+			if err := halfpike.Parse(ctx, conversions.ByteSlice2String(content), ci); err != nil {
+				return nil, fmt.Errorf("failed to parse claw.imports at %s: %w", importsPath, err)
+			}
+			if err := ci.Validate(); err != nil {
+				return nil, fmt.Errorf("invalid claw.imports at %s: %w", importsPath, err)
+			}
+			return ci, nil
+		}
+
+		// Check if we've reached the git root
+		if current == gitRoot {
+			return nil, fmt.Errorf("claw.imports file not found between %s and git root %s", dir, gitRoot)
+		}
+
+		// Move up one directory
+		parent := filepath.Dir(current)
+		if parent == current {
+			return nil, fmt.Errorf("claw.imports file not found, reached filesystem root before git root %s", gitRoot)
+		}
+		current = parent
+	}
+}
+
 // NewVendorManager creates a new VendorManager.
 func NewVendorManager(rootDir string) (*VendorManager, error) {
 	fs, err := osfs.New()
@@ -60,25 +96,29 @@ func NewVendorManager(rootDir string) (*VendorManager, error) {
 		return nil, fmt.Errorf("failed to create filesystem: %w", err)
 	}
 
-	vendorDir := filepath.Join(rootDir, "vendor")
+	// Convert rootDir to absolute path
+	absRootDir, err := filepath.Abs(rootDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute path for %s: %w", rootDir, err)
+	}
 
-	// Try to set up git support - it's optional
-	var gitVCS vcsGit
-	// Use a recover to handle panics from the git package
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				// Git failed, continue without it
-				gitVCS = nil
-			}
-		}()
-		if g, err := vcs.NewGit(rootDir); err == nil {
-			gitVCS = g
-		}
-	}()
+	// Git is REQUIRED per compilation.md Step 2
+	gitVCS, err := vcs.NewGit(absRootDir)
+	if err != nil {
+		return nil, fmt.Errorf("git repository required for clawc: %w", err)
+	}
+
+	// Read claw.imports to determine vendor directory location
+	clawImports, err := findClawImports(absRootDir, gitVCS.Root())
+	if err != nil {
+		return nil, fmt.Errorf("failed to find claw.imports: %w", err)
+	}
+
+	// Vendor directory is based on claw.imports directive path
+	vendorDir := filepath.Join(gitVCS.Root(), clawImports.Directive.Path)
 
 	return &VendorManager{
-		rootDir:     rootDir,
+		rootDir:     absRootDir,
 		vendorDir:   vendorDir,
 		fs:          fs,
 		git:         gitVCS,
@@ -274,9 +314,44 @@ func (vm *VendorManager) processClawFile(ctx context.Context, clawPath, version 
 // Helper methods (simplified implementations)
 
 func (vm *VendorManager) extractPackagePath(clawPath string) string {
-	// Extract package path from file path
-	// This is a simplified implementation
-	return clawPath
+	// If it looks like a package path already (domain/user/repo format), return as-is
+	if !vm.isLocalPath(clawPath) && strings.Contains(clawPath, "/") {
+		parts := strings.Split(clawPath, "/")
+		// Check if first part looks like a domain (contains ".")
+		if len(parts) >= 3 && strings.Contains(parts[0], ".") {
+			return clawPath
+		}
+	}
+
+	// It's a file path - need to read claw.mod to get package path
+	dir := clawPath
+	if strings.HasSuffix(clawPath, ".claw") {
+		dir = filepath.Dir(clawPath)
+	}
+
+	// Normalize empty/current directory
+	if dir == "" || dir == "." {
+		dir = vm.rootDir
+	}
+
+	// Make absolute if relative
+	if !filepath.IsAbs(dir) {
+		dir = filepath.Join(vm.rootDir, dir)
+	}
+
+	// Read claw.mod to get the module path
+	modPath := filepath.Join(dir, "claw.mod")
+	content, err := os.ReadFile(modPath)
+	if err != nil {
+		return clawPath // Fallback for dependencies that might not have claw.mod
+	}
+
+	module := &imports.Module{}
+	if err := vm.parseModuleContent(string(content), module); err != nil {
+		return clawPath // Fallback
+	}
+
+	return module.Path
 }
 
 func (vm *VendorManager) applyReplaceDirectives(pkgPath, version string, rootModule *imports.Module, localReplace imports.LocalReplace) (string, string) {
@@ -310,12 +385,13 @@ func (vm *VendorManager) isLocalPath(path string) bool {
 // Returns false for packages within the current Git repository (local).
 // Returns true only for external dependencies that should be vendored.
 func (vm *VendorManager) shouldVendorPackage(pkgPath string) bool {
-	// If git is not available, fall back to vendoring everything
-	if vm.git == nil {
-		return true
+	// Never vendor local filesystem paths
+	if vm.isLocalPath(pkgPath) {
+		return false
 	}
-	
-	// Only vendor packages that are NOT in the current repository
+
+	// Git is required (enforced in NewVendorManager)
+	// Only vendor external dependencies (different git repositories)
 	return !vm.git.InRepo(pkgPath)
 }
 

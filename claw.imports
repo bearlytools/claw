@@ -1,0 +1,3 @@
+directive {
+	path: "testing/imports/vehicles/claw/vendor"
+}

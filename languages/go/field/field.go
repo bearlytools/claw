@@ -1,15 +1,19 @@
 // Package field details field types used by the Claw format.
 package field
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
-//go:generate stringer -type=Type -linecomment
+// Do not add line comment.
+//go:generate stringer -type=Type
 
 // Type represents the type of data that is held in a byte field.
 type Type uint8
 
 const (
-	FTUnknown Type = 0  // Unknown
+	FTUnknown Type = 0  // unknown
 	FTBool    Type = 1  // bool
 	FTInt8    Type = 2  // int8
 	FTInt16   Type = 3  // int16
@@ -38,7 +42,7 @@ const (
 	FTListFloat64 Type = 51 // []float64
 	FTListBytes   Type = 52 // []bytes
 	FTListStrings Type = 53 // []string
-	FTListStructs Type = 54 // []structs
+	FTListStructs Type = 54 // []struct
 	// Reserve 55 to 79
 )
 
@@ -98,7 +102,11 @@ var NumericListTypes = []Type{
 
 // TypeToString returns the type as a string WITHOUT the leading "FT".
 func TypeToString(t Type) string {
-	return t.String()[2:]
+	s := t.String()
+	if strings.HasPrefix(s, "FT") {
+		return s[2:]
+	}
+	return s
 }
 
 // GoType will return the Go string representation of a type.
