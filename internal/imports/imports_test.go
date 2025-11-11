@@ -85,6 +85,18 @@ func (f fakeGetClawFile) getClawFile(ctx context.Context, pkgPath string, versio
 	return cf, nil
 }
 
+type fakeGetModuleFile struct {
+	m map[string]git.ModuleFile
+}
+
+func (f fakeGetModuleFile) getModuleFile(ctx context.Context, pkgPath string, version string) (git.ModuleFile, error) {
+	mf, ok := f.m[pkgPath]
+	if !ok {
+		return git.ModuleFile{Exists: false}, nil
+	}
+	return mf, nil
+}
+
 type pathContent struct {
 	path    string
 	content []byte
@@ -98,6 +110,7 @@ func TestConfig(t *testing.T) {
 		vcsGit         fakeVCSGit
 		files          []pathContent
 		getClawFile    func(ctx context.Context, pkgPath string, version string) (git.ClawFile, error)
+		getModuleFile  func(ctx context.Context, pkgPath string, version string) (git.ModuleFile, error)
 		err            bool
 		errMsgContains string
 	}{
@@ -111,6 +124,7 @@ func TestConfig(t *testing.T) {
 				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/claw.mod", mustReadFile("testing/config/vehicles.mod")},
 				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/vehicles.claw", mustReadFile("testing/config/vehicles.claw")},
 				// This file which is depended on by vehicles imports vehicles.
+				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/manufacturers/claw.mod", mustReadFile("testing/config/manufacturers.mod")},
 				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/manufacturers/manufacturers.claw", mustReadFile("testing/config/recursive_manufacturers.claw")},
 			},
 			getClawFile: fakeGetClawFile{
@@ -123,6 +137,18 @@ func TestConfig(t *testing.T) {
 					},
 				},
 			}.getClawFile,
+			getModuleFile: fakeGetModuleFile{
+				m: map[string]git.ModuleFile{
+					"github.com/bearlytools/test_claw_imports/trucks": {
+						Content: mustReadFile("testing/config/trucks.mod"),
+						Exists:  true,
+					},
+					"github.com/bearlytools/test_claw_imports/cars/claw": {
+						Content: mustReadFile("testing/config/cars.mod"),
+						Exists:  true,
+					},
+				},
+			}.getModuleFile,
 			errMsgContains: "cyclic import detected",
 			err:            true,
 		},
@@ -135,6 +161,7 @@ func TestConfig(t *testing.T) {
 			files: []pathContent{
 				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/claw.mod", mustReadFile("testing/config/vehicles.mod")},
 				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/vehicles.claw", mustReadFile("testing/config/vehicles.claw")},
+				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/manufacturers/claw.mod", mustReadFile("testing/config/manufacturers.mod")},
 				{"/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/manufacturers/manufacturers.claw", mustReadFile("testing/config/manufacturers.claw")},
 			},
 			getClawFile: fakeGetClawFile{
@@ -147,6 +174,18 @@ func TestConfig(t *testing.T) {
 					},
 				},
 			}.getClawFile,
+			getModuleFile: fakeGetModuleFile{
+				m: map[string]git.ModuleFile{
+					"github.com/bearlytools/test_claw_imports/trucks": {
+						Content: mustReadFile("testing/config/trucks.mod"),
+						Exists:  true,
+					},
+					"github.com/bearlytools/test_claw_imports/cars/claw": {
+						Content: mustReadFile("testing/config/cars.mod"),
+						Exists:  true,
+					},
+				},
+			}.getModuleFile,
 		},
 	}
 
@@ -161,6 +200,7 @@ func TestConfig(t *testing.T) {
 		config := NewConfig()
 		config.fs = testFS
 		config.getClawFile = test.getClawFile
+		config.getModuleFile = test.getModuleFile
 		config.git = test.vcsGit
 
 		err := config.Read(context.Background(), "/user/name/trees/bearlytools/claw/testing/imports/vehicles/claw/vehicles.claw")

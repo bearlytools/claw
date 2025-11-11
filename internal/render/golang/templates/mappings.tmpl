@@ -19,7 +19,7 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             {{- if $field.SelfReferential }}
             SelfReferential: true,
             {{- end }}
-            {{- if eq $field.TypeAsString "struct" }}
+            {{- if eq $field.Type 14 }}
             StructName: "{{ $field.IdentName }}",
             {{- end }}
             {{- if $field.IsEnum }}

@@ -286,7 +286,7 @@ func (m *Module) ParseACLs(ctx context.Context, p *halfpike.Parser) halfpike.Par
 		}
 
 		index := strings.Index(line.Items[0].Val, "*")
-		if index != -1 || index != (len(line.Items[0].Val)-1) {
+		if index != -1 && index != (len(line.Items[0].Val)-1) {
 			return p.Errorf("an ACL can only have * as the last character in the ACL")
 		}
 		m.ACLs = append(m.ACLs, ACL{Path: line.Items[0].Val})

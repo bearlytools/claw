@@ -135,7 +135,7 @@ var wantTrucks = &idl.File{
 
 var wantRoot = &idl.File{
 	Package:  "vehicles",
-	FullPath: "github.com/bearlyworks/claw/testing/imports/vehicles/claw",
+	FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
 	Version:  0,
 	Options:  map[string]idl.Option{},
 	Identifers: map[string]interface{}{
@@ -204,13 +204,13 @@ var wantConfig = &Config{
 		"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers": wantManufacturer,
 		"github.com/bearlytools/test_claw_imports/cars/claw":                      wantCars,
 		"github.com/bearlytools/test_claw_imports/trucks":                         wantTrucks,
-		"github.com/bearlyworks/claw/testing/imports/vehicles/claw":               wantRoot,
+		"github.com/bearlytools/claw/testing/imports/vehicles/claw":               wantRoot,
 	},
 	Module: &Module{
-		Path:     "github.com/bearlyworks/claw/testing/imports/vehicles/claw",
+		Path:     "github.com/bearlytools/claw/testing/imports/vehicles/claw",
 		Required: nil,
 		Replace:  nil,
-		ACLs:     nil,
+		ACLs:     []ACL{{Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw/*"}},
 	},
 	LocalReplace: LocalReplace{
 		Replace: nil,

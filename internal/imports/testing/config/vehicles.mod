@@ -1,1 +1,5 @@
-module github.com/bearlyworks/claw/testing/imports/vehicles/claw
+module github.com/bearlytools/claw/testing/imports/vehicles/claw
+
+acls (
+	github.com/bearlytools/claw/testing/imports/vehicles/claw/*
+)

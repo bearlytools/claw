@@ -87,9 +87,10 @@ type Config struct {
 	LocalReplace  LocalReplace
 	GlobalReplace map[string]Replace
 
-	fs          neededFS
-	git         vcsGit
-	getClawFile func(ctx context.Context, pkgPath string, version string) (git.ClawFile, error)
+	fs            neededFS
+	git           vcsGit
+	getClawFile   func(ctx context.Context, pkgPath string, version string) (git.ClawFile, error)
+	getModuleFile func(ctx context.Context, pkgPath string, version string) (git.ModuleFile, error)
 }
 
 // NewConfig creates a new Config.
@@ -104,6 +105,7 @@ func NewConfig() *Config {
 		GlobalReplace: map[string]Replace{},
 		fs:            fs,
 		getClawFile:   git.GetClawFile,
+		getModuleFile: git.GetModuleFile,
 	}
 }
 
@@ -354,6 +356,27 @@ func (c *Config) readLocal(ctx context.Context, pkgPath, localPath string) error
 		return fmt.Errorf("problem parsing Claw package %q: %w", pkgPath, err)
 	}
 
+	// Read and parse the local claw.mod file to check ACLs
+	modFilePath := filepath.Join(localPath, "claw.mod")
+	modContent, err := c.fs.ReadFile(modFilePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) || strings.Contains(err.Error(), "no such file or directory") {
+			// No claw.mod means no ACLs, which means imports are not allowed
+			return fmt.Errorf("package %q does not have a claw.mod file, imports not allowed", pkgPath)
+		}
+		return fmt.Errorf("error reading module file for %q: %w", pkgPath, err)
+	}
+
+	localMod := &Module{}
+	if err := halfpike.Parse(ctx, conversions.ByteSlice2String(modContent), localMod); err != nil {
+		return fmt.Errorf("error parsing module file for %q: %w", pkgPath, err)
+	}
+
+	// Check ACL permissions
+	if err := CheckACLPermission(c.Module.Path, pkgPath, localMod); err != nil {
+		return err
+	}
+
 	c.Imports[pkgPath] = file
 	for _, imp := range file.Imports.Imports {
 		log.Printf("@readLocal(): %#+v", imp.Path)
@@ -384,6 +407,27 @@ func (c *Config) readRemote(ctx context.Context, pkgPath string) error {
 	file.RepoVersion = cf.Version
 	file.SHA256 = cf.SHA256
 
+	// Get and parse the remote claw.mod file to check ACLs
+	mf, err := c.getModuleFile(ctx, pkgPath, "")
+	if err != nil {
+		return fmt.Errorf("error getting module file for %q: %w", pkgPath, err)
+	}
+
+	if mf.Exists {
+		remoteMod := &Module{}
+		if err := halfpike.Parse(ctx, conversions.ByteSlice2String(mf.Content), remoteMod); err != nil {
+			return fmt.Errorf("error parsing module file for %q: %w", pkgPath, err)
+		}
+
+		// Check ACL permissions
+		if err := CheckACLPermission(c.Module.Path, pkgPath, remoteMod); err != nil {
+			return err
+		}
+	} else {
+		// No claw.mod means no ACLs, which means imports are not allowed
+		return fmt.Errorf("package %q does not have a claw.mod file, imports not allowed", pkgPath)
+	}
+
 	c.Imports[pkgPath] = file
 	for _, imp := range file.Imports.Imports {
 		log.Printf("@readRemote(): %#+v", imp)
@@ -404,6 +448,37 @@ func (c Config) Validate(f *idl.File) error {
 	}
 
 	return nil
+}
+
+// CheckACLPermission checks if currentModule is allowed to import targetModule
+// based on the ACLs defined in targetModuleFile.
+func CheckACLPermission(currentModule, targetModule string, targetModuleFile *Module) error {
+	// Check if current module is allowed to import target module
+	if len(targetModuleFile.ACLs) == 0 {
+		return fmt.Errorf("module %s does not allow any imports", targetModule)
+	}
+
+	// Check for public access
+	for _, acl := range targetModuleFile.ACLs {
+		if acl.Path == "*" || acl.Path == "public" {
+			return nil
+		}
+
+		// Check exact match
+		if acl.Path == currentModule {
+			return nil
+		}
+
+		// Check wildcard match
+		if strings.HasSuffix(acl.Path, "/*") {
+			prefix := strings.TrimSuffix(acl.Path, "/*")
+			if strings.HasPrefix(currentModule, prefix) {
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("module %s is not allowed to import %s", currentModule, targetModule)
 }
 
 type Version struct {

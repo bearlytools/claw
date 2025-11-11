@@ -507,42 +507,13 @@ func (vm *VendorManager) validateACLs(ctx context.Context, graph *DependencyGrap
 
 	for pkgPath, node := range graph.Nodes {
 		if node.ModuleFile != nil {
-			if err := vm.checkACLPermission(currentModulePath, pkgPath, node.ModuleFile); err != nil {
+			if err := imports.CheckACLPermission(currentModulePath, pkgPath, node.ModuleFile); err != nil {
 				return fmt.Errorf("ACL violation for %s: %w", pkgPath, err)
 			}
 		}
 	}
 
 	return nil
-}
-
-func (vm *VendorManager) checkACLPermission(currentModule, targetModule string, targetModuleFile *imports.Module) error {
-	// Check if current module is allowed to import target module
-	if len(targetModuleFile.ACLs) == 0 {
-		return fmt.Errorf("module %s does not allow any imports", targetModule)
-	}
-
-	// Check for public access
-	for _, acl := range targetModuleFile.ACLs {
-		if acl.Path == "*" || acl.Path == "public" {
-			return nil
-		}
-
-		// Check exact match
-		if acl.Path == currentModule {
-			return nil
-		}
-
-		// Check wildcard match
-		if strings.HasSuffix(acl.Path, "/*") {
-			prefix := strings.TrimSuffix(acl.Path, "/*")
-			if strings.HasPrefix(currentModule, prefix) {
-				return nil
-			}
-		}
-	}
-
-	return fmt.Errorf("module %s is not allowed to import %s", currentModule, targetModule)
 }
 
 // createVendorStructure creates the vendor directory structure and copies files.

@@ -25,10 +25,46 @@ type ClawFile struct {
 	SHA256  string
 }
 
+// ModuleFile holds a claw.mod file's content.
+type ModuleFile struct {
+	Content []byte
+	Exists  bool
+}
+
 // GetClawFile retrieves the .claw file for a package at a commit version. version can be
 // an empty string and the .claw file will be for the latest commit.
 func GetClawFile(ctx context.Context, pkgPath, version string) (ClawFile, error) {
 	return getClawFile(ctx, pkgPath, version, 0)
+}
+
+// GetModuleFile retrieves the claw.mod file for a package at a commit version. version can be
+// an empty string and the claw.mod file will be for the latest commit.
+func GetModuleFile(ctx context.Context, pkgPath, version string) (ModuleFile, error) {
+	log.Println("GetModuleFile pkgPath: ", pkgPath)
+	localRepo, _, err := cloneRepo(pkgPath, version)
+	if err != nil {
+		return ModuleFile{}, err
+	}
+
+	insidePath := ""
+	sp := strings.Split(pkgPath, "/")
+	if len(sp) > 3 {
+		insidePath = strings.Join(strings.Split(pkgPath, "/")[3:], "/")
+	}
+	clawDirPath := filepath.Join(localRepo, insidePath)
+
+	modFilePath := filepath.Join(clawDirPath, "claw.mod")
+	log.Println("modFilePath: ", modFilePath)
+
+	b, err := os.ReadFile(modFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return ModuleFile{Exists: false}, nil
+		}
+		return ModuleFile{}, fmt.Errorf("problem reading claw.mod file from git path %q: %w", modFilePath, err)
+	}
+
+	return ModuleFile{Content: b, Exists: true}, nil
 }
 
 func getClawFile(ctx context.Context, pkgPath, version string, depth int) (ClawFile, error) {
