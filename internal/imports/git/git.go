@@ -300,7 +300,6 @@ func (v Version) IsZero() bool {
 
 func (v *Version) FromString(s string) error {
 	s = strings.TrimPrefix(s, "v")
-	s = s[1:]
 	l := strings.Split(s, ".")
 	if len(l) != 3 {
 		return fmt.Errorf("a version must have a major, minor and patch version")
@@ -321,4 +320,83 @@ func (v *Version) FromString(s string) error {
 	}
 	v.Patch = n
 	return nil
+}
+
+// Compare returns -1 if v < other, 0 if v == other, 1 if v > other
+func (v Version) Compare(other Version) int {
+	if v.Major != other.Major {
+		if v.Major < other.Major {
+			return -1
+		}
+		return 1
+	}
+	if v.Minor != other.Minor {
+		if v.Minor < other.Minor {
+			return -1
+		}
+		return 1
+	}
+	if v.Patch != other.Patch {
+		if v.Patch < other.Patch {
+			return -1
+		}
+		return 1
+	}
+	return 0
+}
+
+// GetLatestVersion retrieves the latest version (tag) for a package.
+// It returns the highest semantic version tag if any exist, otherwise returns
+// the current HEAD commit hash.
+func GetLatestVersion(ctx context.Context, pkgPath string) (string, error) {
+	// Clone/update the repo
+	localRepo, currentVer, err := cloneRepo(pkgPath, "")
+	if err != nil {
+		return "", fmt.Errorf("failed to clone repo for %s: %w", pkgPath, err)
+	}
+
+	// Open the repository
+	repo, err := git.PlainOpen(localRepo)
+	if err != nil {
+		return "", fmt.Errorf("failed to open repo: %w", err)
+	}
+
+	// Get all tags
+	tagIter, err := repo.Tags()
+	if err != nil {
+		// If there's an error getting tags, return the current version (HEAD hash)
+		return currentVer, nil
+	}
+
+	// Find the highest semantic version tag
+	var highestVersion *Version
+	var highestTag string
+
+	err = tagIter.ForEach(func(ref *plumbing.Reference) error {
+		tagName := ref.Name().Short()
+
+		// Try to parse as semantic version
+		v := &Version{}
+		if err := v.FromString(tagName); err == nil {
+			// Successfully parsed as semantic version
+			if highestVersion == nil || v.Compare(*highestVersion) > 0 {
+				highestVersion = v
+				highestTag = tagName
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		// If there's an error iterating tags, return current version
+		return currentVer, nil
+	}
+
+	// If we found semantic version tags, return the highest one
+	if highestVersion != nil {
+		return highestTag, nil
+	}
+
+	// No semantic version tags found, return current HEAD hash
+	return currentVer, nil
 }

@@ -26,6 +26,12 @@ type WriteFiles interface {
 	WriteFiles(context.Context, imports.ConfigProvider, []render.Rendered) error
 }
 
+// LazyWriter is an optional interface for writers that support lazy loading.
+type LazyWriter interface {
+	SetVendorDir(string)
+	SetForceRegenerate(bool)
+}
+
 // Runtime init check that both render and writer both support the same languages and
 // all vcs types.
 func init() {
@@ -38,8 +44,10 @@ func init() {
 }
 
 type Writer struct {
-	config imports.ConfigProvider
-	fs     fs.Writer
+	config          imports.ConfigProvider
+	fs              fs.Writer
+	vendorDir       string
+	forceRegenerate bool
 }
 
 type writerOption func(w *Writer)
@@ -48,6 +56,20 @@ type writerOption func(w *Writer)
 func WithFS(fs fs.Writer) writerOption {
 	return func(w *Writer) {
 		w.fs = fs
+	}
+}
+
+// WithVendorDir sets the vendor directory for lazy loading.
+func WithVendorDir(dir string) writerOption {
+	return func(w *Writer) {
+		w.vendorDir = dir
+	}
+}
+
+// WithForceRegenerate forces regeneration of all .go files.
+func WithForceRegenerate(force bool) writerOption {
+	return func(w *Writer) {
+		w.forceRegenerate = force
 	}
 }
 
@@ -100,6 +122,17 @@ func (w *Writer) Write(ctx context.Context, rendered []render.Rendered) error {
 
 			wr := supported[k]
 			wr.SetFS(w.fs)
+
+			// If the writer supports lazy loading, configure it
+			if lw, ok := wr.(LazyWriter); ok {
+				if w.vendorDir != "" {
+					lw.SetVendorDir(w.vendorDir)
+				}
+				if w.forceRegenerate {
+					lw.SetForceRegenerate(w.forceRegenerate)
+				}
+			}
+
 			if err := wr.WriteFiles(ctx, w.config, v); err != nil {
 				errCh <- err
 				cancel()

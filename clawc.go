@@ -12,6 +12,7 @@ import (
 	// Registers the golang renderer.
 
 	"github.com/bearlytools/claw/internal/imports"
+	"github.com/bearlytools/claw/internal/imports/git"
 	"github.com/bearlytools/claw/internal/render"
 	_ "github.com/bearlytools/claw/internal/render/golang"
 	"github.com/bearlytools/claw/internal/vendor"
@@ -23,14 +24,110 @@ func main() {
 
 	flag.Parse()
 	args := flag.Args()
+
+	// Command routing: check if first argument is a command
+	if len(args) > 0 && args[0] == "get" {
+		handleGet(ctx, args[1:])
+		return
+	}
+
+	// Default: compilation mode
+	handleCompile(ctx, args)
+}
+
+// handleGet implements the "clawc get package@version" command
+func handleGet(ctx context.Context, args []string) {
+	if len(args) == 0 {
+		exitf("usage: clawc get <package>[@version]")
+	}
+
+	// Parse package@version syntax
+	pkgSpec := args[0]
+	pkg, version, err := parsePackageSpec(pkgSpec)
+	if err != nil {
+		exitf("invalid package specification: %s", err)
+	}
+
+	// Resolve @latest if needed
+	if version == "latest" || version == "" {
+		latestVersion, err := git.GetLatestVersion(ctx, pkg)
+		if err != nil {
+			exitf("failed to resolve latest version for %s: %s", pkg, err)
+		}
+		version = latestVersion
+		fmt.Printf("Resolved %s to version %s\n", pkg, version)
+	}
+
+	// Create vendor manager
+	vendorManager, err := vendor.NewVendorManager(".")
+	if err != nil {
+		exitf("failed to create vendor manager: %s", err)
+	}
+
+	// Vendor the single dependency
+	fmt.Printf("Fetching %s@%s...\n", pkg, version)
+	if err := vendorManager.VendorSingleDependency(ctx, pkg, version); err != nil {
+		exitf("failed to vendor dependency %s@%s: %s", pkg, version, err)
+	}
+
+	// Find the vendored .claw file
+	vendorPkgDir := vendorManager.GetVendorPath(pkg)
+	vendorClawFile, err := findClawFileInDir(vendorPkgDir)
+	if err != nil {
+		exitf("failed to find .claw file in vendor directory %s: %s", vendorPkgDir, err)
+	}
+
+	// Compile the dependency to generate .go file (force regenerate)
+	fmt.Printf("Generating .go file for %s...\n", pkg)
+	if err := compileDependencyWithOptions(ctx, vendorClawFile, true); err != nil {
+		exitf("failed to compile dependency %s: %s", pkg, err)
+	}
+
+	// TODO: Update claw.mod with the new version requirement
+	fmt.Printf("Successfully fetched and compiled %s@%s\n", pkg, version)
+	fmt.Printf("Note: claw.mod not automatically updated yet - manual update required\n")
+}
+
+// parsePackageSpec parses a package specification in the format "package[@version]"
+// and returns the package path and version separately.
+// Returns an error if the package specification is invalid.
+func parsePackageSpec(spec string) (pkg, version string, err error) {
+	// Trim whitespace
+	spec = strings.TrimSpace(spec)
+
+	// Check for empty string
+	if spec == "" {
+		return "", "", fmt.Errorf("package specification cannot be empty")
+	}
+
+	// Split on @ to separate package and version
+	parts := strings.SplitN(spec, "@", 2)
+	pkg = strings.TrimSpace(parts[0])
+
+	// Check if package path is empty (e.g., "@v1.2.3")
+	if pkg == "" {
+		return "", "", fmt.Errorf("package path is required (spec starts with @)")
+	}
+
+	// Extract version if present
+	if len(parts) == 2 {
+		version = strings.TrimSpace(parts[1])
+		// Empty version after @ is treated as no version
+		if version == "" {
+			version = ""
+		}
+	}
+
+	return pkg, version, nil
+}
+
+// handleCompile implements the default compilation behavior
+func handleCompile(ctx context.Context, args []string) {
 	path := ""
-	switch len(args) {
-	case 0:
+	if len(args) == 0 {
 		path = "."
-	case 1:
+	} else {
 		path = args[0]
-	default:
-		panic("you can 0 or 1 argument")
 	}
 
 	// Mount our filesystem for reading.
@@ -114,7 +211,7 @@ func main() {
 	if err != nil {
 		exit(err)
 	}
-	wr, err := writer.New(vendoredConfig)
+	wr, err := writer.New(vendoredConfig, writer.WithVendorDir(vendorManager.GetVendorPath("")))
 	if err != nil {
 		exit(err)
 	}
@@ -125,6 +222,11 @@ func main() {
 
 // compileDependency compiles a single dependency from the vendor directory.
 func compileDependency(ctx context.Context, vendorClawFile string) error {
+	return compileDependencyWithOptions(ctx, vendorClawFile, false)
+}
+
+// compileDependencyWithOptions compiles a single dependency with optional force regeneration.
+func compileDependencyWithOptions(ctx context.Context, vendorClawFile string, forceRegenerate bool) error {
 	// Find the root vendor directory (not the dependency-specific one)
 	rootVendorDir := findRootVendorDir(vendorClawFile)
 
@@ -139,7 +241,12 @@ func compileDependency(ctx context.Context, vendorClawFile string) error {
 		return fmt.Errorf("error rendering dependency: %w", err)
 	}
 
-	wr, err := writer.New(vendoredConfig)
+	var wr *writer.Writer
+	if forceRegenerate {
+		wr, err = writer.New(vendoredConfig, writer.WithVendorDir(rootVendorDir), writer.WithForceRegenerate(true))
+	} else {
+		wr, err = writer.New(vendoredConfig, writer.WithVendorDir(rootVendorDir))
+	}
 	if err != nil {
 		return fmt.Errorf("error creating writer: %w", err)
 	}

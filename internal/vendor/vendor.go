@@ -703,6 +703,188 @@ func (vm *VendorManager) GetCompilationOrder(graph *DependencyGraph) ([]string, 
 	return result, nil
 }
 
+// VendorSingleDependency vendors a single dependency at a specific version,
+// including its transitive dependencies.
+// This is used by the "clawc get" command to update individual dependencies.
+// It validates ACLs for all dependencies before vendoring.
+func (vm *VendorManager) VendorSingleDependency(ctx context.Context, pkgPath, version string) error {
+	// Step 1: Parse the root claw.mod file (need current module for ACL checks)
+	rootModule, err := vm.parseModuleFile(vm.rootDir)
+	if err != nil {
+		// If claw.mod doesn't exist in root, create a minimal module
+		// This allows clawc get to work without a claw.mod file
+		rootModule = &imports.Module{
+			Path: "local",
+			ACLs: []imports.ACL{}, // Empty ACL list allows all imports
+		}
+	}
+
+	// Step 2: Parse local.replace if it exists
+	localReplace, err := vm.parseLocalReplace(vm.rootDir)
+	if err != nil {
+		// local.replace is optional, continue without it
+		localReplace = imports.LocalReplace{}
+	}
+
+	// Step 3: Build dependency graph for this package and its transitive dependencies
+	graph := &DependencyGraph{
+		Nodes: make(map[string]*DependencyNode),
+		Edges: make(map[string][]string),
+	}
+
+	// Process the package and its transitive dependencies
+	visited := make(map[string]bool)
+	if err := vm.processSingleDependency(ctx, pkgPath, version, graph, rootModule, localReplace, visited); err != nil {
+		return fmt.Errorf("failed to process dependency %s@%s: %w", pkgPath, version, err)
+	}
+
+	// Step 4: Validate ACLs for all dependencies in the graph
+	if err := vm.validateACLs(ctx, graph, rootModule); err != nil {
+		return fmt.Errorf("ACL validation failed for %s: %w", pkgPath, err)
+	}
+
+	// Step 5: Vendor all packages in the dependency graph
+	for depPath, node := range graph.Nodes {
+		if err := vm.vendorPackage(ctx, depPath, node, localReplace); err != nil {
+			return fmt.Errorf("failed to vendor package %s: %w", depPath, err)
+		}
+	}
+
+	return nil
+}
+
+// processSingleDependency processes a single dependency and its transitive dependencies.
+// It's similar to processClawFile but simplified for the single dependency use case.
+func (vm *VendorManager) processSingleDependency(
+	ctx context.Context,
+	pkgPath, version string,
+	graph *DependencyGraph,
+	rootModule *imports.Module,
+	localReplace imports.LocalReplace,
+	visited map[string]bool,
+) error {
+	// Check for circular dependencies
+	if visited[pkgPath] {
+		return fmt.Errorf("circular dependency detected: %s", pkgPath)
+	}
+	visited[pkgPath] = true
+	defer delete(visited, pkgPath)
+
+	// Skip if already processed
+	if _, exists := graph.Nodes[pkgPath]; exists {
+		return nil
+	}
+
+	// Apply replace directives to get the actual source
+	actualPath, actualVersion := vm.applyReplaceDirectives(pkgPath, version, rootModule, localReplace)
+	if actualVersion == "" {
+		actualVersion = version
+	}
+
+	// Get the claw file content
+	var clawFile git.ClawFile
+	var err error
+
+	if vm.isLocalPath(actualPath) {
+		clawFile, err = vm.getLocalClawFile(actualPath)
+	} else {
+		clawFile, err = vm.getClawFile(ctx, actualPath, actualVersion)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to get claw file for %s: %w", pkgPath, err)
+	}
+
+	// Parse the claw file to extract imports
+	idlFile, err := vm.parseClawFile(clawFile.Content)
+	if err != nil {
+		return fmt.Errorf("failed to parse claw file %s: %w", pkgPath, err)
+	}
+
+	// Get the module file for this dependency
+	moduleFile, err := vm.getModuleFile(ctx, actualPath, actualVersion)
+	if err != nil {
+		// Module file is optional for dependencies
+		moduleFile = nil
+	}
+
+	// Create dependency node
+	node := &DependencyNode{
+		PkgPath:         pkgPath,
+		Version:         clawFile.Version,
+		Dependencies:    vm.extractImports(idlFile),
+		ClawFile:        idlFile,
+		OriginalContent: clawFile.Content,
+		ModuleFile:      moduleFile,
+		ShouldVendor:    true, // For clawc get, always vendor
+	}
+
+	graph.Nodes[pkgPath] = node
+	graph.Edges[pkgPath] = node.Dependencies
+
+	// Recursively process transitive dependencies
+	for _, dep := range node.Dependencies {
+		// Apply version resolution from the root module's require section
+		depVersion := vm.resolveVersion(dep, rootModule)
+		if err := vm.processSingleDependency(ctx, dep, depVersion, graph, rootModule, localReplace, visited); err != nil {
+			return fmt.Errorf("failed to process transitive dependency %s: %w", dep, err)
+		}
+	}
+
+	return nil
+}
+
+// IsVendored checks if a package is already vendored.
+func (vm *VendorManager) IsVendored(pkgPath string) bool {
+	vendorPath := filepath.Join(vm.vendorDir, pkgPath)
+
+	// Check if the vendor directory exists
+	if _, err := os.Stat(vendorPath); os.IsNotExist(err) {
+		return false
+	}
+
+	// Check if a .claw file exists in the directory
+	entries, err := os.ReadDir(vendorPath)
+	if err != nil {
+		return false
+	}
+
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), ".claw") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// GetVendoredVersion returns the version of a vendored package.
+// Returns empty string if the package is not vendored or version cannot be determined.
+func (vm *VendorManager) GetVendoredVersion(pkgPath string) (string, error) {
+	if !vm.IsVendored(pkgPath) {
+		return "", fmt.Errorf("package %s is not vendored", pkgPath)
+	}
+
+	// Try to read the claw.mod file for version information
+	modPath := filepath.Join(vm.vendorDir, pkgPath, "claw.mod")
+	if _, err := os.Stat(modPath); err == nil {
+		content, err := os.ReadFile(modPath)
+		if err == nil {
+			module := &imports.Module{}
+			if err := vm.parseModuleContent(string(content), module); err == nil {
+				// For now, we don't have version info in the module itself
+				// We would need to store this separately or in a metadata file
+				// Return empty for now
+				return "", nil
+			}
+		}
+	}
+
+	// Version tracking could be improved by storing version metadata
+	// in a separate file or in the claw.mod file
+	return "", nil
+}
+
 // GetVendorPath returns the vendor path for a given package path.
 func (vm *VendorManager) GetVendorPath(pkgPath string) string {
 	if pkgPath == "" {

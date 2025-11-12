@@ -19,11 +19,24 @@ import (
 
 // Writer implements writer.WriteFiles for the Go language.
 type Writer struct {
-	fs fs.Writer
+	fs               fs.Writer
+	forceRegenerate  bool   // Force regeneration of all .go files
+	vendorDir        string // Path to vendor directory for lazy loading check
 }
 
 func (w *Writer) SetFS(fs fs.Writer) {
 	w.fs = fs
+}
+
+// SetForceRegenerate sets whether to force regeneration of all .go files.
+// This is used by "clawc get" to ensure .go files are regenerated.
+func (w *Writer) SetForceRegenerate(force bool) {
+	w.forceRegenerate = force
+}
+
+// SetVendorDir sets the vendor directory path for lazy loading checks.
+func (w *Writer) SetVendorDir(dir string) {
+	w.vendorDir = dir
 }
 
 func (w *Writer) WriteFiles(ctx context.Context, config imports.ConfigProvider, renders []render.Rendered) error {
@@ -47,6 +60,13 @@ func (w *Writer) WriteFiles(ctx context.Context, config imports.ConfigProvider, 
 					return
 				}
 				p = filepath.Join(p, r.Package+".go")
+
+				// Lazy loading: check if we should skip this file
+				if w.shouldSkipGeneration(p, r.Path) {
+					log.Printf("Skipping generation for %s (already exists)\n", p)
+					return
+				}
+
 				if err := w.fs.WriteFile(p, r.Native, 0o600); err != nil {
 					errs.add(fmt.Errorf("problem writing package(%s) to local file(%s): %w", r.Package, p, err))
 					return
@@ -58,6 +78,61 @@ func (w *Writer) WriteFiles(ctx context.Context, config imports.ConfigProvider, 
 
 	log.Println("done")
 	return errs.get()
+}
+
+// shouldSkipGeneration determines if .go file generation should be skipped.
+// Returns true if:
+// - The file is in the vendor directory (not local)
+// - The .go file already exists
+// - We're not in force regenerate mode
+func (w *Writer) shouldSkipGeneration(goFilePath, clawPath string) bool {
+	// Force regenerate mode always generates (never skips)
+	if w.forceRegenerate {
+		return false
+	}
+
+	// If no vendor directory is set, never skip (not in lazy loading mode)
+	if w.vendorDir == "" {
+		return false
+	}
+
+	// Check if this is a vendored file
+	isVendored := isInVendor(clawPath, w.vendorDir)
+	if !isVendored {
+		// Local files are always regenerated
+		return false
+	}
+
+	// For vendored files, check if .go file exists
+	if _, err := os.Stat(goFilePath); os.IsNotExist(err) {
+		// .go file doesn't exist, need to generate
+		return false
+	}
+
+	// .go file exists for vendored file, skip generation
+	return true
+}
+
+// isInVendor checks if a path is within the vendor directory.
+func isInVendor(path, vendorDir string) bool {
+	if vendorDir == "" {
+		return false
+	}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	absVendorDir, err := filepath.Abs(vendorDir)
+	if err != nil {
+		return false
+	}
+	// Check if path starts with vendor directory
+	rel, err := filepath.Rel(absVendorDir, absPath)
+	if err != nil {
+		return false
+	}
+	// If the relative path doesn't start with "..", it's inside vendor
+	return !filepath.IsAbs(rel) && !filepath.HasPrefix(rel, "..")
 }
 
 // getImports is going to grab any file that the Claw file imports and is not in the
