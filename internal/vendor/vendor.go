@@ -859,3 +859,21 @@ func (vm *VendorManager) GetVendorPath(pkgPath string) string {
 	}
 	return filepath.Join(vm.vendorDir, pkgPath)
 }
+
+// GetRepoRoot returns the root directory of the git repository.
+// Returns an empty string if git is not available.
+func (vm *VendorManager) GetRepoRoot() string {
+	if vm.git == nil {
+		return ""
+	}
+	return vm.git.Root()
+}
+
+// GetGitOrigin returns the git origin URL of the repository.
+// Returns an empty string if git is not available.
+func (vm *VendorManager) GetGitOrigin() string {
+	if vm.git == nil {
+		return ""
+	}
+	return vm.git.Origin()
+}

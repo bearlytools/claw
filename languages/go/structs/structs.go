@@ -9,7 +9,6 @@ import (
 	"io"
 	"log"
 	"math"
-	"reflect"
 	"slices"
 	"sync/atomic"
 	"unsafe"
@@ -1164,11 +1163,11 @@ func validateFieldNum(fieldNum uint16, maps *mapping.Map, ftypes ...field.Type) 
 func numberToDescCheck[N Number](desc *mapping.FieldDescr) (size uint8, isFloat bool, err error) {
 	var t N
 	typeSize := unsafe.Sizeof(t)
-	
+
 	// Determine characteristics using unsafe helpers
 	isFloatType := typedetect.IsFloat[N]()
 	isSigned := typedetect.IsSignedInteger[N]()
-	
+
 	// Map size and characteristics to field types and validate
 	switch typeSize {
 	case 1:

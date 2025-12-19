@@ -183,6 +183,15 @@ func currentVersion(repo *git.Repository) (string, error) {
 	return c.Hash.String(), nil
 }
 
+// GetLatestVersion retrieves the latest version (commit hash) for a package.
+func GetLatestVersion(ctx context.Context, pkgPath string) (string, error) {
+	_, version, err := cloneRepo(pkgPath, "")
+	if err != nil {
+		return "", fmt.Errorf("failed to get latest version for %s: %w", pkgPath, err)
+	}
+	return version, nil
+}
+
 // versionCheckout will checkout the git repo at version. Version can be either the hash
 // or a semantic version tag. If version == "", then we will not do a checkout of a particular
 // version.
