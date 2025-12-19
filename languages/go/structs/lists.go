@@ -844,7 +844,7 @@ func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, err
 		}
 
 		entry := New(0, m)
-		n, err := entry.unmarshal(reader)
+		n, err := entry.Unmarshal(reader)
 		if err != nil {
 			return nil, err
 		}

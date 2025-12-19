@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"path"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"text/template"
@@ -27,6 +28,8 @@ type Option struct {
 
 // File represents the collected information from a .claw file.
 type File struct {
+	// BuildTime is the time in RFC3339 format when the clawc file was made.
+	BuildTime string
 	// Package is the name of the package.
 	Package string
 	// FullPath is the full path to the package.
@@ -50,7 +53,23 @@ type File struct {
 
 // New is the constructor for File.
 func New() *File {
+	bt := ""
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		panic("no build info")
+	}
+	for _, s := range bi.Settings {
+		if s.Key == "vcs.time" {
+			bt = s.Value
+			break
+		}
+	}
+	if bt == "" {
+		panic("no vcs.time")
+	}
+	log.Println("build version: ", bt)
 	return &File{
+		BuildTime:  bt,
 		Identifers: map[string]any{},
 		External:   map[string]*File{},
 		Options:    map[string]Option{},
@@ -163,7 +182,7 @@ func (f *File) Start(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
 func (f *File) SkipLinesWithComments(p *halfpike.Parser) {
 	l := p.Next()
 
-	if strings.HasPrefix("//", l.Items[0].Val) {
+	if strings.HasPrefix(l.Items[0].Val, "//") {
 		if p.EOF(l) {
 			return
 		}
@@ -171,6 +190,34 @@ func (f *File) SkipLinesWithComments(p *halfpike.Parser) {
 	} else {
 		p.Backup()
 	}
+}
+
+// CollectComments collects consecutive comment lines and returns them as a single string.
+// The returned string has the "//" prefix removed and lines joined with "\n// " so that
+// when the template adds "// " prefix, all lines are properly formatted as Go comments.
+func (f *File) CollectComments(p *halfpike.Parser) string {
+	var comments []string
+	for {
+		l := p.Next()
+		if p.EOF(l) {
+			return strings.Join(comments, "\n// ")
+		}
+		if strings.HasPrefix(l.Items[0].Val, "//") {
+			// Extract the comment text after "//"
+			// Join all items after "//" to get the full comment text
+			var parts []string
+			for i := 1; i < len(l.Items); i++ {
+				if l.Items[i].Val != "\n" {
+					parts = append(parts, l.Items[i].Val)
+				}
+			}
+			comments = append(comments, strings.Join(parts, " "))
+		} else {
+			p.Backup()
+			break
+		}
+	}
+	return strings.Join(comments, "\n// ")
 }
 
 var underscore = '_'
@@ -204,7 +251,8 @@ func (f *File) ParsePackage(ctx context.Context, p *halfpike.Parser) halfpike.Pa
 // FindNext is used to scan lines until we find the next thing to parse and direct
 // to the halfpike.ParseFn responsible.
 func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseFn {
-	f.SkipLinesWithComments(p)
+	// Collect any comments that precede the next declaration
+	comment := f.CollectComments(p)
 
 	line := p.Next()
 
@@ -241,6 +289,7 @@ func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseF
 	case "enum":
 		p.Backup()
 		e := NewEnum()
+		e.Comment = comment
 		if err := e.parse(p); err != nil {
 			return p.Errorf("%s", err.Error())
 		}
@@ -252,6 +301,7 @@ func (f *File) FindNext(ctx context.Context, p *halfpike.Parser) halfpike.ParseF
 	case "struct":
 		p.Backup()
 		s := NewStruct(f)
+		s.Comment = comment
 		if err := s.parse(p); err != nil {
 			return p.Errorf("%s", err.Error())
 		}
@@ -407,10 +457,12 @@ func (i *Import) parse(p *halfpike.Parser) error {
 
 // Enum is a set of name values that translate to a number.
 type Enum struct {
-	Name   string
-	Size   int
-	names  map[string]EnumVal
-	values map[uint16]EnumVal
+	// Comment is the comment that appears before the enum declaration.
+	Comment string
+	Name    string
+	Size    int
+	names   map[string]EnumVal
+	values  map[uint16]EnumVal
 }
 
 func (e Enum) Len() int {
@@ -469,8 +521,10 @@ func NewEnum() Enum {
 
 // EnumVal is a value stored in an Enum.
 type EnumVal struct {
-	Name  string
-	Value uint16
+	// Comment is the comment that appears before the enum value.
+	Comment string
+	Name    string
+	Value   uint16
 }
 
 func (e *Enum) parse(p *halfpike.Parser) error {
@@ -502,6 +556,7 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 		return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
 	}
 
+	var pendingComment []string
 	for {
 		l = p.Next()
 		if l.Items[0].Val == "}" {
@@ -512,6 +567,17 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 		}
 		if p.EOF(l) {
 			return fmt.Errorf("[Line %d]: Malformed Enum, EOF reached before closing '}'", l.LineNum)
+		}
+		if strings.HasPrefix(l.Items[0].Val, "//") {
+			// Collect comment text for the next enum value
+			var parts []string
+			for i := 1; i < len(l.Items); i++ {
+				if l.Items[i].Val != "\n" {
+					parts = append(parts, l.Items[i].Val)
+				}
+			}
+			pendingComment = append(pendingComment, strings.Join(parts, " "))
+			continue
 		}
 
 		if len(l.Items) < 3 {
@@ -537,7 +603,12 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 		if _, ok := e.values[uint16(n)]; ok {
 			return fmt.Errorf("[Line %d]: error: Enum %q already contains enumerator(%s) with value %d", l.LineNum, e.Name, e.values[uint16(n)].Name, n)
 		}
-		v := EnumVal{Name: l.Items[0].Val, Value: uint16(n)}
+		v := EnumVal{
+			Comment: strings.Join(pendingComment, "\n// "),
+			Name:    l.Items[0].Val,
+			Value:   uint16(n),
+		}
+		pendingComment = nil // Reset for next value
 		e.names[v.Name] = v
 		e.values[v.Value] = v
 
@@ -557,6 +628,8 @@ func (e *Enum) parse(p *halfpike.Parser) error {
 
 // StructField represents a field in a Struct.
 type StructField struct {
+	// Comment is the comment that appears before the field.
+	Comment string
 	// Name is the name of the field.
 	Name string
 	// Index is the index of the field in the Struct.
@@ -616,6 +689,8 @@ func (s StructField) TypeAsString() string {
 
 // Struct represents a Claw Struct type in the file.
 type Struct struct {
+	// Comment is the comment that appears before the struct declaration.
+	Comment string
 	// Name is the name of the Struct type.
 	Name string
 	// Fields are the fields in the Struct.
@@ -636,51 +711,90 @@ var structTmpl = template.Must(template.New("struct").Parse(structTmplData))
 
 // Render renders the Struct in its Go form.
 func (s Struct) Render() (string, error) {
-	// Integrate all externally defined types.
+	// Integrate all externally defined types and resolve forward references.
 	for i, f := range s.Fields {
-		// This means a field was externally defined, we need to put in the type info.
+		// This means a field type was not resolved during parsing (external or forward reference).
 		if f.Type == field.FTUnknown {
-			file := s.File.External[f.IdentName]
-			sp := strings.Split(f.IdentName, ".")
-			if len(sp) != 2 {
-				return "", fmt.Errorf("Struct %s had field %s of type %s that looks external but isn't?", s.Name, f.Name, f.IdentName)
-			}
-			f.Package = sp[0]
-			imp, err := s.File.Imports.ByPkgName(sp[0])
-			if err != nil {
-				panic(err)
-			}
-			f.FullPath = imp.Path
-			f.IsExternal = true
-
-			ident := file.Identifers[sp[1]]
-			switch v := ident.(type) {
-			case Enum:
-				f.IsEnum = true
-				switch v.Size {
-				case 8:
-					if f.IsList {
-						f.Type = field.FTListUint8
-					} else {
-						f.Type = field.FTUint8
+			// First check if this is a local forward reference (no dot in the name).
+			if !strings.Contains(f.IdentName, ".") {
+				ident, ok := s.File.Identifers[f.IdentName]
+				if !ok {
+					return "", fmt.Errorf("Struct %s had field %s of type %s that is not defined", s.Name, f.Name, f.IdentName)
+				}
+				f.FullPath = s.File.FullPath
+				f.Package = s.File.Package
+				switch v := ident.(type) {
+				case Enum:
+					f.IsEnum = true
+					switch v.Size {
+					case 8:
+						if f.IsList {
+							f.Type = field.FTListUint8
+						} else {
+							f.Type = field.FTUint8
+						}
+					case 16:
+						if f.IsList {
+							f.Type = field.FTListUint16
+						} else {
+							f.Type = field.FTUint16
+						}
+					default:
+						return "", fmt.Errorf("Struct %s had field %s of type Enum that had invalid size %d", s.Name, f.Name, v.Size)
 					}
-				case 16:
+				case Struct:
 					if f.IsList {
-						f.Type = field.FTListUint16
+						f.Type = field.FTListStructs
 					} else {
-						f.Type = field.FTUint16
+						f.Type = field.FTStruct
 					}
 				default:
-					return "", fmt.Errorf("Struct %s had field %s of type Enum that had invalid size %d", s.Name, f.Name, v.Size)
+					return "", fmt.Errorf("Struct %s had field %s of local type that was an invalid type %T", s.Name, f.Name, ident)
 				}
-			case Struct:
-				if f.IsList {
-					f.Type = field.FTListStructs
-				} else {
-					f.Type = field.FTStruct
+			} else {
+				// External type (has package prefix like pkg.Type).
+				file := s.File.External[f.IdentName]
+				sp := strings.Split(f.IdentName, ".")
+				if len(sp) != 2 {
+					return "", fmt.Errorf("Struct %s had field %s of type %s that looks external but isn't?", s.Name, f.Name, f.IdentName)
 				}
-			default:
-				return "", fmt.Errorf("Struct %s had field %s defined externally that was an invalid type %T", s.Name, f.Name, ident)
+				f.Package = sp[0]
+				imp, err := s.File.Imports.ByPkgName(sp[0])
+				if err != nil {
+					panic(err)
+				}
+				f.FullPath = imp.Path
+				f.IsExternal = true
+
+				ident := file.Identifers[sp[1]]
+				switch v := ident.(type) {
+				case Enum:
+					f.IsEnum = true
+					switch v.Size {
+					case 8:
+						if f.IsList {
+							f.Type = field.FTListUint8
+						} else {
+							f.Type = field.FTUint8
+						}
+					case 16:
+						if f.IsList {
+							f.Type = field.FTListUint16
+						} else {
+							f.Type = field.FTUint16
+						}
+					default:
+						return "", fmt.Errorf("Struct %s had field %s of type Enum that had invalid size %d", s.Name, f.Name, v.Size)
+					}
+				case Struct:
+					if f.IsList {
+						f.Type = field.FTListStructs
+					} else {
+						f.Type = field.FTStruct
+					}
+				default:
+					return "", fmt.Errorf("Struct %s had field %s defined externally that was an invalid type %T", s.Name, f.Name, ident)
+				}
 			}
 		} else {
 			f.FullPath = s.File.FullPath
@@ -732,6 +846,7 @@ func (s *Struct) name(p *halfpike.Parser) error {
 
 func (s *Struct) fields(p *halfpike.Parser) error {
 	var l halfpike.Line
+	var pendingComment []string
 	for {
 		l = p.Next()
 
@@ -746,8 +861,22 @@ func (s *Struct) fields(p *halfpike.Parser) error {
 			return fmt.Errorf("[Line %d]: Malformed Struct(1), EOF reached before closing '}'", l.LineNum)
 		}
 
+		if strings.HasPrefix(l.Items[0].Val, "//") {
+			// Collect comment text for the next field
+			var parts []string
+			for i := 1; i < len(l.Items); i++ {
+				if l.Items[i].Val != "\n" {
+					parts = append(parts, l.Items[i].Val)
+				}
+			}
+			pendingComment = append(pendingComment, strings.Join(parts, " "))
+			continue
+		}
+
 		p.Backup()
-		if err := s.field(p); err != nil {
+		comment := strings.Join(pendingComment, "\n// ")
+		pendingComment = nil
+		if err := s.field(p, comment); err != nil {
 			return err
 		}
 	}
@@ -783,7 +912,7 @@ func (s *Struct) fields(p *halfpike.Parser) error {
 	return nil
 }
 
-func (s *Struct) field(p *halfpike.Parser) error {
+func (s *Struct) field(p *halfpike.Parser, comment string) error {
 	l := p.Next()
 	if p.EOF(l) {
 		return fmt.Errorf("[Line %d]: Struct %q had no ending '}'", l.LineNum, s.Name)
@@ -794,7 +923,7 @@ func (s *Struct) field(p *halfpike.Parser) error {
 	if err := validateIdent(l.Items[0].Val); err != nil {
 		return fmt.Errorf("[Line %d]: Struct name %q is invalid: %w", l.LineNum, l.Items[0].Val, err)
 	}
-	f := StructField{Name: l.Items[0].Val}
+	f := StructField{Name: l.Items[0].Val, Comment: comment}
 
 	switch l.Items[1].Val {
 	case "bool":
@@ -913,21 +1042,19 @@ func (s *Struct) field(p *halfpike.Parser) error {
 			default:
 				panic(fmt.Sprintf("bug: we have an identifier %q that is not Enum or Struct, was %T", f.Name, ident))
 			}
-		// This indicates that they type is defined as an external dependency or is incorrect.
+		// This indicates that the type is defined as an external dependency, a forward reference, or is incorrect.
 		default:
-			// This checks that the type comes from an outside file we have imported.
-			if strings.Count(strings.Trim(ft, "."), ".") != 1 {
-				return fmt.Errorf("[Line %d]: Struct %q has field %q with unknown type %q", l.LineNum, s.Name, f.Name, ft)
+			// Check if this is an external type (with package prefix like pkg.Type).
+			if strings.Count(strings.Trim(ft, "."), ".") == 1 {
+				sp := strings.Split(ft, ".")
+				// Make sure we actually import the package that this external type references.
+				if _, err := s.File.Imports.ByPkgName(sp[0]); err != nil {
+					return fmt.Errorf("[Line %d]: found type %q, but %q is not a package we see imported", l.LineNum, ft, sp[0])
+				}
+				// Mark this as an external identifier that we have to fill in later.
+				s.File.External[ft] = nil
 			}
-			sp := strings.Split(ft, ".")
-			// Make sure we actually import the package that this external type references.
-			if _, err := s.File.Imports.ByPkgName(sp[0]); err != nil {
-				return fmt.Errorf("[Line %d]: found type %q, but %q is not a package we see imported", l.LineNum, ft, sp[0])
-			}
-
-			// Mark this as an external identifier that we have to fill in later.
-			s.File.External[ft] = nil
-
+			// For both external types and forward references to local types, mark as unknown for later resolution.
 			f.IdentName = ft
 			f.Type = field.FTUnknown
 			f.IsList = isList

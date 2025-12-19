@@ -16,10 +16,10 @@ import (
 
 var dataSizeMask = bits.Mask[uint64](24, 64)
 
-func (s *Struct) unmarshal(r io.Reader) (int, error) {
+func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 	read := 0
 	h := header.New()
-	read, err := r.Read(h)
+	read, err := io.ReadFull(r, h[:])
 	if read != 8 {
 		return read, fmt.Errorf("could only read %d bytes, a Struct header is always 8 bytes", read)
 	}
@@ -44,7 +44,7 @@ func (s *Struct) unmarshal(r io.Reader) (int, error) {
 		return read, nil
 	}
 
-	n, err := r.Read(buffer)
+	n, err := io.ReadFull(r, buffer)
 	read += n
 	if err != nil {
 		log.Println("this is the buffer size: ", len(buffer))
@@ -350,7 +350,7 @@ func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
 	defer readers.Put(context.Background(), r)
 
 	sub := New(fieldNum, m)
-	n, err := sub.unmarshal(r)
+	n, err := sub.Unmarshal(r)
 	if err != nil {
 		return err
 	}

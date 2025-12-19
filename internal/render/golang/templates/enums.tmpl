@@ -1,4 +1,7 @@
 {{- range $enumsIndex, $enumGroup := .File.Enums }}
+{{- if $enumGroup.Comment }}
+// {{ $enumGroup.Comment }}
+{{- end }}
 type {{  $enumGroup.Name }} {{  $enumGroup.GoType }}
 
 // String implements fmt.Stringer.
@@ -7,14 +10,14 @@ func (x {{  $enumGroup.Name }}) String() string {
 }
 
 // XXXEnumGroup will return the EnumGroup descriptor for this group of enumerators.
-// This should only be used by the reflect package and is has no compatibility promises 
+// This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x {{ $enumGroup.Name }}) XXXEnumGroup() reflect.EnumGroup {
     return XXXEnumGroups.Get({{ $enumsIndex }})
 }
 
 // XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
-// This should only be used by the reflect package and is has no compatibility promises 
+// This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x {{ $enumGroup.Name }}) XXXEnumValueDescr() reflect.EnumValueDescr {
     return XXXEnumGroups.Get({{ $enumsIndex }}).ByValue(uint16(x))
@@ -24,6 +27,9 @@ func (x {{ $enumGroup.Name }}) XXXEnumValueDescr() reflect.EnumValueDescr {
 // This is a set of all constants representing enumerated values for enum {{ $enum.Name }}.
 const (
 {{- range $index, $value := .OrderByValues }}
+    {{- if $value.Comment }}
+    // {{ $value.Comment }}
+    {{- end }}
     {{ $value.Name }} {{ $enum.Name }} = {{ $value.Value }}
 {{- end }}
 )
@@ -41,4 +47,4 @@ var {{ .Name }}ByValue = map[{{ $enum.GoType }}]string{
     {{ $value.Value }}: "{{ $value.Name }}",
 {{- end }}
 }
-{{- end }} {{/* End range .Enums */}}
+{{- end }}{{/* End range .Enums */}}

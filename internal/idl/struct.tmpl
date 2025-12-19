@@ -1,10 +1,12 @@
-{{- $zeroValueCompression := false }} 
+{{- $zeroValueCompression := false }}
 {{- if .File.Options.NoZeroValueCompression }}
-{{- $zeroValueCompression = false }} 
+{{- $zeroValueCompression = false }}
 {{- else }}
 {{- $zeroValueCompression = true }}
 {{- end }}
-
+{{- if .Comment }}
+// {{ .Comment }}
+{{- end }}
 type {{ .Name }} struct {
    s *structs.Struct
 }
@@ -20,21 +22,50 @@ func New{{ .Name }}() {{ .Name }} {
     }
 }
 
-// XXXNewFrom creates a new {{ .Name }} from our internal Struct representation.
+// XXXNew{{ .Name }}From creates a new {{ .Name }} from our internal Struct representation.
 // As with all things marked XXX*, this should not be used and has not compatibility
 // guarantees.
 //
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
-func XXXNewFrom(s *structs.Struct) {{ .Name }} {
+func XXXNew{{ .Name }}From(s *structs.Struct) {{ .Name }} {
     return {{ .Name }}{s: s}
 }
 
 {{- $struct := . }}
 
-{{- range $index, $field := .Fields }}
-{{- if eq $field.TypeAsString "Bool" }}
+// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
+func (x {{ $struct.Name }}) Marshal() ([]byte, error) {
+    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
+    _, err := x.s.Marshal(b)
+    if err != nil {
+        return nil, err
+    }
+    return b.Bytes(), nil
+}
 
+// MarshalWriter marshals to an io.Writer.
+func (x {{ $struct.Name }}) MarshalWriter(w io.Writer) (n int, err error) {
+    return x.s.Marshal(w)
+}
+
+// Unmarshal unmarshals b into the Struct.
+func (x {{ $struct.Name }}) Unmarshal(b []byte) error {
+    buff := bytes.NewBuffer(b)
+    _, err := x.s.Unmarshal(buff)
+    return err
+}
+
+// UnmarshalReader unmarshals a Struct from an io.Reader.
+func (x {{ $struct.Name }}) UnmarshalReader (r io.Reader) (int, error) {
+    return x.s.Unmarshal(r)
+}
+
+{{ range $index, $field := .Fields }}
+{{- if eq $field.TypeAsString "Bool" }}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() bool {
     return structs.MustGetBool(x.s, {{ $field.Index }})
 }
@@ -50,8 +81,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Int8" }}
-
+{{ else if eq $field.TypeAsString "Int8" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() int8 {
     return structs.MustGetNumber[int8](x.s, {{ $field.Index }})
 }
@@ -67,8 +100,10 @@ func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Int16" }}
-
+{{ else if eq $field.TypeAsString "Int16" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() int16 {
     return structs.MustGetNumber[int16](x.s, {{ $field.Index }})
 }
@@ -84,8 +119,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Int32" }}
-
+{{ else if eq $field.TypeAsString "Int32" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() int32 {
     return structs.MustGetNumber[int32](x.s, {{ $field.Index }})
 }
@@ -101,8 +138,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Int64" }}
-
+{{ else if eq $field.TypeAsString "Int64" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() int64 {
     return structs.MustGetNumber[int64](x.s, {{ $field.Index }})
 }
@@ -118,9 +157,11 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Uint8" }}
-{{- if $field.IdentName }} {{/* It is a Enum */}}
-
+{{ else if eq $field.TypeAsString "Uint8" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
+{{- if $field.IdentName -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
     return {{ $field.IdentName }}(structs.MustGetNumber[uint8](x.s, {{ $field.Index }}))
 }
@@ -130,7 +171,6 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
     return x
 }
 {{- else }}
-
 func (x {{ $struct.Name }}) {{ $field.Name }}() uint8 {
     return structs.MustGetNumber[uint8](x.s, {{ $field.Index }})
 }
@@ -147,9 +187,11 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Uint16" }}
-{{ if $field.IdentName }} {{/* It is a Enum */}}
-
+{{ else if eq $field.TypeAsString "Uint16" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
+{{- if $field.IdentName -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
     return {{ $field.IdentName }}(structs.MustGetNumber[uint8](x.s, {{ $field.Index }}))
 }
@@ -159,7 +201,6 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
     return x
 }
 {{- else }}
-
 func (x {{ $struct.Name }}) {{ $field.Name }}() uint16 {
     return structs.MustGetNumber[uint16](x.s, {{ $field.Index }})
 }
@@ -176,7 +217,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Uint32" }}
+{{ else if eq $field.TypeAsString "Uint32" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() uint32 {
     return structs.MustGetNumber[uint32](x.s, {{ $field.Index }})
 }
@@ -192,8 +236,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Uint64" }}
-
+{{ else if eq $field.TypeAsString "Uint64" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() uint64 {
     return structs.MustGetNumber[uint64](x.s, {{ $field.Index }})
 }
@@ -209,7 +255,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Float32" }}
+{{ else if eq $field.TypeAsString "Float32" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() float32 {
     return structs.MustGetNumber[float32](x.s, {{ $field.Index }})
 }
@@ -225,8 +274,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Float64" }}
-
+{{ else if eq $field.TypeAsString "Float64" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() float64 {
     return structs.MustGetNumber[float64](x.s, {{ $field.Index }})
 }
@@ -242,10 +293,15 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "String" }}
-
+{{ else if eq $field.TypeAsString "String" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() string {
     ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    if ptr == nil {
+        return ""
+    }
     return conversions.ByteSlice2String(*ptr)
 }
 
@@ -261,15 +317,23 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Bytes" }}
-
+{{ else if eq $field.TypeAsString "Bytes" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() []byte {
     ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    if ptr == nil {
+        return nil
+    }
     return *ptr
 }
 
 func (x {{ $struct.Name }}) SafeGet{{ $field.Name }}() []byte {
     ptr := structs.MustGetBytes(x.s, {{ $field.Index }})
+    if ptr == nil {
+        return nil
+    }
     b := make([]byte, len(*ptr))
     copy(b, *ptr)
     return b
@@ -286,14 +350,16 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "Struct" }}
-
+{{ else if eq $field.TypeAsString "Struct" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
     s := structs.MustGetStruct(x.s, {{ $field.Index }})
     {{- if $field.IsExternal }}
-    return {{ $field.Package }}.XXXNewFrom(s)
+    return {{ $field.Package }}.XXXNew{{ $field.IdentInFile }}From(s)
     {{- else }}
-    return {{ $field.IdentName }}{s: s} 
+    return {{ $field.IdentName }}{s: s}
     {{- end }}
 }
 
@@ -308,8 +374,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "ListBools" }}
-
+{{ else if eq $field.TypeAsString "ListBools" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() list.Bools {
     return list.XXXFromBools(structs.MustGetListBool(x.s, {{ $field.Index }}))
 }
@@ -325,12 +393,14 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "ListUint8" "ListUint16" "ListUint32" "ListUint64" "ListInt8" "ListInt16" "ListInt32" "ListInt64" "ListFloat32" "ListFloat64"}}
-
-{{- if $field.IdentName }} {{/* It is a Enum */}}
+{{ else if eq $field.TypeAsString "ListUint8" "ListUint16" "ListUint32" "ListUint64" "ListInt8" "ListInt16" "ListInt32" "ListInt64" "ListFloat32" "ListFloat64" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
+{{- if $field.IdentName -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() list.Enums[{{ $field.GoListType }}] {
     n := structs.MustGetListNumber[{{ .GoListType }}](x.s, {{ $field.Index }})
-    return list.XXXEnumsFromNumbers(n) 
+    return list.XXXEnumsFromNumbers(n)
 }
 
 func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Enums[{{ $field.GoListType }}]) {{ $struct.Name }} {
@@ -341,7 +411,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Enums[{{ $field.GoLi
 {{- else }}
 func (x {{ $struct.Name }}) {{ $field.Name }}() list.Numbers[{{ $field.GoListType }}] {
     n := structs.MustGetListNumber[{{ .GoListType }}](x.s, {{ $field.Index }})
-    return list.XXXFromNumbers(n) 
+    return list.XXXFromNumbers(n)
 }
 
 func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Numbers[{{ $field.GoListType }}]) {{ $struct.Name }} {
@@ -357,11 +427,13 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "ListBytes" }}
-
+{{ else if eq $field.TypeAsString "ListBytes" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.Bytes {
     b := structs.MustGetListBytes(x.s, {{ $field.Index }})
-    return list.XXXFromBytes(b) 
+    return list.XXXFromBytes(b)
 }
 
 func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.Bytes) {{ $struct.Name }} {
@@ -376,8 +448,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "ListStrings" }}
-
+{{ else if eq $field.TypeAsString "ListStrings" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.String {
     b := structs.MustGetListBytes(x.s, {{ $field.Index }})
     return &lists.XXXFromStrings(b)
@@ -394,15 +468,20 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- else if eq $field.TypeAsString "ListStructs" }}
-
+{{ else if eq $field.TypeAsString "ListStructs" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() []{{ $field.IdentName }} {
     l := structs.MustGetListStruct(x.s, {{ $field.Index }})
+    if l == nil {
+        return nil
+    }
     vals := make([]{{ $field.IdentName }}, l.Len())
 
     for i := range vals {
         {{- if $field.IsExternal }}
-        vals[i] = {{ $field.Package }}.XXXNewFrom(l.Get(i))
+        vals[i] = {{ $field.Package }}.XXXNew{{ $field.IdentInFile }}From(l.Get(i))
         {{- else }}
         vals[i] = {{ $field.IdentName }}{s: l.Get(i)}
         {{- end }}
@@ -429,8 +508,8 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 
 {{- end }}
 
-{{- end }} {{/* End if eq $field.Type */}}
-{{- end }} {{/* End range $index, $field := .Fields */}}
+{{- end }}{{/* End if eq $field.Type */}}
+{{- end }}{{/* End range $index, $field := .Fields */}}
 
 // ClawStruct returns a reflection type representing the Struct.
 func (x {{ $struct.Name }}) ClawStruct() reflect.Struct{

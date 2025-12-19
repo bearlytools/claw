@@ -9,6 +9,8 @@ import (
 	"io"
 	"log"
 	"math"
+	"reflect"
+	"slices"
 	"sync/atomic"
 	"unsafe"
 
@@ -89,7 +91,7 @@ func New(fieldNum uint16, dataMap *mapping.Map) *Struct {
 func NewFromReader(r io.Reader, maps *mapping.Map) (*Struct, error) {
 	s := New(0, maps)
 
-	if _, err := s.unmarshal(r); err != nil {
+	if _, err := s.Unmarshal(r); err != nil {
 		return nil, err
 	}
 	return s, nil
@@ -152,10 +154,8 @@ func (s *Struct) IsSet(fieldNum uint16) bool {
 	if t == field.FTStruct {
 		return false
 	}
-	for _, lt := range field.ListTypes {
-		if t == lt {
-			return false
-		}
+	if slices.Contains(field.ListTypes, t) {
+		return false
 	}
 
 	return true
@@ -404,7 +404,13 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 		return err
 	}
 	if len(value) == 0 {
-		return fmt.Errorf("cannot encode an empty Bytes value")
+		f := s.fields[fieldNum]
+		if f.Header == nil {
+			// Field not set, nothing to do
+			return nil
+		}
+		// Field is set, delete it
+		return DeleteBytes(s, fieldNum)
 	}
 
 	if len(value) > maxDataSize {
@@ -1121,6 +1127,14 @@ func XXXAddToTotal[N int64 | int | uint | uint64](s *Struct, value N) {
 		ptr.header.SetFinal40(uint64(v))
 		ptr = ptr.parent
 	}
+}
+
+// XXXGetStructTotal retrieves the Struct's size.
+func XXXGetStructTotal(s *Struct) int64 {
+	if s == nil {
+		return 0
+	}
+	return atomic.LoadInt64(s.structTotal)
 }
 
 // validateFieldNum will validate that the type is described in the mapping.Map,

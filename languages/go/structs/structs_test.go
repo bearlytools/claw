@@ -544,7 +544,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	log.Println("encoder says it wrote: ", written)
 	cp := New(0, msg0Mapping)
 	log.Println("new root is: ", *cp.structTotal)
-	if _, err := cp.unmarshal(buff); err != nil {
+	if _, err := cp.Unmarshal(buff); err != nil {
 		panic(err)
 	}
 	if *cp.structTotal != int64(written) {
