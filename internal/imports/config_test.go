@@ -65,8 +65,9 @@ var wantManufacturer = &idl.File{
 	Options:  map[string]idl.Option{},
 	Identifers: map[string]interface{}{
 		"Manufacturer": idl.Enum{
-			Name: "Manufacturer",
-			Size: 8,
+			Comment: "Manufacturer is the maker of a vehicle.",
+			Name:    "Manufacturer",
+			Size:    8,
 		},
 	},
 	External: map[string]*idl.File{},

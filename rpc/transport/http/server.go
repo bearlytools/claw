@@ -96,6 +96,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// This blocks until the connection is closed.
 	ctx := r.Context()
 	err := h.server.Serve(ctx, trans)
+
+	// Close the transport before returning to ensure no writes happen
+	// after the handler completes (ResponseWriter becomes invalid).
+	trans.Close()
+
 	if err != nil && !errors.Is(err, io.EOF) {
 		// Log error if needed, but don't write to response
 		// as headers are already sent.

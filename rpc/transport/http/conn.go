@@ -67,11 +67,11 @@ func (t *serverTransport) Read(p []byte) (int, error) {
 
 func (t *serverTransport) Write(p []byte) (int, error) {
 	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if t.closed {
-		t.mu.Unlock()
 		return 0, io.ErrClosedPipe
 	}
-	t.mu.Unlock()
 
 	n, err := t.writer.Write(p)
 	if err != nil {

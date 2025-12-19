@@ -1,7 +1,6 @@
 package idl
 
 import (
-	"github.com/gostdlib/base/context"
 	_ "embed"
 	"fmt"
 	"math"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/gostdlib/base/context"
 
 	"github.com/johnsiilver/halfpike"
 	"golang.org/x/exp/slices"
@@ -55,19 +56,14 @@ type File struct {
 func New() *File {
 	bt := ""
 	bi, ok := debug.ReadBuildInfo()
-	if !ok {
-		panic("no build info")
-	}
-	for _, s := range bi.Settings {
-		if s.Key == "vcs.time" {
-			bt = s.Value
-			break
+	if ok {
+		for _, s := range bi.Settings {
+			if s.Key == "vcs.time" {
+				bt = s.Value
+				break
+			}
 		}
 	}
-	if bt == "" {
-		panic("no vcs.time")
-	}
-	log.Println("build version: ", bt)
 	return &File{
 		BuildTime:  bt,
 		Identifers: map[string]any{},
@@ -985,7 +981,6 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 			ft = strings.Split(ft, "[]")[1]
 			isList = true
 		}
-
 
 		// See if field type is an identifer of an Enum or Struct.
 		ident, ok := s.File.Identifers[ft]

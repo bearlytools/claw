@@ -38,8 +38,10 @@ func init() {
 }
 
 type Writer struct {
-	config imports.ConfigProvider
-	fs     fs.Writer
+	config          imports.ConfigProvider
+	fs              fs.Writer
+	vendorDir       string
+	forceRegenerate bool
 }
 
 type writerOption func(w *Writer)
@@ -48,6 +50,20 @@ type writerOption func(w *Writer)
 func WithFS(fs fs.Writer) writerOption {
 	return func(w *Writer) {
 		w.fs = fs
+	}
+}
+
+// WithVendorDir sets the vendor directory for the writer.
+func WithVendorDir(vendorDir string) writerOption {
+	return func(w *Writer) {
+		w.vendorDir = vendorDir
+	}
+}
+
+// WithForceRegenerate sets whether to force regeneration of files.
+func WithForceRegenerate(force bool) writerOption {
+	return func(w *Writer) {
+		w.forceRegenerate = force
 	}
 }
 
