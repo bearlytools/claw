@@ -34,8 +34,7 @@ var XXXEnumGroup{{ .Name }} = reflect.XXXEnumGroupImpl{
         {{- end }}
     },
 }
-{{- end }}
-
+{{ end }}
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     List:   []reflect.EnumGroup{
@@ -49,9 +48,9 @@ var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
         {{- end }}
     },
 }
-{{- end }} {{/* end Enum if */}} 
+{{ end }} {{/* end Enum if */}}
 
-{{- range $index, $struct := $file.Structs }}
+{{ range $index, $struct := $file.Structs }}
 var XXXStructDescr{{ .Name }} = &reflect.XXXStructDescrImpl{
     Name:      "{{  $struct.Name }}",
     Pkg:       XXXMapping{{  $struct.Name }}.Pkg,
@@ -85,8 +84,7 @@ var XXXStructDescr{{ .Name }} = &reflect.XXXStructDescrImpl{
         {{- end }} {{/* range $i, $field :=  $struct.Fields */}}
     },
 }
-{{- end }}
-
+{{ end }}
 var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
     {{- range $file.Structs }}
     "{{ .Name }}":  XXXStructDescr{{ .Name }},
@@ -101,12 +99,12 @@ var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     ImportDescrs: []reflect.PackageDescr {
     {{- range $index, $value := $file.Imports.Imports }}
         {{ $value.Name }}.XXXPackageDescr,
-    {{- end }} {{/* end .Imports range */}} 
+    {{- end }}{{/* end .Imports range */}}
     },
-    {{- end }} {{/* end Imports if */}} 
+    {{- end }}{{/* end Imports if */}}
     {{- if $file.Enums }}
     EnumGroupsDescrs: XXXEnumGroups,
-    {{- end }} {{/* end Enum if */}}
+    {{- end }}{{/* end Enum if */}}
     {{- $structs := $file.Structs}}
     {{- if $structs }}
     StructsDescrs: reflect.XXXStructDescrsImpl{
@@ -116,7 +114,7 @@ var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
             {{- end }}
         },
     },
-    {{- end }} {{/* if $file.Identifers */}} 
+    {{- end }}{{/* if $file.Identifers */}}
 }
 
 // PackageDescr returns a PackageDescr for this package.

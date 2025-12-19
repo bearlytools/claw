@@ -44,7 +44,7 @@ func (g Generic) SetFieldType(u field.Type) {
 }
 
 // Final40 returns the value of the final 40 bits. This is usually used to store either the size of
-// an entry of the number of items.
+// an entry or the number of items.
 func (g Generic) Final40() uint64 {
 	u := binary.Get[uint64](g)
 	return bits.GetValue[uint64, uint64](u, dataSizeMask, 24)

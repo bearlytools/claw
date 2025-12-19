@@ -27,30 +27,6 @@ func TestSetValue(t *testing.T) {
 	}
 }
 
-/*
-func TestSetValueBytes(t *testing.T) {
-	storeStart := []byte{uint8(1)}
-	// We start at using bit 1 (we index at 0), so that we can set bit 0 to 1
-	// (meaning our storage number starts at value 1). That way we can make sure
-	// we are only retrieving the values we think we are.
-	for start := uint64(1); start < 8; start++ {
-		for end := start + 1; end < 8; end++ {
-			maxBits := end - start
-			maxValue := uint8(math.Pow(2, float64(maxBits)))
-			for val := uint8(0); val < maxValue; val++ {
-				SetValueBytes(val, storeStart, start, end)
-				bitMask := Mask[uint8](start, end)
-				got := GetValue[uint8, uint8](*conversions.BytesToNum[uint8](storeStart), bitMask, start)
-
-				if got != val {
-					t.Fatalf("TestSetValue(start: %d, end: %d, val: %d): got %d, want %d", start, end, val, got, val)
-				}
-			}
-		}
-	}
-}
-*/
-
 func TestSetBits(t *testing.T) {
 	// Tests we can set all bits that we expect.
 	for start := 0; start < 8; start++ {

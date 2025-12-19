@@ -19,7 +19,9 @@ import (
 
 // Writer implements writer.WriteFiles for the Go language.
 type Writer struct {
-	fs fs.Writer
+	fs              fs.Writer
+	forceRegenerate bool   // Force regeneration of all .go files
+	vendorDir       string // Path to vendor directory for lazy loading check
 }
 
 func (w *Writer) SetFS(fs fs.Writer) {
@@ -104,7 +106,7 @@ func (w *Writer) goGet(ctx context.Context, pkg, version string) error {
 	}
 
 	log.Println("get: ", get)
-	cmd := exec.CommandContext(ctx, p, "get", "-d", get)
+	cmd := exec.CommandContext(ctx, p, "get", get)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println("error output of 'go get':\n", string(out))

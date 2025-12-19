@@ -1,0 +1,229 @@
+package msgs
+
+// MsgType is used to determine the type of message.
+Enum MsgType uint8 {
+    // TUnknown indicates a bug.
+	TUnknown @0
+	// TOpen indicates this message is for opening the stream.
+	TOpen @1
+	// TOpenAck indicates this message is an ack for opening the stream.
+	TOpenAck @2
+	// TClose indicates this message is for closing the stream.
+	TClose @3
+	// TPayload indicates this message is a payload message.
+	TPayload @4
+	// TCancel indicates this message is a cancel message.
+	TCancel @5
+	// TPing indicates this message is a ping for keepalive.
+	TPing @6
+	// TPong indicates this message is a pong response to a ping.
+	TPong @7
+	// TGoAway indicates the server is going away and will stop accepting new streams.
+	TGoAway @8
+}
+
+// Msg represents any message that we decode on the wire.
+Struct Msg {
+	// Type is the type of message.
+	Type MsgType @0
+
+	// Open is an open message.
+	Open Open @1
+	// OpenAck is an open ack message.
+	OpenAck OpenAck @2
+	// Close is a close message.
+	Close Close @3
+	// Payload is a payload message.
+	Payload Payload @4
+	// Cancel is a Cancel message.
+	Cancel Cancel @5
+	// Ping is a ping message for keepalive.
+	Ping Ping @6
+	// Pong is a pong response to a ping.
+	Pong Pong @7
+	// GoAway is a message indicating the server is going away.
+	GoAway GoAway @8
+}
+
+// RPCType is the type of RPC being performed.
+Enum RPCType uint8 {
+	// RTUnknown is always a bug.
+	RTUnknown @0
+	// RTSynchronous represents a request-response style RPC.
+	RTSynchronous @1
+	// RTSend represents a send-only RPC.
+	RTSend @2
+	// RTRecv represents a receive-only RPC.
+	RTRecv @3
+	// RTBiDirectional represents a bi-directional streaming RPC.
+	RTBiDirectional @4
+}
+
+// Compression indicates the compression algorithm used on a payload.
+Enum Compression uint8 {
+	// CmpNone indicates no compression.
+	CmpNone @0
+	// CmpGzip indicates gzip compression.
+	CmpGzip @1
+	// CmpSnappy indicates snappy compression.
+	CmpSnappy @2
+	// CmpZstd indicates zstd compression.
+	CmpZstd @3
+}
+
+// Descr gives the description of the RPC so that it can match up with the other side.
+Struct Descr {
+    // Package is the package the RPC is defined in.
+    Package string @0
+    // Service is the name of the service the RPC is defined in.
+    Service string @1
+    // Call is the name of the call the RPC defines.
+    Call string @2
+    // Type is the type of RPC being performed.
+    Type RPCType @3
+}
+
+// Metadata represents a key-value pair for request/response metadata.
+Struct Metadata {
+	// Key is the metadata key.
+	Key string @0
+	// Value is the metadata value.
+	Value bytes @1
+}
+
+// Open is the open message for an RPC.
+Struct Open {
+	// OpenID is the ID of the Open message so the response can refer to it.
+	OpenID uint32 @0
+	// Descr is the RPC descriptor.
+	Descr Descr @1
+	// ProtocolMajor is the major version of the protocol.
+	ProtocolMajor uint8 @2
+	// ProtocolMinor is the minor version of the protocol.
+	ProtocolMinor uint8 @3
+	// DeadlineMS is the deadline in milliseconds from now. 0 means no deadline.
+	DeadlineMS uint64 @4
+	// MaxPayloadSize is the maximum payload size the client will accept. 0 means use server default.
+	MaxPayloadSize uint32 @5
+	// TraceID is the trace ID for distributed tracing.
+	TraceID bytes @6
+	// SpanID is the span ID for distributed tracing.
+	SpanID bytes @7
+	// Metadata is the request metadata (headers).
+	Metadata []Metadata @8
+}
+
+// OpenAck is the response to an Open message.
+Struct OpenAck {
+	// OpenID is the ID of the Open message being acknowledged.
+	OpenID uint32 @0
+	// SessionID is the ID of the session.
+	SessionID uint32 @1
+	// ProtocolMajor is the major version of the protocol the server will use.
+	ProtocolMajor uint8 @2
+	// ProtocolMinor is the minor version of the protocol the server will use.
+	ProtocolMinor uint8 @3
+	// MaxPayloadSize is the maximum payload size the server will accept.
+	MaxPayloadSize uint32 @4
+	// ErrCode is a code describing an error if the open was rejected. 0 indicates success.
+	ErrCode ErrCode @5
+	// Error is an error message if the open was rejected.
+	Error string @6
+	// Metadata is the response metadata (headers).
+	Metadata []Metadata @7
+}
+
+// ErrCode are error codes sent over Close or OpenAck messages.
+Enum ErrCode uint8 {
+	// ErrNone indicates there was no error.
+	ErrNone @0
+	// ErrInternal indicates there was an internal error.
+	ErrInternal @1
+	// ErrInvalidArgument indicates the client specified an invalid argument.
+	ErrInvalidArgument @2
+	// ErrNotFound indicates a requested resource was not found.
+	ErrNotFound @3
+	// ErrPermissionDenied indicates the caller does not have permission.
+	ErrPermissionDenied @4
+	// ErrUnauthenticated indicates the request does not have valid authentication credentials.
+	ErrUnauthenticated @5
+	// ErrDeadlineExceeded indicates the deadline expired before the operation completed.
+	ErrDeadlineExceeded @6
+	// ErrResourceExhausted indicates some resource has been exhausted.
+	ErrResourceExhausted @7
+	// ErrUnavailable indicates the service is currently unavailable.
+	ErrUnavailable @8
+	// ErrUnimplemented indicates the operation is not implemented.
+	ErrUnimplemented @9
+	// ErrCanceled indicates the operation was canceled.
+	ErrCanceled @10
+	// ErrAborted indicates the operation was aborted.
+	ErrAborted @11
+	// ErrOutOfRange indicates the operation was attempted past the valid range.
+	ErrOutOfRange @12
+	// ErrDataLoss indicates unrecoverable data loss or corruption.
+	ErrDataLoss @13
+	// ErrFailedPrecondition indicates the operation was rejected because the system is not in a required state.
+	ErrFailedPrecondition @14
+	// ErrAlreadyExists indicates the resource already exists.
+	ErrAlreadyExists @15
+}
+
+// Close is a message that closes the session. If ErrCode is set then the session close is due to some type
+// of error.
+Struct Close {
+	// SessionID is the ID of the session that is closing.
+	SessionID uint32 @0
+	// ErrCode is a code describing the error type. 0 indicates no error.
+	ErrCode ErrCode @1
+	// Error is an error message.
+	Error string @2
+	// Metadata is trailing metadata sent with the close.
+	Metadata []Metadata @3
+}
+
+// Cancel is a message sent to cancel an RPC. Works for all RPC types.
+Struct Cancel {
+	// SessionID is the ID of the session being cancelled.
+	SessionID uint32 @0
+	// ReqID is the ID of the request that is being cancelled. For non-Synchronous RPCs, this is 0.
+	ReqID uint32 @1
+}
+
+// Payload is a payload message.
+Struct Payload {
+	// SessionID is the ID of the session on this connection.
+	SessionID uint32 @0
+	// ReqID is the ID of the request. If this is not Synchronous, this is 0.
+	ReqID uint32 @1
+	// Payload is the payload of a request.
+	Payload bytes @2
+	// EndStream indicates the sender is done sending. They may still receive.
+	EndStream bool @3
+	// Compression indicates the compression algorithm used on the payload.
+	Compression Compression @4
+	// Metadata is per-message metadata.
+	Metadata []Metadata @5
+}
+
+// Ping is a keepalive ping message.
+Struct Ping {
+	// ID is the ping identifier, echoed back in the Pong.
+	ID uint32 @0
+}
+
+// Pong is a keepalive pong response.
+Struct Pong {
+	// ID is the ping identifier being responded to.
+	ID uint32 @0
+}
+
+// GoAway is sent to indicate the sender is going away and will stop accepting new streams.
+Struct GoAway {
+	// LastSessionID is the last session ID that will be processed.
+	LastSessionID uint32 @0
+	// ErrCode is a code describing the reason for going away.
+	ErrCode ErrCode @1
+	// DebugData is optional debug information about the shutdown.
+	DebugData string @2
+}

@@ -2,13 +2,14 @@
 package binary
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 
 	"golang.org/x/exp/constraints"
 )
 
+// Enc is the little-endian binary encoder. Do not change this.
 var Enc = binary.LittleEndian
 
 // Get gets any Uint size from a []byte slice.
@@ -39,6 +40,72 @@ func Get[T constraints.Integer](b []byte) T {
 	panic(fmt.Sprintf("unsupported type that passed the type constraint %T", r))
 }
 
+// GetBuffer reads from an io.Reader and decodes into the specified integer type.
+func GetBuffer[T constraints.Integer](r io.Reader) (T, error) {
+	var rt T // This is only used for type detction.
+	switch any(rt).(type) {
+	case int8:
+		var b [1]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(int8(b[0])), nil
+	case int16:
+		var b [2]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(int16(uint16(b[0]) | uint16(b[1])<<8)), nil
+	case int32:
+		var b [4]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(int32(uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24)), nil
+	case int64:
+		var b [8]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(int64(uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 |
+			uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56)), nil
+	case uint8:
+		var b [1]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(uint8(b[0])), nil
+	case uint16:
+		var b [2]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(uint16(b[0]) | uint16(b[1])<<8), nil
+	case uint32:
+		var b [4]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(uint32(b[0]) | uint32(b[1])<<8 | uint32(b[2])<<16 | uint32(b[3])<<24), nil
+	case uint64:
+		var b [8]byte
+		_, err := io.ReadFull(r, b[:])
+		if err != nil {
+			return 0, err
+		}
+		return T(uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 |
+			uint64(b[4])<<32 | uint64(b[5])<<40 | uint64(b[6])<<48 | uint64(b[7])<<56), nil
+	}
+	panic(fmt.Sprintf("unsupported type that passed the type constraint %T", r))
+}
+
 // Put puts any Uint size into a []byte slice.
 func Put[T constraints.Integer](b []byte, v T) {
 	switch any(v).(type) {
@@ -56,7 +123,7 @@ func Put[T constraints.Integer](b []byte, v T) {
 }
 
 // PutBuffer encodes an integer into the passed Buffer.
-func PutBuffer[T constraints.Integer](buff *bytes.Buffer, v T) error {
+func PutBuffer[T constraints.Integer](buff io.Writer, v T) error {
 	var b []byte
 	switch any(v).(type) {
 	case int8:

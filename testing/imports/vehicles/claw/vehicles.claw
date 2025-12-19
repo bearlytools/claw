@@ -6,12 +6,14 @@ import (
 	cars "github.com/bearlytools/test_claw_imports/cars/claw"
 )
 
+// Type is the Type of Vehicle.
 Enum Type uint8 {
 	Unknown @0
 	Car @1
 	Truck @2
 }
 
+// Vehicle describes a vehicle.
 Struct Vehicle {
 	Type Type @0
 	Car cars.Car @1

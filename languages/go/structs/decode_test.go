@@ -1253,7 +1253,7 @@ func TestDecodeStruct(t *testing.T) {
 	}
 
 	cp := New(0, msg0Mapping)
-	read, err := cp.unmarshal(buff)
+	read, err := cp.Unmarshal(buff)
 	if err != nil {
 		panic(err)
 	}

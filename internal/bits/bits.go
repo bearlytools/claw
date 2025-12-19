@@ -1,3 +1,4 @@
+// Package bits provides bit manipulation utilities. This is not a replacement for math/bits.
 package bits
 
 import (
@@ -23,111 +24,6 @@ func SetValue[I, U constraints.Unsigned](val I, store U, start, end uint64) U {
 
 	return store | c
 }
-
-/*
-// SetValue stores "val" in "store" starting at bit "start" and
-// ending at bit "end" (exclusive). Any error condition in this causes a panic, for example:
-// start >= end, store cannot contain start and end, store isn't big enough for val, ...
-func SetValueBytes[I constraints.Unsigned](val I, store []byte, start, end uint64) {
-	log.Printf("setting[%d:%d] to value: %d", start, end, val)
-	if start >= end {
-		panic("start cannot be > end")
-	}
-
-	l := len(store)
-	if l > 8 {
-		panic("SetValueBytes() cannot receive a len(store) > 8, as 8 bytes stores our maximum integer size, 64 bits")
-	}
-	if start/64 > uint64(l) {
-		panic(fmt.Sprintf("SetValueBytes() cannot store a value with start %d and len(store) == %d", start, l))
-	}
-	if end/64 > uint64(l) {
-		panic(fmt.Sprintf("SetValueBytes() cannot store a value with end %d and len(store) == %d", end, l))
-	}
-
-	switch any(val).(type) {
-	case uint8:
-		if l < 1 {
-			panic("SetValueBytes() can only store a uint8 value if len(store) == 1")
-		}
-		switch l {
-		case 1:
-			u := conversions.BytesToNum[uint8](store)
-			log.Println("our number: ", *u)
-			c := val << start
-			*u = *u | uint8(c)
-			log.Println("our number after: ", *u)
-		case 2:
-			u := conversions.BytesToNum[uint16](store)
-			c := val << start
-			*u = *u | uint16(c)
-		case 4:
-			u := conversions.BytesToNum[uint32](store)
-			c := val << start
-			*u = *u | uint32(c)
-		case 8:
-			u := conversions.BytesToNum[uint64](store)
-			c := val << start
-			*u = *u | uint64(c)
-		default:
-			panic("SetValueBytes[uint8]() must receive a len(store) == 1 | 2 | 4 | 8")
-		}
-	case uint16:
-		l := len(store)
-		if l < 2 {
-			panic("SetValueBytes() can only store a uint16 value if len(store) == 2")
-		}
-		switch l {
-		case 2:
-			u := conversions.BytesToNum[uint16](store)
-			c := val << start
-			*u = *u | uint16(c)
-		case 4:
-			u := conversions.BytesToNum[uint32](store)
-			c := val << start
-			*u = *u | uint32(c)
-		case 8:
-			u := conversions.BytesToNum[uint64](store)
-			c := val << start
-			*u = *u | uint64(c)
-		default:
-			panic("SetValueBytes[uint16]() must receive a len(store) == 2 | 4 | 8")
-		}
-	case uint32:
-		l := len(store)
-		if l < 4 {
-			panic("SetValueBytes() can only store a uint32 value if len(store) == 4")
-		}
-		switch l {
-		case 4:
-			u := conversions.BytesToNum[uint32](store)
-			c := val << start
-			*u = *u | uint32(c)
-		case 8:
-			u := conversions.BytesToNum[uint64](store)
-			c := val << start
-			*u = *u | uint64(c)
-		default:
-			panic("SetValueBytes[uint32]() must receive a len(store) == 4 | 8")
-		}
-	case uint64:
-		l := len(store)
-		if l < 8 {
-			panic("SetValueBytes() can only store a uint64 value if len(store) == 8")
-		}
-		switch l {
-		case 8:
-			u := conversions.BytesToNum[uint64](store)
-			c := val << start
-			*u = *u | uint64(c)
-		default:
-			panic("SetValueBytes[uint64]() must receive a len(store) == 4 | 8")
-		}
-	default:
-		panic("you've gone'n done it now!")
-	}
-}
-*/
 
 // GetValue retrieves a value we stored with setValue. store is the unsigned number we
 // stored the value in. bitMask is the mask to apply to retrieve the value. start tells
@@ -205,10 +101,22 @@ func ClearBytes(b []byte, from, to uint8) {
 
 // ClearBits clears all bits from "from" until "to".
 func ClearBits[U constraints.Unsigned](store U, from, to uint8) U {
-	for i := from; i < to; i++ {
-		store = ClearBit(store, i)
+	if from >= to {
+		return store
 	}
-	return store
+
+	width := to - from
+
+	var m uint64
+	if width == 64 {
+		// Avoid shifting by 64 (illegal in Go)
+		m = ^uint64(0)
+	} else {
+		m = (uint64(1)<<width - 1) << from
+	}
+
+	// Clear those bits
+	return store &^ U(m)
 }
 
 // Mask creates a mask for setting, getting and clearing a set of bits.
@@ -219,9 +127,8 @@ func Mask[U constraints.Unsigned](start, end uint64) U {
 	return U(setBits(uint(0), start, end))
 }
 
-// SetBits sets all bits to 1 from start (inclusive) to end(exclusive).
-// This is not particularly fast, so best to use at init time. If this is not a number,
-// aka it is a uintptr, this will panic. If start >= end, this will panic.
+// setBits sets all bits to 1 from start (inclusive) to end(exclusive).
+// If this is not a number, aka it is a uintptr, this will panic. If start >= end, this will panic.
 func setBits[I constraints.Unsigned](n I, start, end uint64) I {
 	var size uint64
 	switch any(n).(type) {
@@ -236,23 +143,32 @@ func setBits[I constraints.Unsigned](n I, start, end uint64) I {
 	case uint64:
 		size = 64
 	default:
-		panic(fmt.Sprintf("n must be of type uint8/uint16/uint32/uint64, was %T", n))
+		panic(fmt.Sprintf("n must be uint8/16/32/64, got %T", n))
 	}
 
 	if start >= end {
 		panic("start cannot be >= end")
 	}
 	if end > size {
-		panic(fmt.Sprintf("end cannot be %d, as that is the largest amount of bits in an %d bit number", end, size))
+		panic(fmt.Sprintf("end %d exceeds width %d", end, size))
 	}
 
-	var r uint
-	for x := start; x < end; x++ {
-		c := (uint(1) << x)
-		r = r | c
+	// Width of range
+	width := end - start
+
+	// Construct mask:
+	// (1<<width)-1 produces width 1-bits
+	// then shift left by start
+	var mask uint64
+	if width == 64 {
+		// Special case: shifting by 64 is illegal
+		mask = ^uint64(0)
+	} else {
+		mask = (uint64(1)<<width - 1) << start
 	}
 
-	return n | I(r)
+	// Apply mask
+	return n | I(mask)
 }
 
 func BytesInBinary(bs []byte) string {
