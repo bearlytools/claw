@@ -829,12 +829,10 @@ func NewStructs(m *mapping.Map) *Structs {
 }
 
 // NewStructsFromBytes returns a new Bytes value.
+// s can be nil for lazy decoding (size is already accounted for in parent).
 func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, error) {
 	if m == nil {
 		panic("bug: cannot pass nil *mapping.Map")
-	}
-	if s == nil {
-		panic("bug: cannot pass *Struct == nil")
 	}
 	// This is an error, because if they want to encode an empty list, it should not get encoded on the
 	// wire. There is no need to distinguish a zero value on a list type from not being set.
