@@ -73,47 +73,87 @@ func (m *mockGetClawFile) getClawFile(ctx context.Context, pkgPath string, versi
 // TestNewVendorManager tests the NewVendorManager constructor
 func TestNewVendorManager(t *testing.T) {
 	tests := []struct {
-		desc    string
-		rootDir string
-		wantErr bool
+		name           string
+		setupFunc      func(t *testing.T) (rootDir string, cleanup func())
+		wantVendorDir  string // relative to rootDir, empty means error expected
+		wantErr        bool
 	}{
 		{
-			desc:    "Success - valid root directory",
-			rootDir: "/tmp/test-project",
-			wantErr: false,
+			name: "Success: valid claw.work with custom vendorDir",
+			setupFunc: func(t *testing.T) (string, func()) {
+				tmpDir := t.TempDir()
+				clawWork := `repo github.com/example/test
+vendorDir my_vendor
+`
+				if err := os.WriteFile(filepath.Join(tmpDir, "claw.work"), []byte(clawWork), 0o644); err != nil {
+					t.Fatalf("failed to create claw.work: %v", err)
+				}
+				return tmpDir, func() {}
+			},
+			wantVendorDir: "my_vendor",
+			wantErr:       false,
 		},
 		{
-			desc:    "Success - relative path",
-			rootDir: "./test-project",
-			wantErr: false,
+			name: "Success: claw.work in parent directory",
+			setupFunc: func(t *testing.T) (string, func()) {
+				tmpDir := t.TempDir()
+				clawWork := `repo github.com/example/test
+vendorDir vendor
+`
+				if err := os.WriteFile(filepath.Join(tmpDir, "claw.work"), []byte(clawWork), 0o644); err != nil {
+					t.Fatalf("failed to create claw.work: %v", err)
+				}
+				subDir := filepath.Join(tmpDir, "subpkg")
+				if err := os.MkdirAll(subDir, 0o755); err != nil {
+					t.Fatalf("failed to create subdir: %v", err)
+				}
+				return subDir, func() {}
+			},
+			wantVendorDir: "vendor",
+			wantErr:       false,
+		},
+		{
+			name: "Error: no claw.work file",
+			setupFunc: func(t *testing.T) (string, func()) {
+				tmpDir := t.TempDir()
+				return tmpDir, func() {}
+			},
+			wantErr: true,
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			vm, err := NewVendorManager(test.rootDir)
+		rootDir, cleanup := test.setupFunc(t)
+		defer cleanup()
 
-			switch {
-			case err != nil && !test.wantErr:
-				t.Errorf("NewVendorManager(): got err = %v, want nil", err)
-			case err == nil && test.wantErr:
-				t.Errorf("NewVendorManager(): got err = nil, want error")
-			case err == nil:
-				if vm.rootDir != test.rootDir {
-					t.Errorf("NewVendorManager(): rootDir = %q, want %q", vm.rootDir, test.rootDir)
-				}
-				expectedVendorDir := filepath.Join(test.rootDir, "vendor")
-				if vm.vendorDir != expectedVendorDir {
-					t.Errorf("NewVendorManager(): vendorDir = %q, want %q", vm.vendorDir, expectedVendorDir)
-				}
-				if vm.fs == nil {
-					t.Error("NewVendorManager(): fs is nil")
-				}
-				if vm.getClawFile == nil {
-					t.Error("NewVendorManager(): getClawFile is nil")
-				}
-			}
-		})
+		vm, err := NewVendorManager(rootDir)
+
+		switch {
+		case err == nil && test.wantErr:
+			t.Errorf("[TestNewVendorManager(%s)]: got err == nil, want err != nil", test.name)
+			continue
+		case err != nil && !test.wantErr:
+			t.Errorf("[TestNewVendorManager(%s)]: got err == %s, want err == nil", test.name, err)
+			continue
+		case err != nil:
+			continue
+		}
+
+		if vm.rootDir != rootDir {
+			t.Errorf("[TestNewVendorManager(%s)]: rootDir = %q, want %q", test.name, vm.rootDir, rootDir)
+		}
+		if !strings.HasSuffix(vm.vendorDir, test.wantVendorDir) {
+			t.Errorf("[TestNewVendorManager(%s)]: vendorDir = %q, want suffix %q", test.name, vm.vendorDir, test.wantVendorDir)
+		}
+		if vm.fs == nil {
+			t.Errorf("[TestNewVendorManager(%s)]: fs is nil", test.name)
+		}
+		if vm.getClawFile == nil {
+			t.Errorf("[TestNewVendorManager(%s)]: getClawFile is nil", test.name)
+		}
+		if vm.work == nil {
+			t.Errorf("[TestNewVendorManager(%s)]: work is nil", test.name)
+		}
 	}
 }
 
@@ -840,6 +880,10 @@ func TestVendorDependenciesIntegration(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	// Create test files
+	clawWorkContent := `repo github.com/example/test
+vendorDir my_vendor
+`
+
 	clawModContent := `module github.com/example/test`
 
 	clawContent := `package test
@@ -848,7 +892,13 @@ Struct TestStruct {
     Field1 string @0
 }`
 
-	// Write test files
+	// Write claw.work file
+	workFile := filepath.Join(tempDir, "claw.work")
+	if err = os.WriteFile(workFile, []byte(clawWorkContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Write claw.mod file
 	modFile := filepath.Join(tempDir, "claw.mod")
 	if err = os.WriteFile(modFile, []byte(clawModContent), 0o644); err != nil {
 		t.Fatal(err)
@@ -900,7 +950,8 @@ Struct DepStruct {
 
 	// Since the test .claw file has no imports, vendor directory should NOT be created
 	// (vendor directory is only created when there are external dependencies)
-	vendorDir := filepath.Join(tempDir, "vendor")
+	// Use the vendorDir from claw.work (my_vendor)
+	vendorDir := filepath.Join(tempDir, "my_vendor")
 	if _, err := os.Stat(vendorDir); err == nil {
 		t.Error("VendorDependencies(): vendor directory should not be created when there are no external dependencies")
 	}
