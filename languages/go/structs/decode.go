@@ -222,23 +222,12 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 	}
 	s.offsets = offsets
 
-	log.Println("struct read ", read)
+	// Set structTotal to the actual size from the serialized header.
+	// This overwrites the initial 8 from New() with the complete size.
+	atomic.StoreInt64(s.structTotal, int64(size))
+	s.header.SetFinal40(uint64(size))
 
-	// For now, still do eager decoding. Phase 3 will make this lazy.
-	bufferCopy := buffer // unmarshalFields modifies the slice, so use a copy reference
-	err = s.unmarshalFields(&bufferCopy)
-	if err != nil {
-		return read, err
-	}
-
-	// Mark all decoded fields as stateDecoded
-	for _, off := range s.offsets {
-		if int(off.fieldNum) < len(s.fieldStates) {
-			s.fieldStates[off.fieldNum] = stateDecoded
-		}
-	}
-
-	s.decoding = false // Done decoding, now Set* functions can apply lazy decode logic
+	s.decoding = false // Done setting up lazy decode infrastructure
 
 	st := atomic.LoadInt64(s.structTotal)
 	if read != int(st) {
