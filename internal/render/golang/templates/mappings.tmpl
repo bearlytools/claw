@@ -29,7 +29,7 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             {{ if $field.IsExternal }}
             Mapping: {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }},
             {{- else }}
-            Mapping: Mapping{{ $field.IdentName }},
+            Mapping: XXXMapping{{ $field.IdentName }},
             {{- end }}
             {{- end }}
         },

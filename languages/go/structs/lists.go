@@ -139,6 +139,11 @@ func (b *Bools) Set(index int, val bool) {
 	// Modify the bits and set it.
 	i = bits.SetBit(i, uint8(indexInSlice), val)
 	data[sliceNum] = i
+
+	// Propagate modified flag to parent
+	if b.s != nil {
+		b.s.markModified()
+	}
 }
 
 func (b *Bools) cap() int {
@@ -171,6 +176,7 @@ func (b *Bools) Append(i ...bool) {
 	updateItems(b.data[:8], b.len)
 	if b.s != nil {
 		XXXAddToTotal(b.s, len(b.data)-oldSize)
+		b.s.markModified()
 	}
 }
 
@@ -420,29 +426,30 @@ func (n *Numbers[I]) Set(index int, value I) {
 	switch n.sizeInBytes {
 	case 1:
 		binary.Put(holder, uint8(value))
-		return
 	case 2:
 		binary.Put(holder, uint16(value))
-		return
 	case 4:
 		if n.isFloat {
 			u := math.Float32bits(float32(value))
 			binary.Put(holder, u)
-			return
+		} else {
+			binary.Put(holder, uint32(value))
 		}
-		binary.Put(holder, uint32(value))
-		return
 	case 8:
 		if n.isFloat {
 			u := math.Float64bits(float64(value))
 			binary.Put(holder, u)
-			return
+		} else {
+			binary.Put(holder, uint64(value))
 		}
-		binary.Put(holder, uint64(value))
-		return
+	default:
+		panic("should never get here")
 	}
 
-	panic("should never get here")
+	// Propagate modified flag to parent
+	if n.s != nil {
+		n.s.markModified()
+	}
 }
 
 // Append appends values to the list of numbers.
@@ -452,6 +459,7 @@ func (n *Numbers[I]) Append(i ...I) {
 		updateItems(n.data[:8], n.len)
 		if n.s != nil {
 			XXXAddToTotal(n.s, len(n.data)-oldSize)
+			n.s.markModified()
 		}
 	}()
 
@@ -633,6 +641,11 @@ func (b *Bytes) Set(index int, value []byte) {
 	atomic.StoreInt64(&b.padding, PaddingNeeded(b.dataSize))
 
 	b.set(index, value)
+
+	// Propagate modified flag to parent
+	if b.s != nil {
+		b.s.markModified()
+	}
 }
 
 func (b *Bytes) set(index int, value []byte) {
@@ -676,6 +689,7 @@ func (b *Bytes) Append(values ...[]byte) {
 	if b.s != nil {
 		log.Println("adding new append data size: ", b.dataSize+b.padding)
 		XXXAddToTotal(b.s, b.dataSize+b.padding) // data size + entry header size
+		b.s.markModified()
 	}
 }
 
@@ -938,7 +952,6 @@ func (s *Structs) Set(index int, value *Struct) error {
 	if value.mapping != s.mapping {
 		return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", index)
 	}
-	s.data[index] = value
 
 	// Remove the size of the current entry.
 	old := s.data[index]
@@ -946,10 +959,18 @@ func (s *Structs) Set(index int, value *Struct) error {
 	XXXAddToTotal(s.s, -oldSize)
 	atomic.AddInt64(s.size, -oldSize)
 
+	s.data[index] = value
+
 	// Add the new size.
 	newSize := atomic.LoadInt64(value.structTotal)
 	XXXAddToTotal(s.s, newSize)
 	atomic.AddInt64(s.size, newSize)
+
+	// Propagate modified flag to parent
+	if s.s != nil {
+		s.s.markModified()
+	}
+
 	return nil
 }
 
@@ -983,6 +1004,12 @@ func (s *Structs) Append(values ...*Struct) error {
 	XXXAddToTotal(s.s, atomic.LoadInt64(s.size)-oldSize)
 
 	updateItems(s.header, len(s.data))
+
+	// Propagate modified flag to parent
+	if s.s != nil {
+		s.s.markModified()
+	}
+
 	return nil
 }
 

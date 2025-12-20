@@ -11,6 +11,13 @@ import (
 
 // Marshal writes out the Struct to an io.Writer.
 func (s *Struct) Marshal(w io.Writer) (n int, err error) {
+	// FAST PATH: If nothing was modified and we have raw data, just write it directly.
+	// This avoids re-encoding when the struct was unmarshaled and never changed.
+	if !s.modified && s.rawData != nil {
+		return w.Write(s.rawData)
+	}
+
+	// SLOW PATH: Re-encode the struct from decoded fields.
 	total := atomic.LoadInt64(s.structTotal)
 	if total%8 != 0 {
 		return 0, fmt.Errorf("Struct has an internal size(%d) that is not divisible by 8, something is bugged", total)

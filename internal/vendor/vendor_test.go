@@ -898,10 +898,11 @@ Struct DepStruct {
 		t.Error("VendorDependencies(): graph has no nodes")
 	}
 
-	// Check that vendor directory was created
+	// Since the test .claw file has no imports, vendor directory should NOT be created
+	// (vendor directory is only created when there are external dependencies)
 	vendorDir := filepath.Join(tempDir, "vendor")
-	if _, err := os.Stat(vendorDir); os.IsNotExist(err) {
-		t.Error("VendorDependencies(): vendor directory was not created")
+	if _, err := os.Stat(vendorDir); err == nil {
+		t.Error("VendorDependencies(): vendor directory should not be created when there are no external dependencies")
 	}
 }
 
