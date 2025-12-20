@@ -37,3 +37,10 @@ var XXXMapping{{ .Name }} = &mapping.Map{
     },
 }
 {{ end }}
+
+// init initializes all mapping function pointer tables for O(1) dispatch.
+func init() {
+{{- range $file.Structs }}
+    XXXMapping{{ .Name }}.Init()
+{{- end }}
+}

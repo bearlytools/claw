@@ -5,8 +5,48 @@ package mapping
 
 import (
 	"fmt"
+	"io"
+	"unsafe"
 
 	"github.com/bearlytools/claw/languages/go/field"
+)
+
+// EncodeFunc is the signature for field encoder functions.
+// Parameters:
+//   - w: destination writer
+//   - header: the field header (8 bytes)
+//   - ptr: pointer to the field data (may be nil for scalar types stored in header)
+//   - desc: field descriptor with type and metadata
+//   - zeroComp: whether zero-value compression is enabled
+//
+// Returns bytes written and any error.
+type EncodeFunc func(w io.Writer, header []byte, ptr unsafe.Pointer, desc *FieldDescr, zeroComp bool) (int, error)
+
+// ScanSizeFunc calculates the size of a field for offset scanning.
+// Parameters:
+//   - data: the raw bytes starting at this field
+//   - header: the field header (first 8 bytes of data)
+//
+// Returns the total size of this field in bytes.
+type ScanSizeFunc func(data []byte, header []byte) uint32
+
+// LazyDecodeFunc decodes a single field from raw bytes into a struct.
+// Parameters:
+//   - structPtr: pointer to the Struct being decoded (as unsafe.Pointer to avoid import cycle)
+//   - fieldNum: the field number being decoded
+//   - data: the raw bytes for this field (includes header)
+//   - desc: field descriptor with type and metadata
+type LazyDecodeFunc func(structPtr unsafe.Pointer, fieldNum uint16, data []byte, desc *FieldDescr)
+
+// Registration functions - set by the codec package during init.
+// This pattern avoids circular dependencies between mapping and codec.
+var (
+	// RegisterEncoders is called by Init() to populate the Encoders slice.
+	RegisterEncoders func(m *Map)
+	// RegisterScanSizers is called by Init() to populate the ScanSizers slice.
+	RegisterScanSizers func(m *Map)
+	// RegisterLazyDecoders is called by Init() to populate the LazyDecoders slice.
+	RegisterLazyDecoders func(m *Map)
 )
 
 // FieldDescr describes a field. FieldDescr are created when the IDL renders to a file
@@ -61,6 +101,43 @@ type Map struct {
 	Path string
 	// Fields are the field descriptions for all fields in the Struct.
 	Fields []*FieldDescr
+
+	// Function pointer tables - initialized once by Init(), used for O(1) dispatch.
+	// These replace the type switches in encode/decode hot paths.
+	Encoders     []EncodeFunc     // For Marshal()
+	ScanSizers   []ScanSizeFunc   // For scanFieldOffsets()
+	LazyDecoders []LazyDecodeFunc // For decodeFieldFromRaw()
+
+	initialized bool
+}
+
+// Init initializes the function pointer tables for this Map.
+// This should be called once during package init for generated code.
+// Safe to call multiple times (idempotent).
+func (m *Map) Init() {
+	if m.initialized {
+		return
+	}
+
+	// Use registration functions set by the codec package
+	if RegisterEncoders != nil {
+		RegisterEncoders(m)
+	}
+	if RegisterScanSizers != nil {
+		RegisterScanSizers(m)
+	}
+	if RegisterLazyDecoders != nil {
+		RegisterLazyDecoders(m)
+	}
+
+	m.initialized = true
+
+	// Recursively init nested struct mappings
+	for _, f := range m.Fields {
+		if f.Mapping != nil && f.Mapping != m { // avoid self-reference loop
+			f.Mapping.Init()
+		}
+	}
 }
 
 func (m Map) validate() error {
