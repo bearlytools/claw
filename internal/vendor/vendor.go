@@ -221,18 +221,22 @@ func (vm *VendorManager) processClawFile(ctx context.Context, clawPath, version 
 	// Get the claw file content
 	var clawFile git.ClawFile
 	var err error
+	var shouldVendor bool // Track based on how we fetch the file
 
 	if vm.isLocalPath(actualPath) {
 		clawFile, err = vm.getLocalClawFile(actualPath)
-	} else if vm.git.InRepo(actualPath) {
+		shouldVendor = false // Local paths are never vendored
+	} else if vm.git != nil && vm.git.InRepo(actualPath) {
 		// Package is in the current git repository, use local filesystem
 		localPath, absErr := vm.git.Abs(actualPath)
 		if absErr != nil {
 			return fmt.Errorf("failed to resolve local path for %s: %w", actualPath, absErr)
 		}
 		clawFile, err = vm.getLocalClawFile(localPath)
+		shouldVendor = false // In-repo paths are never vendored
 	} else {
 		clawFile, err = vm.getClawFile(ctx, actualPath, actualVersion)
+		shouldVendor = true // Remote deps should be vendored
 	}
 
 	if err != nil {
@@ -260,7 +264,7 @@ func (vm *VendorManager) processClawFile(ctx context.Context, clawPath, version 
 		ClawFile:        idlFile,
 		OriginalContent: clawFile.Content, // Store original content
 		ModuleFile:      moduleFile,
-		ShouldVendor:    vm.shouldVendorPackage(pkgPath),
+		ShouldVendor:    shouldVendor,
 	}
 
 	graph.Nodes[pkgPath] = node
@@ -478,6 +482,20 @@ func (vm *VendorManager) checkACLPermission(currentModule, targetModule string, 
 
 // createVendorStructure creates the vendor directory structure and copies files.
 func (vm *VendorManager) createVendorStructure(ctx context.Context, graph *DependencyGraph, localReplace imports.LocalReplace) error {
+	// Check if there are any packages that need to be vendored
+	hasExternalDeps := false
+	for _, node := range graph.Nodes {
+		if node.ShouldVendor {
+			hasExternalDeps = true
+			break
+		}
+	}
+
+	// Only create vendor directory if there are external dependencies
+	if !hasExternalDeps {
+		return nil
+	}
+
 	// Create vendor directory
 	if err := os.MkdirAll(vm.vendorDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create vendor directory: %w", err)

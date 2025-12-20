@@ -16,6 +16,152 @@ import (
 
 var dataSizeMask = bits.Mask[uint64](24, 64)
 
+// scanFieldOffsets scans through raw field data and builds an offset index
+// without actually decoding field values. The data parameter should be the
+// field data (not including the struct header).
+// Returns the offset index sorted by field number.
+func (s *Struct) scanFieldOffsets(data []byte) ([]fieldOffset, error) {
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	// Pre-allocate with a reasonable estimate
+	offsets := make([]fieldOffset, 0, len(s.mapping.Fields))
+
+	var lastFieldNum int32 = -1
+	offset := uint32(0)
+
+	for offset < uint32(len(data)) {
+		if uint32(len(data))-offset < 8 {
+			return nil, fmt.Errorf("scanFieldOffsets: not enough bytes for field header at offset %d", offset)
+		}
+
+		h := GenericHeader(data[offset : offset+8])
+		fieldNum := h.FieldNum()
+		fieldType := field.Type(h.FieldType())
+
+		// Validate field ordering
+		if int32(fieldNum) <= lastFieldNum {
+			return nil, fmt.Errorf("scanFieldOffsets: field %d came after field %d", fieldNum, lastFieldNum)
+		}
+		lastFieldNum = int32(fieldNum)
+
+		// Calculate field size based on type
+		var fieldSize uint32
+		switch fieldType {
+		case field.FTBool:
+			fieldSize = 8
+		case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
+			fieldSize = 8
+		case field.FTInt64, field.FTUint64, field.FTFloat64:
+			fieldSize = 16
+		case field.FTString, field.FTBytes:
+			dataSize := h.Final40()
+			fieldSize = uint32(8 + SizeWithPadding(dataSize))
+		case field.FTStruct:
+			structSize := h.Final40()
+			fieldSize = uint32(structSize)
+		case field.FTListBools:
+			items := h.Final40()
+			wordsNeeded := (items / 64) + 1
+			fieldSize = uint32(8 + (wordsNeeded * 8))
+		case field.FTListInt8, field.FTListUint8:
+			items := h.Final40()
+			fieldSize = uint32(8 + SizeWithPadding(items))
+		case field.FTListInt16, field.FTListUint16:
+			items := h.Final40()
+			fieldSize = uint32(8 + SizeWithPadding(items*2))
+		case field.FTListInt32, field.FTListUint32, field.FTListFloat32:
+			items := h.Final40()
+			fieldSize = uint32(8 + SizeWithPadding(items*4))
+		case field.FTListInt64, field.FTListUint64, field.FTListFloat64:
+			items := h.Final40()
+			fieldSize = uint32(8 + SizeWithPadding(items*8))
+		case field.FTListBytes, field.FTListStrings:
+			// For list of bytes, we need to scan through each entry
+			fieldSize = uint32(s.scanListBytesSize(data[offset:]))
+		case field.FTListStructs:
+			// For list of structs, we need to scan through each struct
+			fieldSize = uint32(s.scanListStructsSize(data[offset:]))
+		default:
+			return nil, fmt.Errorf("scanFieldOffsets: unknown field type %v", fieldType)
+		}
+
+		offsets = append(offsets, fieldOffset{
+			fieldNum: fieldNum,
+			offset:   offset, // Offset relative to field data (rawData[8:])
+			size:     fieldSize,
+		})
+
+		offset += fieldSize
+	}
+
+	return offsets, nil
+}
+
+// scanListBytesSize calculates the total size of a list of bytes/strings field.
+func (s *Struct) scanListBytesSize(data []byte) int {
+	if len(data) < 8 {
+		return 0
+	}
+	h := GenericHeader(data[:8])
+	numItems := h.Final40()
+	if numItems == 0 {
+		return 8
+	}
+
+	size := 8 // header
+	remaining := data[8:]
+
+	for i := uint64(0); i < numItems; i++ {
+		if len(remaining) < 4 {
+			return size
+		}
+		itemSize := int(binary.Get[uint32](remaining[:4]))
+		size += 4 + itemSize
+		if len(remaining) >= 4+itemSize {
+			remaining = remaining[4+itemSize:]
+		} else {
+			break
+		}
+	}
+
+	// Add padding
+	paddingNeeded := PaddingNeeded(size)
+	return size + paddingNeeded
+}
+
+// scanListStructsSize calculates the total size of a list of structs field.
+func (s *Struct) scanListStructsSize(data []byte) int {
+	if len(data) < 8 {
+		return 0
+	}
+	h := GenericHeader(data[:8])
+	numItems := h.Final40()
+	if numItems == 0 {
+		return 8
+	}
+
+	size := 8 // header
+	remaining := data[8:]
+
+	for i := uint64(0); i < numItems; i++ {
+		if len(remaining) < 8 {
+			return size
+		}
+		structHeader := GenericHeader(remaining[:8])
+		structSize := int(structHeader.Final40())
+		size += structSize
+		if len(remaining) >= structSize {
+			remaining = remaining[structSize:]
+		} else {
+			break
+		}
+	}
+
+	return size
+}
+
 func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 	read := 0
 	h := header.New()
@@ -38,9 +184,19 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 	}
 
 	log.Println("Struct says it is: ", size)
-	buffer := make([]byte, size-8) // -8 because we read the buffer
+	buffer := make([]byte, size-8) // -8 because we read the header already
+
+	// Initialize lazy decode infrastructure
+	s.fieldStates = make([]fieldState, len(s.mapping.Fields))
+	s.modified = false
+	s.decoding = true // Prevent Set* functions from applying lazy decode logic
 
 	if len(buffer) == 0 {
+		// Empty struct - no fields, but still set up rawData with just the header
+		s.rawData = make([]byte, 8)
+		copy(s.rawData, h)
+		s.offsets = nil
+		s.decoding = false
 		return read, nil
 	}
 
@@ -53,11 +209,37 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 	if int(size-8) != n {
 		panic(fmt.Sprintf("read %d bytes, expected %d", n, size-8))
 	}
+
+	// Store complete raw data (header + field data) for potential fast-path marshal
+	s.rawData = make([]byte, size)
+	copy(s.rawData[:8], h)
+	copy(s.rawData[8:], buffer)
+
+	// Build field offset index for lazy decode support
+	offsets, err := s.scanFieldOffsets(buffer)
+	if err != nil {
+		return read, fmt.Errorf("failed to scan field offsets: %w", err)
+	}
+	s.offsets = offsets
+
 	log.Println("struct read ", read)
-	err = s.unmarshalFields(&buffer)
+
+	// For now, still do eager decoding. Phase 3 will make this lazy.
+	bufferCopy := buffer // unmarshalFields modifies the slice, so use a copy reference
+	err = s.unmarshalFields(&bufferCopy)
 	if err != nil {
 		return read, err
 	}
+
+	// Mark all decoded fields as stateDecoded
+	for _, off := range s.offsets {
+		if int(off.fieldNum) < len(s.fieldStates) {
+			s.fieldStates[off.fieldNum] = stateDecoded
+		}
+	}
+
+	s.decoding = false // Done decoding, now Set* functions can apply lazy decode logic
+
 	st := atomic.LoadInt64(s.structTotal)
 	if read != int(st) {
 		return read, fmt.Errorf("Struct was %d in length, but only found %d worth of fields", read, st)

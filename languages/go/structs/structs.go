@@ -10,6 +10,7 @@ import (
 	"log"
 	"math"
 	"slices"
+	"sort"
 	"sync/atomic"
 	"unsafe"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/bearlytools/claw/languages/go/mapping"
 	"github.com/bearlytools/claw/languages/go/reflect/enums"
 	"github.com/bearlytools/claw/languages/go/structs/header"
+	"github.com/gostdlib/base/context"
 )
 
 const (
@@ -36,6 +38,25 @@ type GenericHeader = header.Generic
 
 func NewGenericHeader() GenericHeader {
 	return header.New()
+}
+
+// fieldState represents the decode state of a field in lazy decoding mode.
+type fieldState uint8
+
+const (
+	// stateRaw indicates the field data exists in rawData but hasn't been decoded yet.
+	stateRaw fieldState = iota
+	// stateDecoded indicates the field has been decoded from rawData into the fields slice.
+	stateDecoded
+	// stateDirty indicates the field has been modified and differs from rawData.
+	stateDirty
+)
+
+// fieldOffset maps a field number to its location in the raw byte data.
+type fieldOffset struct {
+	fieldNum uint16 // The field number
+	offset   uint32 // Byte offset into rawData where this field starts
+	size     uint32 // Size of this field in bytes (including any padding)
 }
 
 // StructField holds a struct field entry.
@@ -64,6 +85,23 @@ type Struct struct {
 	// zeroTypeCompression indicates if we want to compress the encoding by ignoring
 	// scalar zero values.
 	zeroTypeCompression bool
+
+	// Lazy decoding support fields.
+	// rawData holds the complete raw binary data for this struct (including header).
+	// This is populated during Unmarshal and used for lazy field decoding.
+	rawData []byte
+	// offsets maps field numbers to their byte offsets in rawData.
+	// Sorted by fieldNum for binary search.
+	offsets []fieldOffset
+	// fieldStates tracks the decode state of each field (raw, decoded, or dirty).
+	// Index corresponds to field number.
+	fieldStates []fieldState
+	// modified is true if any field has been modified via Set* or Delete* operations.
+	// When false and rawData is non-nil, Marshal can write rawData directly.
+	modified bool
+	// decoding is true during the Unmarshal process. This prevents the lazy decode
+	// size adjustment logic from being applied during initial decoding.
+	decoding bool
 }
 
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
@@ -130,12 +168,291 @@ func (s *Struct) Fields() []StructField {
 	return s.fields
 }
 
+// findOffsetIndex returns the index into s.offsets for the given fieldNum,
+// or -1 if the field is not present in the raw data.
+// Uses binary search since offsets are sorted by fieldNum.
+func (s *Struct) findOffsetIndex(fieldNum uint16) int {
+	if s.offsets == nil {
+		return -1
+	}
+	idx := sort.Search(len(s.offsets), func(i int) bool {
+		return s.offsets[i].fieldNum >= fieldNum
+	})
+	if idx < len(s.offsets) && s.offsets[idx].fieldNum == fieldNum {
+		return idx
+	}
+	return -1
+}
+
+// fieldExistsInRaw returns true if the field exists in the raw byte data.
+func (s *Struct) fieldExistsInRaw(fieldNum uint16) bool {
+	return s.findOffsetIndex(fieldNum) >= 0
+}
+
+// rawFieldSize returns the size in bytes of a field in the raw data,
+// or 0 if the field doesn't exist in raw data.
+func (s *Struct) rawFieldSize(fieldNum uint16) int {
+	idx := s.findOffsetIndex(fieldNum)
+	if idx < 0 {
+		return 0
+	}
+	return int(s.offsets[idx].size)
+}
+
+// markModified marks this struct and all parent structs as modified.
+// This is called when any Set* or Delete* operation occurs.
+func (s *Struct) markModified() {
+	s.modified = true
+	if s.parent != nil {
+		s.parent.markModified()
+	}
+}
+
+// getOrDecode returns the StructField for the given fieldNum, decoding from
+// raw bytes if necessary. Returns nil if the field doesn't exist.
+// This is the core of lazy decoding - fields are only decoded when accessed.
+func (s *Struct) getOrDecode(fieldNum uint16) *StructField {
+	// If no lazy decode infrastructure, fall back to direct access
+	if s.fieldStates == nil {
+		return &s.fields[fieldNum]
+	}
+
+	// Fast path: field already decoded or modified
+	if s.fieldStates[fieldNum] != stateRaw {
+		return &s.fields[fieldNum]
+	}
+
+	// Field is in raw state - check if it exists in raw data
+	idx := s.findOffsetIndex(fieldNum)
+	if idx < 0 {
+		// Field not present in raw data
+		return &s.fields[fieldNum]
+	}
+
+	// Decode from raw bytes
+	offset := s.offsets[idx]
+	data := s.rawData[8+offset.offset : 8+offset.offset+offset.size]
+	s.decodeFieldFromRaw(fieldNum, data)
+	s.fieldStates[fieldNum] = stateDecoded
+
+	return &s.fields[fieldNum]
+}
+
+// decodeFieldFromRaw decodes a single field from raw bytes into the fields slice.
+// The data parameter should contain the complete field data including header.
+func (s *Struct) decodeFieldFromRaw(fieldNum uint16, data []byte) {
+	if len(data) < 8 {
+		return
+	}
+
+	h := GenericHeader(data[:8])
+	fieldType := field.Type(h.FieldType())
+	f := &s.fields[fieldNum]
+
+	switch fieldType {
+	case field.FTBool:
+		f.Header = data[:8]
+	case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
+		f.Header = data[:8]
+	case field.FTInt64, field.FTUint64, field.FTFloat64:
+		f.Header = data[:8]
+		if len(data) >= 16 {
+			v := data[8:16]
+			f.Ptr = unsafe.Pointer(&v)
+		}
+	case field.FTString, field.FTBytes:
+		f.Header = data[:8]
+		size := h.Final40()
+		if size > 0 && len(data) >= int(8+size) {
+			b := data[8 : 8+size]
+			f.Ptr = unsafe.Pointer(&b)
+		}
+	case field.FTStruct:
+		s.decodeStructFieldFromRaw(fieldNum, data)
+	case field.FTListBools:
+		s.decodeListBoolFromRaw(fieldNum, data)
+	case field.FTListInt8, field.FTListInt16, field.FTListInt32, field.FTListInt64,
+		field.FTListUint8, field.FTListUint16, field.FTListUint32, field.FTListUint64,
+		field.FTListFloat32, field.FTListFloat64:
+		s.decodeListNumberFromRaw(fieldNum, data)
+	case field.FTListBytes, field.FTListStrings:
+		s.decodeListBytesFromRaw(fieldNum, data)
+	case field.FTListStructs:
+		s.decodeListStructsFromRaw(fieldNum, data)
+	}
+}
+
+// decodeStructFieldFromRaw decodes a nested struct field from raw bytes.
+func (s *Struct) decodeStructFieldFromRaw(fieldNum uint16, data []byte) {
+	m := s.mapping.Fields[fieldNum].Mapping
+	if m == nil {
+		m = s.mapping // Self-referential
+	}
+
+	sub := New(fieldNum, m)
+	// Create a reader from the data and unmarshal
+	r := readers.Get(context.Background())
+	r.Reset(data)
+	defer readers.Put(context.Background(), r)
+
+	_, err := sub.Unmarshal(r)
+	if err != nil {
+		return
+	}
+
+	sub.parent = s
+	f := &s.fields[fieldNum]
+	f.Header = sub.header
+	f.Ptr = unsafe.Pointer(sub)
+}
+
+// decodeListBoolFromRaw decodes a list of bools from raw bytes.
+func (s *Struct) decodeListBoolFromRaw(fieldNum uint16, data []byte) {
+	dataCopy := data
+	h, ptr, err := NewBoolsFromBytes(&dataCopy, nil) // Don't add to total - already counted
+	if err != nil {
+		return
+	}
+	ptr.s = s
+	f := &s.fields[fieldNum]
+	f.Header = h
+	f.Ptr = unsafe.Pointer(ptr)
+}
+
+// decodeListNumberFromRaw decodes a list of numbers from raw bytes.
+func (s *Struct) decodeListNumberFromRaw(fieldNum uint16, data []byte) {
+	m := s.mapping.Fields[fieldNum]
+	f := &s.fields[fieldNum]
+	f.Header = data[:8]
+
+	dataCopy := data
+	var uptr unsafe.Pointer
+
+	switch m.Type {
+	case field.FTListInt8:
+		ptr, err := NewNumbersFromBytes[int8](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListInt16:
+		ptr, err := NewNumbersFromBytes[int16](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListInt32:
+		ptr, err := NewNumbersFromBytes[int32](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListInt64:
+		ptr, err := NewNumbersFromBytes[int64](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListUint8:
+		ptr, err := NewNumbersFromBytes[uint8](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListUint16:
+		ptr, err := NewNumbersFromBytes[uint16](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListUint32:
+		ptr, err := NewNumbersFromBytes[uint32](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListUint64:
+		ptr, err := NewNumbersFromBytes[uint64](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListFloat32:
+		ptr, err := NewNumbersFromBytes[float32](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	case field.FTListFloat64:
+		ptr, err := NewNumbersFromBytes[float64](&dataCopy, nil)
+		if err != nil {
+			return
+		}
+		ptr.s = s
+		uptr = unsafe.Pointer(ptr)
+	}
+	f.Ptr = uptr
+}
+
+// decodeListBytesFromRaw decodes a list of bytes from raw bytes.
+func (s *Struct) decodeListBytesFromRaw(fieldNum uint16, data []byte) {
+	dataCopy := data
+	ptr, err := NewBytesFromBytes(&dataCopy, nil)
+	if err != nil {
+		return
+	}
+	ptr.s = s
+	f := &s.fields[fieldNum]
+	f.Header = ptr.header
+	f.Ptr = unsafe.Pointer(ptr)
+}
+
+// decodeListStructsFromRaw decodes a list of structs from raw bytes.
+func (s *Struct) decodeListStructsFromRaw(fieldNum uint16, data []byte) {
+	m := s.mapping.Fields[fieldNum].Mapping
+	dataCopy := data
+	l, err := NewStructsFromBytes(&dataCopy, nil, m)
+	if err != nil {
+		return
+	}
+	l.s = s
+	f := &s.fields[fieldNum]
+	f.Header = l.header
+	f.Ptr = unsafe.Pointer(l)
+}
+
 // IsSet determines if our Struct has a field set or not. If the fieldNum is invalid,
 // this simply returns false. If NoZeroTypeCompression is NOT set, then we will return
 // true for all scaler values, string and bytes.
 func (s *Struct) IsSet(fieldNum uint16) bool {
-	if int(fieldNum) > len(s.mapping.Fields) {
+	if int(fieldNum) >= len(s.mapping.Fields) {
 		return false
+	}
+
+	// Check lazy decode state - if field is in raw state, check raw data
+	if s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Field hasn't been decoded yet - check if it exists in raw data
+		if s.fieldExistsInRaw(fieldNum) {
+			return true
+		}
+		// Field not in raw data, check scalar zero value handling
+		if !s.zeroTypeCompression {
+			return false
+		}
+		t := s.mapping.Fields[int(fieldNum)].Type
+		if t == field.FTStruct || slices.Contains(field.ListTypes, t) {
+			return false
+		}
+		return true // Scalar with zero type compression - zero value is "set"
 	}
 
 	// Not type compression means that we always have a header for a value, even the zero value.
@@ -170,7 +487,7 @@ func GetBool(s *Struct, fieldNum uint16) (bool, error) {
 		return false, err
 	}
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	// Return the zero value of a non-set field.
 	if f.Header == nil {
 		return false, nil
@@ -203,12 +520,22 @@ func SetBool(s *Struct, fieldNum uint16, value bool) error {
 		f.Header.SetFieldNum(fieldNum)
 		f.Header.SetFieldType(field.FTBool)
 
-		log.Println("parent: ", s.parent)
-		XXXAddToTotal(s, 8)
+		// Only add to total if not transitioning from raw (raw already counted)
+		if s.fieldStates == nil || s.fieldStates[fieldNum] != stateRaw {
+			log.Println("parent: ", s.parent)
+			XXXAddToTotal(s, 8)
+		}
 	}
 	n := conversions.BytesToNum[uint64](f.Header)
 	*n = bits.SetBit(*n, 24, value)
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag
+	if s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	s.markModified()
+
 	return nil
 }
 
@@ -224,7 +551,27 @@ func DeleteBool(s *Struct, fieldNum uint16) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTBool); err != nil {
 		return err
 	}
+
+	// Handle size adjustment when deleting from raw state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		if s.fieldExistsInRaw(fieldNum) {
+			XXXAddToTotal(s, -8) // Remove the 8-byte bool field
+		}
+	} else if s.fields[fieldNum].Header != nil {
+		XXXAddToTotal(s, -8)
+	}
+
 	s.fields[fieldNum].Header = nil
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -240,7 +587,7 @@ func GetNumber[N Number](s *Struct, fieldNum uint16) (N, error) {
 		return 0, fmt.Errorf("error getting field number %d: %w", fieldNum, err)
 	}
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	if f.Header == nil {
 		return 0, nil
 	}
@@ -285,13 +632,19 @@ func SetNumber[N Number](s *Struct, fieldNum uint16, value N) error {
 	// If the field isn't allocated, allocate space.
 	if f.Header == nil {
 		f.Header = NewGenericHeader()
+		// Only add to total if not transitioning from raw (raw already counted)
+		isFromRaw := s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw
 		switch size < 64 {
 		case true:
-			XXXAddToTotal(s, 8)
+			if !isFromRaw {
+				XXXAddToTotal(s, 8)
+			}
 		case false:
 			b := make([]byte, 8)
 			f.Ptr = unsafe.Pointer(&b)
-			XXXAddToTotal(s, 16)
+			if !isFromRaw {
+				XXXAddToTotal(s, 16)
+			}
 		default:
 			panic("wtf")
 		}
@@ -336,6 +689,13 @@ func SetNumber[N Number](s *Struct, fieldNum uint16, value N) error {
 		}
 	}
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag
+	if s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	s.markModified()
+
 	return nil
 }
 
@@ -353,18 +713,39 @@ func DeleteNumber(s *Struct, fieldNum uint16) error {
 	}
 	desc := s.mapping.Fields[fieldNum]
 
-	switch desc.Type {
-	case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
-		XXXAddToTotal(s, -8)
-	case field.FTInt64, field.FTUint64, field.FTFloat64:
-		XXXAddToTotal(s, -16)
-	default:
-		panic("wtf")
+	// Only adjust total if field actually exists
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	fieldExists := false
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		fieldExists = s.fieldExistsInRaw(fieldNum)
+	} else {
+		fieldExists = s.fields[fieldNum].Header != nil
 	}
+
+	if fieldExists {
+		switch desc.Type {
+		case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
+			XXXAddToTotal(s, -8)
+		case field.FTInt64, field.FTUint64, field.FTFloat64:
+			XXXAddToTotal(s, -16)
+		default:
+			panic("wtf")
+		}
+	}
+
 	f := s.fields[fieldNum]
 	f.Header = nil
 	f.Ptr = nil
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -376,7 +757,7 @@ func GetBytes(s *Struct, fieldNum uint16) (*[]byte, error) {
 		return nil, err
 	}
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	if f.Header == nil { // The zero value
 		return nil, nil
 	}
@@ -404,7 +785,7 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	}
 	if len(value) == 0 {
 		f := s.fields[fieldNum]
-		if f.Header == nil {
+		if f.Header == nil && (s.fieldStates == nil || s.fieldStates[fieldNum] != stateRaw || !s.fieldExistsInRaw(fieldNum)) {
 			// Field not set, nothing to do
 			return nil
 		}
@@ -423,23 +804,42 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 		ftype = field.FTString
 	}
 
-	remove := 0
-	// If the field isn't allocated, allocate space.
+	// Handle size adjustment
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
 	if f.Header == nil {
+		// Field not currently allocated
+		if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw && s.fieldExistsInRaw(fieldNum) {
+			// Transitioning from raw - remove old size, add new size
+			oldSize := s.rawFieldSize(fieldNum)
+			newSize := 8 + SizeWithPadding(len(value))
+			XXXAddToTotal(s, int64(newSize-oldSize))
+		} else {
+			// New field
+			XXXAddToTotal(s, int64(8+SizeWithPadding(len(value))))
+		}
 		f.Header = NewGenericHeader()
-	} else { // We need to remove our existing entry size total before applying our new data
-		remove += 8 + SizeWithPadding(int(f.Header.Final40()))
+	} else {
+		// We need to remove our existing entry size total before applying our new data
+		remove := 8 + SizeWithPadding(int(f.Header.Final40()))
 		XXXAddToTotal(s, -remove)
+		XXXAddToTotal(s, int64(8+SizeWithPadding(len(value))))
 	}
+
 	f.Header.SetFieldNum(fieldNum)
 	f.Header.SetFieldType(ftype)
 	f.Header.SetFinal40(uint64(len(value)))
 
 	f.Ptr = unsafe.Pointer(&value)
-	// We don't store any padding at this point because we don't want to do another allocation.
-	// But we do record the size it would be with padding.
-	XXXAddToTotal(s, int64(8+SizeWithPadding(len(value))))
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -457,15 +857,36 @@ func DeleteBytes(s *Struct, fieldNum uint16) error {
 	}
 
 	f := s.fields[fieldNum]
-	if f.Header == nil {
+
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Field in raw state
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else if f.Header != nil {
+		// Field is decoded/dirty
+		size := 8 + SizeWithPadding(int(f.Header.Final40()))
+		XXXAddToTotal(s, -int64(size))
+	} else {
+		// Field not set, nothing to do
 		return nil
 	}
 
 	f.Header = nil
-	x := (*[]byte)(f.Ptr)
-	XXXAddToTotal(s, -len(*x))
 	f.Ptr = nil
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -476,7 +897,7 @@ func GetStruct(s *Struct, fieldNum uint16) (*Struct, error) {
 		return nil, err
 	}
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	if f.Header == nil { // The zero value
 		return nil, nil
 	}
@@ -514,20 +935,35 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 	value.parent = s
 	value.header.SetFieldNum(fieldNum)
 
-	var remove int64
-	// We need to remove our existing entry size total before applying our new data
-	if f.Header != nil {
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Transitioning from raw to dirty
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else if f.Header != nil {
+		// We need to remove our existing entry size total before applying our new data
 		x := (*Struct)(f.Ptr)
-		remove += atomic.LoadInt64(x.structTotal)
+		remove := atomic.LoadInt64(x.structTotal)
 		x.parent = nil
 		XXXAddToTotal(s, -remove)
 	}
 
 	f.Header = value.header
-
 	f.Ptr = unsafe.Pointer(value)
 	XXXAddToTotal(s, atomic.LoadInt64(value.structTotal))
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -545,20 +981,39 @@ func DeleteStruct(s *Struct, fieldNum uint16) error {
 	}
 
 	f := s.fields[fieldNum]
-	if f.Header == nil {
-		return nil
-	}
 
-	if f.Ptr == nil {
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Field in raw state
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		} else {
+			return nil // Field not set
+		}
+	} else if f.Header == nil {
+		return nil // Field not set
+	} else if f.Ptr == nil {
 		XXXAddToTotal(s, -8)
-		return nil
+	} else {
+		x := (*Struct)(f.Ptr)
+		x.parent = nil
+		XXXAddToTotal(s, -atomic.LoadInt64(x.structTotal))
 	}
 
-	x := (*Struct)(f.Ptr)
-	x.parent = nil
-	XXXAddToTotal(s, -atomic.LoadInt64(x.structTotal))
+	f.Header = nil
 	f.Ptr = nil
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -568,7 +1023,7 @@ func GetListBool(s *Struct, fieldNum uint16) (*Bools, error) {
 		return nil, err
 	}
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	if f.Header == nil {
 		return nil, nil
 	}
@@ -592,7 +1047,15 @@ func SetListBool(s *Struct, fieldNum uint16, value *Bools) error {
 	}
 
 	f := s.fields[fieldNum]
-	if f.Header != nil { // We had a previous value stored.
+
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else if f.Header != nil {
 		ptr := (*Bools)(f.Ptr)
 		XXXAddToTotal(s, -len(ptr.data))
 	}
@@ -602,6 +1065,15 @@ func SetListBool(s *Struct, fieldNum uint16, value *Bools) error {
 	s.fields[fieldNum] = f
 	value.s = s
 	XXXAddToTotal(s, len(value.data))
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -619,15 +1091,35 @@ func DeleteListBools(s *Struct, fieldNum uint16) error {
 	}
 
 	f := s.fields[fieldNum]
-	if f.Header == nil {
+
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		} else {
+			return nil
+		}
+	} else if f.Header == nil {
 		return nil
+	} else {
+		ptr := (*Bools)(f.Ptr)
+		XXXAddToTotal(s, -len(ptr.data))
 	}
 
 	f.Header = nil
-	ptr := (*Bools)(f.Ptr)
-	XXXAddToTotal(s, -len(ptr.data))
 	f.Ptr = nil
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -638,7 +1130,7 @@ func GetListNumber[N Number](s *Struct, fieldNum uint16) (*Numbers[N], error) {
 	}
 	desc := s.mapping.Fields[fieldNum]
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	if f.Header == nil {
 		return nil, nil
 	}
@@ -673,7 +1165,16 @@ func SetListNumber[N Number](s *Struct, fieldNum uint16, value *Numbers[N]) erro
 	}
 
 	f := s.fields[fieldNum]
-	if f.Header != nil { // We had a previous value stored.
+
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Transitioning from raw to dirty
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else if f.Header != nil { // We had a previous value stored.
 		ptr := (*Numbers[N])(f.Ptr)
 		XXXAddToTotal(s, -len(ptr.data))
 	}
@@ -684,6 +1185,15 @@ func SetListNumber[N Number](s *Struct, fieldNum uint16, value *Numbers[N]) erro
 	s.fields[fieldNum] = f
 	value.s = s
 	XXXAddToTotal(s, len(value.data))
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -699,26 +1209,46 @@ func DeleteListNumber[N Number](s *Struct, fieldNum uint16) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.NumericListTypes...); err != nil {
 		return err
 	}
-	f := s.fields[fieldNum]
-	if f.Header == nil {
-		return nil
-	}
-	desc := s.mapping.Fields[fieldNum]
 
+	desc := s.mapping.Fields[fieldNum]
 	size, _, err := numberToDescCheck[N](desc)
 	if err != nil {
 		return fmt.Errorf("error deleting field number %d: %w", fieldNum, err)
 	}
 
-	ptr := (*Numbers[N])(f.Ptr)
-	ptr.s = nil
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Transitioning from raw to dirty
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else {
+		f := s.fields[fieldNum]
+		if f.Header == nil {
+			return nil
+		}
+		ptr := (*Numbers[N])(f.Ptr)
+		ptr.s = nil
 
-	reduceBy := int(f.Header.Final40()) + int(size) + 8
-	XXXAddToTotal(s, -reduceBy)
+		reduceBy := int(f.Header.Final40()) + int(size) + 8
+		XXXAddToTotal(s, -reduceBy)
+	}
 
+	f := s.fields[fieldNum]
 	f.Header = nil
 	f.Ptr = nil
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -728,7 +1258,7 @@ func GetListStruct(s *Struct, fieldNum uint16) (*Structs, error) {
 		return nil, err
 	}
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	if f.Header == nil { // The zero value
 		return nil, nil
 	}
@@ -761,8 +1291,19 @@ func SetListStructs(s *Struct, fieldNum uint16, value *Structs) error {
 		return fmt.Errorf("cannot have more than %d items in a list", maxDataSize)
 	}
 
-	if err := DeleteListStructs(s, fieldNum); err != nil {
-		return err
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Transitioning from raw to dirty
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else {
+		// Use the normal delete path to clean up decoded data
+		if err := DeleteListStructs(s, fieldNum); err != nil {
+			return err
+		}
 	}
 
 	XXXAddToTotal(s, atomic.LoadInt64(value.size))
@@ -770,6 +1311,15 @@ func SetListStructs(s *Struct, fieldNum uint16, value *Structs) error {
 	f.Header = value.header
 	f.Ptr = unsafe.Pointer(value)
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -787,7 +1337,9 @@ func AppendListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTListStructs); err != nil {
 		return err
 	}
-	f := s.fields[fieldNum]
+
+	// Use getOrDecode to ensure the field is decoded if it exists in raw data
+	f := s.getOrDecode(fieldNum)
 
 	// The list of structs hasn't been created yet, so create it.
 	if f.Header == nil {
@@ -824,9 +1376,18 @@ func AppendListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
 	f.Header = l.header
 
 	f.Ptr = unsafe.Pointer(l)
-	s.fields[fieldNum] = f
+	s.fields[fieldNum] = *f
 
 	l.s = s
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -843,15 +1404,36 @@ func DeleteListStructs(s *Struct, fieldNum uint16) error {
 		return err
 	}
 
-	f := s.fields[fieldNum]
-	if f.Header == nil {
-		return nil
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Transitioning from raw to dirty
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else {
+		f := s.fields[fieldNum]
+		if f.Header == nil {
+			return nil
+		}
+		x := (*Structs)(f.Ptr)
+		XXXAddToTotal(s, -atomic.LoadInt64(x.size))
 	}
-	x := (*Structs)(f.Ptr)
-	XXXAddToTotal(s, atomic.LoadInt64(x.size))
+
+	f := s.fields[fieldNum]
 	f.Header = nil
 	f.Ptr = nil
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -861,7 +1443,7 @@ func GetListBytes(s *Struct, fieldNum uint16) (*Bytes, error) {
 		return nil, err
 	}
 
-	f := s.fields[fieldNum]
+	f := s.getOrDecode(fieldNum)
 	if f.Header == nil {
 		return nil, nil
 	}
@@ -886,21 +1468,37 @@ func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
 	value.s = s
 
 	f := s.fields[fieldNum]
-	if f.Header == nil {
-		value.header.SetFieldNum(fieldNum)
-		f.Header = value.header
-		f.Ptr = unsafe.Pointer(value)
-		s.fields[fieldNum] = f
+
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Transitioning from raw to dirty
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+		// Add new value size
 		XXXAddToTotal(s, value.dataSize+value.padding+8)
-		return nil
+	} else if f.Header == nil {
+		XXXAddToTotal(s, value.dataSize+value.padding+8)
+	} else {
+		ptr := (*Bytes)(f.Ptr)
+		XXXAddToTotal(s, value.dataSize-ptr.dataSize+value.padding-ptr.padding+8)
 	}
-	f.Header = value.data[0]
-	f.Header.SetFieldNum(fieldNum)
-	ptr := (*Bytes)(f.Ptr)
+
+	value.header.SetFieldNum(fieldNum)
+	f.Header = value.header
 	f.Ptr = unsafe.Pointer(value)
 	s.fields[fieldNum] = f
 
-	XXXAddToTotal(s, value.dataSize-ptr.dataSize+value.padding-ptr.padding+8)
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 
@@ -922,17 +1520,36 @@ func DeleteListBytes(s *Struct, fieldNum uint16) error {
 		return err
 	}
 
-	f := s.fields[fieldNum]
-	if f.Header == nil {
-		return nil
+	// Handle size adjustment based on current state
+	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
+	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+		// Transitioning from raw to dirty
+		if s.fieldExistsInRaw(fieldNum) {
+			oldSize := s.rawFieldSize(fieldNum)
+			XXXAddToTotal(s, -int64(oldSize))
+		}
+	} else {
+		f := s.fields[fieldNum]
+		if f.Header == nil {
+			return nil
+		}
+		ptr := (*Bytes)(f.Ptr)
+		XXXAddToTotal(s, -(ptr.dataSize + ptr.padding))
 	}
 
-	ptr := (*Bytes)(f.Ptr)
-	XXXAddToTotal(s, -(ptr.dataSize + ptr.padding))
-
+	f := s.fields[fieldNum]
 	f.Header = nil
 	f.Ptr = nil
 	s.fields[fieldNum] = f
+
+	// Mark as dirty and propagate modified flag (only after unmarshal is done)
+	if !s.decoding && s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	if !s.decoding {
+		s.markModified()
+	}
+
 	return nil
 }
 

@@ -832,15 +832,16 @@ func RealStruct(s interfaces.Struct) *structs.Struct {
 // GetValue allows us to get a Value from the internal Struct representation.
 // If the value of the field is not set, GetValue() returns nil.
 func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
-	f := s.Fields()[fieldNum]
-
-	// We pre-allocate for fields that aren't set.  So if the Header is nil, we
-	// have a nil value.
-	if f.Header == nil {
+	// Use IsSet() which is lazy-decode aware - it checks both decoded fields
+	// and raw byte data without triggering unnecessary decoding.
+	if !s.IsSet(fieldNum) {
 		return nil
 	}
 
-	switch f.Header.FieldType() {
+	// Get the field type from the mapping (don't access fields slice directly)
+	descr := s.Map().Fields[fieldNum]
+
+	switch descr.Type {
 	case field.FTBool:
 		b := structs.MustGetBool(s, fieldNum)
 		return ValueOfBool(b)
@@ -958,6 +959,6 @@ func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
 		l := structs.MustGetListStruct(s, fieldNum)
 		return ValueOfList(NewListStructs(l))
 	default:
-		panic(fmt.Sprintf("unsupported field type %s", f.Header.FieldType()))
+		panic(fmt.Sprintf("unsupported field type %s", descr.Type))
 	}
 }
