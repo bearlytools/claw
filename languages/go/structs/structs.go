@@ -245,6 +245,20 @@ func (s *Struct) decodeFieldFromRaw(fieldNum uint16, data []byte) {
 		return
 	}
 
+	// Use O(1) function pointer dispatch
+	lazyDecoders := s.mapping.LazyDecoders
+	if lazyDecoders != nil && int(fieldNum) < len(lazyDecoders) && lazyDecoders[fieldNum] != nil {
+		desc := s.mapping.Fields[fieldNum]
+		lazyDecoders[fieldNum](unsafe.Pointer(s), fieldNum, data, desc)
+		return
+	}
+
+	// Fallback to type switch for backward compatibility
+	s.decodeFieldFromRawFallback(fieldNum, data)
+}
+
+// decodeFieldFromRawFallback uses type switch for backward compatibility.
+func (s *Struct) decodeFieldFromRawFallback(fieldNum uint16, data []byte) {
 	h := GenericHeader(data[:8])
 	fieldType := field.Type(h.FieldType())
 	f := &s.fields[fieldNum]

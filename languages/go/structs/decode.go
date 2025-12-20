@@ -46,44 +46,16 @@ func (s *Struct) scanFieldOffsets(data []byte) ([]fieldOffset, error) {
 		}
 		lastFieldNum = int32(fieldNum)
 
-		// Calculate field size based on type
+		// Calculate field size based on type using O(1) function pointer dispatch
 		var fieldSize uint32
-		switch fieldType {
-		case field.FTBool:
-			fieldSize = 8
-		case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
-			fieldSize = 8
-		case field.FTInt64, field.FTUint64, field.FTFloat64:
-			fieldSize = 16
-		case field.FTString, field.FTBytes:
-			dataSize := h.Final40()
-			fieldSize = uint32(8 + SizeWithPadding(dataSize))
-		case field.FTStruct:
-			structSize := h.Final40()
-			fieldSize = uint32(structSize)
-		case field.FTListBools:
-			items := h.Final40()
-			wordsNeeded := (items / 64) + 1
-			fieldSize = uint32(8 + (wordsNeeded * 8))
-		case field.FTListInt8, field.FTListUint8:
-			items := h.Final40()
-			fieldSize = uint32(8 + SizeWithPadding(items))
-		case field.FTListInt16, field.FTListUint16:
-			items := h.Final40()
-			fieldSize = uint32(8 + SizeWithPadding(items*2))
-		case field.FTListInt32, field.FTListUint32, field.FTListFloat32:
-			items := h.Final40()
-			fieldSize = uint32(8 + SizeWithPadding(items*4))
-		case field.FTListInt64, field.FTListUint64, field.FTListFloat64:
-			items := h.Final40()
-			fieldSize = uint32(8 + SizeWithPadding(items*8))
-		case field.FTListBytes, field.FTListStrings:
-			// For list of bytes, we need to scan through each entry
-			fieldSize = uint32(s.scanListBytesSize(data[offset:]))
-		case field.FTListStructs:
-			// For list of structs, we need to scan through each struct
-			fieldSize = uint32(s.scanListStructsSize(data[offset:]))
-		default:
+		scanSizers := s.mapping.ScanSizers
+		if scanSizers != nil && int(fieldNum) < len(scanSizers) && scanSizers[fieldNum] != nil {
+			fieldSize = scanSizers[fieldNum](data[offset:], h)
+		} else {
+			// Fallback to type switch for backward compatibility
+			fieldSize = s.scanFieldSizeFallback(data[offset:], h, fieldType)
+		}
+		if fieldSize == 0 {
 			return nil, fmt.Errorf("scanFieldOffsets: unknown field type %v", fieldType)
 		}
 
@@ -162,6 +134,46 @@ func (s *Struct) scanListStructsSize(data []byte) int {
 	return size
 }
 
+// scanFieldSizeFallback calculates field size using type switch (backward compatibility).
+func (s *Struct) scanFieldSizeFallback(data []byte, h GenericHeader, fieldType field.Type) uint32 {
+	switch fieldType {
+	case field.FTBool:
+		return 8
+	case field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8, field.FTUint16, field.FTUint32, field.FTFloat32:
+		return 8
+	case field.FTInt64, field.FTUint64, field.FTFloat64:
+		return 16
+	case field.FTString, field.FTBytes:
+		dataSize := h.Final40()
+		return uint32(8 + SizeWithPadding(dataSize))
+	case field.FTStruct:
+		structSize := h.Final40()
+		return uint32(structSize)
+	case field.FTListBools:
+		items := h.Final40()
+		wordsNeeded := (items / 64) + 1
+		return uint32(8 + (wordsNeeded * 8))
+	case field.FTListInt8, field.FTListUint8:
+		items := h.Final40()
+		return uint32(8 + SizeWithPadding(items))
+	case field.FTListInt16, field.FTListUint16:
+		items := h.Final40()
+		return uint32(8 + SizeWithPadding(items*2))
+	case field.FTListInt32, field.FTListUint32, field.FTListFloat32:
+		items := h.Final40()
+		return uint32(8 + SizeWithPadding(items*4))
+	case field.FTListInt64, field.FTListUint64, field.FTListFloat64:
+		items := h.Final40()
+		return uint32(8 + SizeWithPadding(items*8))
+	case field.FTListBytes, field.FTListStrings:
+		return uint32(s.scanListBytesSize(data))
+	case field.FTListStructs:
+		return uint32(s.scanListStructsSize(data))
+	default:
+		return 0
+	}
+}
+
 func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 	read := 0
 	h := header.New()
@@ -237,96 +249,9 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 	return read, nil
 }
 
-func (s *Struct) unmarshalFields(buffer *[]byte) error {
-	maxFields := uint16(len(s.mapping.Fields))
-	defer log.Println("unmarshal() end")
-
-	var (
-		fieldNum  uint16
-		fieldType field.Type
-		lastNum   int32 = -1
-	)
-
-	entry := 1
-	for len(*buffer) > 0 {
-		if len(*buffer) < 8 {
-			return fmt.Errorf("field inside Struct was malformed: not enough room for field number and field type")
-		}
-		log.Println("buffer size: ", len(*buffer))
-
-		h := GenericHeader((*buffer)[:8])
-		fieldNum = h.FieldNum()
-		fieldType = field.Type(h.FieldType())
-
-		if int32(fieldNum) <= lastNum {
-			log.Println(*buffer)
-			return fmt.Errorf("Struct was malformed: field %d came after field %d", fieldNum, lastNum)
-		}
-		lastNum = int32(fieldNum)
-
-		// This means we have fields that we don't know about, but are likely from a
-		// program writing an updated version of our Struct that has more fields. So we
-		// need to retain our data so that even though the user can't see it, we don't
-		// drop it.
-		if fieldNum >= maxFields {
-			log.Printf("wtf: fieldNum %d maxFields %d", fieldNum, maxFields)
-			s.excess = *buffer
-			XXXAddToTotal(s, len(s.excess))
-			return nil
-		}
-		log.Printf("decode field %d/%d", entry, maxFields)
-		log.Println("decode fieldNum: ", fieldNum)
-		log.Printf("decode fieldType: %v", fieldType)
-
-		var err error
-		switch fieldType {
-		case field.FTBool:
-			err = s.decodeBool(buffer, fieldNum)
-		case field.FTInt8:
-			err = s.decodeNum(buffer, fieldNum, 8)
-		case field.FTInt16:
-			err = s.decodeNum(buffer, fieldNum, 16)
-		case field.FTInt32:
-			err = s.decodeNum(buffer, fieldNum, 32)
-		case field.FTInt64:
-			err = s.decodeNum(buffer, fieldNum, 64)
-		case field.FTUint8:
-			err = s.decodeNum(buffer, fieldNum, 8)
-		case field.FTUint16:
-			err = s.decodeNum(buffer, fieldNum, 16)
-		case field.FTUint32:
-			err = s.decodeNum(buffer, fieldNum, 32)
-		case field.FTUint64:
-			err = s.decodeNum(buffer, fieldNum, 64)
-		case field.FTFloat32:
-			err = s.decodeNum(buffer, fieldNum, 32)
-		case field.FTFloat64:
-			err = s.decodeNum(buffer, fieldNum, 64)
-		case field.FTString, field.FTBytes:
-			err = s.decodeBytes(buffer, fieldNum)
-		case field.FTStruct:
-			err = s.decodeStruct(buffer, fieldNum)
-		case field.FTListBools:
-			err = s.decodeListBool(buffer, fieldNum)
-		case field.FTListInt8, field.FTListInt16, field.FTListInt32, field.FTListInt64,
-			field.FTListUint8, field.FTListUint16, field.FTListUint32, field.FTListUint64,
-			field.FTListFloat32, field.FTListFloat64:
-			err = s.decodeListNumber(buffer, fieldNum)
-		case field.FTListBytes:
-			err = s.decodeListBytes(buffer, fieldNum)
-		case field.FTListStructs:
-			err = s.decodeListStruct(buffer, fieldNum)
-		default:
-			err = fmt.Errorf("got field type %v that we don't support", fieldType)
-		}
-		if err != nil {
-			return err
-		}
-		log.Printf("finished decoding %d/%d", entry, maxFields)
-		entry++
-	}
-	return nil
-}
+// NOTE: unmarshalFields was the old eager decode path and has been removed.
+// The codebase now uses lazy decode via decodeFieldFromRaw and function pointer dispatch.
+// The helper functions below (decodeBool, decodeNum, etc.) are kept for tests.
 
 // decodeBool will decode a boolean value from the buffer into .fields[fieldNum] and
 // advance the buffer for the next value.
