@@ -2,13 +2,13 @@
 package vendor
 
 import (
-	"github.com/gostdlib/base/context"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/gostdlib/base/context"
 	osfs "github.com/gopherfs/fs/io/os"
 	"github.com/johnsiilver/halfpike"
 
@@ -17,12 +17,15 @@ import (
 	"github.com/bearlytools/claw/internal/imports"
 	"github.com/bearlytools/claw/internal/imports/git"
 	"github.com/bearlytools/claw/internal/vcs"
+	"github.com/bearlytools/claw/internal/work"
 )
 
 // VendorManager handles the vendoring process for claw dependencies.
 type VendorManager struct {
 	rootDir     string
 	vendorDir   string
+	workDir     string      // Directory containing claw.work
+	work        *work.Work  // Parsed claw.work configuration
 	fs          fs.ReadFileFS
 	git         vcsGit
 	getClawFile func(ctx context.Context, pkgPath string, version string) (git.ClawFile, error)
@@ -54,13 +57,23 @@ type DependencyGraph struct {
 }
 
 // NewVendorManager creates a new VendorManager.
+// It requires a claw.work file to exist at the git repo root (or project boundary).
 func NewVendorManager(rootDir string) (*VendorManager, error) {
-	fs, err := osfs.New()
+	ctx := context.Background()
+
+	fsys, err := osfs.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create filesystem: %w", err)
 	}
 
-	vendorDir := filepath.Join(rootDir, "vendor")
+	// Find and parse claw.work (required)
+	w, workDir, err := work.FindWork(ctx, rootDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find claw.work: %w", err)
+	}
+
+	// vendorDir is relative to claw.work location
+	vendorDir := filepath.Join(workDir, w.VendorDir)
 
 	// Try to set up git support - it's optional
 	var gitVCS vcsGit
@@ -80,7 +93,9 @@ func NewVendorManager(rootDir string) (*VendorManager, error) {
 	return &VendorManager{
 		rootDir:     rootDir,
 		vendorDir:   vendorDir,
-		fs:          fs,
+		workDir:     workDir,
+		work:        w,
+		fs:          fsys,
 		git:         gitVCS,
 		getClawFile: git.GetClawFile,
 	}, nil
@@ -96,6 +111,11 @@ func (vm *VendorManager) VendorDependencies(ctx context.Context, clawFilePath st
 	rootModule, err := vm.parseModuleFile(filepath.Dir(clawFilePath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse root claw.mod: %w", err)
+	}
+
+	// Step 1.5: Validate that module path is a child of repo path from claw.work
+	if err := work.ValidateModuleInRepo(rootModule.Path, vm.work.Repo); err != nil {
+		return nil, fmt.Errorf("module validation failed: %w", err)
 	}
 
 	// Step 2: Parse replace files
@@ -894,4 +914,14 @@ func (vm *VendorManager) GetGitOrigin() string {
 		return ""
 	}
 	return vm.git.Origin()
+}
+
+// GetWork returns the parsed claw.work configuration.
+func (vm *VendorManager) GetWork() *work.Work {
+	return vm.work
+}
+
+// GetWorkDir returns the directory containing the claw.work file.
+func (vm *VendorManager) GetWorkDir() string {
+	return vm.workDir
 }
