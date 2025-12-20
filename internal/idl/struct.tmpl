@@ -193,10 +193,10 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{ end -}}
 {{- if $field.IdentName -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() {{ $field.IdentName }} {
-    return {{ $field.IdentName }}(structs.MustGetNumber[uint8](x.s, {{ $field.Index }}))
+    return {{ $field.IdentName }}(structs.MustGetNumber[uint16](x.s, {{ $field.Index }}))
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {{ $struct.Name }} {
     structs.MustSetNumber(x.s, {{ $field.Index }}, uint16(value))
     return x
 }
