@@ -189,6 +189,29 @@ func (f *File) ExternalEnumImports() chan string {
 	return ch
 }
 
+// ExternalFieldImports returns a deduped list of packages that contain external types
+// (both enums and structs) used by this file's structs. This is used by clawingest.tmpl
+// to import only the packages needed for struct construction and enum casting.
+func (f *File) ExternalFieldImports() chan string {
+	ch := make(chan string, 1)
+
+	go func() {
+		defer close(ch)
+		seen := map[string]bool{}
+		for _, s := range f.Structs() {
+			for _, field := range s.Fields {
+				if field.IsExternal && field.FullPath != "" {
+					if !seen[field.FullPath] {
+						seen[field.FullPath] = true
+						ch <- field.FullPath
+					}
+				}
+			}
+		}
+	}()
+	return ch
+}
+
 /////////////////////////////////
 // Everything below this is IDL parsing
 /////////////////////////////////

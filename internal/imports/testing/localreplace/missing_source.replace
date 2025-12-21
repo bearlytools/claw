@@ -1,4 +1,0 @@
-replace (
-    github.com/johnsiilver/whatever => ../some/directory/somewhere
-    => ../some/directory/somewhere/else
-)

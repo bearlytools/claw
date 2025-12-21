@@ -1,9 +1,8 @@
 module github.com/bearlytools/claw
 
-go 1.24.3
+go 1.25
 
 require (
-	github.com/bearlytools/test_claw_imports v0.0.0-20251125010302-2efe714b91cb
 	github.com/johnsiilver/halfpike v0.3.4
 	github.com/kylelemons/godebug v1.1.0
 	github.com/pkg/errors v0.9.1
@@ -113,6 +112,7 @@ require (
 
 require (
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e
 	github.com/gopherfs/fs v0.0.0-20220204202500-4538e04c7abb
 	github.com/gostdlib/base v0.0.0-20251213030353-8c8ed8ba3f7e
 	golang.org/x/net v0.41.0

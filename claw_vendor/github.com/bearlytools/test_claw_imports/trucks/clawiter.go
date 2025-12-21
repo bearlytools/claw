@@ -4,61 +4,63 @@
 package trucks
 
 import (
-	"iter"
-	"math"
+    "iter"
+    "math"
 
-	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
-	"github.com/bearlytools/claw/clawc/languages/go/field"
-
-	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
+    "github.com/bearlytools/claw/clawc/languages/go/clawiter"
+    "github.com/bearlytools/claw/clawc/languages/go/field"
+    
+    "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
 // Ensure imports are used.
 var _ = math.Float32bits
 
+
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
 func (x Truck) Walk() iter.Seq[clawiter.Token] {
-	return func(yield func(clawiter.Token) bool) {
-		if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Truck"}) {
-			return
-		}
-		// Field 0: Manufacturer
-		{
-			v := x.Manufacturer()
-			tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Manufacturer", Type: field.FTUint8}
-			tok.SetUint8(uint8(v))
-			tok.IsEnum = true
-			tok.EnumGroup = "Manufacturer"
-			tok.EnumName = manufacturers.ManufacturerByValue[uint8(v)]
-			if !yield(tok) {
-				return
-			}
-		}
-		// Field 1: Model
-		{
-			v := x.Model()
-			tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Model", Type: field.FTUint8}
-			tok.SetUint8(uint8(v))
-			tok.IsEnum = true
-			tok.EnumGroup = "Model"
-			tok.EnumName = ModelByValue[uint8(v)]
-			if !yield(tok) {
-				return
-			}
-		}
-		// Field 2: Year
-		{
-			v := x.Year()
-			tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Year", Type: field.FTUint16}
-			tok.SetUint16(uint16(v))
-			if !yield(tok) {
-				return
-			}
-		}
+    return func(yield func(clawiter.Token) bool) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Truck"}) {
+            return
+        }
+        // Field 0: Manufacturer
+        {
+            v := x.Manufacturer()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Manufacturer", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            tok.IsEnum = true
+            tok.EnumGroup = "Manufacturer"
+            tok.EnumName = manufacturers.ManufacturerByValue[uint8(v)]
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 1: Model
+        {
+            v := x.Model()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Model", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            tok.IsEnum = true
+            tok.EnumGroup = "Model"
+            tok.EnumName = ModelByValue[uint8(v)]
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 2: Year
+        {
+            v := x.Year()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Year", Type: field.FTUint16}
+            tok.SetUint16(uint16(v))
+            if !yield(tok) {
+                return
+            }
+        }
 
-		if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Truck"}) {
-			return
-		}
-	}
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Truck"}) {
+            return
+        }
+    }
 }
+

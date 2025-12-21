@@ -79,12 +79,21 @@ func (r Renderer) RenderAdditionalFiles(ctx context.Context, config *imports.Con
 		File:   f,
 	}
 
-	buff := bytes.Buffer{}
-	if err := templates.ExecuteTemplate(&buff, "clawiter.tmpl", data); err != nil {
+	result := map[string][]byte{}
+
+	// Generate clawiter.go
+	iterBuff := bytes.Buffer{}
+	if err := templates.ExecuteTemplate(&iterBuff, "clawiter.tmpl", data); err != nil {
 		return nil, fmt.Errorf("error rendering clawiter.tmpl: %w", err)
 	}
+	result["clawiter.go"] = iterBuff.Bytes()
 
-	return map[string][]byte{
-		"clawiter.go": buff.Bytes(),
-	}, nil
+	// Generate clawingest.go
+	ingestBuff := bytes.Buffer{}
+	if err := templates.ExecuteTemplate(&ingestBuff, "clawingest.tmpl", data); err != nil {
+		return nil, fmt.Errorf("error rendering clawingest.tmpl: %w", err)
+	}
+	result["clawingest.go"] = ingestBuff.Bytes()
+
+	return result, nil
 }

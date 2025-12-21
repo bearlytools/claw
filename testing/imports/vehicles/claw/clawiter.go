@@ -4,134 +4,137 @@
 package vehicles
 
 import (
-	"iter"
-	"math"
+    "iter"
+    "math"
 
-	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
-	"github.com/bearlytools/claw/clawc/languages/go/field"
+    "github.com/bearlytools/claw/clawc/languages/go/clawiter"
+    "github.com/bearlytools/claw/clawc/languages/go/field"
+    
 )
 
 // Ensure imports are used.
 var _ = math.Float32bits
 
+
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
 func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
-	return func(yield func(clawiter.Token) bool) {
-		if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Vehicle"}) {
-			return
-		}
-		// Field 0: Type
-		{
-			v := x.Type()
-			tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Type", Type: field.FTUint8}
-			tok.SetUint8(uint8(v))
-			tok.IsEnum = true
-			tok.EnumGroup = "Type"
-			tok.EnumName = TypeByValue[uint8(v)]
-			if !yield(tok) {
-				return
-			}
-		}
-		// Field 1: Car
-		{
-			nested := x.Car()
-			isNil := nested.XXXGetStruct() == nil
-			if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Car", Type: field.FTStruct, StructName: "cars.Car", IsNil: isNil}) {
-				return
-			}
-			if !isNil {
-				for tok := range nested.Walk() {
-					if !yield(tok) {
-						return
-					}
-				}
-			}
-		}
-		// Field 2: Truck
-		{
-			list := x.Truck()
-			if len(list) == 0 {
-				if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Truck", Type: field.FTListStructs, StructName: "trucks.Truck", IsNil: true}) {
-					return
-				}
-			} else {
-				if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Truck", Type: field.FTListStructs, StructName: "trucks.Truck"}) {
-					return
-				}
-				if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Truck", Type: field.FTListStructs, Len: len(list)}) {
-					return
-				}
-				for _, item := range list {
-					for tok := range item.Walk() {
-						if !yield(tok) {
-							return
-						}
-					}
-				}
-				if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Truck"}) {
-					return
-				}
-			}
-		}
-		// Field 3: Types
-		{
-			list := x.Types()
-			if list.IsNil() || list.Len() == 0 {
-				if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Types", Type: field.FTListUint8, IsNil: true, IsEnum: true, EnumGroup: "Type"}) {
-					return
-				}
-			} else {
-				if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Types", Type: field.FTListUint8, IsEnum: true, EnumGroup: "Type"}) {
-					return
-				}
-				if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Types", Type: field.FTListUint8, Len: list.Len()}) {
-					return
-				}
-				for v := range list.All() {
-					tok := clawiter.Token{Kind: clawiter.TokenField, Name: "", Type: field.FTUint8}
-					tok.SetUint8(uint8(v))
-					tok.IsEnum = true
-					tok.EnumGroup = "Type"
-					tok.EnumName = TypeByValue[uint8(v)]
-					if !yield(tok) {
-						return
-					}
-				}
-				if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Types"}) {
-					return
-				}
-			}
-		}
-		// Field 4: Bools
-		{
-			list := x.Bools()
-			if list.IsNil() || list.Len() == 0 {
-				if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Bools", Type: field.FTListBools, IsNil: true}) {
-					return
-				}
-			} else {
-				if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Bools", Type: field.FTListBools}) {
-					return
-				}
-				if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Bools", Type: field.FTListBools, Len: list.Len()}) {
-					return
-				}
-				for v := range list.All() {
-					tok := clawiter.Token{Kind: clawiter.TokenField, Name: "", Type: field.FTBool}
-					tok.SetBool(v)
-					if !yield(tok) {
-						return
-					}
-				}
-				if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Bools"}) {
-					return
-				}
-			}
-		}
+    return func(yield func(clawiter.Token) bool) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Vehicle"}) {
+            return
+        }
+        // Field 0: Type
+        {
+            v := x.Type()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Type", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            tok.IsEnum = true
+            tok.EnumGroup = "Type"
+            tok.EnumName = TypeByValue[uint8(v)]
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 1: Car
+        {
+            nested := x.Car()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Car", Type: field.FTStruct, StructName: "cars.Car", IsNil: isNil}) {
+                return
+            }
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
+            }
+        }
+        // Field 2: Truck
+        {
+            list := x.Truck()
+            if len(list) == 0 {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Truck", Type: field.FTListStructs, StructName: "trucks.Truck", IsNil: true}) {
+                    return
+                }
+            } else {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Truck", Type: field.FTListStructs, StructName: "trucks.Truck"}) {
+                    return
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Truck", Type: field.FTListStructs, Len: len(list)}) {
+                    return
+                }
+                for _, item := range list {
+                    for tok := range item.Walk() {
+                        if !yield(tok) {
+                            return
+                        }
+                    }
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Truck"}) {
+                    return
+                }
+            }
+        }
+        // Field 3: Types
+        {
+            list := x.Types()
+            if list.IsNil() || list.Len() == 0 {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Types", Type: field.FTListUint8, IsNil: true, IsEnum: true, EnumGroup: "Type"}) {
+                    return
+                }
+            } else {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Types", Type: field.FTListUint8, IsEnum: true, EnumGroup: "Type"}) {
+                    return
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Types", Type: field.FTListUint8, Len: list.Len()}) {
+                    return
+                }
+                for v := range list.All() {
+                    tok := clawiter.Token{Kind: clawiter.TokenField, Name: "", Type: field.FTUint8}
+                    tok.SetUint8(uint8(v))
+                    tok.IsEnum = true
+                    tok.EnumGroup = "Type"
+                    tok.EnumName = TypeByValue[uint8(v)]
+                    if !yield(tok) {
+                        return
+                    }
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Types"}) {
+                    return
+                }
+            }
+        }
+        // Field 4: Bools
+        {
+            list := x.Bools()
+            if list.IsNil() || list.Len() == 0 {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Bools", Type: field.FTListBools, IsNil: true}) {
+                    return
+                }
+            } else {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Bools", Type: field.FTListBools}) {
+                    return
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Bools", Type: field.FTListBools, Len: list.Len()}) {
+                    return
+                }
+                for v := range list.All() {
+                    tok := clawiter.Token{Kind: clawiter.TokenField, Name: "", Type: field.FTBool}
+                    tok.SetBool(v)
+                    if !yield(tok) {
+                        return
+                    }
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Bools"}) {
+                    return
+                }
+            }
+        }
 
-		if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Vehicle"}) {
-			return
-		}
-	}
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Vehicle"}) {
+            return
+        }
+    }
 }
+
