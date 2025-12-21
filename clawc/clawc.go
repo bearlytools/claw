@@ -11,12 +11,12 @@ import (
 	osfs "github.com/gopherfs/fs/io/os"
 	// Registers the golang renderer.
 
-	"github.com/bearlytools/claw/internal/imports"
-	"github.com/bearlytools/claw/internal/imports/git"
-	"github.com/bearlytools/claw/internal/render"
-	_ "github.com/bearlytools/claw/internal/render/golang"
-	"github.com/bearlytools/claw/internal/vendor"
-	"github.com/bearlytools/claw/internal/writer"
+	"github.com/bearlytools/claw/clawc/internal/imports"
+	"github.com/bearlytools/claw/clawc/internal/imports/git"
+	"github.com/bearlytools/claw/clawc/internal/render"
+	_ "github.com/bearlytools/claw/clawc/internal/render/golang"
+	"github.com/bearlytools/claw/clawc/internal/vendor"
+	"github.com/bearlytools/claw/clawc/internal/writer"
 )
 
 func main() {
@@ -79,7 +79,8 @@ func handleGet(ctx context.Context, args []string) {
 
 	// Compile the dependency to generate .go file (force regenerate)
 	fmt.Printf("Generating .go file for %s...\n", pkg)
-	if err := compileDependencyWithOptions(ctx, vendorClawFile, true); err != nil {
+	rootVendorDir := vendorManager.GetVendorPath("")
+	if err := compileDependencyWithOptions(ctx, vendorClawFile, rootVendorDir, vendorManager.GetWorkRepo(), vendorManager.GetWorkVendorDir(), true); err != nil {
 		exitf("failed to compile dependency %s: %s", pkg, err)
 	}
 
@@ -189,20 +190,25 @@ func handleCompile(ctx context.Context, args []string) {
 			}
 		} else {
 			// External dependency - compile from vendor directory
+			rootVendorDir := vendorManager.GetVendorPath("")
 			vendorPkgDir := vendorManager.GetVendorPath(pkgPath)
 			vendorClawFile, err := findClawFileInDir(vendorPkgDir)
 			if err != nil {
 				exitf("failed to find .claw file in vendor directory %s: %s", vendorPkgDir, err)
 			}
 
-			if compileErr := compileDependency(ctx, vendorClawFile); compileErr != nil {
+			if compileErr := compileDependency(ctx, vendorClawFile, rootVendorDir, vendorManager.GetWorkRepo(), vendorManager.GetWorkVendorDir()); compileErr != nil {
 				exitf("failed to compile dependency %s: %s", pkgPath, compileErr)
 			}
 		}
 	}
 
 	// Step 4: Compile the main file using vendored dependencies
-	vendoredConfig := imports.NewVendoredConfig(vendorManager.GetVendorPath(""))
+	vendoredConfig := imports.NewVendoredConfig(
+		vendorManager.GetVendorPath(""),
+		vendorManager.GetWorkRepo(),
+		vendorManager.GetWorkVendorDir(),
+	)
 	if readErr := vendoredConfig.Read(ctx, originalClawFile); readErr != nil {
 		exitf("error: %s\n", readErr)
 	}
@@ -221,17 +227,15 @@ func handleCompile(ctx context.Context, args []string) {
 }
 
 // compileDependency compiles a single dependency from the vendor directory.
-func compileDependency(ctx context.Context, vendorClawFile string) error {
-	return compileDependencyWithOptions(ctx, vendorClawFile, false)
+func compileDependency(ctx context.Context, vendorClawFile, rootVendorDir, repoPath, vendorDirName string) error {
+	return compileDependencyWithOptions(ctx, vendorClawFile, rootVendorDir, repoPath, vendorDirName, false)
 }
 
 // compileDependencyWithOptions compiles a single dependency with optional force regeneration.
-func compileDependencyWithOptions(ctx context.Context, vendorClawFile string, forceRegenerate bool) error {
-	// Find the root vendor directory (not the dependency-specific one)
-	rootVendorDir := findRootVendorDir(vendorClawFile)
+func compileDependencyWithOptions(ctx context.Context, vendorClawFile, rootVendorDir, repoPath, vendorDirName string, forceRegenerate bool) error {
 
 	// Create a vendored config for the dependency that points to the root vendor directory
-	vendoredConfig := imports.NewVendoredConfig(rootVendorDir)
+	vendoredConfig := imports.NewVendoredConfig(rootVendorDir, repoPath, vendorDirName)
 	if err := vendoredConfig.Read(ctx, vendorClawFile); err != nil {
 		return fmt.Errorf("error reading dependency config: %w", err)
 	}
@@ -258,24 +262,24 @@ func compileDependencyWithOptions(ctx context.Context, vendorClawFile string, fo
 	return nil
 }
 
-// compileLocalDependency compiles a local dependency that's within the current git repository.
+// compileLocalDependency compiles a local dependency that's within the claw.work boundary.
 func compileLocalDependency(ctx context.Context, vendorManager *vendor.VendorManager, pkgPath string) error {
 	// For local dependencies, we need to find the actual file system path
 	// and compile it directly without using vendor directory
 
-	// Get the git repo root
-	repoRoot := vendorManager.GetRepoRoot()
+	// Get claw.work configuration
+	work := vendorManager.GetWork()
+	workDir := vendorManager.GetWorkDir()
 
-	// Convert package path to file system path relative to repo root
+	// Convert package path to file system path relative to claw.work
 	// For github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers
 	// We want testing/imports/vehicles/claw/manufacturers
-	gitOrigin := vendorManager.GetGitOrigin()
-	if !strings.HasPrefix(pkgPath, gitOrigin) {
-		return fmt.Errorf("package path %s does not start with git origin %s", pkgPath, gitOrigin)
+	if !strings.HasPrefix(pkgPath, work.Repo) {
+		return fmt.Errorf("package path %s does not start with claw.work repo %s", pkgPath, work.Repo)
 	}
 
-	relPath := strings.TrimPrefix(pkgPath, gitOrigin+"/")
-	localPath := filepath.Join(repoRoot, relPath)
+	relPath := strings.TrimPrefix(pkgPath, work.Repo+"/")
+	localPath := filepath.Join(workDir, relPath)
 
 	// Find the .claw file in the local directory
 	clawFile, err := findClawFileInDir(localPath)
@@ -306,14 +310,13 @@ func compileLocalDependency(ctx context.Context, vendorManager *vendor.VendorMan
 	return nil
 }
 
-// isLocalDependency checks if a package is within the current git repository
+// isLocalDependency checks if a package is within the claw.work repo boundary
 func isLocalDependency(vendorManager *vendor.VendorManager, pkgPath string) bool {
-	origin := vendorManager.GetGitOrigin()
-	if origin == "" {
-		// No git info available, assume external
+	work := vendorManager.GetWork()
+	if work == nil {
 		return false
 	}
-	return strings.HasPrefix(pkgPath, origin)
+	return strings.HasPrefix(pkgPath, work.Repo)
 }
 
 // findClawFileInDir finds the .claw file in a directory.
@@ -338,26 +341,6 @@ func findClawFileInDir(dir string) (string, error) {
 	default:
 		return "", fmt.Errorf("multiple .claw files found in directory %s: %v", dir, clawFiles)
 	}
-}
-
-// findRootVendorDir finds the root vendor directory from a vendored file path.
-func findRootVendorDir(vendorClawFile string) string {
-	// Walk up the directory tree to find the "vendor" directory
-	dir := filepath.Dir(vendorClawFile)
-	for {
-		if filepath.Base(dir) == "vendor" {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			// Reached root, fallback to current directory
-			break
-		}
-		dir = parent
-	}
-
-	// Fallback: assume vendor is at the current directory
-	return "vendor"
 }
 
 func exit(i ...any) {

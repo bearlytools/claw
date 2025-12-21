@@ -1,0 +1,9 @@
+
+
+// Comment line that will not matter
+replace (
+    github.com/johnsiilver/whatever => ../some/directory/somewhere // Comment
+    github.com/djustice/something => ../some/directory/somewhere/else
+)
+
+// Extra Comment

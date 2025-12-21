@@ -5,18 +5,17 @@
 package manufacturers
 
 import (
-    "io"
-    "bytes"
+	"bytes"
+	"io"
 
-    "github.com/bearlytools/claw/languages/go/reflect"
-    "github.com/bearlytools/claw/languages/go/reflect/runtime"
-    
+	"github.com/bearlytools/claw/clawc/languages/go/reflect"
+	"github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
 )
 
 // Ensure imports are used.
 var (
-    _ = io.EOF
-    _ = bytes.MinRead
+	_ = io.EOF
+	_ = bytes.MinRead
 )
 
 // SyntaxVersion is the major version of the Claw language that is being rendered.
@@ -25,110 +24,111 @@ const SyntaxVersion = 0
 var _package = "manufacturers"
 var _packagePath = "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 
-
+// Manufacturer is the maker of a vehicle.
 type Manufacturer uint8
 
 // String implements fmt.Stringer.
 func (x Manufacturer) String() string {
-    return ManufacturerByValue[uint8(x)]
+	return ManufacturerByValue[uint8(x)]
 }
 
 // XXXEnumGroup will return the EnumGroup descriptor for this group of enumerators.
-// This should only be used by the reflect package and is has no compatibility promises 
+// This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x Manufacturer) XXXEnumGroup() reflect.EnumGroup {
-    return XXXEnumGroups.Get(0)
+	return XXXEnumGroups.Get(0)
 }
 
 // XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
-// This should only be used by the reflect package and is has no compatibility promises 
+// This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x Manufacturer) XXXEnumValueDescr() reflect.EnumValueDescr {
-    return XXXEnumGroups.Get(0).ByValue(uint16(x))
+	return XXXEnumGroups.Get(0).ByValue(uint16(x))
 }
+
 // This is a set of all constants representing enumerated values for enum Manufacturer.
 const (
-    Unknown Manufacturer = 0
-    Toyota Manufacturer = 1
-    Ford Manufacturer = 2
-    Tesla Manufacturer = 3
+	Unknown Manufacturer = 0
+	Toyota  Manufacturer = 1
+	Ford    Manufacturer = 2
+	Tesla   Manufacturer = 3
 )
 
 // ManufacturerByName converts a string representing the enumerator into a Manufacturer.
 var ManufacturerByName = map[string]Manufacturer{
-    "Ford": 2,
-    "Tesla": 3,
-    "Toyota": 1,
-    "Unknown": 0,
+	"Ford":    2,
+	"Tesla":   3,
+	"Toyota":  1,
+	"Unknown": 0,
 }
 
 // ManufacturerByValue converts a uint8 representing a Manufacturer into its string name.
 var ManufacturerByValue = map[uint8]string{
-    0: "Unknown",
-    1: "Toyota",
-    2: "Ford",
-    3: "Tesla",
-} 
- 
+	0: "Unknown",
+	1: "Toyota",
+	2: "Ford",
+	3: "Tesla",
+}
 
 // Everything below this line is internal details.
 
-
+// init initializes all mapping function pointer tables for O(1) dispatch.
+func init() {
+}
 
 var XXXEnumGroupManufacturer = reflect.XXXEnumGroupImpl{
-    GroupName: "Manufacturer",
-    GroupLen: 4,
-    EnumSize: 8,
-    Descrs: []reflect.EnumValueDescr{
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "Unknown",
-            EnumNumber: 0,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "Toyota",
-            EnumNumber: 1,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "Ford",
-            EnumNumber: 2,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "Tesla",
-            EnumNumber: 3,
-            EnumSize: 8,
-        },
-    },
+	GroupName: "Manufacturer",
+	GroupLen:  4,
+	EnumSize:  8,
+	Descrs: []reflect.EnumValueDescr{
+		reflect.XXXEnumValueDescrImpl{
+			EnumName:   "Unknown",
+			EnumNumber: 0,
+			EnumSize:   8,
+		},
+		reflect.XXXEnumValueDescrImpl{
+			EnumName:   "Toyota",
+			EnumNumber: 1,
+			EnumSize:   8,
+		},
+		reflect.XXXEnumValueDescrImpl{
+			EnumName:   "Ford",
+			EnumNumber: 2,
+			EnumSize:   8,
+		},
+		reflect.XXXEnumValueDescrImpl{
+			EnumName:   "Tesla",
+			EnumNumber: 3,
+			EnumSize:   8,
+		},
+	},
 }
 
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
-    List:   []reflect.EnumGroup{
-        XXXEnumGroupManufacturer,
-    },
-    Lookup: map[string]reflect.EnumGroup{
-        "Manufacturer": XXXEnumGroupManufacturer,
-    },
-} 
-
-var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
+	List: []reflect.EnumGroup{
+		XXXEnumGroupManufacturer,
+	},
+	Lookup: map[string]reflect.EnumGroup{
+		"Manufacturer": XXXEnumGroupManufacturer,
+	},
 }
+
+var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{}
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
-    Name: "manufacturers",
-    Path: "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers", 
-    EnumGroupsDescrs: XXXEnumGroups,   
+	Name:             "manufacturers",
+	Path:             "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers",
+	EnumGroupsDescrs: XXXEnumGroups,
 }
 
 // PackageDescr returns a PackageDescr for this package.
 func PackageDescr() reflect.PackageDescr {
-    return XXXPackageDescr
+	return XXXPackageDescr
 }
 
 // Registers our package description with the runtime.
 func init() {
-    runtime.RegisterPackage(XXXPackageDescr)
+	runtime.RegisterPackage(XXXPackageDescr)
 }
