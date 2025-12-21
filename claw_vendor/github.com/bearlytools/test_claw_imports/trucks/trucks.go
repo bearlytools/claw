@@ -5,22 +5,22 @@
 package trucks
 
 import (
-	"bytes"
-	"io"
+    "io"
+    "bytes"
 
-	"github.com/bearlytools/claw/clawc/languages/go/field"
-	"github.com/bearlytools/claw/clawc/languages/go/mapping"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
-	"github.com/bearlytools/claw/clawc/languages/go/structs"
-
-	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
+    "github.com/bearlytools/claw/clawc/languages/go/mapping"
+    "github.com/bearlytools/claw/clawc/languages/go/reflect"
+    "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
+    "github.com/bearlytools/claw/clawc/languages/go/structs"
+    "github.com/bearlytools/claw/clawc/languages/go/field"
+    
+    "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
 // Ensure imports are used.
 var (
-	_ = io.EOF
-	_ = bytes.MinRead
+    _ = io.EOF
+    _ = bytes.MinRead
 )
 
 // SyntaxVersion is the major version of the Claw language that is being rendered.
@@ -29,62 +29,63 @@ const SyntaxVersion = 0
 var _package = "trucks"
 var _packagePath = "github.com/bearlytools/test_claw_imports/trucks"
 
+
 type Model uint8
 
 // String implements fmt.Stringer.
 func (x Model) String() string {
-	return ModelByValue[uint8(x)]
+    return ModelByValue[uint8(x)]
 }
 
 // XXXEnumGroup will return the EnumGroup descriptor for this group of enumerators.
 // This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x Model) XXXEnumGroup() reflect.EnumGroup {
-	return XXXEnumGroups.Get(0)
+    return XXXEnumGroups.Get(0)
 }
 
 // XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
 // This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x Model) XXXEnumValueDescr() reflect.EnumValueDescr {
-	return XXXEnumGroups.Get(0).ByValue(uint16(x))
+    return XXXEnumGroups.Get(0).ByValue(uint16(x))
 }
-
 // This is a set of all constants representing enumerated values for enum Model.
 const (
-	ModelUnknown Model = 0
-	F100         Model = 1
-	Tundra       Model = 2
-	Cybertruck   Model = 3
+    ModelUnknown Model = 0
+    F100 Model = 1
+    Tundra Model = 2
+    Cybertruck Model = 3
 )
 
 // ModelByName converts a string representing the enumerator into a Model.
 var ModelByName = map[string]Model{
-	"Cybertruck":   3,
-	"F100":         1,
-	"ModelUnknown": 0,
-	"Tundra":       2,
+    "Cybertruck": 3,
+    "F100": 1,
+    "ModelUnknown": 0,
+    "Tundra": 2,
 }
 
 // ModelByValue converts a uint8 representing a Model into its string name.
 var ModelByValue = map[uint8]string{
-	0: "ModelUnknown",
-	1: "F100",
-	2: "Tundra",
-	3: "Cybertruck",
+    0: "ModelUnknown",
+    1: "F100",
+    2: "Tundra",
+    3: "Cybertruck",
 }
 
+
 type Truck struct {
-	s *structs.Struct
+   s *structs.Struct
 }
 
 // NewTruck creates a new instance of Truck.
 func NewTruck() Truck {
-	s := structs.New(0, XXXMappingTruck)
-	s.XXXSetNoZeroTypeCompression()
-	return Truck{
-		s: s,
-	}
+    s := structs.New(0, XXXMappingTruck)
+    s.XXXSetNoZeroTypeCompression()
+    return Truck{
+        s: s,
+    }
 }
 
 // XXXNewTruckFrom creates a new Truck from our internal Struct representation.
@@ -94,67 +95,70 @@ func NewTruck() Truck {
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
 func XXXNewTruckFrom(s *structs.Struct) Truck {
-	return Truck{s: s}
+    return Truck{s: s}
 }
 
 // Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
 func (x Truck) Marshal() ([]byte, error) {
-	b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
-	_, err := x.s.Marshal(b)
-	if err != nil {
-		return nil, err
-	}
-	return b.Bytes(), nil
+    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
+    _, err := x.s.Marshal(b)
+    if err != nil {
+        return nil, err
+    }
+    return b.Bytes(), nil
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Truck) MarshalWriter(w io.Writer) (n int, err error) {
-	return x.s.Marshal(w)
+    return x.s.Marshal(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
 func (x Truck) Unmarshal(b []byte) error {
-	buff := bytes.NewBuffer(b)
-	_, err := x.s.Unmarshal(buff)
-	return err
+    buff := bytes.NewBuffer(b)
+    _, err := x.s.Unmarshal(buff)
+    return err
 }
 
 // UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x Truck) UnmarshalReader(r io.Reader) (int, error) {
-	return x.s.Unmarshal(r)
+func (x Truck) UnmarshalReader (r io.Reader) (int, error) {
+    return x.s.Unmarshal(r)
 }
 
 func (x Truck) Manufacturer() manufacturers.Manufacturer {
-	return manufacturers.Manufacturer(structs.MustGetNumber[uint8](x.s, 0))
+    return manufacturers.Manufacturer(structs.MustGetNumber[uint8](x.s, 0))
 }
 
 func (x Truck) SetManufacturer(value manufacturers.Manufacturer) Truck {
-	structs.MustSetNumber(x.s, 0, uint8(value))
-	return x
+    structs.MustSetNumber(x.s, 0, uint8(value))
+    return x
 }
 
 func (x Truck) Model() Model {
-	return Model(structs.MustGetNumber[uint8](x.s, 1))
+    return Model(structs.MustGetNumber[uint8](x.s, 1))
 }
 
 func (x Truck) SetModel(value Model) Truck {
-	structs.MustSetNumber(x.s, 1, uint8(value))
-	return x
+    structs.MustSetNumber(x.s, 1, uint8(value))
+    return x
 }
 
+
 func (x Truck) Year() uint16 {
-	return structs.MustGetNumber[uint16](x.s, 2)
+    return structs.MustGetNumber[uint16](x.s, 2)
 }
 
 func (x Truck) SetYear(value uint16) Truck {
-	structs.MustSetNumber(x.s, 2, value)
-	return x
+    structs.MustSetNumber(x.s, 2, value)
+    return x
 }
 
+
+
 // ClawStruct returns a reflection type representing the Struct.
-func (x Truck) ClawStruct() reflect.Struct {
-	descr := XXXStructDescrTruck
-	return reflect.XXXNewStruct(x.s, descr)
+func (x Truck) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrTruck
+    return reflect.XXXNewStruct(x.s, descr)
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
@@ -162,144 +166,151 @@ func (x Truck) ClawStruct() reflect.Struct {
 //
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Truck) XXXGetStruct() *structs.Struct {
-	return x.s
-}
+    return x.s
+} 
 
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Truck) XXXDescr() reflect.StructDescr {
-	return XXXPackageDescr.Structs().Get(0)
-}
+    return XXXPackageDescr.Structs().Get(0)
+} 
 
 // Everything below this line is internal details.
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingTruck = &mapping.Map{
-	Name: "Truck",
-	Pkg:  "trucks",
-	Path: "github.com/bearlytools/test_claw_imports/trucks",
-	Fields: []*mapping.FieldDescr{
-		{
-			Name:      "Manufacturer",
-			Type:      field.FTUint8,
-			Package:   "manufacturers",
-			FullPath:  "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers",
-			FieldNum:  0,
-			IsEnum:    true,
-			EnumGroup: "manufacturers.Manufacturer",
-		},
-		{
-			Name:      "Model",
-			Type:      field.FTUint8,
-			Package:   "trucks",
-			FullPath:  "github.com/bearlytools/test_claw_imports/trucks",
-			FieldNum:  1,
-			IsEnum:    true,
-			EnumGroup: "Model",
-		},
-		{
-			Name:     "Year",
-			Type:     field.FTUint16,
-			Package:  "trucks",
-			FullPath: "github.com/bearlytools/test_claw_imports/trucks",
-			FieldNum: 2,
-			IsEnum:   false,
-		},
-	},
+    Name: "Truck",
+    Pkg: "trucks",
+    Path: "github.com/bearlytools/test_claw_imports/trucks",
+    Fields: []*mapping.FieldDescr{
+        {
+            Name: "Manufacturer",
+            Type: field.FTUint8,
+            Package: "manufacturers",
+            FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers",
+            FieldNum: 0,
+            IsEnum: true,
+            EnumGroup: "manufacturers.Manufacturer",
+        },
+        {
+            Name: "Model",
+            Type: field.FTUint8,
+            Package: "trucks",
+            FullPath: "github.com/bearlytools/test_claw_imports/trucks",
+            FieldNum: 1,
+            IsEnum: true,
+            EnumGroup: "Model",
+        },
+        {
+            Name: "Year",
+            Type: field.FTUint16,
+            Package: "trucks",
+            FullPath: "github.com/bearlytools/test_claw_imports/trucks",
+            FieldNum: 2,
+            IsEnum: false,
+        },
+    },
 }
+
 
 // init initializes all mapping function pointer tables for O(1) dispatch.
 func init() {
-	XXXMappingTruck.Init()
+    XXXMappingTruck.Init()
 }
 
+
+
+
 var XXXEnumGroupModel = reflect.XXXEnumGroupImpl{
-	GroupName: "Model",
-	GroupLen:  4,
-	EnumSize:  8,
-	Descrs: []reflect.EnumValueDescr{
-		reflect.XXXEnumValueDescrImpl{
-			EnumName:   "ModelUnknown",
-			EnumNumber: 0,
-			EnumSize:   8,
-		},
-		reflect.XXXEnumValueDescrImpl{
-			EnumName:   "F100",
-			EnumNumber: 1,
-			EnumSize:   8,
-		},
-		reflect.XXXEnumValueDescrImpl{
-			EnumName:   "Tundra",
-			EnumNumber: 2,
-			EnumSize:   8,
-		},
-		reflect.XXXEnumValueDescrImpl{
-			EnumName:   "Cybertruck",
-			EnumNumber: 3,
-			EnumSize:   8,
-		},
-	},
+    GroupName: "Model",
+    GroupLen: 4,
+    EnumSize: 8,
+    Descrs: []reflect.EnumValueDescr{
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ModelUnknown",
+            EnumNumber: 0,
+            EnumSize: 8,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "F100",
+            EnumNumber: 1,
+            EnumSize: 8,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "Tundra",
+            EnumNumber: 2,
+            EnumSize: 8,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "Cybertruck",
+            EnumNumber: 3,
+            EnumSize: 8,
+        },
+    },
 }
 
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
-	List: []reflect.EnumGroup{
-		XXXEnumGroupModel,
-	},
-	Lookup: map[string]reflect.EnumGroup{
-		"Model": XXXEnumGroupModel,
-	},
+    List:   []reflect.EnumGroup{
+        XXXEnumGroupModel,
+    },
+    Lookup: map[string]reflect.EnumGroup{
+        "Model": XXXEnumGroupModel,
+    },
 }
+ 
+
 
 var XXXStructDescrTruck = &reflect.XXXStructDescrImpl{
-	Name:    "Truck",
-	Pkg:     XXXMappingTruck.Pkg,
-	Path:    XXXMappingTruck.Path,
-	Mapping: XXXMappingTruck,
-	FieldList: []reflect.FieldDescr{
-
-		reflect.XXXFieldDescrImpl{
-			FD: XXXMappingTruck.Fields[0],
-			EG: manufacturers.XXXEnumGroupManufacturer,
-		},
-
-		reflect.XXXFieldDescrImpl{
-			FD: XXXMappingTruck.Fields[1],
-			EG: XXXEnumGroupModel,
-		},
-
-		reflect.XXXFieldDescrImpl{
-			FD: XXXMappingTruck.Fields[2],
-		},
-	},
+    Name:      "Truck",
+    Pkg:       XXXMappingTruck.Pkg,
+    Path:      XXXMappingTruck.Path,
+    Mapping:   XXXMappingTruck,
+    FieldList: []reflect.FieldDescr {
+        
+        reflect.XXXFieldDescrImpl{
+            FD: XXXMappingTruck.Fields[0],
+            EG: manufacturers.XXXEnumGroupManufacturer,
+        },
+         
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingTruck.Fields[1],
+            EG: XXXEnumGroupModel, 
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingTruck.Fields[2],  
+        },  
+    },
 }
 
 var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
-	"Truck": XXXStructDescrTruck,
+    "Truck":  XXXStructDescrTruck,
 }
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
-	Name: "trucks",
-	Path: "github.com/bearlytools/test_claw_imports/trucks",
-	ImportDescrs: []reflect.PackageDescr{
-		manufacturers.XXXPackageDescr,
-	},
-	EnumGroupsDescrs: XXXEnumGroups,
-	StructsDescrs: reflect.XXXStructDescrsImpl{
-		Descrs: []reflect.StructDescr{
-			XXXStructDescrTruck,
-		},
-	},
+    Name: "trucks",
+    Path: "github.com/bearlytools/test_claw_imports/trucks",
+    ImportDescrs: []reflect.PackageDescr {
+        manufacturers.XXXPackageDescr,
+    },
+    EnumGroupsDescrs: XXXEnumGroups,
+    StructsDescrs: reflect.XXXStructDescrsImpl{
+        Descrs: []reflect.StructDescr{
+            XXXStructDescrTruck,
+        },
+    },
 }
 
 // PackageDescr returns a PackageDescr for this package.
 func PackageDescr() reflect.PackageDescr {
-	return XXXPackageDescr
+    return XXXPackageDescr
 }
 
 // Registers our package description with the runtime.
 func init() {
-	runtime.RegisterPackage(XXXPackageDescr)
+    runtime.RegisterPackage(XXXPackageDescr)
 }

@@ -285,3 +285,204 @@ func TestMarshalProducesValidJSON(t *testing.T) {
 		t.Errorf("TestMarshalProducesValidJSON: -want/+got:\n%s", diff)
 	}
 }
+
+func TestUnmarshalRoundTripCar(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func() cars.Car
+		options []MarshalOption
+	}{
+		{
+			name: "Success: car with enum strings",
+			setup: func() cars.Car {
+				return cars.NewCar().
+					SetManufacturer(manufacturers.Toyota).
+					SetModel(cars.Venza).
+					SetYear(2010)
+			},
+		},
+		{
+			name: "Success: car with enum numbers",
+			setup: func() cars.Car {
+				return cars.NewCar().
+					SetManufacturer(manufacturers.Tesla).
+					SetModel(cars.ModelS).
+					SetYear(2023)
+			},
+			options: []MarshalOption{WithUseEnumNumbers(true)},
+		},
+		{
+			name: "Success: empty car (zero values)",
+			setup: func() cars.Car {
+				return cars.NewCar()
+			},
+		},
+	}
+
+	for _, test := range tests {
+		original := test.setup()
+
+		// Marshal to JSON
+		jsonData, err := Marshal(original, test.options...)
+		if err != nil {
+			t.Errorf("TestUnmarshalRoundTripCar(%s): Marshal error: %s", test.name, err)
+			continue
+		}
+
+		// Unmarshal back into a new struct
+		restored := cars.NewCar()
+		if err := Unmarshal(jsonData, &restored); err != nil {
+			t.Errorf("TestUnmarshalRoundTripCar(%s): Unmarshal error: %s\nJSON: %s", test.name, err, string(jsonData))
+			continue
+		}
+
+		// Compare fields
+		if original.Manufacturer() != restored.Manufacturer() {
+			t.Errorf("TestUnmarshalRoundTripCar(%s): Manufacturer mismatch: got %v, want %v",
+				test.name, restored.Manufacturer(), original.Manufacturer())
+		}
+		if original.Model() != restored.Model() {
+			t.Errorf("TestUnmarshalRoundTripCar(%s): Model mismatch: got %v, want %v",
+				test.name, restored.Model(), original.Model())
+		}
+		if original.Year() != restored.Year() {
+			t.Errorf("TestUnmarshalRoundTripCar(%s): Year mismatch: got %v, want %v",
+				test.name, restored.Year(), original.Year())
+		}
+	}
+}
+
+func TestUnmarshalRoundTripVehicle(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func() vehicles.Vehicle
+		options []MarshalOption
+	}{
+		{
+			name: "Success: vehicle with nested car",
+			setup: func() vehicles.Vehicle {
+				car := cars.NewCar().
+					SetManufacturer(manufacturers.Toyota).
+					SetModel(cars.Venza).
+					SetYear(2010)
+				return vehicles.NewVehicle().
+					SetType(vehicles.Car).
+					SetCar(car)
+			},
+		},
+		{
+			name: "Success: vehicle with bool list",
+			setup: func() vehicles.Vehicle {
+				return vehicles.NewVehicle().
+					SetBools(list.NewBools().Append(true, false, true))
+			},
+		},
+		{
+			name: "Success: vehicle with enum list (strings)",
+			setup: func() vehicles.Vehicle {
+				return vehicles.NewVehicle().
+					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+			},
+		},
+		{
+			name: "Success: vehicle with enum list (numbers)",
+			setup: func() vehicles.Vehicle {
+				return vehicles.NewVehicle().
+					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+			},
+			options: []MarshalOption{WithUseEnumNumbers(true)},
+		},
+		{
+			name: "Success: vehicle with all fields",
+			setup: func() vehicles.Vehicle {
+				car := cars.NewCar().
+					SetManufacturer(manufacturers.Ford).
+					SetModel(cars.GT).
+					SetYear(2020)
+				return vehicles.NewVehicle().
+					SetType(vehicles.Car).
+					SetCar(car).
+					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck)).
+					SetBools(list.NewBools().Append(true, false))
+			},
+		},
+	}
+
+	for _, test := range tests {
+		original := test.setup()
+
+		// Marshal to JSON
+		jsonData, err := Marshal(original, test.options...)
+		if err != nil {
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Marshal error: %s", test.name, err)
+			continue
+		}
+
+		// Unmarshal back into a new struct
+		restored := vehicles.NewVehicle()
+		if err := Unmarshal(jsonData, &restored); err != nil {
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Unmarshal error: %s\nJSON: %s", test.name, err, string(jsonData))
+			continue
+		}
+
+		// Compare Type enum
+		if original.Type() != restored.Type() {
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Type mismatch: got %v, want %v",
+				test.name, restored.Type(), original.Type())
+		}
+
+		// Compare nested Car struct
+		origCar := original.Car()
+		resCar := restored.Car()
+		origCarStruct := origCar.XXXGetStruct()
+		resCarStruct := resCar.XXXGetStruct()
+		switch {
+		case origCarStruct == nil && resCarStruct != nil:
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Car should be nil", test.name)
+		case origCarStruct != nil && resCarStruct == nil:
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Car should not be nil", test.name)
+		case origCarStruct != nil && resCarStruct != nil:
+			if origCar.Manufacturer() != resCar.Manufacturer() {
+				t.Errorf("TestUnmarshalRoundTripVehicle(%s): Car.Manufacturer mismatch", test.name)
+			}
+			if origCar.Model() != resCar.Model() {
+				t.Errorf("TestUnmarshalRoundTripVehicle(%s): Car.Model mismatch", test.name)
+			}
+			if origCar.Year() != resCar.Year() {
+				t.Errorf("TestUnmarshalRoundTripVehicle(%s): Car.Year mismatch", test.name)
+			}
+		}
+
+		// Compare Types enum list
+		origTypes := original.Types()
+		resTypes := restored.Types()
+		switch {
+		case origTypes.IsNil() && !resTypes.IsNil():
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Types should be nil", test.name)
+		case !origTypes.IsNil() && resTypes.IsNil():
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Types should not be nil", test.name)
+		case !origTypes.IsNil() && !resTypes.IsNil():
+			origSlice := origTypes.Slice()
+			resSlice := resTypes.Slice()
+			if diff := pretty.Compare(origSlice, resSlice); diff != "" {
+				t.Errorf("TestUnmarshalRoundTripVehicle(%s): Types mismatch: -want/+got:\n%s", test.name, diff)
+			}
+		}
+
+		// Compare Bools list
+		origBools := original.Bools()
+		resBools := restored.Bools()
+		switch {
+		case origBools.IsNil() && !resBools.IsNil():
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Bools should be nil", test.name)
+		case !origBools.IsNil() && resBools.IsNil():
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Bools should not be nil", test.name)
+		case !origBools.IsNil() && !resBools.IsNil():
+			origSlice := origBools.Slice()
+			resSlice := resBools.Slice()
+			if diff := pretty.Compare(origSlice, resSlice); diff != "" {
+				t.Errorf("TestUnmarshalRoundTripVehicle(%s): Bools mismatch: -want/+got:\n%s", test.name, diff)
+			}
+		}
+	}
+}

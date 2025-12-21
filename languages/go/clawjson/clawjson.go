@@ -13,6 +13,8 @@ import (
 
 	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
+	jsonv2 "github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 )
 
 // Walker is an interface for walking over Claw tokens.
@@ -306,3 +308,232 @@ func (a *Array) Reset(w io.Writer) {
 	a.written = false
 	a.writer = w
 }
+
+// Ingester is an interface for ingesting Claw tokens into a struct.
+type Ingester interface {
+	IngestWithOptions(iter.Seq[clawiter.Token], clawiter.IngestOptions) error
+}
+
+// unmarshalOptions provides options for reading JSON into Claw structs.
+type unmarshalOptions struct {
+	IgnoreUnknownFields bool
+}
+
+// UnmarshalOption provides options for unmarshaling JSON to Claw.
+type UnmarshalOption func(unmarshalOptions) (unmarshalOptions, error)
+
+// WithIgnoreUnknownFields configures whether unknown JSON fields should be ignored.
+func WithIgnoreUnknownFields(ignore bool) UnmarshalOption {
+	return func(u unmarshalOptions) (unmarshalOptions, error) {
+		u.IgnoreUnknownFields = ignore
+		return u, nil
+	}
+}
+
+// Unmarshal parses JSON data and populates the Ingester.
+func Unmarshal(data []byte, v Ingester, options ...UnmarshalOption) error {
+	return UnmarshalReader(bytes.NewReader(data), v, options...)
+}
+
+// UnmarshalReader parses JSON from a reader and populates the Ingester.
+func UnmarshalReader(r io.Reader, v Ingester, options ...UnmarshalOption) error {
+	opts := unmarshalOptions{}
+	for _, opt := range options {
+		var err error
+		opts, err = opt(opts)
+		if err != nil {
+			return err
+		}
+	}
+
+	tokens := jsonToTokens(r)
+	ingestOpts := clawiter.IngestOptions{
+		IgnoreUnknownFields: opts.IgnoreUnknownFields,
+	}
+	return v.IngestWithOptions(tokens, ingestOpts)
+}
+
+// jsonToTokens parses JSON and yields Claw tokens.
+func jsonToTokens(r io.Reader) iter.Seq[clawiter.Token] {
+	return func(yield func(clawiter.Token) bool) {
+		dec := jsontext.NewDecoder(r)
+
+		// Stack to track context at each nesting level
+		// true = in object (expecting key/value pairs), false = in array
+		var contextStack []bool
+		// Stack to track if we're expecting a key (true) or value (false) in objects
+		var expectKeyStack []bool
+		// Current field name for the next value
+		var currentName string
+
+		inObject := func() bool {
+			if len(contextStack) == 0 {
+				return false
+			}
+			return contextStack[len(contextStack)-1]
+		}
+
+		expectKey := func() bool {
+			if len(expectKeyStack) == 0 {
+				return false
+			}
+			return expectKeyStack[len(expectKeyStack)-1]
+		}
+
+		setExpectKey := func(v bool) {
+			if len(expectKeyStack) > 0 {
+				expectKeyStack[len(expectKeyStack)-1] = v
+			}
+		}
+
+		for {
+			tok, err := dec.ReadToken()
+			if err != nil {
+				if err == io.EOF {
+					return
+				}
+				return
+			}
+
+			switch tok.Kind() {
+			case '{':
+				// Object start
+				// If we have a current field name, emit a TokenField first (for nested structs)
+				if currentName != "" {
+					if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: currentName, Type: field.FTStruct}) {
+						return
+					}
+				}
+				// Emit TokenStructStart
+				structName := currentName
+				if structName == "" {
+					structName = "root"
+				}
+				if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: structName}) {
+					return
+				}
+				// Push object context - expecting keys next
+				contextStack = append(contextStack, true)
+				expectKeyStack = append(expectKeyStack, true)
+				currentName = ""
+
+			case '}':
+				// Object end - emit TokenStructEnd
+				if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd}) {
+					return
+				}
+				// Pop context
+				if len(contextStack) > 0 {
+					contextStack = contextStack[:len(contextStack)-1]
+				}
+				if len(expectKeyStack) > 0 {
+					expectKeyStack = expectKeyStack[:len(expectKeyStack)-1]
+				}
+				// After closing an object, the parent expects next key (if in object)
+				setExpectKey(true)
+
+			case '[':
+				// Array start
+				// If we have a current field name, emit a TokenField first (for lists)
+				if currentName != "" {
+					if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: currentName}) {
+						return
+					}
+				}
+				// Emit TokenListStart
+				if !yield(clawiter.Token{Kind: clawiter.TokenListStart}) {
+					return
+				}
+				// Push array context
+				contextStack = append(contextStack, false)
+				expectKeyStack = append(expectKeyStack, false)
+				currentName = ""
+
+			case ']':
+				// Array end - emit TokenListEnd
+				if !yield(clawiter.Token{Kind: clawiter.TokenListEnd}) {
+					return
+				}
+				// Pop context
+				if len(contextStack) > 0 {
+					contextStack = contextStack[:len(contextStack)-1]
+				}
+				if len(expectKeyStack) > 0 {
+					expectKeyStack = expectKeyStack[:len(expectKeyStack)-1]
+				}
+				// After closing an array, the parent expects next key (if in object)
+				setExpectKey(true)
+
+			case '"':
+				// String - could be a field name or a value
+				s := tok.String()
+
+				// If we're in an object and expecting a key, this is a field name
+				if inObject() && expectKey() {
+					currentName = s
+					setExpectKey(false) // Next we expect a value
+					continue
+				}
+
+				// This is a string value - emit as field token
+				token := clawiter.Token{
+					Kind:  clawiter.TokenField,
+					Name:  currentName,
+					Type:  field.FTString,
+					Bytes: []byte(s),
+				}
+				if !yield(token) {
+					return
+				}
+				currentName = ""
+				setExpectKey(true) // Next we expect a key (if in object)
+
+			case '0':
+				// Number - store as int64 (will be cast by Ingest as needed)
+				token := clawiter.Token{
+					Kind: clawiter.TokenField,
+					Name: currentName,
+				}
+				// Use Int64 which handles most JSON numbers correctly
+				// Ingest will cast to the appropriate type (uint8, uint16, int32, etc.)
+				token.SetInt64(tok.Int())
+				if !yield(token) {
+					return
+				}
+				currentName = ""
+				setExpectKey(true)
+
+			case 't', 'f':
+				// Boolean
+				b := tok.Bool()
+				token := clawiter.Token{
+					Kind: clawiter.TokenField,
+					Name: currentName,
+					Type: field.FTBool,
+				}
+				token.SetBool(b)
+				if !yield(token) {
+					return
+				}
+				currentName = ""
+				setExpectKey(true)
+
+			case 'n':
+				// Null
+				token := clawiter.Token{
+					Kind:  clawiter.TokenField,
+					Name:  currentName,
+					IsNil: true,
+				}
+				if !yield(token) {
+					return
+				}
+				currentName = ""
+				setExpectKey(true)
+			}
+		}
+	}
+}
+
+// Ensure imports are used
+var _ = jsonv2.Marshal
