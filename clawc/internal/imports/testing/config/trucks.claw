@@ -1,0 +1,18 @@
+package trucks
+
+import (
+        "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
+)
+
+Enum Model uint8 {
+        ModelUnknown @0
+        F100 @1 // Ford
+        Tundra @2 // Toyota
+        Cybertruck @3 // Tesla
+}
+
+Struct Truck {
+        Manufacturer manufacturers.Manufacturer @0
+        Model Model @1
+        Year uint16 @2
+}

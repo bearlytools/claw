@@ -1,0 +1,133 @@
+// Package clawiter provides types for streaming iteration over Claw structs.
+// This enables serialization to various formats (JSON, XML, etc.) without
+// format-specific code in each struct.
+package clawiter
+
+import (
+	"math"
+	"unsafe"
+
+	"github.com/bearlytools/claw/clawc/languages/go/field"
+)
+
+// TokenKind represents the type of token in the walk stream.
+type TokenKind uint8
+
+const (
+	TokenStructStart TokenKind = iota // Beginning of a struct
+	TokenStructEnd                    // End of a struct
+	TokenField                        // A field (scalar or announces complex type)
+	TokenListStart                    // Beginning of a list
+	TokenListEnd                      // End of a list
+)
+
+// Token represents a single event in the walk stream.
+type Token struct {
+	// Kind is the type of token.
+	Kind TokenKind
+	// Name is the struct name (for Start/End) or field name (for Field).
+	Name string
+	// Type is the field type (for TokenField and TokenListStart).
+	Type field.Type
+
+	// data stores scalar values inline (all fit in 64 bits).
+	data uint64
+	// Bytes stores string and byte slice data. Use String() for zero-copy string conversion.
+	Bytes []byte
+
+	// IsEnum indicates if this is an enum value.
+	IsEnum bool
+	// EnumGroup is the name of the enum group (e.g., "Type").
+	EnumGroup string
+	// EnumName is the string name of the enum value (e.g., "Car").
+	EnumName string
+
+	// StructName is the struct type name for FTStruct/FTListStructs.
+	StructName string
+	// IsNil indicates the struct or list is nil/empty. No Start/End tokens follow.
+	IsNil bool
+
+	// Len is the list length (for TokenListStart).
+	Len int
+}
+
+// Bool returns the boolean value. Only valid when Type == FTBool.
+func (t Token) Bool() bool { return t.data != 0 }
+
+// Int8 returns the int8 value. Only valid when Type == FTInt8.
+func (t Token) Int8() int8 { return int8(t.data) }
+
+// Int16 returns the int16 value. Only valid when Type == FTInt16.
+func (t Token) Int16() int16 { return int16(t.data) }
+
+// Int32 returns the int32 value. Only valid when Type == FTInt32.
+func (t Token) Int32() int32 { return int32(t.data) }
+
+// Int64 returns the int64 value. Only valid when Type == FTInt64.
+func (t Token) Int64() int64 { return int64(t.data) }
+
+// Uint8 returns the uint8 value. Only valid when Type == FTUint8.
+func (t Token) Uint8() uint8 { return uint8(t.data) }
+
+// Uint16 returns the uint16 value. Only valid when Type == FTUint16.
+func (t Token) Uint16() uint16 { return uint16(t.data) }
+
+// Uint32 returns the uint32 value. Only valid when Type == FTUint32.
+func (t Token) Uint32() uint32 { return uint32(t.data) }
+
+// Uint64 returns the uint64 value. Only valid when Type == FTUint64.
+func (t Token) Uint64() uint64 { return t.data }
+
+// Float32 returns the float32 value. Only valid when Type == FTFloat32.
+func (t Token) Float32() float32 { return math.Float32frombits(uint32(t.data)) }
+
+// Float64 returns the float64 value. Only valid when Type == FTFloat64.
+func (t Token) Float64() float64 { return math.Float64frombits(t.data) }
+
+// String returns the string value using unsafe.String for zero-copy conversion.
+// Only valid when Type == FTString.
+func (t Token) String() string {
+	if len(t.Bytes) == 0 {
+		return ""
+	}
+	return unsafe.String(&t.Bytes[0], len(t.Bytes))
+}
+
+// SetBool sets the boolean value in the token.
+func (t *Token) SetBool(v bool) {
+	if v {
+		t.data = 1
+	} else {
+		t.data = 0
+	}
+}
+
+// SetInt8 sets the int8 value in the token.
+func (t *Token) SetInt8(v int8) { t.data = uint64(v) }
+
+// SetInt16 sets the int16 value in the token.
+func (t *Token) SetInt16(v int16) { t.data = uint64(v) }
+
+// SetInt32 sets the int32 value in the token.
+func (t *Token) SetInt32(v int32) { t.data = uint64(v) }
+
+// SetInt64 sets the int64 value in the token.
+func (t *Token) SetInt64(v int64) { t.data = uint64(v) }
+
+// SetUint8 sets the uint8 value in the token.
+func (t *Token) SetUint8(v uint8) { t.data = uint64(v) }
+
+// SetUint16 sets the uint16 value in the token.
+func (t *Token) SetUint16(v uint16) { t.data = uint64(v) }
+
+// SetUint32 sets the uint32 value in the token.
+func (t *Token) SetUint32(v uint32) { t.data = uint64(v) }
+
+// SetUint64 sets the uint64 value in the token.
+func (t *Token) SetUint64(v uint64) { t.data = v }
+
+// SetFloat32 sets the float32 value in the token.
+func (t *Token) SetFloat32(v float32) { t.data = uint64(math.Float32bits(v)) }
+
+// SetFloat64 sets the float64 value in the token.
+func (t *Token) SetFloat64(v float64) { t.data = math.Float64bits(v) }
