@@ -3,7 +3,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
 	"sync/atomic"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
@@ -27,8 +26,6 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	if uint64(total) != s.header.Final40() {
 		return 0, fmt.Errorf("Struct had internal size(%d), but header size as %d", total, s.header.Final40())
 	}
-	defer log.Println("Marshal headers says the size is: ", s.header.Final40())
-	defer log.Println("Marshal also says the total is: ", total)
 	written, err := w.Write(s.header)
 	if err != nil {
 		return written, err
@@ -38,7 +35,6 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	encoders := s.mapping.Encoders
 	for i, v := range s.fields {
 		if v.Header == nil {
-			log.Printf("field %d was skipped for encode", i)
 			continue
 		}
 
@@ -47,7 +43,6 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 		}
 
 		desc := s.mapping.Fields[i]
-		log.Printf("field %d was: %s", i, desc.Type)
 
 		// O(1) function pointer dispatch instead of O(N) type switch
 		if encoders != nil && encoders[i] != nil {
@@ -65,7 +60,15 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 		}
 	}
-	log.Println("wrote: ", written)
+	// Write unknown fields for forward compatibility
+	for _, data := range s.unknownFieldsData {
+		n, err := w.Write(data)
+		written += n
+		if err != nil {
+			return written, err
+		}
+	}
+
 	if written != int(total) {
 		return written, fmt.Errorf("bug: we wrote %d data out, which is not the same as the total bytes it should take (%d)", written, total)
 	}

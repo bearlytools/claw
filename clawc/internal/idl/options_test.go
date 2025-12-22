@@ -139,3 +139,15 @@ func TestValNoZeroTypeCompression(t *testing.T) {
 		t.Fatalf("TestValNoZeroTypeCompression: []string{\"hello\"} argument gave did not give error")
 	}
 }
+
+func TestValNoPatch(t *testing.T) {
+	if err := valNoPatch(nil); err != nil {
+		t.Errorf("TestValNoPatch: nil argument gave unexpected error: %s", err)
+	}
+	if err := valNoPatch([]string{}); err != nil {
+		t.Errorf("TestValNoPatch: []string{} argument gave unexpected error: %s", err)
+	}
+	if err := valNoPatch([]string{"hello"}); err == nil {
+		t.Errorf("TestValNoPatch: []string{\"hello\"} argument did not give error")
+	}
+}

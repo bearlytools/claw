@@ -102,6 +102,11 @@ type Struct struct {
 	// decoding is true during the Unmarshal process. This prevents the lazy decode
 	// size adjustment logic from being applied during initial decoding.
 	decoding bool
+
+	// unknownFieldsData stores raw bytes for unknown fields (forward compatibility).
+	// Key is field number, value is the raw field data including header.
+	// This is populated by XXXSetUnknownField and written out during Marshal.
+	unknownFieldsData map[uint16][]byte
 }
 
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
@@ -141,6 +146,69 @@ func NewFromReader(r io.Reader, maps *mapping.Map) (*Struct, error) {
 // can have bad effects and there is no compatibility promise around it.
 func (s *Struct) XXXSetNoZeroTypeCompression() {
 	s.zeroTypeCompression = false
+}
+
+// UnknownField represents a field that exists in the wire format but is not in the mapping.
+type UnknownField struct {
+	FieldNum uint16
+	Data     []byte // Raw bytes including the 8-byte header
+}
+
+// XXXUnknownFields returns all fields that exist in the raw data but are not defined
+// in the mapping. This is used for forward compatibility - preserving fields that
+// were added in newer schema versions.
+func (s *Struct) XXXUnknownFields() []UnknownField {
+	var unknown []UnknownField
+
+	// First, check rawData for unknown fields from unmarshal
+	if s.offsets != nil && s.rawData != nil {
+		for _, offset := range s.offsets {
+			// Check if this field number is beyond the known fields
+			if int(offset.fieldNum) >= len(s.mapping.Fields) || s.mapping.Fields[offset.fieldNum] == nil {
+				// This is an unknown field - extract its raw bytes
+				data := s.rawData[8+offset.offset : 8+offset.offset+offset.size]
+				unknown = append(unknown, UnknownField{
+					FieldNum: offset.fieldNum,
+					Data:     data,
+				})
+			}
+		}
+	}
+
+	// Also include any explicitly set unknown fields
+	for fieldNum, data := range s.unknownFieldsData {
+		unknown = append(unknown, UnknownField{
+			FieldNum: fieldNum,
+			Data:     data,
+		})
+	}
+
+	return unknown
+}
+
+// XXXSetUnknownField sets raw data for an unknown field (forward compatibility).
+// The data should be the complete field encoding including the 8-byte header.
+// This is used when applying patches that contain unknown field operations.
+func (s *Struct) XXXSetUnknownField(fieldNum uint16, data []byte) {
+	if s.unknownFieldsData == nil {
+		s.unknownFieldsData = make(map[uint16][]byte)
+	}
+	s.unknownFieldsData[fieldNum] = data
+	s.markModified()
+	// Update structTotal with the field size
+	XXXAddToTotal(s, int64(len(data)))
+}
+
+// XXXDeleteUnknownField removes an unknown field (forward compatibility).
+func (s *Struct) XXXDeleteUnknownField(fieldNum uint16) {
+	if s.unknownFieldsData == nil {
+		return
+	}
+	if data, exists := s.unknownFieldsData[fieldNum]; exists {
+		delete(s.unknownFieldsData, fieldNum)
+		s.markModified()
+		XXXAddToTotal(s, -int64(len(data)))
+	}
 }
 
 // NewFrom creates a new Struct that represents the same Struct type.

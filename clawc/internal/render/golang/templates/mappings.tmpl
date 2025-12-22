@@ -25,7 +25,7 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             {{- if $field.IsEnum }}
             EnumGroup: "{{ $field.IdentName }}",
             {{- end }}
-            {{- if or (eq $field.TypeAsString "Struct") (eq $field.TypeAsString "ListStruct") }}
+            {{- if or (eq $field.TypeAsString "Struct") (eq $field.TypeAsString "ListStructs") }}
             {{ if $field.IsExternal }}
             Mapping: {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }},
             {{- else }}

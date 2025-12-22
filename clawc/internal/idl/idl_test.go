@@ -83,6 +83,83 @@ Struct Car {
 	}
 }
 
+func TestStructOptions(t *testing.T) {
+	tests := []struct {
+		name       string
+		content    string
+		wantErr    bool
+		wantOption string
+	}{
+		{
+			name: "Success: struct without options",
+			content: `
+package test
+Struct Car {
+	Name string @0
+}
+`,
+			wantErr: false,
+		},
+		{
+			name: "Success: struct with NoPatch option",
+			content: `
+package test
+Struct Patch [NoPatch()] {
+	Ops bytes @0
+}
+`,
+			wantErr:    false,
+			wantOption: "NoPatch",
+		},
+		{
+			name: "Error: invalid struct option",
+			content: `
+package test
+Struct Car [InvalidOption()] {
+	Name string @0
+}
+`,
+			wantErr: true,
+		},
+		{
+			name: "Error: NoPatch with arguments",
+			content: `
+package test
+Struct Car [NoPatch("arg")] {
+	Name string @0
+}
+`,
+			wantErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		f := New()
+		err := halfpike.Parse(context.Background(), test.content, f)
+		switch {
+		case err == nil && test.wantErr:
+			t.Errorf("TestStructOptions(%s): got err == nil, want err != nil", test.name)
+			continue
+		case err != nil && !test.wantErr:
+			t.Errorf("TestStructOptions(%s): got err == %s, want err == nil", test.name, err)
+			continue
+		case err != nil:
+			continue
+		}
+
+		if test.wantOption != "" {
+			structs := f.Structs()
+			if len(structs) == 0 {
+				t.Errorf("TestStructOptions(%s): expected at least one struct", test.name)
+				continue
+			}
+			if !structs[0].HasOption(test.wantOption) {
+				t.Errorf("TestStructOptions(%s): struct does not have expected option %q", test.name, test.wantOption)
+			}
+		}
+	}
+}
+
 // lineLexer is provided to simply lex out a single line for testing.
 type lineLexer struct {
 	line halfpike.Line
