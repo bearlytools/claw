@@ -22,6 +22,17 @@ func valNoZeroValueCompression(args []string) error {
 	return nil
 }
 
+var structOptions = map[string]validateOptArgs{
+	"NoPatch": valNoPatch,
+}
+
+func valNoPatch(args []string) error {
+	if len(args) != 0 {
+		return fmt.Errorf("NoPatch takes no arguments")
+	}
+	return nil
+}
+
 var optionsDL = lexline.DecodeList{
 	LeftConstraint:  `[`,
 	RightConstraint: `]`,
@@ -31,6 +42,19 @@ var optionsDL = lexline.DecodeList{
 
 // Options holds a set of options defined.
 type Options []Option
+
+// parseFromRaw parses options from a raw string that starts with "[" and ends with "]".
+// This is useful for parsing struct options from a line like "Struct Name [options] {".
+func (o *Options) parseFromRaw(raw string) error {
+	lex := lexline.New(raw)
+	lexline.SkipAllSpaces(lex)
+	i := lex.Next()
+	if !strings.HasPrefix(i.Val, "[") {
+		return fmt.Errorf("options must start with '[', got: %s", i.Val)
+	}
+	lex.Backup()
+	return o.parseOptions(lex)
+}
 
 func (o *Options) parse(line halfpike.Line, optionsKeyword bool) error {
 	if optionsKeyword {

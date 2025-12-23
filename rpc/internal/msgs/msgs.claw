@@ -23,7 +23,7 @@ Enum MsgType uint8 {
 }
 
 // Msg represents any message that we decode on the wire.
-Struct Msg {
+Struct Msg [NoPatch()] {
 	// Type is the type of message.
 	Type MsgType @0
 
@@ -72,7 +72,7 @@ Enum Compression uint8 {
 }
 
 // Descr gives the description of the RPC so that it can match up with the other side.
-Struct Descr {
+Struct Descr [NoPatch()] {
     // Package is the package the RPC is defined in.
     Package string @0
     // Service is the name of the service the RPC is defined in.
@@ -84,7 +84,7 @@ Struct Descr {
 }
 
 // Metadata represents a key-value pair for request/response metadata.
-Struct Metadata {
+Struct Metadata [NoPatch()] {
 	// Key is the metadata key.
 	Key string @0
 	// Value is the metadata value.
@@ -92,7 +92,7 @@ Struct Metadata {
 }
 
 // Open is the open message for an RPC.
-Struct Open {
+Struct Open [NoPatch()] {
 	// OpenID is the ID of the Open message so the response can refer to it.
 	OpenID uint32 @0
 	// Descr is the RPC descriptor.
@@ -114,7 +114,7 @@ Struct Open {
 }
 
 // OpenAck is the response to an Open message.
-Struct OpenAck {
+Struct OpenAck [NoPatch()] {
 	// OpenID is the ID of the Open message being acknowledged.
 	OpenID uint32 @0
 	// SessionID is the ID of the session.
@@ -171,7 +171,7 @@ Enum ErrCode uint8 {
 
 // Close is a message that closes the session. If ErrCode is set then the session close is due to some type
 // of error.
-Struct Close {
+Struct Close [NoPatch()] {
 	// SessionID is the ID of the session that is closing.
 	SessionID uint32 @0
 	// ErrCode is a code describing the error type. 0 indicates no error.
@@ -183,7 +183,7 @@ Struct Close {
 }
 
 // Cancel is a message sent to cancel an RPC. Works for all RPC types.
-Struct Cancel {
+Struct Cancel [NoPatch()] {
 	// SessionID is the ID of the session being cancelled.
 	SessionID uint32 @0
 	// ReqID is the ID of the request that is being cancelled. For non-Synchronous RPCs, this is 0.
@@ -191,7 +191,7 @@ Struct Cancel {
 }
 
 // Payload is a payload message.
-Struct Payload {
+Struct Payload [NoPatch()] {
 	// SessionID is the ID of the session on this connection.
 	SessionID uint32 @0
 	// ReqID is the ID of the request. If this is not Synchronous, this is 0.
@@ -207,19 +207,19 @@ Struct Payload {
 }
 
 // Ping is a keepalive ping message.
-Struct Ping {
+Struct Ping [NoPatch()] {
 	// ID is the ping identifier, echoed back in the Pong.
 	ID uint32 @0
 }
 
 // Pong is a keepalive pong response.
-Struct Pong {
+Struct Pong [NoPatch()] {
 	// ID is the ping identifier being responded to.
 	ID uint32 @0
 }
 
 // GoAway is sent to indicate the sender is going away and will stop accepting new streams.
-Struct GoAway {
+Struct GoAway [NoPatch()] {
 	// LastSessionID is the last session ID that will be processed.
 	LastSessionID uint32 @0
 	// ErrCode is a code describing the reason for going away.

@@ -735,11 +735,23 @@ type Struct struct {
 	Comment string
 	// Name is the name of the Struct type.
 	Name string
+	// Options holds struct-level options like NoPatch().
+	Options Options
 	// Fields are the fields in the Struct.
 	Fields []StructField
 
 	// File has all the information in the File.
 	File *File
+}
+
+// HasOption returns true if the struct has the named option.
+func (s Struct) HasOption(name string) bool {
+	for _, opt := range s.Options {
+		if opt.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // NewStruct creates a new Struct type.
@@ -874,13 +886,47 @@ func (s *Struct) name(p *halfpike.Parser) error {
 		return fmt.Errorf("[Line %d]: error: Struct identifier: %w", l.LineNum, err)
 	}
 
-	if l.Items[2].Val != "{" {
-		return fmt.Errorf("[Line %d]: error: need `{` after Struct identifier: %s", l.LineNum, l.Raw)
-	}
-
 	s.Name = l.Items[1].Val
 
-	if err := commentOrEOL(l, 3); err != nil {
+	// Find the index of { in the line items, handling optional [options]
+	// Note: halfpike may tokenize "[NoPatch()]" as a single item or "{" separately
+	braceIdx := 2
+	item2 := l.Items[2].Val
+	switch {
+	case item2 == "{":
+		// No options, brace is at index 2
+	case strings.HasPrefix(item2, "["):
+		// Has options (tokenized as single item like "[NoPatch()]")
+		if err := s.Options.parseFromRaw(item2); err != nil {
+			return fmt.Errorf("[Line %d]: error parsing struct options: %w", l.LineNum, err)
+		}
+		// Validate struct options
+		for _, opt := range s.Options {
+			v, ok := structOptions[opt.Name]
+			if !ok {
+				return fmt.Errorf("[Line %d]: struct option %q is not valid", l.LineNum, opt.Name)
+			}
+			if err := v(opt.Args); err != nil {
+				return fmt.Errorf("[Line %d]: struct option %q: %w", l.LineNum, opt.Name, err)
+			}
+		}
+		// Find the { after the options
+		foundBrace := false
+		for i := 3; i < len(l.Items); i++ {
+			if l.Items[i].Val == "{" {
+				braceIdx = i
+				foundBrace = true
+				break
+			}
+		}
+		if !foundBrace {
+			return fmt.Errorf("[Line %d]: error: need `{` after Struct options: %s", l.LineNum, l.Raw)
+		}
+	default:
+		return fmt.Errorf("[Line %d]: error: need `{` or `[options]` after Struct identifier: %s", l.LineNum, l.Raw)
+	}
+
+	if err := commentOrEOL(l, braceIdx+1); err != nil {
 		return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
 	}
 	return nil
