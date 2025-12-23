@@ -242,44 +242,538 @@ func applyListReplace(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16
 		return nil // Unknown field, skip
 	}
 
-	// For now, implement basic list replacement
-	// TODO: Full implementation for all list types
-	switch fd.Type {
-	case field.FTListBools:
-		// Decode bools from data (1 byte per bool)
-		bools := structs.NewBools(uint16(len(data)))
-		for i, b := range data {
-			bools.Set(i, b != 0)
-		}
-		structs.MustSetListBool(s, fieldNum, bools)
-	case field.FTListStructs:
-		// Clear existing and data is empty means empty list
-		if len(data) == 0 {
-			structs.DeleteListStructs(s, fieldNum)
-		}
-		// TODO: Decode full list of structs
-	default:
-		// For other list types, clear and leave empty for now
-		// Full implementation would decode the list data
-		return nil
+	// Empty data means clear the list
+	if len(data) == 0 {
+		return applyClear(s, fd, fieldNum)
 	}
 
+	switch fd.Type {
+	case field.FTListBools:
+		return applyListReplaceBools(s, fieldNum, data)
+	case field.FTListInt8:
+		return applyListReplaceNumbers[int8](s, fieldNum, data, 1)
+	case field.FTListUint8:
+		return applyListReplaceNumbers[uint8](s, fieldNum, data, 1)
+	case field.FTListInt16:
+		return applyListReplaceNumbers[int16](s, fieldNum, data, 2)
+	case field.FTListUint16:
+		return applyListReplaceNumbers[uint16](s, fieldNum, data, 2)
+	case field.FTListInt32:
+		return applyListReplaceNumbers[int32](s, fieldNum, data, 4)
+	case field.FTListUint32:
+		return applyListReplaceNumbers[uint32](s, fieldNum, data, 4)
+	case field.FTListFloat32:
+		return applyListReplaceNumbers[float32](s, fieldNum, data, 4)
+	case field.FTListInt64:
+		return applyListReplaceNumbers[int64](s, fieldNum, data, 8)
+	case field.FTListUint64:
+		return applyListReplaceNumbers[uint64](s, fieldNum, data, 8)
+	case field.FTListFloat64:
+		return applyListReplaceNumbers[float64](s, fieldNum, data, 8)
+	case field.FTListBytes, field.FTListStrings:
+		return applyListReplaceBytes(s, fieldNum, data)
+	case field.FTListStructs:
+		return applyListReplaceStructs(s, fd, fieldNum, data)
+	default:
+		return fmt.Errorf("LIST_REPLACE not supported for field type: %v", fd.Type)
+	}
+}
+
+func applyListReplaceBools(s *structs.Struct, fieldNum uint16, data []byte) error {
+	bools := structs.NewBools(fieldNum)
+	vals := make([]bool, len(data))
+	for i, b := range data {
+		vals[i] = b != 0
+	}
+	bools.Append(vals...)
+	structs.MustSetListBool(s, fieldNum, bools)
+	return nil
+}
+
+func applyListReplaceNumbers[N structs.Number](s *structs.Struct, fieldNum uint16, data []byte, sizeInBytes int) error {
+	if len(data)%sizeInBytes != 0 {
+		return fmt.Errorf("invalid number list data length: %d not divisible by %d", len(data), sizeInBytes)
+	}
+	count := len(data) / sizeInBytes
+	nums := structs.NewNumbers[N]()
+	values := make([]N, count)
+	for i := 0; i < count; i++ {
+		offset := i * sizeInBytes
+		switch sizeInBytes {
+		case 1:
+			values[i] = N(data[offset])
+		case 2:
+			values[i] = N(decodeUint16(data[offset:]))
+		case 4:
+			// Check if float by trying to detect if this is float32
+			var zero N
+			switch any(zero).(type) {
+			case float32:
+				values[i] = N(decodeFloat32(data[offset:]))
+			default:
+				values[i] = N(decodeUint32(data[offset:]))
+			}
+		case 8:
+			var zero N
+			switch any(zero).(type) {
+			case float64:
+				values[i] = N(decodeFloat64(data[offset:]))
+			default:
+				values[i] = N(decodeUint64(data[offset:]))
+			}
+		}
+	}
+	nums.Append(values...)
+	structs.MustSetListNumber(s, fieldNum, nums)
+	return nil
+}
+
+func applyListReplaceBytes(s *structs.Struct, fieldNum uint16, data []byte) error {
+	b := structs.NewBytes()
+	// Data format: [count:4][len1:4][data1...][len2:4][data2...]...
+	if len(data) < 4 {
+		return fmt.Errorf("bytes list data too short")
+	}
+	count := int(decodeUint32(data[:4]))
+	offset := 4
+	items := make([][]byte, 0, count)
+	for i := 0; i < count; i++ {
+		if offset+4 > len(data) {
+			return fmt.Errorf("bytes list truncated at item %d", i)
+		}
+		itemLen := int(decodeUint32(data[offset:]))
+		offset += 4
+		if offset+itemLen > len(data) {
+			return fmt.Errorf("bytes list item %d data truncated", i)
+		}
+		item := make([]byte, itemLen)
+		copy(item, data[offset:offset+itemLen])
+		items = append(items, item)
+		offset += itemLen
+	}
+	b.Append(items...)
+	structs.MustSetListBytes(s, fieldNum, b)
+	return nil
+}
+
+func applyListReplaceStructs(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
+	list := structs.NewStructs(fd.Mapping)
+	// Data format: [count:4][struct1...][struct2...]...
+	if len(data) < 4 {
+		return fmt.Errorf("struct list data too short")
+	}
+	count := int(decodeUint32(data[:4]))
+	reader := bytes.NewReader(data[4:])
+	items := make([]*structs.Struct, 0, count)
+	for i := 0; i < count; i++ {
+		item := structs.New(0, fd.Mapping)
+		if _, err := item.Unmarshal(reader); err != nil {
+			return fmt.Errorf("unmarshal struct at index %d: %w", i, err)
+		}
+		items = append(items, item)
+	}
+	if err := list.Append(items...); err != nil {
+		return fmt.Errorf("append structs: %w", err)
+	}
+	structs.MustSetListStruct(s, fieldNum, list)
 	return nil
 }
 
 func applyListSet(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
-	// TODO: Implement list set at index
+	if fd == nil {
+		return nil // Unknown field, skip
+	}
+	if index < 0 {
+		return fmt.Errorf("LIST_SET invalid index: %d", index)
+	}
+
+	switch fd.Type {
+	case field.FTListBools:
+		list := structs.MustGetListBool(s, fieldNum)
+		if list == nil || int(index) >= list.Len() {
+			return fmt.Errorf("LIST_SET index %d out of bounds", index)
+		}
+		if len(data) < 1 {
+			return fmt.Errorf("LIST_SET bool data too short")
+		}
+		list.Set(int(index), data[0] != 0)
+	case field.FTListInt8:
+		return applyListSetNumber[int8](s, fieldNum, index, data, 1)
+	case field.FTListUint8:
+		return applyListSetNumber[uint8](s, fieldNum, index, data, 1)
+	case field.FTListInt16:
+		return applyListSetNumber[int16](s, fieldNum, index, data, 2)
+	case field.FTListUint16:
+		return applyListSetNumber[uint16](s, fieldNum, index, data, 2)
+	case field.FTListInt32:
+		return applyListSetNumber[int32](s, fieldNum, index, data, 4)
+	case field.FTListUint32:
+		return applyListSetNumber[uint32](s, fieldNum, index, data, 4)
+	case field.FTListFloat32:
+		return applyListSetNumber[float32](s, fieldNum, index, data, 4)
+	case field.FTListInt64:
+		return applyListSetNumber[int64](s, fieldNum, index, data, 8)
+	case field.FTListUint64:
+		return applyListSetNumber[uint64](s, fieldNum, index, data, 8)
+	case field.FTListFloat64:
+		return applyListSetNumber[float64](s, fieldNum, index, data, 8)
+	case field.FTListBytes, field.FTListStrings:
+		list := structs.MustGetListBytes(s, fieldNum)
+		if list == nil || int(index) >= list.Len() {
+			return fmt.Errorf("LIST_SET index %d out of bounds", index)
+		}
+		list.Set(int(index), data)
+	case field.FTListStructs:
+		list := structs.MustGetListStruct(s, fieldNum)
+		if list == nil || int(index) >= list.Len() {
+			return fmt.Errorf("LIST_SET index %d out of bounds", index)
+		}
+		item := structs.New(0, fd.Mapping)
+		if _, err := item.Unmarshal(bytes.NewReader(data)); err != nil {
+			return fmt.Errorf("unmarshal struct for LIST_SET: %w", err)
+		}
+		if err := list.Set(int(index), item); err != nil {
+			return fmt.Errorf("LIST_SET struct: %w", err)
+		}
+	default:
+		return fmt.Errorf("LIST_SET not supported for field type: %v", fd.Type)
+	}
+	return nil
+}
+
+func applyListSetNumber[N structs.Number](s *structs.Struct, fieldNum uint16, index int32, data []byte, sizeInBytes int) error {
+	list := structs.MustGetListNumber[N](s, fieldNum)
+	if list == nil || int(index) >= list.Len() {
+		return fmt.Errorf("LIST_SET index %d out of bounds", index)
+	}
+	if len(data) < sizeInBytes {
+		return fmt.Errorf("LIST_SET number data too short")
+	}
+	var value N
+	switch sizeInBytes {
+	case 1:
+		value = N(data[0])
+	case 2:
+		value = N(decodeUint16(data))
+	case 4:
+		var zero N
+		switch any(zero).(type) {
+		case float32:
+			value = N(decodeFloat32(data))
+		default:
+			value = N(decodeUint32(data))
+		}
+	case 8:
+		var zero N
+		switch any(zero).(type) {
+		case float64:
+			value = N(decodeFloat64(data))
+		default:
+			value = N(decodeUint64(data))
+		}
+	}
+	list.Set(int(index), value)
 	return nil
 }
 
 func applyListInsert(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
-	// TODO: Implement list insert at index
+	if fd == nil {
+		return nil // Unknown field, skip
+	}
+	if index < 0 {
+		return fmt.Errorf("LIST_INSERT invalid index: %d", index)
+	}
+
+	// For insert, we need to get the current list, convert to slice, insert, and create a new list
+	switch fd.Type {
+	case field.FTListBools:
+		return applyListInsertBool(s, fieldNum, index, data)
+	case field.FTListInt8:
+		return applyListInsertNumber[int8](s, fieldNum, index, data, 1)
+	case field.FTListUint8:
+		return applyListInsertNumber[uint8](s, fieldNum, index, data, 1)
+	case field.FTListInt16:
+		return applyListInsertNumber[int16](s, fieldNum, index, data, 2)
+	case field.FTListUint16:
+		return applyListInsertNumber[uint16](s, fieldNum, index, data, 2)
+	case field.FTListInt32:
+		return applyListInsertNumber[int32](s, fieldNum, index, data, 4)
+	case field.FTListUint32:
+		return applyListInsertNumber[uint32](s, fieldNum, index, data, 4)
+	case field.FTListFloat32:
+		return applyListInsertNumber[float32](s, fieldNum, index, data, 4)
+	case field.FTListInt64:
+		return applyListInsertNumber[int64](s, fieldNum, index, data, 8)
+	case field.FTListUint64:
+		return applyListInsertNumber[uint64](s, fieldNum, index, data, 8)
+	case field.FTListFloat64:
+		return applyListInsertNumber[float64](s, fieldNum, index, data, 8)
+	case field.FTListBytes, field.FTListStrings:
+		return applyListInsertBytes(s, fieldNum, index, data)
+	case field.FTListStructs:
+		return applyListInsertStruct(s, fd, fieldNum, index, data)
+	default:
+		return fmt.Errorf("LIST_INSERT not supported for field type: %v", fd.Type)
+	}
+}
+
+func applyListInsertBool(s *structs.Struct, fieldNum uint16, index int32, data []byte) error {
+	list := structs.MustGetListBool(s, fieldNum)
+	var existing []bool
+	if list != nil {
+		existing = list.Slice()
+	}
+	if int(index) > len(existing) {
+		return fmt.Errorf("LIST_INSERT index %d out of bounds (len=%d)", index, len(existing))
+	}
+	if len(data) < 1 {
+		return fmt.Errorf("LIST_INSERT bool data too short")
+	}
+	newVal := data[0] != 0
+	// Insert at index
+	newSlice := make([]bool, 0, len(existing)+1)
+	newSlice = append(newSlice, existing[:index]...)
+	newSlice = append(newSlice, newVal)
+	newSlice = append(newSlice, existing[index:]...)
+
+	newList := structs.NewBools(fieldNum)
+	newList.Append(newSlice...)
+	structs.MustSetListBool(s, fieldNum, newList)
+	return nil
+}
+
+func applyListInsertNumber[N structs.Number](s *structs.Struct, fieldNum uint16, index int32, data []byte, sizeInBytes int) error {
+	list := structs.MustGetListNumber[N](s, fieldNum)
+	var existing []N
+	if list != nil {
+		existing = list.Slice()
+	}
+	if int(index) > len(existing) {
+		return fmt.Errorf("LIST_INSERT index %d out of bounds (len=%d)", index, len(existing))
+	}
+	if len(data) < sizeInBytes {
+		return fmt.Errorf("LIST_INSERT number data too short")
+	}
+	var newVal N
+	switch sizeInBytes {
+	case 1:
+		newVal = N(data[0])
+	case 2:
+		newVal = N(decodeUint16(data))
+	case 4:
+		var zero N
+		switch any(zero).(type) {
+		case float32:
+			newVal = N(decodeFloat32(data))
+		default:
+			newVal = N(decodeUint32(data))
+		}
+	case 8:
+		var zero N
+		switch any(zero).(type) {
+		case float64:
+			newVal = N(decodeFloat64(data))
+		default:
+			newVal = N(decodeUint64(data))
+		}
+	}
+	// Insert at index
+	newSlice := make([]N, 0, len(existing)+1)
+	newSlice = append(newSlice, existing[:index]...)
+	newSlice = append(newSlice, newVal)
+	newSlice = append(newSlice, existing[index:]...)
+
+	newList := structs.NewNumbers[N]()
+	newList.Append(newSlice...)
+	structs.MustSetListNumber(s, fieldNum, newList)
+	return nil
+}
+
+func applyListInsertBytes(s *structs.Struct, fieldNum uint16, index int32, data []byte) error {
+	list := structs.MustGetListBytes(s, fieldNum)
+	var existing [][]byte
+	if list != nil {
+		existing = list.Slice()
+	}
+	if int(index) > len(existing) {
+		return fmt.Errorf("LIST_INSERT index %d out of bounds (len=%d)", index, len(existing))
+	}
+	// Insert at index
+	newSlice := make([][]byte, 0, len(existing)+1)
+	newSlice = append(newSlice, existing[:index]...)
+	newSlice = append(newSlice, data)
+	newSlice = append(newSlice, existing[index:]...)
+
+	newList := structs.NewBytes()
+	newList.Append(newSlice...)
+	structs.MustSetListBytes(s, fieldNum, newList)
+	return nil
+}
+
+func applyListInsertStruct(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
+	list := structs.MustGetListStruct(s, fieldNum)
+	var existing []*structs.Struct
+	if list != nil {
+		existing = list.Slice()
+	}
+	if int(index) > len(existing) {
+		return fmt.Errorf("LIST_INSERT index %d out of bounds (len=%d)", index, len(existing))
+	}
+	item := structs.New(0, fd.Mapping)
+	if _, err := item.Unmarshal(bytes.NewReader(data)); err != nil {
+		return fmt.Errorf("unmarshal struct for LIST_INSERT: %w", err)
+	}
+	// Insert at index - need to create new slice since existing items have parents
+	newList := structs.NewStructs(fd.Mapping)
+	// Append items before index
+	for i := 0; i < int(index); i++ {
+		clone := cloneStruct(existing[i], fd.Mapping)
+		if err := newList.Append(clone); err != nil {
+			return fmt.Errorf("append clone: %w", err)
+		}
+	}
+	// Append new item
+	if err := newList.Append(item); err != nil {
+		return fmt.Errorf("append new item: %w", err)
+	}
+	// Append items after index
+	for i := int(index); i < len(existing); i++ {
+		clone := cloneStruct(existing[i], fd.Mapping)
+		if err := newList.Append(clone); err != nil {
+			return fmt.Errorf("append clone: %w", err)
+		}
+	}
+	structs.MustSetListStruct(s, fieldNum, newList)
 	return nil
 }
 
 func applyListRemove(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32) error {
-	// TODO: Implement list remove at index
+	if fd == nil {
+		return nil // Unknown field, skip
+	}
+	if index < 0 {
+		return fmt.Errorf("LIST_REMOVE invalid index: %d", index)
+	}
+
+	switch fd.Type {
+	case field.FTListBools:
+		return applyListRemoveBool(s, fieldNum, index)
+	case field.FTListInt8:
+		return applyListRemoveNumber[int8](s, fieldNum, index)
+	case field.FTListUint8:
+		return applyListRemoveNumber[uint8](s, fieldNum, index)
+	case field.FTListInt16:
+		return applyListRemoveNumber[int16](s, fieldNum, index)
+	case field.FTListUint16:
+		return applyListRemoveNumber[uint16](s, fieldNum, index)
+	case field.FTListInt32:
+		return applyListRemoveNumber[int32](s, fieldNum, index)
+	case field.FTListUint32:
+		return applyListRemoveNumber[uint32](s, fieldNum, index)
+	case field.FTListFloat32:
+		return applyListRemoveNumber[float32](s, fieldNum, index)
+	case field.FTListInt64:
+		return applyListRemoveNumber[int64](s, fieldNum, index)
+	case field.FTListUint64:
+		return applyListRemoveNumber[uint64](s, fieldNum, index)
+	case field.FTListFloat64:
+		return applyListRemoveNumber[float64](s, fieldNum, index)
+	case field.FTListBytes, field.FTListStrings:
+		return applyListRemoveBytes(s, fieldNum, index)
+	case field.FTListStructs:
+		return applyListRemoveStruct(s, fd, fieldNum, index)
+	default:
+		return fmt.Errorf("LIST_REMOVE not supported for field type: %v", fd.Type)
+	}
+}
+
+func applyListRemoveBool(s *structs.Struct, fieldNum uint16, index int32) error {
+	list := structs.MustGetListBool(s, fieldNum)
+	if list == nil || int(index) >= list.Len() {
+		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
+	}
+	existing := list.Slice()
+	newSlice := append(existing[:index], existing[index+1:]...)
+	if len(newSlice) == 0 {
+		structs.DeleteListBools(s, fieldNum)
+		return nil
+	}
+	newList := structs.NewBools(fieldNum)
+	newList.Append(newSlice...)
+	structs.MustSetListBool(s, fieldNum, newList)
 	return nil
+}
+
+func applyListRemoveNumber[N structs.Number](s *structs.Struct, fieldNum uint16, index int32) error {
+	list := structs.MustGetListNumber[N](s, fieldNum)
+	if list == nil || int(index) >= list.Len() {
+		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
+	}
+	existing := list.Slice()
+	newSlice := append(existing[:index], existing[index+1:]...)
+	if len(newSlice) == 0 {
+		structs.DeleteListNumber[N](s, fieldNum)
+		return nil
+	}
+	newList := structs.NewNumbers[N]()
+	newList.Append(newSlice...)
+	structs.MustSetListNumber(s, fieldNum, newList)
+	return nil
+}
+
+func applyListRemoveBytes(s *structs.Struct, fieldNum uint16, index int32) error {
+	list := structs.MustGetListBytes(s, fieldNum)
+	if list == nil || int(index) >= list.Len() {
+		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
+	}
+	existing := list.Slice()
+	newSlice := append(existing[:index], existing[index+1:]...)
+	if len(newSlice) == 0 {
+		structs.DeleteListBytes(s, fieldNum)
+		return nil
+	}
+	newList := structs.NewBytes()
+	newList.Append(newSlice...)
+	structs.MustSetListBytes(s, fieldNum, newList)
+	return nil
+}
+
+func applyListRemoveStruct(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32) error {
+	list := structs.MustGetListStruct(s, fieldNum)
+	if list == nil || int(index) >= list.Len() {
+		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
+	}
+	existing := list.Slice()
+	if len(existing) == 1 {
+		structs.DeleteListStructs(s, fieldNum)
+		return nil
+	}
+	// Create new list without the item at index
+	newList := structs.NewStructs(fd.Mapping)
+	for i, item := range existing {
+		if i == int(index) {
+			continue
+		}
+		clone := cloneStruct(item, fd.Mapping)
+		if err := newList.Append(clone); err != nil {
+			return fmt.Errorf("append clone: %w", err)
+		}
+	}
+	structs.MustSetListStruct(s, fieldNum, newList)
+	return nil
+}
+
+// cloneStruct creates a deep copy of a struct by marshaling and unmarshaling it.
+func cloneStruct(src *structs.Struct, m *mapping.Map) *structs.Struct {
+	buf := &bytes.Buffer{}
+	if _, err := src.Marshal(buf); err != nil {
+		panic(fmt.Sprintf("clone marshal failed: %v", err))
+	}
+	dst := structs.New(0, m)
+	if _, err := dst.Unmarshal(bytes.NewReader(buf.Bytes())); err != nil {
+		panic(fmt.Sprintf("clone unmarshal failed: %v", err))
+	}
+	return dst
 }
 
 func applyListStructPatch(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {

@@ -454,14 +454,190 @@ func createListReplaceBools(fieldNum uint16, toList *structs.Bools) (*msgs.Op, e
 }
 
 func diffListNumberReplace(from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDescr) (*msgs.Op, error) {
-	// This is a placeholder - full implementation would encode the list
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
 	op.SetIndex(-1)
-	// TODO: Encode the number list properly
-	op.SetData(nil)
+
+	// Encode based on the specific number type
+	switch fd.Type {
+	case field.FTListInt8:
+		data, changed := encodeListNumber[int8](from, to, fieldNum, 1)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListUint8:
+		data, changed := encodeListNumber[uint8](from, to, fieldNum, 1)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListInt16:
+		data, changed := encodeListNumber[int16](from, to, fieldNum, 2)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListUint16:
+		data, changed := encodeListNumber[uint16](from, to, fieldNum, 2)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListInt32:
+		data, changed := encodeListNumber[int32](from, to, fieldNum, 4)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListUint32:
+		data, changed := encodeListNumber[uint32](from, to, fieldNum, 4)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListFloat32:
+		data, changed := encodeListNumberFloat32(from, to, fieldNum)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListInt64:
+		data, changed := encodeListNumber[int64](from, to, fieldNum, 8)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListUint64:
+		data, changed := encodeListNumber[uint64](from, to, fieldNum, 8)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	case field.FTListFloat64:
+		data, changed := encodeListNumberFloat64(from, to, fieldNum)
+		if !changed {
+			return nil, nil
+		}
+		op.SetData(data)
+	default:
+		return nil, fmt.Errorf("unexpected number list type: %v", fd.Type)
+	}
+
 	return &op, nil
+}
+
+func encodeListNumber[N structs.Number](from, to *structs.Struct, fieldNum uint16, sizeInBytes int) ([]byte, bool) {
+	fromList := structs.MustGetListNumber[N](from, fieldNum)
+	toList := structs.MustGetListNumber[N](to, fieldNum)
+
+	var fromSlice, toSlice []N
+	if fromList != nil {
+		fromSlice = fromList.Slice()
+	}
+	if toList != nil {
+		toSlice = toList.Slice()
+	}
+
+	// Check if lists are equal
+	if len(fromSlice) == len(toSlice) {
+		equal := true
+		for i := range fromSlice {
+			if fromSlice[i] != toSlice[i] {
+				equal = false
+				break
+			}
+		}
+		if equal {
+			return nil, false
+		}
+	}
+
+	// Encode the target list
+	data := make([]byte, len(toSlice)*sizeInBytes)
+	for i, v := range toSlice {
+		offset := i * sizeInBytes
+		switch sizeInBytes {
+		case 1:
+			data[offset] = byte(v)
+		case 2:
+			copy(data[offset:], encodeUint16(uint16(v)))
+		case 4:
+			copy(data[offset:], encodeUint32(uint32(v)))
+		case 8:
+			copy(data[offset:], encodeUint64(uint64(v)))
+		}
+	}
+	return data, true
+}
+
+func encodeListNumberFloat32(from, to *structs.Struct, fieldNum uint16) ([]byte, bool) {
+	fromList := structs.MustGetListNumber[float32](from, fieldNum)
+	toList := structs.MustGetListNumber[float32](to, fieldNum)
+
+	var fromSlice, toSlice []float32
+	if fromList != nil {
+		fromSlice = fromList.Slice()
+	}
+	if toList != nil {
+		toSlice = toList.Slice()
+	}
+
+	// Check if lists are equal
+	if len(fromSlice) == len(toSlice) {
+		equal := true
+		for i := range fromSlice {
+			if fromSlice[i] != toSlice[i] {
+				equal = false
+				break
+			}
+		}
+		if equal {
+			return nil, false
+		}
+	}
+
+	// Encode the target list
+	data := make([]byte, len(toSlice)*4)
+	for i, v := range toSlice {
+		copy(data[i*4:], encodeFloat32(v))
+	}
+	return data, true
+}
+
+func encodeListNumberFloat64(from, to *structs.Struct, fieldNum uint16) ([]byte, bool) {
+	fromList := structs.MustGetListNumber[float64](from, fieldNum)
+	toList := structs.MustGetListNumber[float64](to, fieldNum)
+
+	var fromSlice, toSlice []float64
+	if fromList != nil {
+		fromSlice = fromList.Slice()
+	}
+	if toList != nil {
+		toSlice = toList.Slice()
+	}
+
+	// Check if lists are equal
+	if len(fromSlice) == len(toSlice) {
+		equal := true
+		for i := range fromSlice {
+			if fromSlice[i] != toSlice[i] {
+				equal = false
+				break
+			}
+		}
+		if equal {
+			return nil, false
+		}
+	}
+
+	// Encode the target list
+	data := make([]byte, len(toSlice)*8)
+	for i, v := range toSlice {
+		copy(data[i*8:], encodeFloat64(v))
+	}
+	return data, true
 }
 
 func createListReplaceBytes(fieldNum uint16, toList *structs.Bytes) (*msgs.Op, error) {
@@ -469,8 +645,36 @@ func createListReplaceBytes(fieldNum uint16, toList *structs.Bytes) (*msgs.Op, e
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
 	op.SetIndex(-1)
-	// TODO: Encode the bytes list properly
-	op.SetData(nil)
+
+	if toList == nil || toList.Len() == 0 {
+		op.SetData(nil)
+		return &op, nil
+	}
+
+	// Encode format: [count:4][len1:4][data1...][len2:4][data2...]...
+	// Calculate total size
+	totalSize := 4 // count
+	for i := 0; i < toList.Len(); i++ {
+		totalSize += 4 + len(toList.Get(i)) // length + data
+	}
+
+	data := make([]byte, totalSize)
+	offset := 0
+
+	// Write count
+	copy(data[offset:], encodeUint32(uint32(toList.Len())))
+	offset += 4
+
+	// Write each item
+	for i := 0; i < toList.Len(); i++ {
+		item := toList.Get(i)
+		copy(data[offset:], encodeUint32(uint32(len(item))))
+		offset += 4
+		copy(data[offset:], item)
+		offset += len(item)
+	}
+
+	op.SetData(data)
 	return &op, nil
 }
 
@@ -479,8 +683,27 @@ func createListReplaceStructs(fieldNum uint16, toList *structs.Structs) (*msgs.O
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
 	op.SetIndex(-1)
-	// TODO: Encode the struct list properly
-	op.SetData(nil)
+
+	if toList == nil || toList.Len() == 0 {
+		op.SetData(nil)
+		return &op, nil
+	}
+
+	// Encode format: [count:4][struct1...][struct2...]...
+	buf := &bytes.Buffer{}
+
+	// Write count
+	buf.Write(encodeUint32(uint32(toList.Len())))
+
+	// Write each struct
+	for i := 0; i < toList.Len(); i++ {
+		item := toList.Get(i)
+		if _, err := item.Marshal(buf); err != nil {
+			return nil, fmt.Errorf("marshal struct at index %d: %w", i, err)
+		}
+	}
+
+	op.SetData(buf.Bytes())
 	return &op, nil
 }
 
