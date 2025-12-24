@@ -21,4 +21,6 @@ Struct Vehicle {
 
 	Types []Type @3
 	Bools []bool @4
+	Name string @5
+	VIN bytes @6
 }

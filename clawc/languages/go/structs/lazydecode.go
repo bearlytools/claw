@@ -290,6 +290,9 @@ func lazyDecodeListBytes(structPtr unsafe.Pointer, fieldNum uint16, data []byte,
 func lazyDecodeListStructs(structPtr unsafe.Pointer, fieldNum uint16, data []byte, desc *mapping.FieldDescr) {
 	s := (*Struct)(structPtr)
 	m := desc.Mapping
+	if m == nil {
+		return
+	}
 	dataCopy := data
 	l, err := NewStructsFromBytes(&dataCopy, nil, m)
 	if err != nil {

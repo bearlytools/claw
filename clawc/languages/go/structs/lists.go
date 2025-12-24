@@ -952,14 +952,14 @@ func (s *Structs) Set(index int, value *Struct) error {
 
 	// Remove the size of the current entry.
 	old := s.data[index]
-	oldSize := atomic.LoadInt64(old.structTotal)
+	oldSize := old.structTotal.Load()
 	XXXAddToTotal(s.s, -oldSize)
 	atomic.AddInt64(s.size, -oldSize)
 
 	s.data[index] = value
 
 	// Add the new size.
-	newSize := atomic.LoadInt64(value.structTotal)
+	newSize := value.structTotal.Load()
 	XXXAddToTotal(s.s, newSize)
 	atomic.AddInt64(s.size, newSize)
 
@@ -992,7 +992,7 @@ func (s *Structs) Append(values ...*Struct) error {
 			return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", i)
 		}
 		v.zeroTypeCompression = s.zeroTypeCompression
-		total += atomic.LoadInt64(v.structTotal)
+		total += v.structTotal.Load()
 	}
 	s.data = append(s.data, values...)
 
@@ -1031,17 +1031,14 @@ func (s *Structs) Encode(w io.Writer) (int, error) {
 	if err != nil {
 		return wrote, err
 	}
-	log.Println("header was: ", wrote)
 	for index, item := range s.data {
 		item.header.SetFieldNum(uint16(index))
 		n, err := item.Marshal(w)
 		wrote += n
-		log.Println("wrote item: ", n)
 		if err != nil {
 			return wrote, err
 		}
 	}
-	log.Println("total was: ", wrote)
 	return wrote, err
 }
 

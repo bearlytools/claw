@@ -10,14 +10,33 @@ import (
 	"github.com/bearlytools/claw/languages/go/patch/msgs"
 )
 
+const (
+	// MaxPatchOps is the maximum number of operations allowed in a single patch.
+	// This prevents denial-of-service from malicious/corrupt patches.
+	MaxPatchOps = 10000
+
+	// MaxPatchNestingDepth is the maximum nesting depth for STRUCT_PATCH operations.
+	// This prevents stack overflow from deeply nested patches.
+	MaxPatchNestingDepth = 100
+)
+
 // Apply applies the patch to 'base', modifying it in place.
 // Returns error if patch cannot be applied.
 func Apply[T ClawStruct](base T, p msgs.Patch) error {
+	if p.Version() != PatchVersion {
+		return fmt.Errorf("unsupported patch version: %d (expected %d)", p.Version(), PatchVersion)
+	}
+
+	ops := p.Ops()
+	if len(ops) > MaxPatchOps {
+		return fmt.Errorf("patch has %d operations, exceeds maximum of %d", len(ops), MaxPatchOps)
+	}
+
 	s := base.XXXGetStruct()
 	m := s.Map()
 
-	for _, op := range p.Ops() {
-		if err := applyOp(s, m, op); err != nil {
+	for _, op := range ops {
+		if err := applyOpWithDepth(s, m, op, 0); err != nil {
 			return err
 		}
 	}
@@ -25,8 +44,8 @@ func Apply[T ClawStruct](base T, p msgs.Patch) error {
 	return nil
 }
 
-// applyOp applies a single operation to the struct.
-func applyOp(s *structs.Struct, m *mapping.Map, op msgs.Op) error {
+// applyOpWithDepth applies a single operation to the struct, tracking nesting depth.
+func applyOpWithDepth(s *structs.Struct, m *mapping.Map, op msgs.Op, depth int) error {
 	fieldNum := op.FieldNum()
 	opType := op.Type()
 	data := op.Data()
@@ -43,7 +62,7 @@ func applyOp(s *structs.Struct, m *mapping.Map, op msgs.Op) error {
 	case msgs.Clear:
 		return applyClear(s, fd, fieldNum)
 	case msgs.StructPatch:
-		return applyStructPatch(s, fd, fieldNum, data)
+		return applyStructPatch(s, fd, fieldNum, data, depth)
 	case msgs.ListReplace:
 		return applyListReplace(s, fd, fieldNum, data)
 	case msgs.ListSet:
@@ -53,7 +72,7 @@ func applyOp(s *structs.Struct, m *mapping.Map, op msgs.Op) error {
 	case msgs.ListRemove:
 		return applyListRemove(s, fd, fieldNum, op.Index())
 	case msgs.ListStructPatch:
-		return applyListStructPatch(s, fd, fieldNum, op.Index(), data)
+		return applyListStructPatch(s, fd, fieldNum, op.Index(), data, depth)
 	default:
 		// Unknown operation type - skip for forward compatibility
 		return nil
@@ -208,7 +227,11 @@ func applyClear(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16) erro
 	return nil
 }
 
-func applyStructPatch(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
+func applyStructPatch(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte, depth int) error {
+	if depth >= MaxPatchNestingDepth {
+		return fmt.Errorf("patch nesting depth %d exceeds maximum of %d", depth, MaxPatchNestingDepth)
+	}
+
 	if fd == nil || fd.Type != field.FTStruct {
 		return fmt.Errorf("STRUCT_PATCH requires struct field")
 	}
@@ -222,14 +245,14 @@ func applyStructPatch(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16
 	}
 
 	// Unmarshal the patch
-	var subPatch msgs.Patch
+	subPatch := msgs.NewPatch()
 	if err := subPatch.Unmarshal(data); err != nil {
 		return fmt.Errorf("unmarshal sub-patch: %w", err)
 	}
 
 	// Apply each operation to the nested struct
 	for _, op := range subPatch.Ops() {
-		if err := applyOp(subStruct, fd.Mapping, op); err != nil {
+		if err := applyOpWithDepth(subStruct, fd.Mapping, op, depth+1); err != nil {
 			return err
 		}
 	}
@@ -251,25 +274,25 @@ func applyListReplace(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16
 	case field.FTListBools:
 		return applyListReplaceBools(s, fieldNum, data)
 	case field.FTListInt8:
-		return applyListReplaceNumbers[int8](s, fieldNum, data, 1)
+		return applyListReplaceNumbers[int8](s, fieldNum, data, 1, false)
 	case field.FTListUint8:
-		return applyListReplaceNumbers[uint8](s, fieldNum, data, 1)
+		return applyListReplaceNumbers[uint8](s, fieldNum, data, 1, false)
 	case field.FTListInt16:
-		return applyListReplaceNumbers[int16](s, fieldNum, data, 2)
+		return applyListReplaceNumbers[int16](s, fieldNum, data, 2, false)
 	case field.FTListUint16:
-		return applyListReplaceNumbers[uint16](s, fieldNum, data, 2)
+		return applyListReplaceNumbers[uint16](s, fieldNum, data, 2, false)
 	case field.FTListInt32:
-		return applyListReplaceNumbers[int32](s, fieldNum, data, 4)
+		return applyListReplaceNumbers[int32](s, fieldNum, data, 4, false)
 	case field.FTListUint32:
-		return applyListReplaceNumbers[uint32](s, fieldNum, data, 4)
+		return applyListReplaceNumbers[uint32](s, fieldNum, data, 4, false)
 	case field.FTListFloat32:
-		return applyListReplaceNumbers[float32](s, fieldNum, data, 4)
+		return applyListReplaceNumbers[float32](s, fieldNum, data, 4, true)
 	case field.FTListInt64:
-		return applyListReplaceNumbers[int64](s, fieldNum, data, 8)
+		return applyListReplaceNumbers[int64](s, fieldNum, data, 8, false)
 	case field.FTListUint64:
-		return applyListReplaceNumbers[uint64](s, fieldNum, data, 8)
+		return applyListReplaceNumbers[uint64](s, fieldNum, data, 8, false)
 	case field.FTListFloat64:
-		return applyListReplaceNumbers[float64](s, fieldNum, data, 8)
+		return applyListReplaceNumbers[float64](s, fieldNum, data, 8, true)
 	case field.FTListBytes, field.FTListStrings:
 		return applyListReplaceBytes(s, fieldNum, data)
 	case field.FTListStructs:
@@ -290,7 +313,7 @@ func applyListReplaceBools(s *structs.Struct, fieldNum uint16, data []byte) erro
 	return nil
 }
 
-func applyListReplaceNumbers[N structs.Number](s *structs.Struct, fieldNum uint16, data []byte, sizeInBytes int) error {
+func applyListReplaceNumbers[N structs.Number](s *structs.Struct, fieldNum uint16, data []byte, sizeInBytes int, isFloat bool) error {
 	if len(data)%sizeInBytes != 0 {
 		return fmt.Errorf("invalid number list data length: %d not divisible by %d", len(data), sizeInBytes)
 	}
@@ -305,20 +328,15 @@ func applyListReplaceNumbers[N structs.Number](s *structs.Struct, fieldNum uint1
 		case 2:
 			values[i] = N(decodeUint16(data[offset:]))
 		case 4:
-			// Check if float by trying to detect if this is float32
-			var zero N
-			switch any(zero).(type) {
-			case float32:
+			if isFloat {
 				values[i] = N(decodeFloat32(data[offset:]))
-			default:
+			} else {
 				values[i] = N(decodeUint32(data[offset:]))
 			}
 		case 8:
-			var zero N
-			switch any(zero).(type) {
-			case float64:
+			if isFloat {
 				values[i] = N(decodeFloat64(data[offset:]))
-			default:
+			} else {
 				values[i] = N(decodeUint64(data[offset:]))
 			}
 		}
@@ -398,25 +416,25 @@ func applyListSet(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, in
 		}
 		list.Set(int(index), data[0] != 0)
 	case field.FTListInt8:
-		return applyListSetNumber[int8](s, fieldNum, index, data, 1)
+		return applyListSetNumber[int8](s, fieldNum, index, data, 1, false)
 	case field.FTListUint8:
-		return applyListSetNumber[uint8](s, fieldNum, index, data, 1)
+		return applyListSetNumber[uint8](s, fieldNum, index, data, 1, false)
 	case field.FTListInt16:
-		return applyListSetNumber[int16](s, fieldNum, index, data, 2)
+		return applyListSetNumber[int16](s, fieldNum, index, data, 2, false)
 	case field.FTListUint16:
-		return applyListSetNumber[uint16](s, fieldNum, index, data, 2)
+		return applyListSetNumber[uint16](s, fieldNum, index, data, 2, false)
 	case field.FTListInt32:
-		return applyListSetNumber[int32](s, fieldNum, index, data, 4)
+		return applyListSetNumber[int32](s, fieldNum, index, data, 4, false)
 	case field.FTListUint32:
-		return applyListSetNumber[uint32](s, fieldNum, index, data, 4)
+		return applyListSetNumber[uint32](s, fieldNum, index, data, 4, false)
 	case field.FTListFloat32:
-		return applyListSetNumber[float32](s, fieldNum, index, data, 4)
+		return applyListSetNumber[float32](s, fieldNum, index, data, 4, true)
 	case field.FTListInt64:
-		return applyListSetNumber[int64](s, fieldNum, index, data, 8)
+		return applyListSetNumber[int64](s, fieldNum, index, data, 8, false)
 	case field.FTListUint64:
-		return applyListSetNumber[uint64](s, fieldNum, index, data, 8)
+		return applyListSetNumber[uint64](s, fieldNum, index, data, 8, false)
 	case field.FTListFloat64:
-		return applyListSetNumber[float64](s, fieldNum, index, data, 8)
+		return applyListSetNumber[float64](s, fieldNum, index, data, 8, true)
 	case field.FTListBytes, field.FTListStrings:
 		list := structs.MustGetListBytes(s, fieldNum)
 		if list == nil || int(index) >= list.Len() {
@@ -441,7 +459,7 @@ func applyListSet(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, in
 	return nil
 }
 
-func applyListSetNumber[N structs.Number](s *structs.Struct, fieldNum uint16, index int32, data []byte, sizeInBytes int) error {
+func applyListSetNumber[N structs.Number](s *structs.Struct, fieldNum uint16, index int32, data []byte, sizeInBytes int, isFloat bool) error {
 	list := structs.MustGetListNumber[N](s, fieldNum)
 	if list == nil || int(index) >= list.Len() {
 		return fmt.Errorf("LIST_SET index %d out of bounds", index)
@@ -456,19 +474,15 @@ func applyListSetNumber[N structs.Number](s *structs.Struct, fieldNum uint16, in
 	case 2:
 		value = N(decodeUint16(data))
 	case 4:
-		var zero N
-		switch any(zero).(type) {
-		case float32:
+		if isFloat {
 			value = N(decodeFloat32(data))
-		default:
+		} else {
 			value = N(decodeUint32(data))
 		}
 	case 8:
-		var zero N
-		switch any(zero).(type) {
-		case float64:
+		if isFloat {
 			value = N(decodeFloat64(data))
-		default:
+		} else {
 			value = N(decodeUint64(data))
 		}
 	}
@@ -489,25 +503,25 @@ func applyListInsert(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16,
 	case field.FTListBools:
 		return applyListInsertBool(s, fieldNum, index, data)
 	case field.FTListInt8:
-		return applyListInsertNumber[int8](s, fieldNum, index, data, 1)
+		return applyListInsertNumber[int8](s, fieldNum, index, data, 1, false)
 	case field.FTListUint8:
-		return applyListInsertNumber[uint8](s, fieldNum, index, data, 1)
+		return applyListInsertNumber[uint8](s, fieldNum, index, data, 1, false)
 	case field.FTListInt16:
-		return applyListInsertNumber[int16](s, fieldNum, index, data, 2)
+		return applyListInsertNumber[int16](s, fieldNum, index, data, 2, false)
 	case field.FTListUint16:
-		return applyListInsertNumber[uint16](s, fieldNum, index, data, 2)
+		return applyListInsertNumber[uint16](s, fieldNum, index, data, 2, false)
 	case field.FTListInt32:
-		return applyListInsertNumber[int32](s, fieldNum, index, data, 4)
+		return applyListInsertNumber[int32](s, fieldNum, index, data, 4, false)
 	case field.FTListUint32:
-		return applyListInsertNumber[uint32](s, fieldNum, index, data, 4)
+		return applyListInsertNumber[uint32](s, fieldNum, index, data, 4, false)
 	case field.FTListFloat32:
-		return applyListInsertNumber[float32](s, fieldNum, index, data, 4)
+		return applyListInsertNumber[float32](s, fieldNum, index, data, 4, true)
 	case field.FTListInt64:
-		return applyListInsertNumber[int64](s, fieldNum, index, data, 8)
+		return applyListInsertNumber[int64](s, fieldNum, index, data, 8, false)
 	case field.FTListUint64:
-		return applyListInsertNumber[uint64](s, fieldNum, index, data, 8)
+		return applyListInsertNumber[uint64](s, fieldNum, index, data, 8, false)
 	case field.FTListFloat64:
-		return applyListInsertNumber[float64](s, fieldNum, index, data, 8)
+		return applyListInsertNumber[float64](s, fieldNum, index, data, 8, true)
 	case field.FTListBytes, field.FTListStrings:
 		return applyListInsertBytes(s, fieldNum, index, data)
 	case field.FTListStructs:
@@ -530,11 +544,11 @@ func applyListInsertBool(s *structs.Struct, fieldNum uint16, index int32, data [
 		return fmt.Errorf("LIST_INSERT bool data too short")
 	}
 	newVal := data[0] != 0
-	// Insert at index
-	newSlice := make([]bool, 0, len(existing)+1)
-	newSlice = append(newSlice, existing[:index]...)
-	newSlice = append(newSlice, newVal)
-	newSlice = append(newSlice, existing[index:]...)
+	// Insert at index - single allocation, two copies
+	newSlice := make([]bool, len(existing)+1)
+	copy(newSlice, existing[:index])
+	newSlice[index] = newVal
+	copy(newSlice[index+1:], existing[index:])
 
 	newList := structs.NewBools(fieldNum)
 	newList.Append(newSlice...)
@@ -542,7 +556,7 @@ func applyListInsertBool(s *structs.Struct, fieldNum uint16, index int32, data [
 	return nil
 }
 
-func applyListInsertNumber[N structs.Number](s *structs.Struct, fieldNum uint16, index int32, data []byte, sizeInBytes int) error {
+func applyListInsertNumber[N structs.Number](s *structs.Struct, fieldNum uint16, index int32, data []byte, sizeInBytes int, isFloat bool) error {
 	list := structs.MustGetListNumber[N](s, fieldNum)
 	var existing []N
 	if list != nil {
@@ -561,27 +575,23 @@ func applyListInsertNumber[N structs.Number](s *structs.Struct, fieldNum uint16,
 	case 2:
 		newVal = N(decodeUint16(data))
 	case 4:
-		var zero N
-		switch any(zero).(type) {
-		case float32:
+		if isFloat {
 			newVal = N(decodeFloat32(data))
-		default:
+		} else {
 			newVal = N(decodeUint32(data))
 		}
 	case 8:
-		var zero N
-		switch any(zero).(type) {
-		case float64:
+		if isFloat {
 			newVal = N(decodeFloat64(data))
-		default:
+		} else {
 			newVal = N(decodeUint64(data))
 		}
 	}
-	// Insert at index
-	newSlice := make([]N, 0, len(existing)+1)
-	newSlice = append(newSlice, existing[:index]...)
-	newSlice = append(newSlice, newVal)
-	newSlice = append(newSlice, existing[index:]...)
+	// Insert at index - single allocation, two copies
+	newSlice := make([]N, len(existing)+1)
+	copy(newSlice, existing[:index])
+	newSlice[index] = newVal
+	copy(newSlice[index+1:], existing[index:])
 
 	newList := structs.NewNumbers[N]()
 	newList.Append(newSlice...)
@@ -598,11 +608,11 @@ func applyListInsertBytes(s *structs.Struct, fieldNum uint16, index int32, data 
 	if int(index) > len(existing) {
 		return fmt.Errorf("LIST_INSERT index %d out of bounds (len=%d)", index, len(existing))
 	}
-	// Insert at index
-	newSlice := make([][]byte, 0, len(existing)+1)
-	newSlice = append(newSlice, existing[:index]...)
-	newSlice = append(newSlice, data)
-	newSlice = append(newSlice, existing[index:]...)
+	// Insert at index - single allocation, two copies
+	newSlice := make([][]byte, len(existing)+1)
+	copy(newSlice, existing[:index])
+	newSlice[index] = data
+	copy(newSlice[index+1:], existing[index:])
 
 	newList := structs.NewBytes()
 	newList.Append(newSlice...)
@@ -627,7 +637,10 @@ func applyListInsertStruct(s *structs.Struct, fd *mapping.FieldDescr, fieldNum u
 	newList := structs.NewStructs(fd.Mapping)
 	// Append items before index
 	for i := 0; i < int(index); i++ {
-		clone := cloneStruct(existing[i], fd.Mapping)
+		clone, err := cloneStruct(existing[i], fd.Mapping)
+		if err != nil {
+			return fmt.Errorf("clone struct at index %d: %w", i, err)
+		}
 		if err := newList.Append(clone); err != nil {
 			return fmt.Errorf("append clone: %w", err)
 		}
@@ -638,7 +651,10 @@ func applyListInsertStruct(s *structs.Struct, fd *mapping.FieldDescr, fieldNum u
 	}
 	// Append items after index
 	for i := int(index); i < len(existing); i++ {
-		clone := cloneStruct(existing[i], fd.Mapping)
+		clone, err := cloneStruct(existing[i], fd.Mapping)
+		if err != nil {
+			return fmt.Errorf("clone struct at index %d: %w", i, err)
+		}
 		if err := newList.Append(clone); err != nil {
 			return fmt.Errorf("append clone: %w", err)
 		}
@@ -693,11 +709,14 @@ func applyListRemoveBool(s *structs.Struct, fieldNum uint16, index int32) error 
 		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
 	}
 	existing := list.Slice()
-	newSlice := append(existing[:index], existing[index+1:]...)
-	if len(newSlice) == 0 {
+	if len(existing) == 1 {
 		structs.DeleteListBools(s, fieldNum)
 		return nil
 	}
+	// Allocate new slice to avoid mutating the underlying array
+	newSlice := make([]bool, 0, len(existing)-1)
+	newSlice = append(newSlice, existing[:index]...)
+	newSlice = append(newSlice, existing[index+1:]...)
 	newList := structs.NewBools(fieldNum)
 	newList.Append(newSlice...)
 	structs.MustSetListBool(s, fieldNum, newList)
@@ -710,11 +729,14 @@ func applyListRemoveNumber[N structs.Number](s *structs.Struct, fieldNum uint16,
 		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
 	}
 	existing := list.Slice()
-	newSlice := append(existing[:index], existing[index+1:]...)
-	if len(newSlice) == 0 {
+	if len(existing) == 1 {
 		structs.DeleteListNumber[N](s, fieldNum)
 		return nil
 	}
+	// Allocate new slice to avoid mutating the underlying array
+	newSlice := make([]N, 0, len(existing)-1)
+	newSlice = append(newSlice, existing[:index]...)
+	newSlice = append(newSlice, existing[index+1:]...)
 	newList := structs.NewNumbers[N]()
 	newList.Append(newSlice...)
 	structs.MustSetListNumber(s, fieldNum, newList)
@@ -727,11 +749,14 @@ func applyListRemoveBytes(s *structs.Struct, fieldNum uint16, index int32) error
 		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
 	}
 	existing := list.Slice()
-	newSlice := append(existing[:index], existing[index+1:]...)
-	if len(newSlice) == 0 {
+	if len(existing) == 1 {
 		structs.DeleteListBytes(s, fieldNum)
 		return nil
 	}
+	// Allocate new slice to avoid mutating the underlying array
+	newSlice := make([][]byte, 0, len(existing)-1)
+	newSlice = append(newSlice, existing[:index]...)
+	newSlice = append(newSlice, existing[index+1:]...)
 	newList := structs.NewBytes()
 	newList.Append(newSlice...)
 	structs.MustSetListBytes(s, fieldNum, newList)
@@ -754,7 +779,10 @@ func applyListRemoveStruct(s *structs.Struct, fd *mapping.FieldDescr, fieldNum u
 		if i == int(index) {
 			continue
 		}
-		clone := cloneStruct(item, fd.Mapping)
+		clone, err := cloneStruct(item, fd.Mapping)
+		if err != nil {
+			return fmt.Errorf("clone struct at index %d: %w", i, err)
+		}
 		if err := newList.Append(clone); err != nil {
 			return fmt.Errorf("append clone: %w", err)
 		}
@@ -764,19 +792,23 @@ func applyListRemoveStruct(s *structs.Struct, fd *mapping.FieldDescr, fieldNum u
 }
 
 // cloneStruct creates a deep copy of a struct by marshaling and unmarshaling it.
-func cloneStruct(src *structs.Struct, m *mapping.Map) *structs.Struct {
+func cloneStruct(src *structs.Struct, m *mapping.Map) (*structs.Struct, error) {
 	buf := &bytes.Buffer{}
 	if _, err := src.Marshal(buf); err != nil {
-		panic(fmt.Sprintf("clone marshal failed: %v", err))
+		return nil, fmt.Errorf("clone marshal failed: %w", err)
 	}
 	dst := structs.New(0, m)
 	if _, err := dst.Unmarshal(bytes.NewReader(buf.Bytes())); err != nil {
-		panic(fmt.Sprintf("clone unmarshal failed: %v", err))
+		return nil, fmt.Errorf("clone unmarshal failed: %w", err)
 	}
-	return dst
+	return dst, nil
 }
 
-func applyListStructPatch(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
+func applyListStructPatch(s *structs.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte, depth int) error {
+	if depth >= MaxPatchNestingDepth {
+		return fmt.Errorf("patch nesting depth %d exceeds maximum of %d", depth, MaxPatchNestingDepth)
+	}
+
 	if fd == nil || fd.Type != field.FTListStructs {
 		return fmt.Errorf("LIST_STRUCT_PATCH requires list of structs field")
 	}
@@ -794,14 +826,14 @@ func applyListStructPatch(s *structs.Struct, fd *mapping.FieldDescr, fieldNum ui
 	}
 
 	// Unmarshal the patch
-	var subPatch msgs.Patch
+	subPatch := msgs.NewPatch()
 	if err := subPatch.Unmarshal(data); err != nil {
 		return fmt.Errorf("unmarshal sub-patch: %w", err)
 	}
 
 	// Apply each operation to the struct at the index
 	for _, op := range subPatch.Ops() {
-		if err := applyOp(itemStruct, fd.Mapping, op); err != nil {
+		if err := applyOpWithDepth(itemStruct, fd.Mapping, op, depth+1); err != nil {
 			return err
 		}
 	}

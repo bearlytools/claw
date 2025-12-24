@@ -124,6 +124,16 @@ func TestGetStructDecr(t *testing.T) {
 			Type:     field.FTListBools,
 			FieldNum: 4,
 		},
+		{
+			Name:     "Name",
+			Type:     field.FTString,
+			FieldNum: 5,
+		},
+		{
+			Name:     "VIN",
+			Type:     field.FTBytes,
+			FieldNum: 6,
+		},
 	}
 
 	// Setup a vehicle the normal way.

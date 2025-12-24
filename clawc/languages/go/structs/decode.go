@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"sync/atomic"
 	"unsafe"
 
 	"github.com/bearlytools/claw/clawc/internal/binary"
@@ -236,12 +235,12 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 
 	// Set structTotal to the actual size from the serialized header.
 	// This overwrites the initial 8 from New() with the complete size.
-	atomic.StoreInt64(s.structTotal, int64(size))
+	s.structTotal.Store(int64(size))
 	s.header.SetFinal40(uint64(size))
 
 	s.decoding = false // Done setting up lazy decode infrastructure
 
-	st := atomic.LoadInt64(s.structTotal)
+	st := s.structTotal.Load()
 	if read != int(st) {
 		return read, fmt.Errorf("Struct was %d in length, but only found %d worth of fields", read, st)
 	}

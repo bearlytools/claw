@@ -131,6 +131,17 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
                 }
             }
         }
+        // Field 5: Name
+        {
+            s := x.Name()
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Name", Type: field.FTString, Bytes: []byte(s)}) {
+                return
+            }
+        }
+        // Field 6: VIN
+        if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "VIN", Type: field.FTBytes, Bytes: x.VIN()}) {
+            return
+        }
 
         if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Vehicle"}) {
             return

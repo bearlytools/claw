@@ -22,6 +22,7 @@ import (
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/enums"
 	"github.com/bearlytools/claw/clawc/languages/go/structs/header"
+	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 )
 
@@ -80,7 +81,7 @@ type Struct struct {
 	parent *Struct
 
 	// structTotal is the total size of this struct in bytes, including header.
-	structTotal *int64
+	structTotal atomic.Int64
 
 	// zeroTypeCompression indicates if we want to compress the encoding by ignoring
 	// scalar zero values.
@@ -109,6 +110,15 @@ type Struct struct {
 	unknownFieldsData map[uint16][]byte
 }
 
+var structPool = sync.NewPool[*Struct](
+	context.Background(),
+	"Struct Pool",
+	func() *Struct {
+		return &Struct{}
+	},
+	sync.WithBuffer(100),
+)
+
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
 func New(fieldNum uint16, dataMap *mapping.Map) *Struct {
 	if dataMap == nil {
@@ -122,7 +132,6 @@ func New(fieldNum uint16, dataMap *mapping.Map) *Struct {
 		header:              h,
 		mapping:             dataMap,
 		fields:              make([]StructField, len(dataMap.Fields)),
-		structTotal:         new(int64),
 		zeroTypeCompression: true,
 	}
 	XXXAddToTotal(s, 8) // the header
@@ -220,7 +229,6 @@ func (s *Struct) NewFrom() *Struct {
 		header:              h,
 		mapping:             s.mapping,
 		fields:              make([]StructField, len(s.mapping.Fields)),
-		structTotal:         new(int64),
 		zeroTypeCompression: s.zeroTypeCompression,
 	}
 	XXXAddToTotal(n, 8) // the header
@@ -1008,7 +1016,7 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 		return err
 	}
 
-	if atomic.LoadInt64(value.structTotal) > maxDataSize {
+	if value.structTotal.Load() > maxDataSize {
 		return fmt.Errorf("cannot set a Struct field to size > 1099511627775")
 	}
 
@@ -1028,14 +1036,14 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 	} else if f.Header != nil {
 		// We need to remove our existing entry size total before applying our new data
 		x := (*Struct)(f.Ptr)
-		remove := atomic.LoadInt64(x.structTotal)
+		remove := x.structTotal.Load()
 		x.parent = nil
 		XXXAddToTotal(s, -remove)
 	}
 
 	f.Header = value.header
 	f.Ptr = unsafe.Pointer(value)
-	XXXAddToTotal(s, atomic.LoadInt64(value.structTotal))
+	XXXAddToTotal(s, value.structTotal.Load())
 	s.fields[fieldNum] = f
 
 	// Mark as dirty and propagate modified flag (only after unmarshal is done)
@@ -1081,7 +1089,7 @@ func DeleteStruct(s *Struct, fieldNum uint16) error {
 	} else {
 		x := (*Struct)(f.Ptr)
 		x.parent = nil
-		XXXAddToTotal(s, -atomic.LoadInt64(x.structTotal))
+		XXXAddToTotal(s, -x.structTotal.Load())
 	}
 
 	f.Header = nil
@@ -1814,14 +1822,14 @@ func XXXAddToTotal[N int64 | int | uint | uint64](s *Struct, value N) {
 	if s == nil {
 		return
 	}
-	v := atomic.AddInt64(s.structTotal, int64(value))
+	v := s.structTotal.Add(int64(value))
 	s.header.SetFinal40(uint64(v))
 	ptr := s.parent
 	for {
 		if ptr == nil {
 			return
 		}
-		v := atomic.AddInt64(ptr.structTotal, int64(value))
+		v := ptr.structTotal.Add(int64(value))
 		ptr.header.SetFinal40(uint64(v))
 		ptr = ptr.parent
 	}
@@ -1832,7 +1840,7 @@ func XXXGetStructTotal(s *Struct) int64 {
 	if s == nil {
 		return 0
 	}
-	return atomic.LoadInt64(s.structTotal)
+	return s.structTotal.Load()
 }
 
 // validateFieldNum will validate that the type is described in the mapping.Map,

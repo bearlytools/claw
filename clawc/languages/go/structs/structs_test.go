@@ -336,8 +336,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	var totalWithScalars int64 = 120 // Scalar sizes + 8 byte hedaer for Struct
-	if *root.structTotal != totalWithScalars {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.structTotal, totalWithScalars)
+	if root.structTotal.Load() != totalWithScalars {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", root.structTotal.Load(), totalWithScalars)
 	}
 
 	if err = marshalCheck(root, int(totalWithScalars)); err != nil {
@@ -379,12 +379,12 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	log.Println("we are adding: ", 8+SizeWithPadding(len(strData)))
 	totalWithBytes := totalWithScalars + 8 + int64(SizeWithPadding(len(strData)))
 	log.Println("totalWithBytes: ", totalWithBytes)
-	if *root.structTotal != totalWithBytes {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.structTotal, totalWithBytes)
+	if root.structTotal.Load() != totalWithBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", root.structTotal.Load(), totalWithBytes)
 	}
 
-	if *root.structTotal%8 != 0 {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): structTotal(%d) is not divisible by 8", *root.structTotal)
+	if root.structTotal.Load()%8 != 0 {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): structTotal(%d) is not divisible by 8", root.structTotal.Load())
 	}
 
 	if err = marshalCheck(root, int(totalWithBytes)); err != nil {
@@ -403,8 +403,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		panic(err)
 	}
 	totalWithStruct := totalWithBytes + 8
-	if *root.structTotal != totalWithStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
+	if root.structTotal.Load() != totalWithStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithStruct)
 	}
 
 	if err = SetBool(sub, 0, true); err != nil {
@@ -422,8 +422,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if !gotBool {
 		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], got %v, want %v", gotBool, true)
 	}
-	if *root.structTotal != totalWithStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
+	if root.structTotal.Load() != totalWithStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct+Bool value): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithStruct)
 	}
 
 	if err = marshalCheck(root, totalWithStruct); err != nil {
@@ -447,8 +447,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	totalWithListStruct := totalWithStruct + 8 + 16 // ListStruct header + two Struct headers
-	if *root.structTotal != totalWithListStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
+	if root.structTotal.Load() != totalWithListStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListStruct)
 	}
 
 	if err = SetBool(structs[1], 0, true); err != nil {
@@ -467,8 +467,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if !gotBool {
 		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14][1], got %v, want %v", gotBool, true)
 	}
-	if *root.structTotal != totalWithListStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
+	if root.structTotal.Load() != totalWithListStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct+Bool value): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListStruct)
 	}
 	if err = marshalCheck(root, totalWithListStruct); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding list Struct): %s", err)
@@ -488,14 +488,14 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	totalWithListNumber := totalWithListStruct + 8
-	if *root.structTotal != totalWithListNumber {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListNumber): root.Struct total was %d, want %d", *root.structTotal, totalWithListNumber)
+	if root.structTotal.Load() != totalWithListNumber {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListNumber): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListNumber)
 	}
 
 	nums.Append(1, 2, 3, 4, 5, 6, 7, 8, 9)
 	totalWithListNumber += 16 // Requires 16 bytes to hold 9 uint8 values
-	if *root.structTotal != totalWithListNumber {
-		t.Fatalf("TestBasicEncodeDecodeStruct(appending to ListNumber): root.Struct total was %d, want %d", *root.structTotal, totalWithListNumber)
+	if root.structTotal.Load() != totalWithListNumber {
+		t.Fatalf("TestBasicEncodeDecodeStruct(appending to ListNumber): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListNumber)
 	}
 
 	if err := marshalCheck(root, totalWithListNumber); err != nil {
@@ -516,15 +516,15 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 	totalWithListBytes := totalWithListNumber + 8
 
-	if *root.structTotal != totalWithListBytes {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding Listbytes): root.Struct total was %d, want %d", *root.structTotal, totalWithListBytes)
+	if root.structTotal.Load() != totalWithListBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Listbytes): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListBytes)
 	}
 
 	bytesList.Append([]byte("what"), []byte("ever"))
 
 	totalWithListBytes += 16 // 2 * content(4 bytes each) + two entry headers(4 bytes)
-	if *root.structTotal != totalWithListBytes {
-		t.Fatalf("TestBasicEncodeDecodeStruct(appending to Listbytes): root.Struct total was %d, want %d", *root.structTotal, totalWithListBytes)
+	if root.structTotal.Load() != totalWithListBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(appending to Listbytes): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListBytes)
 	}
 	if err := marshalCheck(root, totalWithListBytes); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding Listbytes): %s", err)
@@ -543,12 +543,12 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	written, _ := root.Marshal(buff) // We just marshalled, so no error
 	log.Println("encoder says it wrote: ", written)
 	cp := New(0, msg0Mapping)
-	log.Println("new root is: ", *cp.structTotal)
+	log.Println("new root is: ", cp.structTotal.Load())
 	if _, err := cp.Unmarshal(buff); err != nil {
 		panic(err)
 	}
-	if *cp.structTotal != int64(written) {
-		t.Fatalf("TestBasicEncodeDecodeStruct(decode message): cp.Struct total was %d, want %d", *cp.structTotal, written)
+	if cp.structTotal.Load() != int64(written) {
+		t.Fatalf("TestBasicEncodeDecodeStruct(decode message): cp.Struct total was %d, want %d", cp.structTotal.Load(), written)
 	}
 
 	if err := compareStruct(root, cp); err != nil {

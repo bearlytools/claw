@@ -3,7 +3,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"sync/atomic"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
@@ -18,7 +17,7 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	}
 
 	// SLOW PATH: Re-encode the struct from decoded fields.
-	total := atomic.LoadInt64(s.structTotal)
+	total := s.structTotal.Load()
 	if total%8 != 0 {
 		return 0, fmt.Errorf("Struct has an internal size(%d) that is not divisible by 8, something is bugged", total)
 	}

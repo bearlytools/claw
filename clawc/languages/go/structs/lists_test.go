@@ -88,8 +88,8 @@ func TestBoolGetSetAppendRange(t *testing.T) {
 		t.Fatalf("TestBoolGetSetAppendRange(Range): found %d items, want %d items", i, list.Len()-3)
 	}
 
-	if *s.structTotal != 32 { // 24 for the Bool, 8 for the Struct header
-		t.Fatalf("TestBoolGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", *s.structTotal, 32)
+	if s.structTotal.Load() != 32 { // 24 for the Bool, 8 for the Struct header
+		t.Fatalf("TestBoolGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", s.structTotal.Load(), 32)
 	}
 }
 
@@ -173,8 +173,8 @@ func TestNumberGetSetAppendRange(t *testing.T) {
 		t.Fatalf("TestNumberGetSetAppendRange(Range): found %d items, want %d items", i, list.Len()-3)
 	}
 
-	if *s.structTotal != 32 { // 24 for the Number, 8 for the Struct header
-		t.Fatalf("TestNumberGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", *s.structTotal, 32)
+	if s.structTotal.Load() != 32 { // 24 for the Number, 8 for the Struct header
+		t.Fatalf("TestNumberGetSetAppendRange(total count): internal 'total' counter, got %d bytes, want %d bytes", s.structTotal.Load(), 32)
 	}
 }
 
@@ -307,7 +307,7 @@ func TestBytes(t *testing.T) {
 		size += len(v)
 	}
 
-	if *s.structTotal != 56 { // 48 for the Bytes, 8 for the Struct header
-		t.Fatalf("TestBytes(total count): internal 'total' counter, got %d bytes, want %d bytes", *s.structTotal, 56)
+	if s.structTotal.Load() != 56 { // 48 for the Bytes, 8 for the Struct header
+		t.Fatalf("TestBytes(total count): internal 'total' counter, got %d bytes, want %d bytes", s.structTotal.Load(), 56)
 	}
 }

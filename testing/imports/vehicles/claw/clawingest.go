@@ -135,6 +135,10 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
                 bools.Append(itemTok.Bool())
             }
             x.SetBools(bools)
+        case "Name":
+            x.SetName(tok.String())
+        case "VIN":
+            x.SetVIN(tok.Bytes)
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {

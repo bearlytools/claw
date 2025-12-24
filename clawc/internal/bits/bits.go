@@ -15,11 +15,16 @@ type PtrUnsigned interface {
 
 // SetValue stores "val" in unsigned number "store" starting at bit "start" and
 // ending at bit "end" (exclusive). If start >= end, this panics.
+// This clears the existing bits in the range before setting the new value.
 func SetValue[I, U constraints.Unsigned](val I, store U, start, end uint64) U {
 	if start >= end {
 		panic("start cannot be > end")
 	}
 
+	// Clear the existing bits in the range first
+	store = ClearBits(store, uint8(start), uint8(end))
+
+	// Then set the new value
 	c := U(val) << start
 
 	return store | c

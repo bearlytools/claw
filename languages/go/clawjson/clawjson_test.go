@@ -82,7 +82,7 @@ func TestMarshalNestedStruct(t *testing.T) {
 					SetType(vehicles.Car).
 					SetCar(car)
 			},
-			want: `{"Type":"Car","Car":{"Manufacturer":"Toyota","Model":"Venza","Year":2010},"Truck":null,"Types":null,"Bools":null}`,
+			want: `{"Type":"Car","Car":{"Manufacturer":"Toyota","Model":"Venza","Year":2010},"Truck":null,"Types":null,"Bools":null,"Name":"","VIN":""}`,
 		},
 		{
 			name: "Success: vehicle with nil car",
@@ -90,7 +90,7 @@ func TestMarshalNestedStruct(t *testing.T) {
 				return vehicles.NewVehicle().
 					SetType(vehicles.Truck)
 			},
-			want: `{"Type":"Truck","Car":null,"Truck":null,"Types":null,"Bools":null}`,
+			want: `{"Type":"Truck","Car":null,"Truck":null,"Types":null,"Bools":null,"Name":"","VIN":""}`,
 		},
 	}
 
@@ -121,7 +121,7 @@ func TestMarshalLists(t *testing.T) {
 				return vehicles.NewVehicle().
 					SetBools(list.NewBools().Append(true, false, true))
 			},
-			want: `{"Type":"Unknown","Car":null,"Truck":null,"Types":null,"Bools":[true,false,true]}`,
+			want: `{"Type":"Unknown","Car":null,"Truck":null,"Types":null,"Bools":[true,false,true],"Name":"","VIN":""}`,
 		},
 		{
 			name: "Success: vehicle with enum list (strings)",
@@ -129,7 +129,7 @@ func TestMarshalLists(t *testing.T) {
 				return vehicles.NewVehicle().
 					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
 			},
-			want: `{"Type":"Unknown","Car":null,"Truck":null,"Types":["Car","Truck"],"Bools":null}`,
+			want: `{"Type":"Unknown","Car":null,"Truck":null,"Types":["Car","Truck"],"Bools":null,"Name":"","VIN":""}`,
 		},
 		{
 			name: "Success: vehicle with enum list (numbers)",
@@ -138,7 +138,7 @@ func TestMarshalLists(t *testing.T) {
 					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
 			},
 			options: []MarshalOption{WithUseEnumNumbers(true)},
-			want:    `{"Type":0,"Car":null,"Truck":null,"Types":[1,2],"Bools":null}`,
+			want:    `{"Type":0,"Car":null,"Truck":null,"Types":[1,2],"Bools":null,"Name":"","VIN":""}`,
 		},
 	}
 
@@ -279,6 +279,8 @@ func TestMarshalProducesValidJSON(t *testing.T) {
 		"Truck": nil,
 		"Types": []any{"Car", "Truck"},
 		"Bools": []any{true, false},
+		"Name":  "",
+		"VIN":   "",
 	}
 
 	if diff := pretty.Compare(want, parsed); diff != "" {

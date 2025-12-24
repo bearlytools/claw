@@ -4,6 +4,7 @@ package patch
 import (
 	"bytes"
 	"fmt"
+	"math"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
@@ -13,6 +14,9 @@ import (
 
 // PatchVersion is the current patch format version.
 const PatchVersion = 1
+
+// NoListIndex indicates the operation is not list-indexed (for scalar field ops).
+const NoListIndex int32 = -1
 
 // ClawStruct is the interface that all generated claw structs implement.
 type ClawStruct interface {
@@ -48,15 +52,15 @@ func Diff[T ClawStruct](from, to T) (msgs.Patch, error) {
 	patch := msgs.NewPatch()
 	patch.SetVersion(PatchVersion)
 
-	if err := diffStruct(fromS, toS, &patch); err != nil {
+	if err := diffStructToPatch(fromS, toS, &patch); err != nil {
 		return msgs.Patch{}, err
 	}
 
 	return patch, nil
 }
 
-// diffStruct compares two structs and appends operations to the patch.
-func diffStruct(from, to *structs.Struct, patch *msgs.Patch) error {
+// diffStructToPatch compares two structs and appends operations to the patch.
+func diffStructToPatch(from, to *structs.Struct, patch *msgs.Patch) error {
 	m := from.Map()
 
 	// Diff known fields
@@ -66,12 +70,12 @@ func diffStruct(from, to *structs.Struct, patch *msgs.Patch) error {
 		}
 		fieldNum := fd.FieldNum
 
-		op, err := diffField(from, to, fd)
+		ops, err := diffField(from, to, fd)
 		if err != nil {
 			return fmt.Errorf("field %d (%s): %w", fieldNum, fd.Name, err)
 		}
-		if op != nil {
-			patch.AppendOps(*op)
+		for _, op := range ops {
+			patch.AppendOps(op)
 		}
 	}
 
@@ -107,7 +111,7 @@ func diffUnknownFields(from, to *structs.Struct, patch *msgs.Patch) error {
 			op := msgs.NewOp()
 			op.SetFieldNum(fieldNum)
 			op.SetType(msgs.Clear)
-			op.SetIndex(-1)
+			op.SetIndex(NoListIndex)
 			patch.AppendOps(op)
 		}
 	}
@@ -119,7 +123,7 @@ func diffUnknownFields(from, to *structs.Struct, patch *msgs.Patch) error {
 			op := msgs.NewOp()
 			op.SetFieldNum(fieldNum)
 			op.SetType(msgs.Set)
-			op.SetIndex(-1)
+			op.SetIndex(NoListIndex)
 			op.SetData(toData)
 			patch.AppendOps(op)
 		}
@@ -128,21 +132,38 @@ func diffUnknownFields(from, to *structs.Struct, patch *msgs.Patch) error {
 	return nil
 }
 
-// diffField compares a single field and returns an Op if different, nil if same.
-func diffField(from, to *structs.Struct, fd *mapping.FieldDescr) (*msgs.Op, error) {
+// diffField compares a single field and returns Op(s) if different, nil if same.
+// For scalar fields, returns at most one op. For list fields, may return multiple ops.
+func diffField(from, to *structs.Struct, fd *mapping.FieldDescr) ([]msgs.Op, error) {
 	fieldNum := fd.FieldNum
 
 	switch fd.Type {
 	case field.FTBool:
-		return diffBool(from, to, fieldNum)
+		op, err := diffBool(from, to, fieldNum)
+		if err != nil || op == nil {
+			return nil, err
+		}
+		return []msgs.Op{*op}, nil
 	case field.FTInt8, field.FTInt16, field.FTInt32, field.FTInt64,
 		field.FTUint8, field.FTUint16, field.FTUint32, field.FTUint64,
 		field.FTFloat32, field.FTFloat64:
-		return diffNumber(from, to, fieldNum, fd)
+		op, err := diffNumber(from, to, fieldNum, fd)
+		if err != nil || op == nil {
+			return nil, err
+		}
+		return []msgs.Op{*op}, nil
 	case field.FTString, field.FTBytes:
-		return diffBytes(from, to, fieldNum, fd.Type == field.FTString)
+		op, err := diffBytes(from, to, fieldNum)
+		if err != nil || op == nil {
+			return nil, err
+		}
+		return []msgs.Op{*op}, nil
 	case field.FTStruct:
-		return diffNestedStruct(from, to, fieldNum, fd)
+		op, err := diffNestedStruct(from, to, fieldNum, fd)
+		if err != nil || op == nil {
+			return nil, err
+		}
+		return []msgs.Op{*op}, nil
 	case field.FTListBools:
 		return diffListBool(from, to, fieldNum)
 	case field.FTListInt8, field.FTListInt16, field.FTListInt32, field.FTListInt64,
@@ -152,7 +173,7 @@ func diffField(from, to *structs.Struct, fd *mapping.FieldDescr) (*msgs.Op, erro
 	case field.FTListBytes, field.FTListStrings:
 		return diffListBytes(from, to, fieldNum)
 	case field.FTListStructs:
-		return diffListStructs(from, to, fieldNum, fd)
+		return diffListStructs(from, to, fieldNum)
 	default:
 		return nil, fmt.Errorf("unsupported field type: %v", fd.Type)
 	}
@@ -169,7 +190,7 @@ func diffBool(from, to *structs.Struct, fieldNum uint16) (*msgs.Op, error) {
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.Set)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 	// Encode bool as single byte
 	if toVal {
 		op.SetData([]byte{1})
@@ -180,7 +201,7 @@ func diffBool(from, to *structs.Struct, fieldNum uint16) (*msgs.Op, error) {
 }
 
 func diffNumber(from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDescr) (*msgs.Op, error) {
-	var fromBytes, toBytes []byte
+	var toBytes []byte
 	var equal bool
 
 	switch fd.Type {
@@ -243,14 +264,20 @@ func diffNumber(from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDesc
 	case field.FTFloat32:
 		fromVal := structs.MustGetNumber[float32](from, fieldNum)
 		toVal := structs.MustGetNumber[float32](to, fieldNum)
-		equal = fromVal == toVal
+		// Handle NaN: both NaN is considered equal, otherwise use ==
+		fromNaN := math.IsNaN(float64(fromVal))
+		toNaN := math.IsNaN(float64(toVal))
+		equal = (fromNaN && toNaN) || (!fromNaN && !toNaN && fromVal == toVal)
 		if !equal {
 			toBytes = encodeFloat32(toVal)
 		}
 	case field.FTFloat64:
 		fromVal := structs.MustGetNumber[float64](from, fieldNum)
 		toVal := structs.MustGetNumber[float64](to, fieldNum)
-		equal = fromVal == toVal
+		// Handle NaN: both NaN is considered equal, otherwise use ==
+		fromNaN := math.IsNaN(fromVal)
+		toNaN := math.IsNaN(toVal)
+		equal = (fromNaN && toNaN) || (!fromNaN && !toNaN && fromVal == toVal)
 		if !equal {
 			toBytes = encodeFloat64(toVal)
 		}
@@ -262,17 +289,15 @@ func diffNumber(from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDesc
 		return nil, nil
 	}
 
-	_ = fromBytes // unused for now, just comparing values
-
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.Set)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 	op.SetData(toBytes)
 	return &op, nil
 }
 
-func diffBytes(from, to *structs.Struct, fieldNum uint16, isString bool) (*msgs.Op, error) {
+func diffBytes(from, to *structs.Struct, fieldNum uint16) (*msgs.Op, error) {
 	fromPtr := structs.MustGetBytes(from, fieldNum)
 	toPtr := structs.MustGetBytes(to, fieldNum)
 
@@ -293,14 +318,14 @@ func diffBytes(from, to *structs.Struct, fieldNum uint16, isString bool) (*msgs.
 		op := msgs.NewOp()
 		op.SetFieldNum(fieldNum)
 		op.SetType(msgs.Clear)
-		op.SetIndex(-1)
+		op.SetIndex(NoListIndex)
 		return &op, nil
 	}
 
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.Set)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 	op.SetData(toVal)
 	return &op, nil
 }
@@ -318,7 +343,7 @@ func diffNestedStruct(from, to *structs.Struct, fieldNum uint16, fd *mapping.Fie
 		op := msgs.NewOp()
 		op.SetFieldNum(fieldNum)
 		op.SetType(msgs.Clear)
-		op.SetIndex(-1)
+		op.SetIndex(NoListIndex)
 		return &op, nil
 	}
 	if fromSub == nil && toSub != nil {
@@ -330,7 +355,7 @@ func diffNestedStruct(from, to *structs.Struct, fieldNum uint16, fd *mapping.Fie
 		op := msgs.NewOp()
 		op.SetFieldNum(fieldNum)
 		op.SetType(msgs.Set)
-		op.SetIndex(-1)
+		op.SetIndex(NoListIndex)
 		op.SetData(buf.Bytes())
 		return &op, nil
 	}
@@ -338,7 +363,7 @@ func diffNestedStruct(from, to *structs.Struct, fieldNum uint16, fd *mapping.Fie
 	// Both exist - compute recursive patch
 	subPatch := msgs.NewPatch()
 	subPatch.SetVersion(PatchVersion)
-	if err := diffStruct(fromSub, toSub, &subPatch); err != nil {
+	if err := diffStructToPatch(fromSub, toSub, &subPatch); err != nil {
 		return nil, fmt.Errorf("diff nested struct: %w", err)
 	}
 
@@ -356,12 +381,12 @@ func diffNestedStruct(from, to *structs.Struct, fieldNum uint16, fd *mapping.Fie
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.StructPatch)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 	op.SetData(patchBytes)
 	return &op, nil
 }
 
-func diffListBool(from, to *structs.Struct, fieldNum uint16) (*msgs.Op, error) {
+func diffListBool(from, to *structs.Struct, fieldNum uint16) ([]msgs.Op, error) {
 	fromList := structs.MustGetListBool(from, fieldNum)
 	toList := structs.MustGetListBool(to, fieldNum)
 
@@ -378,18 +403,243 @@ func diffListBool(from, to *structs.Struct, fieldNum uint16) (*msgs.Op, error) {
 		return nil, nil
 	}
 
-	// For simplicity, use LIST_REPLACE for boolean lists
-	// (index-based ops on bool lists are less useful)
-	return createListReplaceBools(fieldNum, toList)
+	// Generate index-based operations
+	var ops []msgs.Op
+
+	// For indices that exist in both lists, generate SET if different
+	minLen := fromLen
+	if toLen < minLen {
+		minLen = toLen
+	}
+	for i := 0; i < minLen; i++ {
+		if fromList.Get(i) != toList.Get(i) {
+			op := msgs.NewOp()
+			op.SetFieldNum(fieldNum)
+			op.SetType(msgs.ListSet)
+			op.SetIndex(int32(i))
+			if toList.Get(i) {
+				op.SetData([]byte{1})
+			} else {
+				op.SetData([]byte{0})
+			}
+			ops = append(ops, op)
+		}
+	}
+
+	// For new indices in 'to', generate INSERT
+	for i := fromLen; i < toLen; i++ {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListInsert)
+		op.SetIndex(int32(i))
+		if toList.Get(i) {
+			op.SetData([]byte{1})
+		} else {
+			op.SetData([]byte{0})
+		}
+		ops = append(ops, op)
+	}
+
+	// For removed indices, generate REMOVE (in reverse order)
+	for i := fromLen - 1; i >= toLen; i-- {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListRemove)
+		op.SetIndex(int32(i))
+		ops = append(ops, op)
+	}
+
+	// Use LIST_REPLACE when individual ops exceed half the combined list sizes.
+	// This heuristic balances patch size vs granularity of changes.
+	if len(ops) > 0 && len(ops) > (fromLen+toLen)/2 {
+		replaceOp, err := createListReplaceBools(fieldNum, toList)
+		if err != nil {
+			return nil, err
+		}
+		if replaceOp != nil {
+			return []msgs.Op{*replaceOp}, nil
+		}
+		return nil, nil
+	}
+
+	return ops, nil
 }
 
-func diffListNumber(from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDescr) (*msgs.Op, error) {
-	// For now, use LIST_REPLACE for number lists
-	// Full index-based diffing can be added later
-	return diffListNumberReplace(from, to, fieldNum, fd)
+func diffListNumber(from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDescr) ([]msgs.Op, error) {
+	switch fd.Type {
+	case field.FTListInt8:
+		return diffListNumberTyped[int8](from, to, fieldNum, fd, 1, encodeInt8)
+	case field.FTListUint8:
+		return diffListNumberTyped[uint8](from, to, fieldNum, fd, 1, encodeUint8)
+	case field.FTListInt16:
+		return diffListNumberTyped[int16](from, to, fieldNum, fd, 2, encodeInt16)
+	case field.FTListUint16:
+		return diffListNumberTyped[uint16](from, to, fieldNum, fd, 2, encodeUint16)
+	case field.FTListInt32:
+		return diffListNumberTyped[int32](from, to, fieldNum, fd, 4, encodeInt32)
+	case field.FTListUint32:
+		return diffListNumberTyped[uint32](from, to, fieldNum, fd, 4, encodeUint32)
+	case field.FTListFloat32:
+		return diffListNumberFloat[float32](from, to, fieldNum, fd, encodeFloat32)
+	case field.FTListInt64:
+		return diffListNumberTyped[int64](from, to, fieldNum, fd, 8, encodeInt64)
+	case field.FTListUint64:
+		return diffListNumberTyped[uint64](from, to, fieldNum, fd, 8, encodeUint64)
+	case field.FTListFloat64:
+		return diffListNumberFloat[float64](from, to, fieldNum, fd, encodeFloat64)
+	default:
+		return nil, fmt.Errorf("unexpected number list type: %v", fd.Type)
+	}
 }
 
-func diffListBytes(from, to *structs.Struct, fieldNum uint16) (*msgs.Op, error) {
+func diffListNumberTyped[N structs.Number](from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDescr, sizeInBytes int, encode func(N) []byte) ([]msgs.Op, error) {
+	fromList := structs.MustGetListNumber[N](from, fieldNum)
+	toList := structs.MustGetListNumber[N](to, fieldNum)
+
+	var fromSlice, toSlice []N
+	if fromList != nil {
+		fromSlice = fromList.Slice()
+	}
+	if toList != nil {
+		toSlice = toList.Slice()
+	}
+
+	fromLen := len(fromSlice)
+	toLen := len(toSlice)
+
+	if fromLen == 0 && toLen == 0 {
+		return nil, nil
+	}
+
+	var ops []msgs.Op
+
+	// For indices that exist in both lists, generate SET if different
+	minLen := fromLen
+	if toLen < minLen {
+		minLen = toLen
+	}
+	for i := 0; i < minLen; i++ {
+		if fromSlice[i] != toSlice[i] {
+			op := msgs.NewOp()
+			op.SetFieldNum(fieldNum)
+			op.SetType(msgs.ListSet)
+			op.SetIndex(int32(i))
+			op.SetData(encode(toSlice[i]))
+			ops = append(ops, op)
+		}
+	}
+
+	// For new indices in 'to', generate INSERT
+	for i := fromLen; i < toLen; i++ {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListInsert)
+		op.SetIndex(int32(i))
+		op.SetData(encode(toSlice[i]))
+		ops = append(ops, op)
+	}
+
+	// For removed indices, generate REMOVE (in reverse order)
+	for i := fromLen - 1; i >= toLen; i-- {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListRemove)
+		op.SetIndex(int32(i))
+		ops = append(ops, op)
+	}
+
+	// Use LIST_REPLACE when individual ops exceed half the combined list sizes.
+	// This heuristic balances patch size vs granularity of changes.
+	if len(ops) > 0 && len(ops) > (fromLen+toLen)/2 {
+		replaceOp, err := diffListNumberReplace(from, to, fieldNum, fd)
+		if err != nil {
+			return nil, err
+		}
+		if replaceOp != nil {
+			return []msgs.Op{*replaceOp}, nil
+		}
+		return nil, nil
+	}
+
+	return ops, nil
+}
+
+func diffListNumberFloat[F float32 | float64](from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDescr, encode func(F) []byte) ([]msgs.Op, error) {
+	fromList := structs.MustGetListNumber[F](from, fieldNum)
+	toList := structs.MustGetListNumber[F](to, fieldNum)
+
+	var fromSlice, toSlice []F
+	if fromList != nil {
+		fromSlice = fromList.Slice()
+	}
+	if toList != nil {
+		toSlice = toList.Slice()
+	}
+
+	fromLen := len(fromSlice)
+	toLen := len(toSlice)
+
+	if fromLen == 0 && toLen == 0 {
+		return nil, nil
+	}
+
+	var ops []msgs.Op
+
+	// For indices that exist in both lists, generate SET if different (handling NaN)
+	minLen := fromLen
+	if toLen < minLen {
+		minLen = toLen
+	}
+	for i := 0; i < minLen; i++ {
+		fromNaN := math.IsNaN(float64(fromSlice[i]))
+		toNaN := math.IsNaN(float64(toSlice[i]))
+		equal := (fromNaN && toNaN) || (!fromNaN && !toNaN && fromSlice[i] == toSlice[i])
+		if !equal {
+			op := msgs.NewOp()
+			op.SetFieldNum(fieldNum)
+			op.SetType(msgs.ListSet)
+			op.SetIndex(int32(i))
+			op.SetData(encode(toSlice[i]))
+			ops = append(ops, op)
+		}
+	}
+
+	// For new indices in 'to', generate INSERT
+	for i := fromLen; i < toLen; i++ {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListInsert)
+		op.SetIndex(int32(i))
+		op.SetData(encode(toSlice[i]))
+		ops = append(ops, op)
+	}
+
+	// For removed indices, generate REMOVE (in reverse order)
+	for i := fromLen - 1; i >= toLen; i-- {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListRemove)
+		op.SetIndex(int32(i))
+		ops = append(ops, op)
+	}
+
+	// Use LIST_REPLACE when individual ops exceed half the combined list sizes.
+	// This heuristic balances patch size vs granularity of changes.
+	if len(ops) > 0 && len(ops) > (fromLen+toLen)/2 {
+		replaceOp, err := diffListNumberReplace(from, to, fieldNum, fd)
+		if err != nil {
+			return nil, err
+		}
+		if replaceOp != nil {
+			return []msgs.Op{*replaceOp}, nil
+		}
+		return nil, nil
+	}
+
+	return ops, nil
+}
+
+func diffListBytes(from, to *structs.Struct, fieldNum uint16) ([]msgs.Op, error) {
 	fromList := structs.MustGetListBytes(from, fieldNum)
 	toList := structs.MustGetListBytes(to, fieldNum)
 
@@ -405,11 +655,60 @@ func diffListBytes(from, to *structs.Struct, fieldNum uint16) (*msgs.Op, error) 
 		return nil, nil
 	}
 
-	// For now, use LIST_REPLACE
-	return createListReplaceBytes(fieldNum, toList)
+	var ops []msgs.Op
+
+	// For indices that exist in both lists, generate SET if different
+	minLen := fromLen
+	if toLen < minLen {
+		minLen = toLen
+	}
+	for i := 0; i < minLen; i++ {
+		if !bytes.Equal(fromList.Get(i), toList.Get(i)) {
+			op := msgs.NewOp()
+			op.SetFieldNum(fieldNum)
+			op.SetType(msgs.ListSet)
+			op.SetIndex(int32(i))
+			op.SetData(toList.Get(i))
+			ops = append(ops, op)
+		}
+	}
+
+	// For new indices in 'to', generate INSERT
+	for i := fromLen; i < toLen; i++ {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListInsert)
+		op.SetIndex(int32(i))
+		op.SetData(toList.Get(i))
+		ops = append(ops, op)
+	}
+
+	// For removed indices, generate REMOVE (in reverse order)
+	for i := fromLen - 1; i >= toLen; i-- {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListRemove)
+		op.SetIndex(int32(i))
+		ops = append(ops, op)
+	}
+
+	// Use LIST_REPLACE when individual ops exceed half the combined list sizes.
+	// This heuristic balances patch size vs granularity of changes.
+	if len(ops) > 0 && len(ops) > (fromLen+toLen)/2 {
+		replaceOp, err := createListReplaceBytes(fieldNum, toList)
+		if err != nil {
+			return nil, err
+		}
+		if replaceOp != nil {
+			return []msgs.Op{*replaceOp}, nil
+		}
+		return nil, nil
+	}
+
+	return ops, nil
 }
 
-func diffListStructs(from, to *structs.Struct, fieldNum uint16, fd *mapping.FieldDescr) (*msgs.Op, error) {
+func diffListStructs(from, to *structs.Struct, fieldNum uint16) ([]msgs.Op, error) {
 	fromList := structs.MustGetListStruct(from, fieldNum)
 	toList := structs.MustGetListStruct(to, fieldNum)
 
@@ -425,9 +724,78 @@ func diffListStructs(from, to *structs.Struct, fieldNum uint16, fd *mapping.Fiel
 		return nil, nil
 	}
 
-	// For now, use LIST_REPLACE for struct lists
-	// Full index-based diffing with LIST_STRUCT_PATCH can be added later
-	return createListReplaceStructs(fieldNum, toList)
+	var ops []msgs.Op
+
+	// For indices that exist in both lists, generate LIST_STRUCT_PATCH if different
+	minLen := fromLen
+	if toLen < minLen {
+		minLen = toLen
+	}
+	for i := 0; i < minLen; i++ {
+		fromItem := fromList.Get(i)
+		toItem := toList.Get(i)
+
+		// Compute recursive patch - if structs are equal, this produces 0 ops
+		subPatch := msgs.NewPatch()
+		subPatch.SetVersion(PatchVersion)
+		if err := diffStructToPatch(fromItem, toItem, &subPatch); err != nil {
+			return nil, fmt.Errorf("diff struct at index %d: %w", i, err)
+		}
+
+		if len(subPatch.Ops()) > 0 {
+			patchBytes, err := subPatch.Marshal()
+			if err != nil {
+				return nil, fmt.Errorf("marshal sub-patch at index %d: %w", i, err)
+			}
+
+			op := msgs.NewOp()
+			op.SetFieldNum(fieldNum)
+			op.SetType(msgs.ListStructPatch)
+			op.SetIndex(int32(i))
+			op.SetData(patchBytes)
+			ops = append(ops, op)
+		}
+	}
+
+	// For new indices in 'to', generate INSERT with full struct data
+	for i := fromLen; i < toLen; i++ {
+		toItem := toList.Get(i)
+		buf := &bytes.Buffer{}
+		if _, err := toItem.Marshal(buf); err != nil {
+			return nil, fmt.Errorf("marshal struct for insert at index %d: %w", i, err)
+		}
+
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListInsert)
+		op.SetIndex(int32(i))
+		op.SetData(buf.Bytes())
+		ops = append(ops, op)
+	}
+
+	// For removed indices, generate REMOVE (in reverse order)
+	for i := fromLen - 1; i >= toLen; i-- {
+		op := msgs.NewOp()
+		op.SetFieldNum(fieldNum)
+		op.SetType(msgs.ListRemove)
+		op.SetIndex(int32(i))
+		ops = append(ops, op)
+	}
+
+	// Use LIST_REPLACE when individual ops exceed half the combined list sizes.
+	// This heuristic balances patch size vs granularity of changes.
+	if len(ops) > 0 && len(ops) > (fromLen+toLen)/2 {
+		replaceOp, err := createListReplaceStructs(fieldNum, toList)
+		if err != nil {
+			return nil, err
+		}
+		if replaceOp != nil {
+			return []msgs.Op{*replaceOp}, nil
+		}
+		return nil, nil
+	}
+
+	return ops, nil
 }
 
 // Helper functions for list replace operations
@@ -435,7 +803,7 @@ func createListReplaceBools(fieldNum uint16, toList *structs.Bools) (*msgs.Op, e
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 
 	if toList == nil || toList.Len() == 0 {
 		op.SetData(nil)
@@ -457,7 +825,7 @@ func diffListNumberReplace(from, to *structs.Struct, fieldNum uint16, fd *mappin
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 
 	// Encode based on the specific number type
 	switch fd.Type {
@@ -584,11 +952,13 @@ func encodeListNumberFloat32(from, to *structs.Struct, fieldNum uint16) ([]byte,
 		toSlice = toList.Slice()
 	}
 
-	// Check if lists are equal
+	// Check if lists are equal (handling NaN: both NaN is considered equal)
 	if len(fromSlice) == len(toSlice) {
 		equal := true
 		for i := range fromSlice {
-			if fromSlice[i] != toSlice[i] {
+			fromNaN := math.IsNaN(float64(fromSlice[i]))
+			toNaN := math.IsNaN(float64(toSlice[i]))
+			if !((fromNaN && toNaN) || (!fromNaN && !toNaN && fromSlice[i] == toSlice[i])) {
 				equal = false
 				break
 			}
@@ -618,11 +988,13 @@ func encodeListNumberFloat64(from, to *structs.Struct, fieldNum uint16) ([]byte,
 		toSlice = toList.Slice()
 	}
 
-	// Check if lists are equal
+	// Check if lists are equal (handling NaN: both NaN is considered equal)
 	if len(fromSlice) == len(toSlice) {
 		equal := true
 		for i := range fromSlice {
-			if fromSlice[i] != toSlice[i] {
+			fromNaN := math.IsNaN(fromSlice[i])
+			toNaN := math.IsNaN(toSlice[i])
+			if !((fromNaN && toNaN) || (!fromNaN && !toNaN && fromSlice[i] == toSlice[i])) {
 				equal = false
 				break
 			}
@@ -644,7 +1016,7 @@ func createListReplaceBytes(fieldNum uint16, toList *structs.Bytes) (*msgs.Op, e
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 
 	if toList == nil || toList.Len() == 0 {
 		op.SetData(nil)
@@ -682,7 +1054,7 @@ func createListReplaceStructs(fieldNum uint16, toList *structs.Structs) (*msgs.O
 	op := msgs.NewOp()
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
-	op.SetIndex(-1)
+	op.SetIndex(NoListIndex)
 
 	if toList == nil || toList.Len() == 0 {
 		op.SetData(nil)

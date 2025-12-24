@@ -13,6 +13,7 @@ import (
     "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
     "github.com/bearlytools/claw/clawc/languages/go/structs"
     "github.com/bearlytools/claw/clawc/languages/go/types/list"
+    "github.com/bearlytools/claw/clawc/languages/go/conversions"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
@@ -186,6 +187,43 @@ func (x Vehicle) SetBools(value list.Bools) Vehicle {
     return x
 }
 
+func (x Vehicle) Name() string {
+    ptr := structs.MustGetBytes(x.s, 5)
+    if ptr == nil {
+        return ""
+    }
+    return conversions.ByteSlice2String(*ptr)
+}
+
+func (x Vehicle) SetName(value string) Vehicle {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, 5, b, true)
+    return x
+}
+
+func (x Vehicle) VIN() []byte {
+    ptr := structs.MustGetBytes(x.s, 6)
+    if ptr == nil {
+        return nil
+    }
+    return *ptr
+}
+
+func (x Vehicle) SafeGetVIN() []byte {
+    ptr := structs.MustGetBytes(x.s, 6)
+    if ptr == nil {
+        return nil
+    }
+    b := make([]byte, len(*ptr))
+    copy(b, *ptr)
+    return b
+}
+
+func (x Vehicle) SetVIN(value []byte) Vehicle {
+    structs.MustSetBytes(x.s, 6, value, false)
+    return x
+}
+
 
 
 // ClawStruct returns a reflection type representing the Struct.
@@ -244,6 +282,8 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/test_claw_imports/trucks",
             FieldNum: 2,
             IsEnum: false,
+            
+            Mapping: trucks.XXXMappingTruck,
         },
         {
             Name: "Types",
@@ -260,6 +300,22 @@ var XXXMappingVehicle = &mapping.Map{
             Package: "vehicles",
             FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
             FieldNum: 4,
+            IsEnum: false,
+        },
+        {
+            Name: "Name",
+            Type: field.FTString,
+            Package: "vehicles",
+            FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
+            FieldNum: 5,
+            IsEnum: false,
+        },
+        {
+            Name: "VIN",
+            Type: field.FTBytes,
+            Package: "vehicles",
+            FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
+            FieldNum: 6,
             IsEnum: false,
         },
     },
@@ -340,6 +396,14 @@ var XXXStructDescrVehicle = &reflect.XXXStructDescrImpl{
         
         reflect.XXXFieldDescrImpl{
             FD:  XXXMappingVehicle.Fields[4],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingVehicle.Fields[5],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingVehicle.Fields[6],  
         },  
     },
 }

@@ -7,6 +7,14 @@ import (
 
 // Number encoding helpers using little-endian format to match claw wire format.
 
+func encodeInt8(v int8) []byte {
+	return []byte{byte(v)}
+}
+
+func encodeUint8(v uint8) []byte {
+	return []byte{v}
+}
+
 func encodeInt16(v int16) []byte {
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(v))
