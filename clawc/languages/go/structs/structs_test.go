@@ -336,8 +336,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	var totalWithScalars int64 = 120 // Scalar sizes + 8 byte hedaer for Struct
-	if *root.structTotal != totalWithScalars {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", *root.structTotal, totalWithScalars)
+	if root.structTotal.Load() != totalWithScalars {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", root.structTotal.Load(), totalWithScalars)
 	}
 
 	if err = marshalCheck(root, int(totalWithScalars)); err != nil {
@@ -379,12 +379,12 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	log.Println("we are adding: ", 8+SizeWithPadding(len(strData)))
 	totalWithBytes := totalWithScalars + 8 + int64(SizeWithPadding(len(strData)))
 	log.Println("totalWithBytes: ", totalWithBytes)
-	if *root.structTotal != totalWithBytes {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", *root.structTotal, totalWithBytes)
+	if root.structTotal.Load() != totalWithBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after adding bytes field was %d, want %d", root.structTotal.Load(), totalWithBytes)
 	}
 
-	if *root.structTotal%8 != 0 {
-		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): structTotal(%d) is not divisible by 8", *root.structTotal)
+	if root.structTotal.Load()%8 != 0 {
+		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): structTotal(%d) is not divisible by 8", root.structTotal.Load())
 	}
 
 	if err = marshalCheck(root, int(totalWithBytes)); err != nil {
@@ -403,8 +403,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		panic(err)
 	}
 	totalWithStruct := totalWithBytes + 8
-	if *root.structTotal != totalWithStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
+	if root.structTotal.Load() != totalWithStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithStruct)
 	}
 
 	if err = SetBool(sub, 0, true); err != nil {
@@ -422,8 +422,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if !gotBool {
 		t.Fatalf("TestBasicEncodeDecodeStruct(sub Struct): root.Struct[13], got %v, want %v", gotBool, true)
 	}
-	if *root.structTotal != totalWithStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithStruct)
+	if root.structTotal.Load() != totalWithStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct+Bool value): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithStruct)
 	}
 
 	if err = marshalCheck(root, totalWithStruct); err != nil {
@@ -447,8 +447,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	totalWithListStruct := totalWithStruct + 8 + 16 // ListStruct header + two Struct headers
-	if *root.structTotal != totalWithListStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
+	if root.structTotal.Load() != totalWithListStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListStruct)
 	}
 
 	if err = SetBool(structs[1], 0, true); err != nil {
@@ -467,8 +467,8 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if !gotBool {
 		t.Fatalf("TestBasicEncodeDecodeStruct(ListStruct): root.Struct[14][1], got %v, want %v", gotBool, true)
 	}
-	if *root.structTotal != totalWithListStruct {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct+Bool value): root.Struct total was %d, want %d", *root.structTotal, totalWithListStruct)
+	if root.structTotal.Load() != totalWithListStruct {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct+Bool value): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListStruct)
 	}
 	if err = marshalCheck(root, totalWithListStruct); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding list Struct): %s", err)
@@ -488,14 +488,14 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 
 	totalWithListNumber := totalWithListStruct + 8
-	if *root.structTotal != totalWithListNumber {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListNumber): root.Struct total was %d, want %d", *root.structTotal, totalWithListNumber)
+	if root.structTotal.Load() != totalWithListNumber {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListNumber): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListNumber)
 	}
 
 	nums.Append(1, 2, 3, 4, 5, 6, 7, 8, 9)
 	totalWithListNumber += 16 // Requires 16 bytes to hold 9 uint8 values
-	if *root.structTotal != totalWithListNumber {
-		t.Fatalf("TestBasicEncodeDecodeStruct(appending to ListNumber): root.Struct total was %d, want %d", *root.structTotal, totalWithListNumber)
+	if root.structTotal.Load() != totalWithListNumber {
+		t.Fatalf("TestBasicEncodeDecodeStruct(appending to ListNumber): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListNumber)
 	}
 
 	if err := marshalCheck(root, totalWithListNumber); err != nil {
@@ -516,15 +516,15 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	}
 	totalWithListBytes := totalWithListNumber + 8
 
-	if *root.structTotal != totalWithListBytes {
-		t.Fatalf("TestBasicEncodeDecodeStruct(adding Listbytes): root.Struct total was %d, want %d", *root.structTotal, totalWithListBytes)
+	if root.structTotal.Load() != totalWithListBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(adding Listbytes): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListBytes)
 	}
 
 	bytesList.Append([]byte("what"), []byte("ever"))
 
 	totalWithListBytes += 16 // 2 * content(4 bytes each) + two entry headers(4 bytes)
-	if *root.structTotal != totalWithListBytes {
-		t.Fatalf("TestBasicEncodeDecodeStruct(appending to Listbytes): root.Struct total was %d, want %d", *root.structTotal, totalWithListBytes)
+	if root.structTotal.Load() != totalWithListBytes {
+		t.Fatalf("TestBasicEncodeDecodeStruct(appending to Listbytes): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListBytes)
 	}
 	if err := marshalCheck(root, totalWithListBytes); err != nil {
 		t.Fatalf("TestBasicEncodeDecodeStruct(encoding after adding Listbytes): %s", err)
@@ -543,12 +543,12 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	written, _ := root.Marshal(buff) // We just marshalled, so no error
 	log.Println("encoder says it wrote: ", written)
 	cp := New(0, msg0Mapping)
-	log.Println("new root is: ", *cp.structTotal)
+	log.Println("new root is: ", cp.structTotal.Load())
 	if _, err := cp.Unmarshal(buff); err != nil {
 		panic(err)
 	}
-	if *cp.structTotal != int64(written) {
-		t.Fatalf("TestBasicEncodeDecodeStruct(decode message): cp.Struct total was %d, want %d", *cp.structTotal, written)
+	if cp.structTotal.Load() != int64(written) {
+		t.Fatalf("TestBasicEncodeDecodeStruct(decode message): cp.Struct total was %d, want %d", cp.structTotal.Load(), written)
 	}
 
 	if err := compareStruct(root, cp); err != nil {
@@ -1091,5 +1091,215 @@ func TestNumberToDescCheck(t *testing.T) {
 		if gotIsFloat != test.wantIsFloat {
 			t.Errorf("TestNumberToDescCheck(%T): isFloat: got %v, want %v", test.n, gotIsFloat, test.wantIsFloat)
 		}
+	}
+}
+
+func TestStructReset(t *testing.T) {
+	t.Parallel()
+
+	testMapping := &mapping.Map{
+		Name: "TestStruct",
+		Fields: []*mapping.FieldDescr{
+			{Name: "Bool", Type: field.FTBool, FieldNum: 0},
+			{Name: "Int32", Type: field.FTInt32, FieldNum: 1},
+			{Name: "String", Type: field.FTString, FieldNum: 2},
+		},
+	}
+	testMapping.Init()
+
+	s := New(0, testMapping)
+
+	// Set some values
+	if err := SetBool(s, 0, true); err != nil {
+		t.Fatalf("[TestStructReset]: SetBool failed: %v", err)
+	}
+	if err := SetNumber(s, 1, int32(42)); err != nil {
+		t.Fatalf("[TestStructReset]: SetNumber failed: %v", err)
+	}
+	if err := SetBytes(s, 2, []byte("hello"), false); err != nil {
+		t.Fatalf("[TestStructReset]: SetBytes failed: %v", err)
+	}
+
+	// Verify values are set
+	if got, _ := GetBool(s, 0); got != true {
+		t.Fatalf("[TestStructReset]: before Reset, GetBool = %v, want true", got)
+	}
+	if got, _ := GetNumber[int32](s, 1); got != 42 {
+		t.Fatalf("[TestStructReset]: before Reset, GetNumber = %v, want 42", got)
+	}
+
+	// Store the structTotal before reset
+	totalBeforeReset := s.structTotal.Load()
+	if totalBeforeReset == 0 {
+		t.Fatalf("[TestStructReset]: structTotal should be > 0 before Reset")
+	}
+
+	// Reset the struct
+	s.Reset()
+
+	// Verify state is cleared
+	if s.structTotal.Load() != 0 {
+		t.Errorf("[TestStructReset]: after Reset, structTotal = %d, want 0", s.structTotal.Load())
+	}
+	if s.fields != nil {
+		t.Errorf("[TestStructReset]: after Reset, fields should be nil")
+	}
+	if s.mapping != nil {
+		t.Errorf("[TestStructReset]: after Reset, mapping should be nil")
+	}
+	if s.rawData != nil {
+		t.Errorf("[TestStructReset]: after Reset, rawData should be nil")
+	}
+	if s.modified {
+		t.Errorf("[TestStructReset]: after Reset, modified should be false")
+	}
+}
+
+func TestStructPoolReuse(t *testing.T) {
+	t.Parallel()
+
+	testMapping := &mapping.Map{
+		Name: "TestStruct",
+		Fields: []*mapping.FieldDescr{
+			{Name: "Value", Type: field.FTInt32, FieldNum: 0},
+		},
+	}
+	testMapping.Init()
+
+	// Create a struct, set a value, and verify structTotal is updated
+	s1 := New(0, testMapping)
+	if err := SetNumber(s1, 0, int32(100)); err != nil {
+		t.Fatalf("[TestStructPoolReuse]: SetNumber failed: %v", err)
+	}
+
+	total1 := s1.structTotal.Load()
+	if total1 == 0 {
+		t.Fatalf("[TestStructPoolReuse]: structTotal should be > 0 after setting value")
+	}
+
+	// Create another struct - it should start fresh
+	s2 := New(0, testMapping)
+
+	// The new struct should have structTotal = 8 (just the header)
+	total2 := s2.structTotal.Load()
+	if total2 != 8 {
+		t.Errorf("[TestStructPoolReuse]: new struct structTotal = %d, want 8", total2)
+	}
+
+	// Set a different value and verify it works independently
+	if err := SetNumber(s2, 0, int32(200)); err != nil {
+		t.Fatalf("[TestStructPoolReuse]: SetNumber on s2 failed: %v", err)
+	}
+
+	got, err := GetNumber[int32](s2, 0)
+	if err != nil {
+		t.Fatalf("[TestStructPoolReuse]: GetNumber on s2 failed: %v", err)
+	}
+	if got != 200 {
+		t.Errorf("[TestStructPoolReuse]: s2 GetNumber = %d, want 200", got)
+	}
+
+	// Original struct should still have its value
+	got1, err := GetNumber[int32](s1, 0)
+	if err != nil {
+		t.Fatalf("[TestStructPoolReuse]: GetNumber on s1 failed: %v", err)
+	}
+	if got1 != 100 {
+		t.Errorf("[TestStructPoolReuse]: s1 GetNumber = %d, want 100", got1)
+	}
+}
+
+func TestRecycleFieldsWithLists(t *testing.T) {
+	t.Parallel()
+
+	innerMapping := &mapping.Map{
+		Name: "Inner",
+		Fields: []*mapping.FieldDescr{
+			{Name: "Value", Type: field.FTInt32, FieldNum: 0},
+		},
+	}
+	innerMapping.Init()
+
+	testMapping := &mapping.Map{
+		Name: "TestStruct",
+		Fields: []*mapping.FieldDescr{
+			{Name: "Bools", Type: field.FTListBools, FieldNum: 0},
+			{Name: "Numbers", Type: field.FTListInt32, FieldNum: 1},
+			{Name: "Bytes", Type: field.FTListBytes, FieldNum: 2},
+			{Name: "Structs", Type: field.FTListStructs, FieldNum: 3, Mapping: innerMapping},
+		},
+	}
+	testMapping.Init()
+
+	// Create struct with list fields
+	s := New(0, testMapping)
+
+	// Set up list of bools
+	bools := NewBools(0)
+	bools.Append(true, false, true)
+	MustSetListBool(s, 0, bools)
+
+	// Set up list of numbers
+	nums := NewNumbers[int32]()
+	nums.Append(1, 2, 3)
+	MustSetListNumber(s, 1, nums)
+
+	// Set up list of bytes
+	byts := NewBytes()
+	byts.Append([]byte("hello"))
+	byts.Append([]byte("world"))
+	MustSetListBytes(s, 2, byts)
+
+	// Set up list of structs
+	structs := NewStructs(innerMapping)
+	inner1 := New(0, innerMapping)
+	MustSetNumber(inner1, 0, int32(100))
+	structs.Append(inner1)
+	MustSetListStruct(s, 3, structs)
+
+	// Verify total is non-zero
+	if s.structTotal.Load() == 0 {
+		t.Fatalf("[TestRecycleFieldsWithLists]: structTotal should be > 0")
+	}
+
+	// Reset should recycle all list fields
+	s.Reset()
+
+	// After reset, all should be cleared
+	if s.structTotal.Load() != 0 {
+		t.Errorf("[TestRecycleFieldsWithLists]: after Reset, structTotal = %d, want 0", s.structTotal.Load())
+	}
+	if s.fields != nil {
+		t.Errorf("[TestRecycleFieldsWithLists]: after Reset, fields should be nil")
+	}
+}
+
+func TestBytesDataSizeAndPadding(t *testing.T) {
+	t.Parallel()
+
+	b := NewBytes()
+
+	// Initially should be zero
+	if b.dataSize.Load() != 0 {
+		t.Errorf("[TestBytesDataSizeAndPadding]: initial dataSize = %d, want 0", b.dataSize.Load())
+	}
+	if b.padding.Load() != 0 {
+		t.Errorf("[TestBytesDataSizeAndPadding]: initial padding = %d, want 0", b.padding.Load())
+	}
+
+	// Add some bytes - "hello" is 5 bytes
+	b.Append([]byte("hello"))
+
+	// dataSize should now be 4 (length prefix) + 5 (data) = 9
+	if b.dataSize.Load() != 9 {
+		t.Errorf("[TestBytesDataSizeAndPadding]: after append, dataSize = %d, want 9", b.dataSize.Load())
+	}
+
+	// Add more bytes
+	b.Append([]byte("world"))
+
+	// dataSize should increase
+	if b.dataSize.Load() <= 9 {
+		t.Errorf("[TestBytesDataSizeAndPadding]: after second append, dataSize should be > 9, got %d", b.dataSize.Load())
 	}
 }

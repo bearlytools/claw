@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"log"
 	"math"
 	"slices"
 	"sync/atomic"
@@ -210,6 +209,7 @@ type Numbers[I typedetect.Number] struct {
 
 // NewNumbers is used to create a holder for a list of numbers not decoded from an existing []byte stream.
 func NewNumbers[I typedetect.Number]() *Numbers[I] {
+	ctx := context.Background()
 	var t I
 	size := unsafe.Sizeof(t)
 
@@ -222,44 +222,63 @@ func NewNumbers[I typedetect.Number]() *Numbers[I] {
 	isFloatType = typedetect.IsFloat[I]()
 	isSigned := typedetect.IsSignedInteger[I]()
 
-	// Create new instance directly (pools don't work with custom types)
-	n = &Numbers[I]{}
-
+	// Try to get from appropriate pool based on type.
+	// Use type assertion to check if pooled type matches - it won't for enum types.
+	var pooled any
+	var ok bool
 	switch size {
 	case 1:
 		if isSigned {
 			ft = field.FTListInt8
+			pooled = nInt8Pool.Get(ctx)
 		} else {
 			ft = field.FTListUint8
+			pooled = nUint8Pool.Get(ctx)
 		}
 		sizeInBytes = 1
 	case 2:
 		if isSigned {
 			ft = field.FTListInt16
+			pooled = nInt16Pool.Get(ctx)
 		} else {
 			ft = field.FTListUint16
+			pooled = nUint16Pool.Get(ctx)
 		}
 		sizeInBytes = 2
 	case 4:
 		if isFloatType {
 			ft = field.FTListFloat32
+			pooled = nFloat32Pool.Get(ctx)
 		} else if isSigned {
 			ft = field.FTListInt32
+			pooled = nInt32Pool.Get(ctx)
 		} else {
 			ft = field.FTListUint32
+			pooled = nUint32Pool.Get(ctx)
 		}
 		sizeInBytes = 4
 	case 8:
 		if isFloatType {
 			ft = field.FTListFloat64
+			pooled = nFloat64Pool.Get(ctx)
 		} else if isSigned {
 			ft = field.FTListInt64
+			pooled = nInt64Pool.Get(ctx)
 		} else {
 			ft = field.FTListUint64
+			pooled = nUint64Pool.Get(ctx)
 		}
 		sizeInBytes = 8
 	default:
 		panic(fmt.Sprintf("unsupported number type %T (size: %d bytes)", t, size))
+	}
+
+	// Type assertion - if I is an enum type, this will fail and we create new one.
+	n, ok = pooled.(*Numbers[I])
+	if !ok {
+		// Return pooled value since type doesn't match (e.g., enum types)
+		returnNumberToPool(ctx, pooled, sizeInBytes, isFloatType, isSigned)
+		n = &Numbers[I]{}
 	}
 
 	h := NewGenericHeader()
@@ -268,8 +287,44 @@ func NewNumbers[I typedetect.Number]() *Numbers[I] {
 	n.sizeInBytes = sizeInBytes
 	n.isFloat = isFloatType
 	n.data = h
+	n.len = 0
+	n.s = nil
 
 	return n
+}
+
+// returnNumberToPool returns a pooled Numbers value back to its pool.
+func returnNumberToPool(ctx context.Context, pooled any, sizeInBytes uint8, isFloat, isSigned bool) {
+	switch sizeInBytes {
+	case 1:
+		if isSigned {
+			nInt8Pool.Put(ctx, pooled.(*Numbers[int8]))
+		} else {
+			nUint8Pool.Put(ctx, pooled.(*Numbers[uint8]))
+		}
+	case 2:
+		if isSigned {
+			nInt16Pool.Put(ctx, pooled.(*Numbers[int16]))
+		} else {
+			nUint16Pool.Put(ctx, pooled.(*Numbers[uint16]))
+		}
+	case 4:
+		if isFloat {
+			nFloat32Pool.Put(ctx, pooled.(*Numbers[float32]))
+		} else if isSigned {
+			nInt32Pool.Put(ctx, pooled.(*Numbers[int32]))
+		} else {
+			nUint32Pool.Put(ctx, pooled.(*Numbers[uint32]))
+		}
+	case 8:
+		if isFloat {
+			nFloat64Pool.Put(ctx, pooled.(*Numbers[float64]))
+		} else if isSigned {
+			nInt64Pool.Put(ctx, pooled.(*Numbers[int64]))
+		} else {
+			nUint64Pool.Put(ctx, pooled.(*Numbers[uint64]))
+		}
+	}
 }
 
 func wordsRequiredToStore(items, sizeInBytes int) int {
@@ -283,6 +338,7 @@ func wordsRequiredToStore(items, sizeInBytes int) int {
 
 // NewNumbersFromBytes returns a new Number value.
 func NewNumbersFromBytes[I typedetect.Number](data *[]byte, s *Struct) (*Numbers[I], error) {
+	ctx := context.Background()
 	l := len(*data)
 	if l < 8 {
 		return nil, fmt.Errorf("header was < 64 bits")
@@ -303,21 +359,54 @@ func NewNumbersFromBytes[I typedetect.Number](data *[]byte, s *Struct) (*Numbers
 
 	// Determine characteristics using unsafe helpers
 	isFloatType = typedetect.IsFloat[I]()
+	isSigned := typedetect.IsSignedInteger[I]()
 
-	// Create new instance directly (pools don't work with custom types)
-	n = &Numbers[I]{}
-
+	// Try to get from appropriate pool based on type
+	var pooled any
+	var ok bool
 	switch size {
 	case 1:
 		sizeInBytes = 1
+		if isSigned {
+			pooled = nInt8Pool.Get(ctx)
+		} else {
+			pooled = nUint8Pool.Get(ctx)
+		}
 	case 2:
 		sizeInBytes = 2
+		if isSigned {
+			pooled = nInt16Pool.Get(ctx)
+		} else {
+			pooled = nUint16Pool.Get(ctx)
+		}
 	case 4:
 		sizeInBytes = 4
+		if isFloatType {
+			pooled = nFloat32Pool.Get(ctx)
+		} else if isSigned {
+			pooled = nInt32Pool.Get(ctx)
+		} else {
+			pooled = nUint32Pool.Get(ctx)
+		}
 	case 8:
 		sizeInBytes = 8
+		if isFloatType {
+			pooled = nFloat64Pool.Get(ctx)
+		} else if isSigned {
+			pooled = nInt64Pool.Get(ctx)
+		} else {
+			pooled = nUint64Pool.Get(ctx)
+		}
 	default:
 		panic(fmt.Sprintf("unsupported number type %T (size: %d bytes)", t, size))
+	}
+
+	// Type assertion - if I is an enum type, this will fail and we create new
+	n, ok = pooled.(*Numbers[I])
+	if !ok {
+		// Return pooled value since type doesn't match (e.g., enum types)
+		returnNumberToPool(ctx, pooled, sizeInBytes, isFloatType, isSigned)
+		n = &Numbers[I]{}
 	}
 	n.sizeInBytes = sizeInBytes
 	n.isFloat = isFloatType
@@ -500,8 +589,8 @@ type Bytes struct {
 	data   [][]byte // Each entry includes the item header of 32bits.
 
 	s        *Struct
-	dataSize int64 // This is the size of the "data" field (without header)
-	padding  int64 // This is how much padding would currently be needed
+	dataSize atomic.Int64 // This is the size of the "data" field (without header)
+	padding  atomic.Int64 // This is how much padding would currently be needed
 }
 
 // NewBytes returns a new Bytes for holding lists of bytes. This is used when creating a new list
@@ -562,13 +651,12 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 		read += paddingNeeded
 	}
 
-	log.Println("1: ", read)
 	XXXAddToTotal(s, read) // Add header + data + padding
 
 	b.data = d
 	b.s = s
-	atomic.StoreInt64(&b.dataSize, int64(read-8-paddingNeeded)) // We do not count the list header or padding in this
-	atomic.StoreInt64(&b.padding, int64(paddingNeeded))
+	b.dataSize.Store(int64(read - 8 - paddingNeeded)) // We do not count the list header or padding in this
+	b.padding.Store(int64(paddingNeeded))
 
 	return b, nil
 }
@@ -632,12 +720,12 @@ func (b *Bytes) Set(index int, value []byte) {
 	// Record the current size of this value and end padding.  Get new value size and new
 	// padding needed. Calculate our new data size.
 	oldSize := int64(len(b.data[index]))
-	oldPadding := b.padding
+	oldPadding := b.padding.Load()
 	XXXAddToTotal(b.s, -(oldSize + oldPadding))
-	atomic.AddInt64(&b.dataSize, -oldSize)
+	b.dataSize.Add(-oldSize)
 
-	atomic.AddInt64(&b.dataSize, int64(len(value))+4) // data + entry header
-	atomic.StoreInt64(&b.padding, PaddingNeeded(b.dataSize))
+	b.dataSize.Add(int64(len(value)) + 4) // data + entry header
+	b.padding.Store(PaddingNeeded(b.dataSize.Load()))
 
 	b.set(index, value)
 
@@ -662,13 +750,12 @@ func (b *Bytes) Append(values ...[]byte) {
 		}
 	}
 
-	// Remove old data size = padding.
+	// Remove old data size + padding.
 	if b.s != nil {
-		log.Println("removing old data size before append: ", -(b.dataSize + b.padding))
-		XXXAddToTotal(b.s, -(b.dataSize + b.padding))
+		XXXAddToTotal(b.s, -(b.dataSize.Load() + b.padding.Load()))
 	}
 
-	newSize := b.dataSize // We are appending, so our new size starts at the old size
+	newSize := b.dataSize.Load() // We are appending, so our new size starts at the old size
 
 	// Create new slice that can hold our data.
 	indexStart := len(b.data)
@@ -683,11 +770,10 @@ func (b *Bytes) Append(values ...[]byte) {
 	updateItems(b.header, len(b.data))
 
 	// Record our data size and padding requirements.
-	b.dataSize = newSize
-	b.padding = PaddingNeeded(newSize)
+	b.dataSize.Store(newSize)
+	b.padding.Store(PaddingNeeded(newSize))
 	if b.s != nil {
-		log.Println("adding new append data size: ", b.dataSize+b.padding)
-		XXXAddToTotal(b.s, b.dataSize+b.padding) // data size + entry header size
+		XXXAddToTotal(b.s, b.dataSize.Load()+b.padding.Load()) // data size + entry header size
 		b.s.markModified()
 	}
 }
@@ -700,10 +786,27 @@ func (b *Bytes) Slice() [][]byte {
 		return nil
 	}
 
+	// Calculate total size needed (excluding 4-byte headers)
+	total := 0
+	for _, v := range b.data {
+		if len(v) > 4 {
+			total += len(v) - 4
+		}
+	}
+
+	// Single allocation for all data, plus one for the slice
+	backing := make([]byte, total)
 	n := make([][]byte, len(b.data))
+	offset := 0
 	for i, v := range b.data {
-		n[i] = make([]byte, len(v))
-		copy(n[i], v)
+		if len(v) <= 4 {
+			n[i] = nil // Empty entry
+			continue
+		}
+		dataLen := len(v) - 4
+		n[i] = backing[offset : offset+dataLen]
+		copy(n[i], v[4:]) // Skip 4-byte header
+		offset += dataLen
 	}
 	return n
 }
@@ -728,7 +831,7 @@ func (b *Bytes) Encode(w io.Writer) (int, error) {
 			return wrote, err
 		}
 	}
-	n, err := w.Write(Padding(int(b.padding)))
+	n, err := w.Write(Padding(int(b.padding.Load())))
 	wrote += n
 	return wrote, err
 }
@@ -805,7 +908,7 @@ type Structs struct {
 	mapping             *mapping.Map
 	s                   *Struct
 	zeroTypeCompression bool
-	size                *int64 // The size of the header + all structs in the list.
+	size                atomic.Int64 // The size of the header + all structs in the list.
 }
 
 // NewStructs returns a new Structs for holding lists of Structs. This is used when creating a new list
@@ -817,13 +920,12 @@ func NewStructs(m *mapping.Map) *Structs {
 	s := &Structs{
 		header:  header.New(),
 		mapping: m,
-		size:    new(int64),
 	}
 
 	s.header.SetFieldNum(0)
 	s.header.SetFieldType(field.FTListStructs)
 	s.header.SetFinal40(0)
-	atomic.AddInt64(s.size, 8)
+	s.size.Add(8)
 	return s
 }
 
@@ -838,7 +940,7 @@ func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, err
 	if len(*data) < 16 { // structs header(8) + 8 bytes of some field
 		return nil, fmt.Errorf("malformed list of structs: must be at least 16 bytes in size")
 	}
-	d := &Structs{s: s, mapping: m, size: new(int64)}
+	d := &Structs{s: s, mapping: m}
 	d.header = (*data)[:8]
 	*data = (*data)[8:] // Move past the header
 
@@ -865,7 +967,7 @@ func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, err
 
 	*data = (*data)[read-8:] // Move past the data (-8 is for the header we alread moved past)
 	XXXAddToTotal(s, read)   // Add header + data
-	*d.size = int64(read)
+	d.size.Store(int64(read))
 	return d, nil
 }
 
@@ -880,7 +982,7 @@ func (s *Structs) Reset() {
 	s.header = nil
 	s.data = nil
 	s.s = nil
-	*s.size = 0
+	s.size.Store(0)
 }
 
 // Map returns the Map for all entries in this list of Structs.
@@ -952,16 +1054,16 @@ func (s *Structs) Set(index int, value *Struct) error {
 
 	// Remove the size of the current entry.
 	old := s.data[index]
-	oldSize := atomic.LoadInt64(old.structTotal)
+	oldSize := old.structTotal.Load()
 	XXXAddToTotal(s.s, -oldSize)
-	atomic.AddInt64(s.size, -oldSize)
+	s.size.Add(-oldSize)
 
 	s.data[index] = value
 
 	// Add the new size.
-	newSize := atomic.LoadInt64(value.structTotal)
+	newSize := value.structTotal.Load()
 	XXXAddToTotal(s.s, newSize)
-	atomic.AddInt64(s.size, newSize)
+	s.size.Add(newSize)
 
 	// Propagate modified flag to parent
 	if s.s != nil {
@@ -973,7 +1075,7 @@ func (s *Structs) Set(index int, value *Struct) error {
 
 // Append appends values to the list of []byte.
 func (s *Structs) Append(values ...*Struct) error {
-	oldSize := atomic.LoadInt64(s.size)
+	oldSize := s.size.Load()
 
 	var total int64
 	for i, v := range values {
@@ -992,13 +1094,13 @@ func (s *Structs) Append(values ...*Struct) error {
 			return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", i)
 		}
 		v.zeroTypeCompression = s.zeroTypeCompression
-		total += atomic.LoadInt64(v.structTotal)
+		total += v.structTotal.Load()
 	}
 	s.data = append(s.data, values...)
 
 	// Update the total the list sees.
-	atomic.AddInt64(s.size, total)
-	XXXAddToTotal(s.s, atomic.LoadInt64(s.size)-oldSize)
+	s.size.Add(total)
+	XXXAddToTotal(s.s, s.size.Load()-oldSize)
 
 	updateItems(s.header, len(s.data))
 
@@ -1031,17 +1133,14 @@ func (s *Structs) Encode(w io.Writer) (int, error) {
 	if err != nil {
 		return wrote, err
 	}
-	log.Println("header was: ", wrote)
 	for index, item := range s.data {
 		item.header.SetFieldNum(uint16(index))
 		n, err := item.Marshal(w)
 		wrote += n
-		log.Println("wrote item: ", n)
 		if err != nil {
 			return wrote, err
 		}
 	}
-	log.Println("total was: ", wrote)
 	return wrote, err
 }
 

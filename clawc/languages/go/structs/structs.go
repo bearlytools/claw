@@ -7,9 +7,7 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
 	"math"
-	"slices"
 	"sort"
 	"sync/atomic"
 	"unsafe"
@@ -40,12 +38,12 @@ func NewGenericHeader() GenericHeader {
 	return header.New()
 }
 
-// fieldState represents the decode state of a field in lazy decoding mode.
-type fieldState uint8
+// FieldState represents the decode state of a field in lazy decoding mode.
+type FieldState = mapping.FieldState
 
 const (
 	// stateRaw indicates the field data exists in rawData but hasn't been decoded yet.
-	stateRaw fieldState = iota
+	stateRaw FieldState = iota
 	// stateDecoded indicates the field has been decoded from rawData into the fields slice.
 	stateDecoded
 	// stateDirty indicates the field has been modified and differs from rawData.
@@ -53,17 +51,11 @@ const (
 )
 
 // fieldOffset maps a field number to its location in the raw byte data.
-type fieldOffset struct {
-	fieldNum uint16 // The field number
-	offset   uint32 // Byte offset into rawData where this field starts
-	size     uint32 // Size of this field in bytes (including any padding)
-}
+// fieldOffset is an alias for mapping.FieldOffset to allow pooling.
+type fieldOffset = mapping.FieldOffset
 
 // StructField holds a struct field entry.
-type StructField struct {
-	Header header.Generic
-	Ptr    unsafe.Pointer
-}
+type StructField = mapping.StructField
 
 // Struct is the basic type for holding a set of values. In claw format, every variable
 // must be contained in a Struct.
@@ -80,7 +72,7 @@ type Struct struct {
 	parent *Struct
 
 	// structTotal is the total size of this struct in bytes, including header.
-	structTotal *int64
+	structTotal atomic.Int64
 
 	// zeroTypeCompression indicates if we want to compress the encoding by ignoring
 	// scalar zero values.
@@ -89,13 +81,14 @@ type Struct struct {
 	// Lazy decoding support fields.
 	// rawData holds the complete raw binary data for this struct (including header).
 	// This is populated during Unmarshal and used for lazy field decoding.
+	// Allocated from diffBuffers pool and returned on Reset/Recycle.
 	rawData []byte
 	// offsets maps field numbers to their byte offsets in rawData.
 	// Sorted by fieldNum for binary search.
 	offsets []fieldOffset
 	// fieldStates tracks the decode state of each field (raw, decoded, or dirty).
 	// Index corresponds to field number.
-	fieldStates []fieldState
+	fieldStates []FieldState
 	// modified is true if any field has been modified via Set* or Delete* operations.
 	// When false and rawData is non-nil, Marshal can write rawData directly.
 	modified bool
@@ -109,17 +102,22 @@ func New(fieldNum uint16, dataMap *mapping.Map) *Struct {
 	if dataMap == nil {
 		panic("dataMap must not be nil")
 	}
-	h := GenericHeader(make([]byte, 8))
-	h.SetFieldNum(fieldNum)
-	h.SetFieldType(field.FTStruct)
 
-	s := &Struct{
-		header:              h,
-		mapping:             dataMap,
-		fields:              make([]StructField, len(dataMap.Fields)),
-		structTotal:         new(int64),
-		zeroTypeCompression: true,
+	ctx := context.Background()
+	s := structPool.Get(ctx)
+	s.structTotal.Store(0) // Reset in case struct was reused from pool
+	s.header.SetFieldNum(fieldNum)
+	s.header.SetFieldType(field.FTStruct)
+	s.header.SetFinal40(0) // Reset header size
+	s.mapping = dataMap
+
+	if dataMap.StructFieldsPool != nil {
+		s.fields = *dataMap.StructFieldsPool.Get(ctx)
+	} else {
+		s.fields = make([]StructField, len(dataMap.Fields))
 	}
+
+	s.zeroTypeCompression = true
 	XXXAddToTotal(s, 8) // the header
 	return s
 }
@@ -145,22 +143,221 @@ func (s *Struct) XXXSetNoZeroTypeCompression() {
 
 // NewFrom creates a new Struct that represents the same Struct type.
 func (s *Struct) NewFrom() *Struct {
+	ctx := context.Background()
 	h := GenericHeader(make([]byte, 8))
 	h.SetFieldType(field.FTStruct)
+
+	var fields []StructField
+	if s.mapping.StructFieldsPool != nil {
+		fields = *s.mapping.StructFieldsPool.Get(ctx)
+	} else {
+		fields = make([]StructField, len(s.mapping.Fields))
+	}
 
 	n := &Struct{
 		header:              h,
 		mapping:             s.mapping,
-		fields:              make([]StructField, len(s.mapping.Fields)),
-		structTotal:         new(int64),
+		fields:              fields,
 		zeroTypeCompression: s.zeroTypeCompression,
 	}
-	XXXAddToTotal(n, 8) // the header
+	XXXAddToTotal(n, 8) // Use XXXAddToTotal to also update header
 	return n
 }
 
 func (s *Struct) Map() *mapping.Map {
 	return s.mapping
+}
+
+// Recycle returns the Struct to a pool. This will automatically call Reset().
+func (s *Struct) Recycle(ctx context.Context) {
+	// This is what calls Reset() as it implements Resetter.
+	structPool.Put(context.Background(), s)
+}
+
+// Reset resets the Struct to its initial state. This implements sync.Resetter.
+func (s *Struct) Reset() {
+	ctx := context.Background()
+
+	// Recycle field resources before clearing
+	s.recycleFields(ctx)
+
+	// Reset header values but keep the underlying []byte
+	s.header.SetFieldNum(0)
+	s.header.SetFieldType(0)
+	s.header.SetFinal40(0)
+
+	// Return slices to the mapping's pools before clearing mapping
+	if s.mapping != nil {
+		if s.fields != nil {
+			clear(s.fields)
+			s.mapping.StructFieldsPool.Put(ctx, &s.fields)
+		}
+		if s.fieldStates != nil {
+			clear(s.fieldStates)
+			s.mapping.FieldStates.Put(ctx, &s.fieldStates)
+		}
+		if s.offsets != nil && s.mapping.OffsetsPool != nil {
+			s.offsets = s.offsets[:0] // Reset length but keep capacity
+			s.mapping.OffsetsPool.Put(ctx, &s.offsets)
+		}
+	}
+
+	// Clear all other fields
+	s.inList = false
+	s.fields = nil
+	s.fieldStates = nil
+	s.excess = nil
+	s.mapping = nil
+	s.parent = nil
+	s.structTotal.Store(0)
+	s.zeroTypeCompression = false
+
+	// Return pooled rawData buffer before clearing
+	if s.rawData != nil {
+		diffBuffers.Put(ctx, s.rawData)
+		s.rawData = nil
+	}
+
+	s.offsets = nil
+	s.modified = false
+	s.decoding = false
+}
+
+// recycleFields returns decoded field resources to their respective pools.
+func (s *Struct) recycleFields(ctx context.Context) {
+	if s.mapping == nil || s.fields == nil {
+		return
+	}
+
+	for i, f := range s.fields {
+		if f.Header == nil {
+			continue
+		}
+
+		// Skip fields still in raw state (not decoded)
+		if s.fieldStates != nil && s.fieldStates[i] == stateRaw {
+			continue
+		}
+
+		desc := s.mapping.Fields[i]
+		isDirty := s.fieldStates != nil && s.fieldStates[i] == stateDirty
+
+		switch desc.Type {
+		case field.FTStruct:
+			if isDirty && f.Ptr != nil {
+				sub := (*Struct)(f.Ptr)
+				sub.Reset()
+				structPool.Put(ctx, sub)
+			}
+		case field.FTListStructs:
+			if isDirty && f.Ptr != nil {
+				list := (*Structs)(f.Ptr)
+				for _, sub := range list.data {
+					sub.Reset()
+					structPool.Put(ctx, sub)
+				}
+				list.Reset()
+			}
+		case field.FTListBools:
+			if f.Ptr != nil {
+				b := (*Bools)(f.Ptr)
+				b.data = nil
+				b.len = 0
+				b.s = nil
+				boolPool.Put(ctx, b)
+			}
+		case field.FTListBytes, field.FTListStrings:
+			if f.Ptr != nil {
+				b := (*Bytes)(f.Ptr)
+				b.header = nil
+				b.data = nil
+				b.s = nil
+				b.dataSize.Store(0)
+				b.padding.Store(0)
+				bytesPool.Put(ctx, b)
+			}
+		case field.FTListInt8:
+			if f.Ptr != nil {
+				n := (*Numbers[int8])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nInt8Pool.Put(ctx, n)
+			}
+		case field.FTListInt16:
+			if f.Ptr != nil {
+				n := (*Numbers[int16])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nInt16Pool.Put(ctx, n)
+			}
+		case field.FTListInt32:
+			if f.Ptr != nil {
+				n := (*Numbers[int32])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nInt32Pool.Put(ctx, n)
+			}
+		case field.FTListInt64:
+			if f.Ptr != nil {
+				n := (*Numbers[int64])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nInt64Pool.Put(ctx, n)
+			}
+		case field.FTListUint8:
+			if f.Ptr != nil {
+				n := (*Numbers[uint8])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nUint8Pool.Put(ctx, n)
+			}
+		case field.FTListUint16:
+			if f.Ptr != nil {
+				n := (*Numbers[uint16])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nUint16Pool.Put(ctx, n)
+			}
+		case field.FTListUint32:
+			if f.Ptr != nil {
+				n := (*Numbers[uint32])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nUint32Pool.Put(ctx, n)
+			}
+		case field.FTListUint64:
+			if f.Ptr != nil {
+				n := (*Numbers[uint64])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nUint64Pool.Put(ctx, n)
+			}
+		case field.FTListFloat32:
+			if f.Ptr != nil {
+				n := (*Numbers[float32])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nFloat32Pool.Put(ctx, n)
+			}
+		case field.FTListFloat64:
+			if f.Ptr != nil {
+				n := (*Numbers[float64])(f.Ptr)
+				n.data = nil
+				n.len = 0
+				n.s = nil
+				nFloat64Pool.Put(ctx, n)
+			}
+		}
+	}
 }
 
 // Fields returns the list of StructFields.
@@ -176,9 +373,9 @@ func (s *Struct) findOffsetIndex(fieldNum uint16) int {
 		return -1
 	}
 	idx := sort.Search(len(s.offsets), func(i int) bool {
-		return s.offsets[i].fieldNum >= fieldNum
+		return s.offsets[i].FieldNum >= fieldNum
 	})
-	if idx < len(s.offsets) && s.offsets[idx].fieldNum == fieldNum {
+	if idx < len(s.offsets) && s.offsets[idx].FieldNum == fieldNum {
 		return idx
 	}
 	return -1
@@ -196,16 +393,34 @@ func (s *Struct) rawFieldSize(fieldNum uint16) int {
 	if idx < 0 {
 		return 0
 	}
-	return int(s.offsets[idx].size)
+	return int(s.offsets[idx].Size)
 }
 
 // markModified marks this struct and all parent structs as modified.
 // This is called when any Set* or Delete* operation occurs.
 func (s *Struct) markModified() {
-	s.modified = true
-	if s.parent != nil {
-		s.parent.markModified()
+	for ptr := s; ptr != nil; ptr = ptr.parent {
+		ptr.modified = true
 	}
+}
+
+// isLazyRaw returns true if lazy decode is active and the field is in raw state.
+// Returns false during initial unmarshal (s.decoding == true) to prevent
+// the lazy decode size adjustment logic from being applied.
+func (s *Struct) isLazyRaw(fieldNum uint16) bool {
+	return !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw
+}
+
+// markFieldDirty marks the field as dirty and propagates modified flag.
+// Should be called after modifying a field. Safe to call during decoding (no-op).
+func (s *Struct) markFieldDirty(fieldNum uint16) {
+	if s.decoding {
+		return
+	}
+	if s.fieldStates != nil {
+		s.fieldStates[fieldNum] = stateDirty
+	}
+	s.markModified()
 }
 
 // getOrDecode returns the StructField for the given fieldNum, decoding from
@@ -231,7 +446,7 @@ func (s *Struct) getOrDecode(fieldNum uint16) *StructField {
 
 	// Decode from raw bytes
 	offset := s.offsets[idx]
-	data := s.rawData[8+offset.offset : 8+offset.offset+offset.size]
+	data := s.rawData[8+offset.Offset : 8+offset.Offset+offset.Size]
 	s.decodeFieldFromRaw(fieldNum, data)
 	s.fieldStates[fieldNum] = stateDecoded
 
@@ -463,7 +678,7 @@ func (s *Struct) IsSet(fieldNum uint16) bool {
 			return false
 		}
 		t := s.mapping.Fields[int(fieldNum)].Type
-		if t == field.FTStruct || slices.Contains(field.ListTypes, t) {
+		if t == field.FTStruct || field.IsListType(t) {
 			return false
 		}
 		return true // Scalar with zero type compression - zero value is "set"
@@ -481,10 +696,7 @@ func (s *Struct) IsSet(fieldNum uint16) bool {
 
 	// The Header is nil, so only some types can still report if they are not set.
 	t := s.mapping.Fields[int(fieldNum)].Type
-	if t == field.FTStruct {
-		return false
-	}
-	if slices.Contains(field.ListTypes, t) {
+	if t == field.FTStruct || field.IsListType(t) {
 		return false
 	}
 
@@ -536,7 +748,6 @@ func SetBool(s *Struct, fieldNum uint16, value bool) error {
 
 		// Only add to total if not transitioning from raw (raw already counted)
 		if s.fieldStates == nil || s.fieldStates[fieldNum] != stateRaw {
-			log.Println("parent: ", s.parent)
 			XXXAddToTotal(s, 8)
 		}
 	}
@@ -567,8 +778,7 @@ func DeleteBool(s *Struct, fieldNum uint16) error {
 	}
 
 	// Handle size adjustment when deleting from raw state
-	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		if s.fieldExistsInRaw(fieldNum) {
 			XXXAddToTotal(s, -8) // Remove the 8-byte bool field
 		}
@@ -728,9 +938,8 @@ func DeleteNumber(s *Struct, fieldNum uint16) error {
 	desc := s.mapping.Fields[fieldNum]
 
 	// Only adjust total if field actually exists
-	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
 	fieldExists := false
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		fieldExists = s.fieldExistsInRaw(fieldNum)
 	} else {
 		fieldExists = s.fields[fieldNum].Header != nil
@@ -819,10 +1028,9 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 	}
 
 	// Handle size adjustment
-	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
 	if f.Header == nil {
 		// Field not currently allocated
-		if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw && s.fieldExistsInRaw(fieldNum) {
+		if s.isLazyRaw(fieldNum) && s.fieldExistsInRaw(fieldNum) {
 			// Transitioning from raw - remove old size, add new size
 			oldSize := s.rawFieldSize(fieldNum)
 			newSize := 8 + SizeWithPadding(len(value))
@@ -874,7 +1082,7 @@ func DeleteBytes(s *Struct, fieldNum uint16) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Field in raw state
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -940,7 +1148,7 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 		return err
 	}
 
-	if atomic.LoadInt64(value.structTotal) > maxDataSize {
+	if value.structTotal.Load() > maxDataSize {
 		return fmt.Errorf("cannot set a Struct field to size > 1099511627775")
 	}
 
@@ -951,7 +1159,7 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Transitioning from raw to dirty
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -960,14 +1168,13 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 	} else if f.Header != nil {
 		// We need to remove our existing entry size total before applying our new data
 		x := (*Struct)(f.Ptr)
-		remove := atomic.LoadInt64(x.structTotal)
+		x.structTotal.Store(0)
 		x.parent = nil
-		XXXAddToTotal(s, -remove)
 	}
 
 	f.Header = value.header
 	f.Ptr = unsafe.Pointer(value)
-	XXXAddToTotal(s, atomic.LoadInt64(value.structTotal))
+	XXXAddToTotal(s, value.structTotal.Load()) // Add child's size to parent
 	s.fields[fieldNum] = f
 
 	// Mark as dirty and propagate modified flag (only after unmarshal is done)
@@ -998,7 +1205,7 @@ func DeleteStruct(s *Struct, fieldNum uint16) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Field in raw state
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -1013,7 +1220,7 @@ func DeleteStruct(s *Struct, fieldNum uint16) error {
 	} else {
 		x := (*Struct)(f.Ptr)
 		x.parent = nil
-		XXXAddToTotal(s, -atomic.LoadInt64(x.structTotal))
+		s.structTotal.Add(-x.structTotal.Load())
 	}
 
 	f.Header = nil
@@ -1064,7 +1271,7 @@ func SetListBool(s *Struct, fieldNum uint16, value *Bools) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
 			XXXAddToTotal(s, -int64(oldSize))
@@ -1108,7 +1315,7 @@ func DeleteListBools(s *Struct, fieldNum uint16) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
 			XXXAddToTotal(s, -int64(oldSize))
@@ -1182,7 +1389,7 @@ func SetListNumber[N Number](s *Struct, fieldNum uint16, value *Numbers[N]) erro
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Transitioning from raw to dirty
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -1232,7 +1439,7 @@ func DeleteListNumber[N Number](s *Struct, fieldNum uint16) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Transitioning from raw to dirty
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -1307,7 +1514,7 @@ func SetListStructs(s *Struct, fieldNum uint16, value *Structs) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Transitioning from raw to dirty
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -1320,7 +1527,7 @@ func SetListStructs(s *Struct, fieldNum uint16, value *Structs) error {
 		}
 	}
 
-	XXXAddToTotal(s, atomic.LoadInt64(value.size))
+	XXXAddToTotal(s, value.size.Load())
 	f := s.fields[fieldNum]
 	f.Header = value.header
 	f.Ptr = unsafe.Pointer(value)
@@ -1420,7 +1627,7 @@ func DeleteListStructs(s *Struct, fieldNum uint16) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Transitioning from raw to dirty
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -1432,7 +1639,7 @@ func DeleteListStructs(s *Struct, fieldNum uint16) error {
 			return nil
 		}
 		x := (*Structs)(f.Ptr)
-		XXXAddToTotal(s, -atomic.LoadInt64(x.size))
+		XXXAddToTotal(s, -x.size.Load())
 	}
 
 	f := s.fields[fieldNum]
@@ -1485,19 +1692,19 @@ func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Transitioning from raw to dirty
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
 			XXXAddToTotal(s, -int64(oldSize))
 		}
 		// Add new value size
-		XXXAddToTotal(s, value.dataSize+value.padding+8)
+		XXXAddToTotal(s, value.dataSize.Load()+value.padding.Load()+8)
 	} else if f.Header == nil {
-		XXXAddToTotal(s, value.dataSize+value.padding+8)
+		XXXAddToTotal(s, value.dataSize.Load()+value.padding.Load()+8)
 	} else {
 		ptr := (*Bytes)(f.Ptr)
-		XXXAddToTotal(s, value.dataSize-ptr.dataSize+value.padding-ptr.padding+8)
+		XXXAddToTotal(s, value.dataSize.Load()-ptr.dataSize.Load()+value.padding.Load()-ptr.padding.Load()+8)
 	}
 
 	value.header.SetFieldNum(fieldNum)
@@ -1536,7 +1743,7 @@ func DeleteListBytes(s *Struct, fieldNum uint16) error {
 
 	// Handle size adjustment based on current state
 	// Skip lazy decode logic during initial unmarshal (s.decoding == true)
-	if !s.decoding && s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
+	if s.isLazyRaw(fieldNum) {
 		// Transitioning from raw to dirty
 		if s.fieldExistsInRaw(fieldNum) {
 			oldSize := s.rawFieldSize(fieldNum)
@@ -1548,7 +1755,7 @@ func DeleteListBytes(s *Struct, fieldNum uint16) error {
 			return nil
 		}
 		ptr := (*Bytes)(f.Ptr)
-		XXXAddToTotal(s, -(ptr.dataSize + ptr.padding))
+		XXXAddToTotal(s, -(ptr.dataSize.Load() + ptr.padding.Load()))
 	}
 
 	f := s.fields[fieldNum]
@@ -1746,25 +1953,25 @@ func XXXAddToTotal[N int64 | int | uint | uint64](s *Struct, value N) {
 	if s == nil {
 		return
 	}
-	v := atomic.AddInt64(s.structTotal, int64(value))
+	v := s.structTotal.Add(int64(value))
 	s.header.SetFinal40(uint64(v))
 	ptr := s.parent
 	for {
 		if ptr == nil {
 			return
 		}
-		v := atomic.AddInt64(ptr.structTotal, int64(value))
+		v := ptr.structTotal.Add(int64(value))
 		ptr.header.SetFinal40(uint64(v))
 		ptr = ptr.parent
 	}
 }
 
-// XXXGetStructTotal retrieves the Struct's size.
+// XXXGetStructTotal returns the total size of the struct. Used by internals of generated packages.
 func XXXGetStructTotal(s *Struct) int64 {
 	if s == nil {
 		return 0
 	}
-	return atomic.LoadInt64(s.structTotal)
+	return s.structTotal.Load()
 }
 
 // validateFieldNum will validate that the type is described in the mapping.Map,

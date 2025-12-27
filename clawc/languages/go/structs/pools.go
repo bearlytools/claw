@@ -5,19 +5,19 @@ import (
 
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
+	"github.com/gostdlib/base/values/sizes"
 )
 
-var ()
+// structPool is a pool of Struct objects to reduce allocations.
+var structPool = sync.NewPool[*Struct](
+	context.Background(),
+	"structPool",
+	func() *Struct {
+		return &Struct{header: NewGenericHeader()}
+	},
+)
 
-type BytesPool interface {
-	Get() *[]byte
-	Put(*[]byte)
-}
-
-type StructsPool interface {
-	Get() *Struct
-	Put(*Struct)
-}
+var diffBuffers = newDiffSizePools()
 
 var readers = sync.NewPool[*bytes.Reader](
 	context.Background(),
@@ -28,6 +28,7 @@ var readers = sync.NewPool[*bytes.Reader](
 	sync.WithBuffer(100),
 )
 
+// These are all pools related to the types supported in Structs fields.
 var (
 	boolPool     *sync.Pool[*Bools]
 	nUint8Pool   *sync.Pool[*Numbers[uint8]]
@@ -43,9 +44,10 @@ var (
 	bytesPool    *sync.Pool[*Bytes]
 )
 
+// This init function initializes all the pools supporting Struct field types.
 func init() {
 	ctx := context.Background()
-	
+
 	boolPool = sync.NewPool[*Bools](
 		ctx, "boolPool",
 		func() *Bools { return &Bools{} },
@@ -117,5 +119,142 @@ func init() {
 		func() *Bytes { return &Bytes{} },
 		sync.WithBuffer(100),
 	)
+
 }
 
+type diffSizePools struct {
+	_256B *sync.Pool[*[]byte]
+	_512B *sync.Pool[*[]byte]
+	_1K   *sync.Pool[*[]byte]
+	_4K   *sync.Pool[*[]byte]
+	_16K  *sync.Pool[*[]byte]
+	_64K  *sync.Pool[*[]byte]
+	_256K *sync.Pool[*[]byte]
+	_1M   *sync.Pool[*[]byte]
+}
+
+func newDiffSizePools() diffSizePools {
+	return diffSizePools{
+		_256B: sync.NewPool(
+			context.Background(),
+			"diffPool256",
+			func() *[]byte {
+				b := make([]byte, 256)
+				return &b
+			},
+		),
+		_512B: sync.NewPool(
+			context.Background(),
+			"diffPool512",
+			func() *[]byte {
+				b := make([]byte, 512)
+				return &b
+			},
+		),
+		_1K: sync.NewPool(
+			context.Background(),
+			"diffPool1KB",
+			func() *[]byte {
+				b := make([]byte, 1*sizes.KiB)
+				return &b
+			},
+		),
+		_4K: sync.NewPool(
+			context.Background(),
+			"diffPool4K",
+			func() *[]byte {
+				b := make([]byte, 4*sizes.KiB)
+				return &b
+			},
+		),
+		_16K: sync.NewPool(
+			context.Background(),
+			"diffPool16K",
+			func() *[]byte {
+				b := make([]byte, 16*sizes.KiB)
+				return &b
+			},
+		),
+		_64K: sync.NewPool(
+			context.Background(),
+			"diffPool64K",
+			func() *[]byte {
+				b := make([]byte, 64*sizes.KiB)
+				return &b
+			},
+		),
+		_256K: sync.NewPool(
+			context.Background(),
+			"diffPool256K",
+			func() *[]byte {
+				b := make([]byte, 256*sizes.KiB)
+				return &b
+			},
+		),
+		_1M: sync.NewPool(
+			context.Background(),
+			"diffPool1M",
+			func() *[]byte {
+				b := make([]byte, 1*sizes.MiB)
+				return &b
+			},
+		),
+	}
+}
+
+// Get pulls a slice that will hold sizeBytes. The len/cap may be larger than requested, so
+// make sure to adjust to your needs.
+func (d *diffSizePools) Get(ctx context.Context, sizeBytes int) []byte {
+	switch {
+	case sizeBytes <= 256:
+		b := d._256B.Get(ctx)
+		return *b
+	case sizeBytes <= 512:
+		b := d._512B.Get(ctx)
+		return *b
+	case sizeBytes <= 1*sizes.KiB:
+		b := d._1K.Get(ctx)
+		return *b
+	case sizeBytes <= 4*sizes.KiB:
+		b := d._4K.Get(ctx)
+		return *b
+	case sizeBytes <= 16*sizes.KiB:
+		b := d._16K.Get(ctx)
+		return *b
+	case sizeBytes <= 64*sizes.KiB:
+		b := d._64K.Get(ctx)
+		return *b
+	case sizeBytes <= 256*sizes.KiB:
+		b := d._256K.Get(ctx)
+		return *b
+	case sizeBytes <= 1*sizes.MiB:
+		b := d._1M.Get(ctx)
+		return *b
+	default:
+		return make([]byte, sizeBytes)
+	}
+}
+
+// Put puts a []byte into a pool for reuse.
+func (d *diffSizePools) Put(ctx context.Context, b []byte) {
+	switch {
+	case cap(b) <= 256:
+		d._256B.Put(ctx, &b)
+	case cap(b) <= 512:
+		d._512B.Put(ctx, &b)
+	case cap(b) <= 1*sizes.KiB:
+		d._1K.Put(ctx, &b)
+	case cap(b) <= 4*sizes.KiB:
+		d._4K.Put(ctx, &b)
+	case cap(b) <= 16*sizes.KiB:
+		d._16K.Put(ctx, &b)
+	case cap(b) <= 64*sizes.KiB:
+		d._64K.Put(ctx, &b)
+	case cap(b) <= 256*sizes.KiB:
+		d._256K.Put(ctx, &b)
+	case cap(b) <= 1*sizes.MiB:
+		d._1M.Put(ctx, &b)
+	default:
+		// Larger than 1MiB - don't pool, let GC handle it
+	}
+}

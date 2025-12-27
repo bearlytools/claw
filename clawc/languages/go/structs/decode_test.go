@@ -75,8 +75,8 @@ func TestDecodeBool(t *testing.T) {
 		if got != test.want {
 			t.Errorf("TestDecodeBool(%s): got %v, want %v", test.desc, got, test.want)
 		}
-		if *s.structTotal != 16 {
-			t.Errorf("TestDecodeBool(%s): structTotal: got %v, want %v", test.desc, s.structTotal, 16)
+		if s.structTotal.Load() != 16 {
+			t.Errorf("TestDecodeBool(%s): structTotal: got %v, want %v", test.desc, s.structTotal.Load(), 16)
 		}
 		f := s.fields[test.fieldNum]
 		if !bytes.Equal(f.Header, wantHeader) {
@@ -178,8 +178,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(uint8): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 16 {
-				t.Errorf("TestDecodeNum(uint8): structTotal: got %d, want %d", *s.structTotal, 16)
+			if s.structTotal.Load() != 16 {
+				t.Errorf("TestDecodeNum(uint8): structTotal: got %d, want %d", s.structTotal.Load(), 16)
 			}
 			if s.fields[0].Header.FieldType() != field.FTUint8 {
 				t.Errorf("TestDecodeNum(uint8): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -195,8 +195,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(uint16): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 16 {
-				t.Errorf("TestDecodeNum(uint16): structTotal: got %d, want %d", *s.structTotal, 16)
+			if s.structTotal.Load() != 16 {
+				t.Errorf("TestDecodeNum(uint16): structTotal: got %d, want %d", s.structTotal.Load(), 16)
 			}
 			if s.fields[0].Header.FieldType() != field.FTUint16 {
 				t.Errorf("TestDecodeNum(uint16): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -212,8 +212,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(uint32): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 16 {
-				t.Errorf("TestDecodeNum(uint32): structTotal: got %d, want %d", *s.structTotal, 16)
+			if s.structTotal.Load() != 16 {
+				t.Errorf("TestDecodeNum(uint32): structTotal: got %d, want %d", s.structTotal.Load(), 16)
 			}
 			if s.fields[0].Header.FieldType() != field.FTUint32 {
 				t.Errorf("TestDecodeNum(uint32): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -229,8 +229,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(uint64): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 24 {
-				t.Errorf("TestDecodeNum(uint64): structTotal: got %d, want %d", *s.structTotal, 24)
+			if s.structTotal.Load() != 24 {
+				t.Errorf("TestDecodeNum(uint64): structTotal: got %d, want %d", s.structTotal.Load(), 24)
 			}
 			if s.fields[0].Header.FieldType() != field.FTUint64 {
 				t.Errorf("TestDecodeNum(uint64): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -246,8 +246,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(int8): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 16 {
-				t.Errorf("TestDecodeNum(int8): structTotal: got %d, want %d", *s.structTotal, 16)
+			if s.structTotal.Load() != 16 {
+				t.Errorf("TestDecodeNum(int8): structTotal: got %d, want %d", s.structTotal.Load(), 16)
 			}
 			if s.fields[0].Header.FieldType() != field.FTInt8 {
 				t.Errorf("TestDecodeNum(int8): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -263,8 +263,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(int16): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 16 {
-				t.Errorf("TestDecodeNum(int16): structTotal: got %d, want %d", *s.structTotal, 16)
+			if s.structTotal.Load() != 16 {
+				t.Errorf("TestDecodeNum(int16): structTotal: got %d, want %d", s.structTotal.Load(), 16)
 			}
 			if s.fields[0].Header.FieldType() != field.FTInt16 {
 				t.Errorf("TestDecodeNum(int16): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -280,8 +280,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(int32): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 16 {
-				t.Errorf("TestDecodeNum(int32): structTotal: got %d, want %d", *s.structTotal, 16)
+			if s.structTotal.Load() != 16 {
+				t.Errorf("TestDecodeNum(int32): structTotal: got %d, want %d", s.structTotal.Load(), 16)
 			}
 			if s.fields[0].Header.FieldType() != field.FTInt32 {
 				t.Errorf("TestDecodeNum(int32): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -297,8 +297,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(int64): got %d, want %d", got, want[i])
 			}
-			if *s.structTotal != 24 {
-				t.Errorf("TestDecodeNum(int64): structTotal: got %d, want %d", *s.structTotal, 24)
+			if s.structTotal.Load() != 24 {
+				t.Errorf("TestDecodeNum(int64): structTotal: got %d, want %d", s.structTotal.Load(), 24)
 			}
 			if s.fields[0].Header.FieldType() != field.FTInt64 {
 				t.Errorf("TestDecodeNum(int64): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -314,8 +314,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(float32): got %v, want %v", got, want[i])
 			}
-			if *s.structTotal != 16 {
-				t.Errorf("TestDecodeNum(float32): structTotal: got %d, want %d", *s.structTotal, 16)
+			if s.structTotal.Load() != 16 {
+				t.Errorf("TestDecodeNum(float32): structTotal: got %d, want %d", s.structTotal.Load(), 16)
 			}
 			if s.fields[0].Header.FieldType() != field.FTFloat32 {
 				t.Errorf("TestDecodeNum(float32): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -331,8 +331,8 @@ func TestDecodeNum(t *testing.T) {
 			if !reflect.DeepEqual(got, want[i]) {
 				t.Errorf("TestDecodeNum(float64): got %v, want %v", got, want[i])
 			}
-			if *s.structTotal != 24 {
-				t.Errorf("TestDecodeNum(float64): structTotal: got %d, want %d", *s.structTotal, 24)
+			if s.structTotal.Load() != 24 {
+				t.Errorf("TestDecodeNum(float64): structTotal: got %d, want %d", s.structTotal.Load(), 24)
 			}
 			if s.fields[0].Header.FieldType() != field.FTFloat64 {
 				t.Errorf("TestDecodeNum(float64): fieldNum: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -483,8 +483,8 @@ func TestDecodeBytes(t *testing.T) {
 			continue
 		}
 		totalWant := int64(16 + SizeWithPadding(len(test.want))) // structSize(8) + header(8) + datasize(7) + padding(1)
-		if *s.structTotal != totalWant {
-			t.Errorf("TestDecodeBytes(%s): structTotal: got %d, want %d", test.desc, *s.structTotal, totalWant)
+		if s.structTotal.Load() != totalWant {
+			t.Errorf("TestDecodeBytes(%s): structTotal: got %d, want %d", test.desc, s.structTotal.Load(), totalWant)
 			continue
 		}
 		if s.fields[0].Header.FieldType() != field.FTBytes {
@@ -600,8 +600,8 @@ func TestDecodeListBool(t *testing.T) {
 			}
 		}
 
-		if int(*s.structTotal) != 8+dataSize { // structHeader(8) + listHeaderAndData(dataSize)
-			t.Errorf("TestDecodeListBool(%s): structTotal: got %d, want %d)", test.desc, *s.structTotal, 8+dataSize)
+		if int(s.structTotal.Load()) != 8+dataSize { // structHeader(8) + listHeaderAndData(dataSize)
+			t.Errorf("TestDecodeListBool(%s): structTotal: got %d, want %d)", test.desc, s.structTotal.Load(), 8+dataSize)
 		}
 		if len(test.listData) > 0 {
 			t.Errorf("TestDecodeListBool(%s): after decode []byte buffer had len %d, but expected 0", test.desc, len(test.listData))
@@ -705,8 +705,8 @@ func TestDecodeListBytes(t *testing.T) {
 			}
 		}
 
-		if int(*s.structTotal) != 8+dataSize { // structHeader(8) + listHeaderAndData(dataSize)
-			t.Errorf("TestDecodeListBytes(%s): structTotal: got %d, want %d)", test.desc, *s.structTotal, 8+dataSize)
+		if int(s.structTotal.Load()) != 8+dataSize { // structHeader(8) + listHeaderAndData(dataSize)
+			t.Errorf("TestDecodeListBytes(%s): structTotal: got %d, want %d)", test.desc, s.structTotal.Load(), 8+dataSize)
 		}
 		if len(test.listData) > 0 {
 			t.Errorf("TestDecodeListBytes(%s): after decode []byte buffer had len %d, but expected 0", test.desc, len(test.listData))
@@ -922,8 +922,8 @@ func TestDecodeListNum(t *testing.T) {
 
 			// StructHeader(8) + ListHeader(8) + Data(16 bytes to hold 10 values)
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]int8): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]int8): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListInt8 {
 				t.Errorf("TestDecodeListNum([]int8]): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -944,8 +944,8 @@ func TestDecodeListNum(t *testing.T) {
 			}
 
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]uint8): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]uint8): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListUint8 {
 				t.Errorf("TestDecodeListNum([]uint8): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -965,8 +965,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]int16): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]int16): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListInt16 {
 				t.Errorf("TestDecodeListNum([]int16): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -986,8 +986,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]uint16): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]uint16): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListUint16 {
 				t.Errorf("TestDecodeListNum([]uint16): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -1008,8 +1008,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]int32): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]int32): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListInt32 {
 				t.Errorf("TestDecodeListNum([]int32): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -1029,8 +1029,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]uint32): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]uint32): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListUint32 {
 				t.Errorf("TestDecodeListNum([]uint32): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -1050,8 +1050,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]float32): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]float32): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListFloat32 {
 				t.Errorf("TestDecodeListNum([]float32): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -1071,8 +1071,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]int64): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]int64): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListInt64 {
 				t.Errorf("TestDecodeListNum([]int64): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -1092,8 +1092,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]uint64): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]uint64): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListUint64 {
 				t.Errorf("TestDecodeListNum([]uint64): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -1113,8 +1113,8 @@ func TestDecodeListNum(t *testing.T) {
 				}
 			}
 			wantSize := int64(8 + 8 + (8 * wordsRequiredToStore(len(wantList), int(sizeInBytes[i]))))
-			if *s.structTotal != wantSize {
-				t.Errorf("TestDecodeListNum([]float64): structTotal: got %d, want %d", *s.structTotal, wantSize)
+			if s.structTotal.Load() != wantSize {
+				t.Errorf("TestDecodeListNum([]float64): structTotal: got %d, want %d", s.structTotal.Load(), wantSize)
 			}
 			if s.fields[0].Header.FieldType() != field.FTListFloat64 {
 				t.Errorf("TestDecodeListNum([]float64): field type: got %v", field.Type(s.fields[0].Header.FieldType()))
@@ -1158,8 +1158,8 @@ func TestDecodeListStruct(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if *s0.structTotal != int64(written) {
-		t.Fatalf("TestDecodeListStruct: s0 had structTotal %d, but encoded it was %d", *s0.structTotal, written)
+	if s0.structTotal.Load() != int64(written) {
+		t.Fatalf("TestDecodeListStruct: s0 had structTotal %d, but encoded it was %d", s0.structTotal.Load(), written)
 	}
 	if written != expectedTotal {
 		t.Fatalf("TestDecodeListStruct: encoding: wrote %d, expected %d", written, expectedTotal)
@@ -1245,8 +1245,8 @@ func TestDecodeStruct(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if *s0.structTotal != int64(written) {
-		t.Fatalf("TestDecodeStruct: s0 had structTotal %d, but encoded it was %d", *s0.structTotal, written)
+	if s0.structTotal.Load() != int64(written) {
+		t.Fatalf("TestDecodeStruct: s0 had structTotal %d, but encoded it was %d", s0.structTotal.Load(), written)
 	}
 	if written != expectedTotal {
 		t.Fatalf("TestDecodeStruct: encoding: wrote %d, expected %d", written, expectedTotal)
@@ -1257,8 +1257,8 @@ func TestDecodeStruct(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if read != int(*cp.structTotal) {
-		t.Fatalf("TestDecodeStruct: decoding: unmarshal() returned %d bytes read, but .structTotal was %d", read, *cp.structTotal)
+	if read != int(cp.structTotal.Load()) {
+		t.Fatalf("TestDecodeStruct: decoding: unmarshal() returned %d bytes read, but .structTotal was %d", read, cp.structTotal.Load())
 	}
 	if read != expectedTotal {
 		t.Fatalf("TestDecodeStruct: decoding: unmarshal() returned %d bytes, expected %d bytes", read, expectedTotal)
@@ -1314,5 +1314,123 @@ func TestDecodeStruct(t *testing.T) {
 		if !bytes.Equal(f13.Get(i), bytesList.Get(i)) {
 			t.Fatalf("TestDecodeStruct: decoding: msg0.msg1[14]: bytes list index %d: got %s, want %s", i, string(f13.Get(i)), string(bytesList.Get(i)))
 		}
+	}
+}
+
+func TestScanFieldOffsets(t *testing.T) {
+	t.Parallel()
+
+	testMapping := &mapping.Map{
+		Name: "TestStruct",
+		Fields: []*mapping.FieldDescr{
+			{Name: "Bool", Type: field.FTBool, FieldNum: 0},
+			{Name: "Int32", Type: field.FTInt32, FieldNum: 1},
+			{Name: "Int64", Type: field.FTInt64, FieldNum: 2},
+			{Name: "String", Type: field.FTString, FieldNum: 3},
+		},
+	}
+	testMapping.Init()
+
+	// Create and populate a struct
+	s := New(0, testMapping)
+	s.XXXSetNoZeroTypeCompression()
+	MustSetBool(s, 0, true)
+	MustSetNumber(s, 1, int32(42))
+	MustSetNumber(s, 2, int64(12345))
+	MustSetBytes(s, 3, []byte("hello"), false)
+
+	// Marshal it
+	var buf bytes.Buffer
+	_, err := s.Marshal(&buf)
+	if err != nil {
+		t.Fatalf("[TestScanFieldOffsets]: Marshal failed: %v", err)
+	}
+
+	// Unmarshal into a new struct
+	decoded := New(0, testMapping)
+	_, err = decoded.Unmarshal(&buf)
+	if err != nil {
+		t.Fatalf("[TestScanFieldOffsets]: Unmarshal failed: %v", err)
+	}
+
+	// Verify offsets were scanned (lazy decode infrastructure)
+	if decoded.offsets == nil {
+		t.Fatalf("[TestScanFieldOffsets]: offsets should not be nil after Unmarshal")
+	}
+
+	// Verify offset count matches number of fields we set
+	if len(decoded.offsets) != 4 {
+		t.Errorf("[TestScanFieldOffsets]: len(offsets) = %d, want 4", len(decoded.offsets))
+	}
+
+	// Verify we can still read values (triggers lazy decode)
+	if got, _ := GetBool(decoded, 0); got != true {
+		t.Errorf("[TestScanFieldOffsets]: GetBool = %v, want true", got)
+	}
+	if got, _ := GetNumber[int32](decoded, 1); got != 42 {
+		t.Errorf("[TestScanFieldOffsets]: GetNumber[int32] = %v, want 42", got)
+	}
+	if got, _ := GetNumber[int64](decoded, 2); got != 12345 {
+		t.Errorf("[TestScanFieldOffsets]: GetNumber[int64] = %v, want 12345", got)
+	}
+	if got, _ := GetBytes(decoded, 3); string(*got) != "hello" {
+		t.Errorf("[TestScanFieldOffsets]: GetBytes = %q, want %q", string(*got), "hello")
+	}
+}
+
+func TestOffsetsPooling(t *testing.T) {
+	t.Parallel()
+
+	testMapping := &mapping.Map{
+		Name: "TestStruct",
+		Fields: []*mapping.FieldDescr{
+			{Name: "Value", Type: field.FTInt32, FieldNum: 0},
+		},
+	}
+	testMapping.Init()
+
+	// Create and populate a struct
+	s := New(0, testMapping)
+	s.XXXSetNoZeroTypeCompression()
+	MustSetNumber(s, 0, int32(100))
+
+	// Marshal it
+	var buf bytes.Buffer
+	_, err := s.Marshal(&buf)
+	if err != nil {
+		t.Fatalf("[TestOffsetsPooling]: Marshal failed: %v", err)
+	}
+
+	// Unmarshal into a new struct - this should use pooled offsets
+	decoded := New(0, testMapping)
+	_, err = decoded.Unmarshal(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("[TestOffsetsPooling]: Unmarshal failed: %v", err)
+	}
+
+	// Save reference to offsets before reset
+	offsetsBeforeReset := decoded.offsets
+
+	if offsetsBeforeReset == nil {
+		t.Fatalf("[TestOffsetsPooling]: offsets should not be nil after Unmarshal")
+	}
+
+	// Reset should return offsets to pool
+	decoded.Reset()
+
+	// After reset, offsets should be nil
+	if decoded.offsets != nil {
+		t.Errorf("[TestOffsetsPooling]: after Reset, offsets should be nil")
+	}
+
+	// Unmarshal again - should get offsets from pool
+	decoded2 := New(0, testMapping)
+	_, err = decoded2.Unmarshal(bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		t.Fatalf("[TestOffsetsPooling]: second Unmarshal failed: %v", err)
+	}
+
+	if decoded2.offsets == nil {
+		t.Fatalf("[TestOffsetsPooling]: offsets should not be nil after second Unmarshal")
 	}
 }

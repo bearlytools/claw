@@ -6,7 +6,7 @@ require (
 	github.com/johnsiilver/halfpike v0.3.4
 	github.com/kylelemons/godebug v1.1.0
 	github.com/pkg/errors v0.9.1
-	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
+	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 )
 
 require (
@@ -114,6 +114,6 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e
 	github.com/gopherfs/fs v0.0.0-20220204202500-4538e04c7abb
-	github.com/gostdlib/base v0.0.0-20251213030353-8c8ed8ba3f7e
+	github.com/gostdlib/base v0.0.0-20251216181915-f10250b44e96
 	golang.org/x/net v0.41.0
 )
