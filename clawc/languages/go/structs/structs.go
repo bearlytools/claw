@@ -314,6 +314,7 @@ func (s *Struct) recycleFields(ctx context.Context) {
 			if f.Ptr != nil {
 				b := (*Bytes)(f.Ptr)
 				b.header = nil
+				b.offsets = nil
 				b.data = nil
 				b.s = nil
 				b.dataSize.Store(0)

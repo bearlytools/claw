@@ -302,11 +302,6 @@ func TestBytes(t *testing.T) {
 		t.Fatalf("TestBytes(Range): only found %d entries, want %d entries", i, len(want))
 	}
 
-	size := 0
-	for _, v := range list.data {
-		size += len(v)
-	}
-
 	if s.structTotal.Load() != 56 { // 48 for the Bytes, 8 for the Struct header
 		t.Fatalf("TestBytes(total count): internal 'total' counter, got %d bytes, want %d bytes", s.structTotal.Load(), 56)
 	}
