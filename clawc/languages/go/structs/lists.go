@@ -583,14 +583,18 @@ func (n *Numbers[I]) Encode() []byte {
 	return n.data
 }
 
-// Bytes represents a list of bytes.
+// Bytes represents a list of bytes with contiguous storage for cache efficiency.
+// Instead of [][]byte which requires pointer chasing, we store:
+// - offsets: index of start position for each item in data (len = num_items + 1)
+// - data: single contiguous buffer holding all item data
 type Bytes struct {
-	header GenericHeader
-	data   [][]byte // Each entry includes the item header of 32bits.
+	header  GenericHeader
+	offsets []uint32 // offsets[i] = start of item i in data; offsets[len(offsets)-1] = end
+	data    []byte   // All item data stored contiguously
 
 	s        *Struct
-	dataSize atomic.Int64 // This is the size of the "data" field (without header)
-	padding  atomic.Int64 // This is how much padding would currently be needed
+	dataSize atomic.Int64 // Wire size of data (item headers + item data, excludes list header)
+	padding  atomic.Int64 // Padding needed for 8-byte alignment
 }
 
 // NewBytes returns a new Bytes for holding lists of bytes. This is used when creating a new list
@@ -617,45 +621,60 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 	b.header = (*data)[:8]
 	*data = (*data)[8:] // Move past the header
 
-	if b.header.Final40() == 0 {
+	numItems := int(b.header.Final40())
+	if numItems == 0 {
 		return nil, fmt.Errorf("cannot have a ListBytes field that has zero entries")
 	}
 
-	// We need to carve up the slice into a slice of slice.
-	d := make([][]byte, b.header.Final40())
-
-	read := 8 // This will hold the number of bytes we have read.
-	for i := 0; i < len(d); i++ {
-		if len(*data) < 4 {
+	// First pass: calculate total data size
+	tempData := *data
+	totalDataSize := 0
+	for i := 0; i < numItems; i++ {
+		if len(tempData) < 4 {
 			return nil, fmt.Errorf("malformed list of bytes field: an item (%d) did not have a valid header", i)
 		}
-		size := int(binary.Get[uint32]((*data)[:4]))
-		if len((*data)[4:]) < size {
+		size := int(binary.Get[uint32](tempData[:4]))
+		if len(tempData[4:]) < size {
 			return nil, fmt.Errorf("malformed list of bytes field: an item did not have enough data to match the header")
 		}
-		// Assign data
-		d[i] = (*data)[:size+4] // data size + data header
-
-		// Move to next set of data
-		*data = (*data)[4+size:] // Move past item
-		read += size + 4
+		totalDataSize += size
+		tempData = tempData[4+size:]
 	}
 
+	// Allocate contiguous buffer and offsets array
+	b.offsets = make([]uint32, numItems+1)
+	b.data = make([]byte, totalDataSize)
+
+	// Second pass: copy data into contiguous buffer
+	offset := uint32(0)
+	wireDataSize := 0 // Size of item headers + item data on wire
+	for i := 0; i < numItems; i++ {
+		size := int(binary.Get[uint32]((*data)[:4]))
+		*data = (*data)[4:] // Move past item header
+		wireDataSize += 4
+
+		b.offsets[i] = offset
+		copy(b.data[offset:], (*data)[:size])
+		offset += uint32(size)
+		*data = (*data)[size:] // Move past item data
+		wireDataSize += size
+	}
+	b.offsets[numItems] = offset // End offset
+
 	// Read past any padding that was required to align to 64 bits (8 bytes).
+	read := 8 + wireDataSize // list header + item headers + item data
 	paddingNeeded := PaddingNeeded(read)
 	if paddingNeeded != 0 {
 		if len(*data) < paddingNeeded {
 			return nil, fmt.Errorf("malformed list of bytes field: was missing byte list padding")
 		}
 		*data = (*data)[paddingNeeded:]
-		read += paddingNeeded
 	}
 
-	XXXAddToTotal(s, read) // Add header + data + padding
+	XXXAddToTotal(s, read+paddingNeeded) // Add header + data + padding
 
-	b.data = d
 	b.s = s
-	b.dataSize.Store(int64(read - 8 - paddingNeeded)) // We do not count the list header or padding in this
+	b.dataSize.Store(int64(wireDataSize)) // item headers + item data (excludes list header)
 	b.padding.Store(int64(paddingNeeded))
 
 	return b, nil
@@ -663,7 +682,10 @@ func NewBytesFromBytes(data *[]byte, s *Struct) (*Bytes, error) {
 
 // Len returns the number of items in the list.
 func (b *Bytes) Len() int {
-	return len(b.data)
+	if len(b.offsets) == 0 {
+		return 0
+	}
+	return len(b.offsets) - 1
 }
 
 // Get gets a []byte stored at the index.
@@ -672,11 +694,12 @@ func (b *Bytes) Get(index int) []byte {
 		panic(fmt.Sprintf("slice out of bounds: index %d in slice of size %d", index, b.Len()))
 	}
 
-	if len(b.data[index]) == 4 {
-		return nil
+	start := b.offsets[index]
+	end := b.offsets[index+1]
+	if start == end {
+		return nil // Empty entry
 	}
-
-	return b.data[index][4:]
+	return b.data[start:end]
 }
 
 // All returns an iterator over all byte slices in the list.
@@ -717,29 +740,46 @@ func (b *Bytes) Set(index int, value []byte) {
 	if len(value) > math.MaxUint32 {
 		panic(fmt.Sprintf("cannot set a value > %dKiB", math.MaxUint32/1024))
 	}
-	// Record the current size of this value and end padding.  Get new value size and new
-	// padding needed. Calculate our new data size.
-	oldSize := int64(len(b.data[index]))
-	oldPadding := b.padding.Load()
-	XXXAddToTotal(b.s, -(oldSize + oldPadding))
-	b.dataSize.Add(-oldSize)
 
-	b.dataSize.Add(int64(len(value)) + 4) // data + entry header
-	b.padding.Store(PaddingNeeded(b.dataSize.Load()))
+	// Calculate old and new sizes
+	oldStart := b.offsets[index]
+	oldEnd := b.offsets[index+1]
+	oldSize := int(oldEnd - oldStart)
+	newSize := len(value)
+	delta := newSize - oldSize
 
-	b.set(index, value)
-
-	// Propagate modified flag to parent
+	// Remove old totals from parent struct
 	if b.s != nil {
+		XXXAddToTotal(b.s, -(b.dataSize.Load() + b.padding.Load()))
+	}
+
+	if delta == 0 {
+		// Same size: just copy in place
+		copy(b.data[oldStart:], value)
+	} else {
+		// Different size: rebuild data buffer
+		newData := make([]byte, len(b.data)+delta)
+		copy(newData[:oldStart], b.data[:oldStart])
+		copy(newData[oldStart:], value)
+		copy(newData[oldStart+uint32(newSize):], b.data[oldEnd:])
+		b.data = newData
+
+		// Update offsets for all items after this one
+		for i := index + 1; i < len(b.offsets); i++ {
+			b.offsets[i] = uint32(int(b.offsets[i]) + delta)
+		}
+	}
+
+	// Recalculate wire size: item headers (4 bytes each) + item data
+	wireSize := int64(b.Len()*4 + len(b.data))
+	b.dataSize.Store(wireSize)
+	b.padding.Store(PaddingNeeded(8 + wireSize)) // +8 for list header
+
+	// Add new totals to parent struct
+	if b.s != nil {
+		XXXAddToTotal(b.s, b.dataSize.Load()+b.padding.Load())
 		b.s.markModified()
 	}
-}
-
-func (b *Bytes) set(index int, value []byte) {
-	buff := make([]byte, 4+len(value))
-	binary.Put(buff, uint32(len(value)))
-	copy(buff[4:], value)
-	b.data[index] = buff
 }
 
 // Append appends values to the list of []byte.
@@ -755,25 +795,41 @@ func (b *Bytes) Append(values ...[]byte) {
 		XXXAddToTotal(b.s, -(b.dataSize.Load() + b.padding.Load()))
 	}
 
-	newSize := b.dataSize.Load() // We are appending, so our new size starts at the old size
-
-	// Create new slice that can hold our data.
-	indexStart := len(b.data)
-	n := make([][]byte, len(b.data)+len(values))
-	copy(n, b.data)
-	b.data = n
-
-	for i, v := range values {
-		b.set(indexStart+i, v)
-		newSize += int64(len(v)) + 4 // data + entry header
+	// Calculate new sizes
+	additionalSize := 0
+	for _, v := range values {
+		additionalSize += len(v)
 	}
-	updateItems(b.header, len(b.data))
+
+	// Extend offsets array
+	oldLen := b.Len()
+	newOffsets := make([]uint32, oldLen+len(values)+1)
+	copy(newOffsets, b.offsets)
+
+	// Extend data buffer
+	newData := make([]byte, len(b.data)+additionalSize)
+	copy(newData, b.data)
+
+	// Append new items
+	offset := uint32(len(b.data))
+	for i, v := range values {
+		newOffsets[oldLen+i] = offset
+		copy(newData[offset:], v)
+		offset += uint32(len(v))
+	}
+	newOffsets[oldLen+len(values)] = offset // End offset
+
+	b.offsets = newOffsets
+	b.data = newData
+	updateItems(b.header, b.Len())
 
 	// Record our data size and padding requirements.
-	b.dataSize.Store(newSize)
-	b.padding.Store(PaddingNeeded(newSize))
+	wireSize := int64(b.Len()*4 + len(b.data)) // item headers + item data
+	b.dataSize.Store(wireSize)
+	b.padding.Store(PaddingNeeded(8 + wireSize)) // +8 for list header
+
 	if b.s != nil {
-		XXXAddToTotal(b.s, b.dataSize.Load()+b.padding.Load()) // data size + entry header size
+		XXXAddToTotal(b.s, b.dataSize.Load()+b.padding.Load())
 		b.s.markModified()
 	}
 }
@@ -782,33 +838,26 @@ func (b *Bytes) Append(values ...[]byte) {
 // []bool or calling b.Set(...) will have no affect on the other. If there are no
 // entries, this returns a nil slice.
 func (b *Bytes) Slice() [][]byte {
-	if len(b.data) == 0 {
+	if b.Len() == 0 {
 		return nil
 	}
 
-	// Calculate total size needed (excluding 4-byte headers)
-	total := 0
-	for _, v := range b.data {
-		if len(v) > 4 {
-			total += len(v) - 4
-		}
-	}
+	// Single allocation for result slice and backing buffer
+	result := make([][]byte, b.Len())
+	backing := make([]byte, len(b.data))
+	copy(backing, b.data)
 
-	// Single allocation for all data, plus one for the slice
-	backing := make([]byte, total)
-	n := make([][]byte, len(b.data))
-	offset := 0
-	for i, v := range b.data {
-		if len(v) <= 4 {
-			n[i] = nil // Empty entry
+	// Create subslices pointing into the backing buffer
+	for i := 0; i < b.Len(); i++ {
+		start := b.offsets[i]
+		end := b.offsets[i+1]
+		if start == end {
+			result[i] = nil // Empty entry
 			continue
 		}
-		dataLen := len(v) - 4
-		n[i] = backing[offset : offset+dataLen]
-		copy(n[i], v[4:]) // Skip 4-byte header
-		offset += dataLen
+		result[i] = backing[start:end]
 	}
-	return n
+	return result
 }
 
 // Encode returns the []byte to write to output to represent this Bytes. If it returns nil,
@@ -816,7 +865,7 @@ func (b *Bytes) Slice() [][]byte {
 func (b *Bytes) Encode(w io.Writer) (int, error) {
 	// If we have a Bytes that doesn't actually have any data, it should not be encoded as
 	// indicated by returning nil.
-	if len(b.data) == 0 {
+	if b.Len() == 0 {
 		return 0, nil
 	}
 
@@ -824,13 +873,28 @@ func (b *Bytes) Encode(w io.Writer) (int, error) {
 	if err != nil {
 		return wrote, err
 	}
-	for _, item := range b.data {
-		n, err := w.Write(item)
+
+	// Write each item with its 4-byte size header
+	var buf [4]byte
+	for i := 0; i < b.Len(); i++ {
+		itemData := b.Get(i)
+		binary.Put(buf[:], uint32(len(itemData)))
+
+		n, err := w.Write(buf[:])
 		wrote += n
 		if err != nil {
 			return wrote, err
 		}
+
+		if len(itemData) > 0 {
+			n, err = w.Write(itemData)
+			wrote += n
+			if err != nil {
+				return wrote, err
+			}
+		}
 	}
+
 	n, err := w.Write(Padding(int(b.padding.Load())))
 	wrote += n
 	return wrote, err
