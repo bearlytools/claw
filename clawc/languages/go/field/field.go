@@ -43,11 +43,18 @@ const (
 )
 
 // IsList determines if a Type represents a list of entries.
+// Deprecated: Use IsListType instead, this has incorrect bounds.
 func IsList(ft Type) bool {
 	if ft > 14 && ft < 29 {
 		return true
 	}
 	return false
+}
+
+// IsListType returns true if the Type represents a list type.
+// This is O(1) compared to slices.Contains(ListTypes, t).
+func IsListType(ft Type) bool {
+	return ft >= FTListBools && ft <= FTListStructs
 }
 
 // NumberTypes is a list of field types that represent a number.

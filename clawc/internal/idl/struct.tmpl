@@ -524,3 +524,9 @@ func (x {{ $struct.Name }}) ClawStruct() reflect.Struct{
 func (x {{ $struct.Name }}) XXXGetStruct() *structs.Struct {
     return x.s
 }
+
+// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
+// After calling Recycle, the {{ $struct.Name }} nor any sub-structs should be used again.
+func (x {{ $struct.Name }}) Recycle(ctx context.Context) {
+    x.s.Recycle(ctx)
+}

@@ -1,6 +1,7 @@
 package idl
 
 import (
+	"cmp"
 	_ "embed"
 	"fmt"
 	"math"
@@ -521,8 +522,8 @@ func (e Enum) OrderByValues() []EnumVal {
 	}
 	slices.SortFunc(
 		l,
-		func(a, b EnumVal) bool {
-			return a.Value < b.Value
+		func(a, b EnumVal) int {
+			return cmp.Compare(a.Value, b.Value)
 		},
 	)
 	return l
@@ -536,8 +537,8 @@ func (e Enum) OrderByNames() []EnumVal {
 	}
 	slices.SortFunc(
 		l,
-		func(a, b EnumVal) bool {
-			return a.Name < b.Name
+		func(a, b EnumVal) int {
+			return cmp.Compare(a.Name, b.Name)
 		},
 	)
 	return l
@@ -946,8 +947,8 @@ func (s *Struct) fields(p *halfpike.Parser) error {
 	// can be in random order and we need them to be in field order.
 	slices.SortFunc(
 		s.Fields,
-		func(a, b StructField) bool {
-			return a.Index < b.Index
+		func(a, b StructField) int {
+			return cmp.Compare(a.Index, b.Index)
 		},
 	)
 

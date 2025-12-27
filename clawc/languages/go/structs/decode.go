@@ -3,8 +3,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
-	"sync/atomic"
 	"unsafe"
 
 	"github.com/bearlytools/claw/clawc/internal/binary"
@@ -25,8 +23,16 @@ func (s *Struct) scanFieldOffsets(data []byte) ([]fieldOffset, error) {
 		return nil, nil
 	}
 
-	// Pre-allocate with a reasonable estimate
-	offsets := make([]fieldOffset, 0, len(s.mapping.Fields))
+	ctx := context.Background()
+
+	// Get offsets slice from pool or allocate
+	var offsets []fieldOffset
+	if s.mapping.OffsetsPool != nil {
+		offsets = *s.mapping.OffsetsPool.Get(ctx)
+		offsets = offsets[:0] // Reset length but keep capacity
+	} else {
+		offsets = make([]fieldOffset, 0, len(s.mapping.Fields))
+	}
 
 	var lastFieldNum int32 = -1
 	offset := uint32(0)
@@ -60,9 +66,9 @@ func (s *Struct) scanFieldOffsets(data []byte) ([]fieldOffset, error) {
 		}
 
 		offsets = append(offsets, fieldOffset{
-			fieldNum: fieldNum,
-			offset:   offset, // Offset relative to field data (rawData[8:])
-			size:     fieldSize,
+			FieldNum: fieldNum,
+			Offset:   offset, // Offset relative to field data (rawData[8:])
+			Size:     fieldSize,
 		})
 
 		offset += fieldSize
@@ -175,6 +181,7 @@ func (s *Struct) scanFieldSizeFallback(data []byte, h GenericHeader, fieldType f
 }
 
 func (s *Struct) Unmarshal(r io.Reader) (int, error) {
+	ctx := context.Background()
 	read := 0
 	h := header.New()
 	read, err := io.ReadFull(r, h[:])
@@ -195,40 +202,40 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 		return read, fmt.Errorf("Struct malformed: must have a size divisible by 8, was %d", h.Final40())
 	}
 
-	log.Println("Struct says it is: ", size)
-	buffer := make([]byte, size-8) // -8 because we read the header already
-
 	// Initialize lazy decode infrastructure
-	s.fieldStates = make([]fieldState, len(s.mapping.Fields))
+	if s.mapping.FieldStates != nil {
+		s.fieldStates = *s.mapping.FieldStates.Get(ctx)
+	} else {
+		s.fieldStates = make([]FieldState, len(s.mapping.Fields))
+	}
 	s.modified = false
 	s.decoding = true // Prevent Set* functions from applying lazy decode logic
 
-	if len(buffer) == 0 {
+	if size == 8 {
 		// Empty struct - no fields, but still set up rawData with just the header
-		s.rawData = make([]byte, 8)
+		s.rawData = diffBuffers.Get(ctx, 8)[:8]
 		copy(s.rawData, h)
 		s.offsets = nil
 		s.decoding = false
 		return read, nil
 	}
 
-	n, err := io.ReadFull(r, buffer)
+	// Get a pooled buffer for rawData (header + field data)
+	s.rawData = diffBuffers.Get(ctx, int(size))[:size]
+	copy(s.rawData[:8], h)
+
+	// Read field data directly into rawData
+	n, err := io.ReadFull(r, s.rawData[8:])
 	read += n
 	if err != nil {
-		log.Println("this is the buffer size: ", len(buffer))
 		return read, fmt.Errorf("problem reading Struct data: %w", err)
 	}
 	if int(size-8) != n {
 		panic(fmt.Sprintf("read %d bytes, expected %d", n, size-8))
 	}
 
-	// Store complete raw data (header + field data) for potential fast-path marshal
-	s.rawData = make([]byte, size)
-	copy(s.rawData[:8], h)
-	copy(s.rawData[8:], buffer)
-
 	// Build field offset index for lazy decode support
-	offsets, err := s.scanFieldOffsets(buffer)
+	offsets, err := s.scanFieldOffsets(s.rawData[8:])
 	if err != nil {
 		return read, fmt.Errorf("failed to scan field offsets: %w", err)
 	}
@@ -236,12 +243,12 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 
 	// Set structTotal to the actual size from the serialized header.
 	// This overwrites the initial 8 from New() with the complete size.
-	atomic.StoreInt64(s.structTotal, int64(size))
+	s.structTotal.Store(int64(size))
 	s.header.SetFinal40(uint64(size))
 
 	s.decoding = false // Done setting up lazy decode infrastructure
 
-	st := atomic.LoadInt64(s.structTotal)
+	st := s.structTotal.Load()
 	if read != int(st) {
 		return read, fmt.Errorf("Struct was %d in length, but only found %d worth of fields", read, st)
 	}
@@ -327,7 +334,6 @@ func (s *Struct) decodeBytes(buffer *[]byte, fieldNum uint16) error {
 	f.Ptr = unsafe.Pointer(&b)
 
 	s.fields[fieldNum] = f
-	log.Println("addToTotal: ", withPadding)
 	XXXAddToTotal(s, withPadding)
 	*buffer = (*buffer)[withPadding:]
 	return nil
@@ -461,10 +467,8 @@ func (s *Struct) decodeListStruct(buffer *[]byte, fieldNum uint16) error {
 	m := s.mapping.Fields[fieldNum].Mapping
 
 	f := s.fields[fieldNum]
-	log.Println("buffer size before: ", len(*buffer))
 	l, err := NewStructsFromBytes(buffer, s, m)
 	if err != nil {
-		log.Println("buffer size after: ", len(*buffer))
 		return err
 	}
 	f.Header = l.header

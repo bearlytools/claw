@@ -4,11 +4,15 @@
 package mapping
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"path"
 	"unsafe"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
+	"github.com/bearlytools/claw/clawc/languages/go/structs/header"
+	"github.com/gostdlib/base/concurrency/sync"
 )
 
 // EncodeFunc is the signature for field encoder functions.
@@ -108,6 +112,13 @@ type Map struct {
 	ScanSizers   []ScanSizeFunc   // For scanFieldOffsets()
 	LazyDecoders []LazyDecodeFunc // For decodeFieldFromRaw()
 
+	// StructFieldsPool is a pool of StructField slices for use during encoding/decoding.
+	StructFieldsPool *sync.Pool[*[]StructField]
+	// FieldStates is a pool of FieldState slices for use during lazy decoding.
+	FieldStates *sync.Pool[*[]FieldState]
+	// OffsetsPool is a pool of FieldOffset slices for use during lazy decoding.
+	OffsetsPool *sync.Pool[*[]FieldOffset]
+
 	initialized bool
 }
 
@@ -129,6 +140,30 @@ func (m *Map) Init() {
 	if RegisterLazyDecoders != nil {
 		RegisterLazyDecoders(m)
 	}
+	m.StructFieldsPool = sync.NewPool(
+		context.Background(),
+		path.Join(m.Path, m.Pkg, m.Name)+".StructFieldsPool",
+		func() *[]StructField {
+			slice := make([]StructField, len(m.Fields))
+			return &slice
+		},
+	)
+	m.FieldStates = sync.NewPool(
+		context.Background(),
+		path.Join(m.Path, m.Pkg, m.Name)+".FieldStatesPool",
+		func() *[]FieldState {
+			slice := make([]FieldState, len(m.Fields))
+			return &slice
+		},
+	)
+	m.OffsetsPool = sync.NewPool(
+		context.Background(),
+		path.Join(m.Path, m.Pkg, m.Name)+".OffsetsPool",
+		func() *[]FieldOffset {
+			slice := make([]FieldOffset, 0, len(m.Fields))
+			return &slice
+		},
+	)
 
 	m.initialized = true
 
@@ -163,4 +198,23 @@ func (m Map) MustValidate() {
 	if err := m.validate(); err != nil {
 		panic(err)
 	}
+}
+
+// StructField holds a struct field entry. Defined here to avoid import cycles, as I want a pool of
+// these in mapping.
+type StructField struct {
+	Header header.Generic
+	Ptr    unsafe.Pointer
+}
+
+// FieldState represents the decode state of a field in lazy decoding mode.
+// Defined here instead of structs to avoid import cycles, as I want a pool of these in mapping.
+type FieldState uint8
+
+// FieldOffset stores the location of a field within raw serialized data.
+// Defined here instead of structs to allow pooling in mapping without import cycles.
+type FieldOffset struct {
+	FieldNum uint16 // The field number
+	Offset   uint32 // Byte offset into rawData where this field starts
+	Size     uint32 // Size of this field in bytes (including any padding)
 }
