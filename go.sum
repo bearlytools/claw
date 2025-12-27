@@ -151,8 +151,6 @@ github.com/gopherfs/fs v0.0.0-20220204202500-4538e04c7abb h1:Jm2ojAu8QLI8kjS/+qI
 github.com/gopherfs/fs v0.0.0-20220204202500-4538e04c7abb/go.mod h1:37tq52MJx44jOSzHph17/OxzgtVTAOnX3vbrsJSleC8=
 github.com/gostdlib/base v0.0.0-20251216181915-f10250b44e96 h1:z2BG8VexnmZJfQqkebdgM6mCoEqDxvudwYDetcT8td8=
 github.com/gostdlib/base v0.0.0-20251216181915-f10250b44e96/go.mod h1:TnAl424I5tewSbOHf43jIcZ34RTGqbtuotgPJMN2XX4=
-github.com/gostdlib/memory v0.0.0-20240318153335-39f2c93e660c h1:+ZPXDyl5yHAWoS/vHzVfukx6f4Q9gXU6ITxTA6AyRZo=
-github.com/gostdlib/memory v0.0.0-20240318153335-39f2c93e660c/go.mod h1:AoibHVzWE+w8TtbP7sqgrdqq+8IE7onwc2bdzSkpq5A=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrRoT6yV5+wkrOpcszoIsO4+4ds248=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=

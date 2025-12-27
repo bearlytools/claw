@@ -115,6 +115,5 @@ require (
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e
 	github.com/gopherfs/fs v0.0.0-20220204202500-4538e04c7abb
 	github.com/gostdlib/base v0.0.0-20251216181915-f10250b44e96
-	github.com/gostdlib/memory v0.0.0-20240318153335-39f2c93e660c
 	golang.org/x/net v0.41.0
 )

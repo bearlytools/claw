@@ -76,7 +76,7 @@ func TestDecodeBool(t *testing.T) {
 			t.Errorf("TestDecodeBool(%s): got %v, want %v", test.desc, got, test.want)
 		}
 		if s.structTotal.Load() != 16 {
-			t.Errorf("TestDecodeBool(%s): structTotal: got %v, want %v", test.desc, s.structTotal, 16)
+			t.Errorf("TestDecodeBool(%s): structTotal: got %v, want %v", test.desc, s.structTotal.Load(), 16)
 		}
 		f := s.fields[test.fieldNum]
 		if !bytes.Equal(f.Header, wantHeader) {
