@@ -3,7 +3,6 @@ package structs
 import (
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
@@ -26,8 +25,6 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	if uint64(total) != s.header.Final40() {
 		return 0, fmt.Errorf("Struct had internal size(%d), but header size as %d", total, s.header.Final40())
 	}
-	defer log.Println("Marshal headers says the size is: ", s.header.Final40())
-	defer log.Println("Marshal also says the total is: ", total)
 	written, err := w.Write(s.header)
 	if err != nil {
 		return written, err
@@ -37,7 +34,6 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 	encoders := s.mapping.Encoders
 	for i, v := range s.fields {
 		if v.Header == nil {
-			log.Printf("field %d was skipped for encode", i)
 			continue
 		}
 
@@ -46,11 +42,10 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 		}
 
 		desc := s.mapping.Fields[i]
-		log.Printf("field %d was: %s", i, desc.Type)
 
 		// O(1) function pointer dispatch instead of O(N) type switch
 		if encoders != nil && encoders[i] != nil {
-			n, err := encoders[i](w, v.Header, v.Ptr, desc, s.zeroTypeCompression)
+			n, err := encoders[i](w, v.Header, v.Ptr, desc)
 			written += n
 			if err != nil {
 				return written, err
@@ -64,7 +59,28 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 			}
 		}
 	}
-	log.Println("wrote: ", written)
+
+	// Encode IsSet bitfields at the end (if enabled)
+	// Each byte: bits 0-6 = field flags, bit 7 = continuation (1 = more data bytes follow)
+	// The buffer is padded to 8-byte alignment, but continuation bits only apply to actual data bytes.
+	if s.isSetEnabled && s.isSetBits != nil {
+		numBytes := (len(s.mapping.Fields) + 6) / 7
+		if numBytes == 0 {
+			numBytes = 1
+		}
+		for i, b := range s.isSetBits {
+			entry := b
+			// Set continuation bit (bit 7) only for actual data bytes (not padding)
+			if i < numBytes-1 {
+				entry |= 0x80
+			}
+			n, err := w.Write([]byte{entry})
+			written += n
+			if err != nil {
+				return written, err
+			}
+		}
+	}
 	if written != int(total) {
 		return written, fmt.Errorf("bug: we wrote %d data out, which is not the same as the total bytes it should take (%d)", written, total)
 	}
@@ -80,7 +96,8 @@ func (s *Struct) encodeFieldFallback(w io.Writer, v StructField, desc *mapping.F
 	switch desc.Type {
 	case field.FTBool, field.FTInt8, field.FTInt16, field.FTInt32, field.FTUint8,
 		field.FTUint16, field.FTUint32, field.FTFloat32:
-		if s.zeroTypeCompression && v.Header.Final40() == 0 {
+		// Zero-value compression: skip scalar fields with zero values
+		if v.Header.Final40() == 0 {
 			return 0, nil
 		}
 		return w.Write(v.Header)
@@ -89,20 +106,19 @@ func (s *Struct) encodeFieldFallback(w io.Writer, v StructField, desc *mapping.F
 		if v.Ptr != nil {
 			b = (*[]byte)(v.Ptr)
 		}
-		if s.zeroTypeCompression {
-			if b == nil {
-				return 0, nil
+		// Zero-value compression: skip 64-bit fields with zero values
+		if b == nil {
+			return 0, nil
+		}
+		allZero := true
+		for _, u := range *b {
+			if u != 0 {
+				allZero = false
+				break
 			}
-			allZero := true
-			for _, u := range *b {
-				if u != 0 {
-					allZero = false
-					break
-				}
-			}
-			if allZero {
-				return 0, nil
-			}
+		}
+		if allZero {
+			return 0, nil
 		}
 		n, err := w.Write(v.Header)
 		written += n
@@ -113,7 +129,8 @@ func (s *Struct) encodeFieldFallback(w io.Writer, v StructField, desc *mapping.F
 		written += n
 		return written, err
 	case field.FTString, field.FTBytes:
-		if s.zeroTypeCompression && v.Header.Final40() == 0 {
+		// Zero-value compression: skip string/bytes with zero size
+		if v.Header.Final40() == 0 {
 			return 0, nil
 		}
 		n, err := w.Write(v.Header)

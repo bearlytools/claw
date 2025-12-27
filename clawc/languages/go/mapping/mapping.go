@@ -21,10 +21,10 @@ import (
 //   - header: the field header (8 bytes)
 //   - ptr: pointer to the field data (may be nil for scalar types stored in header)
 //   - desc: field descriptor with type and metadata
-//   - zeroComp: whether zero-value compression is enabled
 //
 // Returns bytes written and any error.
-type EncodeFunc func(w io.Writer, header []byte, ptr unsafe.Pointer, desc *FieldDescr, zeroComp bool) (int, error)
+// Note: Zero-value compression is always enabled - scalar zero values are skipped.
+type EncodeFunc func(w io.Writer, header []byte, ptr unsafe.Pointer, desc *FieldDescr) (int, error)
 
 // ScanSizeFunc calculates the size of a field for offset scanning.
 // Parameters:

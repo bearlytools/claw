@@ -903,12 +903,12 @@ func (s Strings) Slice() []string {
 
 // Structs represents a list of Struct.
 type Structs struct {
-	header              header.Generic
-	data                []*Struct
-	mapping             *mapping.Map
-	s                   *Struct
-	zeroTypeCompression bool
-	size                atomic.Int64 // The size of the header + all structs in the list.
+	header       header.Generic
+	data         []*Struct
+	mapping      *mapping.Map
+	s            *Struct
+	isSetEnabled bool
+	size         atomic.Int64 // The size of the header + all structs in the list.
 }
 
 // NewStructs returns a new Structs for holding lists of Structs. This is used when creating a new list
@@ -932,6 +932,13 @@ func NewStructs(m *mapping.Map) *Structs {
 // NewStructsFromBytes returns a new Bytes value.
 // s can be nil for lazy decoding (size is already accounted for in parent).
 func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, error) {
+	return NewStructsFromBytesWithIsSet(data, s, m, false)
+}
+
+// NewStructsFromBytesWithIsSet returns a new Structs value with IsSet propagation.
+// s can be nil for lazy decoding (size is already accounted for in parent).
+// If isSetEnabled is true, each struct in the list will have IsSet tracking enabled.
+func NewStructsFromBytesWithIsSet(data *[]byte, s *Struct, m *mapping.Map, isSetEnabled bool) (*Structs, error) {
 	if m == nil {
 		panic("bug: cannot pass nil *mapping.Map")
 	}
@@ -940,7 +947,7 @@ func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, err
 	if len(*data) < 16 { // structs header(8) + 8 bytes of some field
 		return nil, fmt.Errorf("malformed list of structs: must be at least 16 bytes in size")
 	}
-	d := &Structs{s: s, mapping: m}
+	d := &Structs{s: s, mapping: m, isSetEnabled: isSetEnabled}
 	d.header = (*data)[:8]
 	*data = (*data)[8:] // Move past the header
 
@@ -957,6 +964,10 @@ func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, err
 		}
 
 		entry := New(0, m)
+		// Propagate isSetEnabled to each struct in the list
+		if isSetEnabled {
+			entry.XXXSetIsSetEnabled()
+		}
 		n, err := entry.Unmarshal(reader)
 		if err != nil {
 			return nil, err
@@ -1086,15 +1097,21 @@ func (s *Structs) Append(values ...*Struct) error {
 			// TODO(jdoak): If this is true, deep clone the Struct and attach the copy.
 			return fmt.Errorf("entry %d is attached to another field", i)
 		}
-		// Update our value's parent.
-		v.parent = s.s
 
 		// If the mapping pointers are pointing to the same place, then the Structs aren't the same.
 		if v.mapping != s.mapping {
 			return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", i)
 		}
-		v.zeroTypeCompression = s.zeroTypeCompression
+		// Propagate isSetEnabled if the parent has it enabled.
+		// IMPORTANT: Do this BEFORE setting parent to avoid double-counting IsSet size
+		// (XXXSetIsSetEnabled propagates to parent via XXXAddToTotal).
+		if s.isSetEnabled && !v.isSetEnabled {
+			v.XXXSetIsSetEnabled()
+		}
 		total += v.structTotal.Load()
+
+		// Update our value's parent AFTER propagating isSetEnabled.
+		v.parent = s.s
 	}
 	s.data = append(s.data, values...)
 

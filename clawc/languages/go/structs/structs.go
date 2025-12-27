@@ -74,9 +74,13 @@ type Struct struct {
 	// structTotal is the total size of this struct in bytes, including header.
 	structTotal atomic.Int64
 
-	// zeroTypeCompression indicates if we want to compress the encoding by ignoring
-	// scalar zero values.
-	zeroTypeCompression bool
+	// isSetEnabled indicates if we track which fields were explicitly set.
+	// When enabled, IsSet bitfield entries are appended to the struct during encoding.
+	isSetEnabled bool
+	// isSetBits tracks which fields have been explicitly set via Set* methods.
+	// Each byte tracks 7 fields (bit 7 is continuation flag in encoding).
+	// nil when isSetEnabled is false. Allocated from diffBuffers pool.
+	isSetBits []byte
 
 	// Lazy decoding support fields.
 	// rawData holds the complete raw binary data for this struct (including header).
@@ -117,7 +121,6 @@ func New(fieldNum uint16, dataMap *mapping.Map) *Struct {
 		s.fields = make([]StructField, len(dataMap.Fields))
 	}
 
-	s.zeroTypeCompression = true
 	XXXAddToTotal(s, 8) // the header
 	return s
 }
@@ -132,13 +135,45 @@ func NewFromReader(r io.Reader, maps *mapping.Map) (*Struct, error) {
 	return s, nil
 }
 
-// XXXSetNoZeroTypeCompression sets the Struct to output scalar value headers even if the
-// value is set to the zero value of the type. This makes the size larger but allows
-// detection if the field was set to 0 versus being a zero value.
+// XXXSetIsSetEnabled enables IsSet tracking for this Struct. When enabled, bitfield
+// entries tracking which fields were set are appended to the struct during encoding.
 // As with all XXXFunName, this is meant to be used internally. Using this otherwise
 // can have bad effects and there is no compatibility promise around it.
-func (s *Struct) XXXSetNoZeroTypeCompression() {
-	s.zeroTypeCompression = false
+func (s *Struct) XXXSetIsSetEnabled() {
+	s.isSetEnabled = true
+	// Allocate bits: we need ceil(numFields / 7) bytes
+	// (7 because bit 7 is used as continuation flag in encoding)
+	numBytes := (len(s.mapping.Fields) + 6) / 7
+	if numBytes == 0 {
+		numBytes = 1
+	}
+	// Pad to 8-byte alignment for Claw wire format compatibility
+	paddedSize := ((numBytes + 7) / 8) * 8
+	s.isSetBits = diffBuffers.Get(context.Background(), paddedSize)[:paddedSize]
+	clear(s.isSetBits) // Zero the buffer since pool may return dirty data
+	// Add the padded bitfield size to total
+	XXXAddToTotal(s, int64(paddedSize))
+}
+
+// markFieldSet marks a field as having been explicitly set.
+func (s *Struct) markFieldSet(fieldNum uint16) {
+	if !s.isSetEnabled || s.isSetBits == nil {
+		return
+	}
+	byteIdx := int(fieldNum) / 7
+	bitIdx := uint(fieldNum) % 7
+	if byteIdx < len(s.isSetBits) {
+		s.isSetBits[byteIdx] |= (1 << bitIdx)
+	}
+}
+
+// isSetBitSize returns the size in bytes of the IsSet bitfield entries (padded to 8-byte alignment).
+// Returns 0 if isSetEnabled is false.
+func (s *Struct) isSetBitSize() int64 {
+	if !s.isSetEnabled || s.isSetBits == nil {
+		return 0
+	}
+	return int64(len(s.isSetBits)) // Already padded during allocation
 }
 
 // NewFrom creates a new Struct that represents the same Struct type.
@@ -155,15 +190,19 @@ func (s *Struct) NewFrom() *Struct {
 	}
 
 	n := &Struct{
-		header:              h,
-		mapping:             s.mapping,
-		fields:              fields,
-		zeroTypeCompression: s.zeroTypeCompression,
+		header:  h,
+		mapping: s.mapping,
+		fields:  fields,
 	}
 	XXXAddToTotal(n, 8) // Use XXXAddToTotal to also update header
+	// Propagate isSetEnabled if the parent has it enabled
+	if s.isSetEnabled {
+		n.XXXSetIsSetEnabled()
+	}
 	return n
 }
 
+// Map returns the mapping.Map associated with this Struct.
 func (s *Struct) Map() *mapping.Map {
 	return s.mapping
 }
@@ -210,7 +249,12 @@ func (s *Struct) Reset() {
 	s.mapping = nil
 	s.parent = nil
 	s.structTotal.Store(0)
-	s.zeroTypeCompression = false
+	s.isSetEnabled = false
+	// Return pooled isSetBits buffer before clearing
+	if s.isSetBits != nil {
+		diffBuffers.Put(ctx, s.isSetBits)
+		s.isSetBits = nil
+	}
 
 	// Return pooled rawData buffer before clearing
 	if s.rawData != nil {
@@ -519,6 +563,10 @@ func (s *Struct) decodeStructFieldFromRaw(fieldNum uint16, data []byte) {
 	}
 
 	sub := New(fieldNum, m)
+	// Propagate isSetEnabled to nested struct before unmarshaling
+	if s.isSetEnabled {
+		sub.XXXSetIsSetEnabled()
+	}
 	// Create a reader from the data and unmarshal
 	r := readers.Get(context.Background())
 	r.Reset(data)
@@ -649,58 +697,43 @@ func (s *Struct) decodeListBytesFromRaw(fieldNum uint16, data []byte) {
 func (s *Struct) decodeListStructsFromRaw(fieldNum uint16, data []byte) {
 	m := s.mapping.Fields[fieldNum].Mapping
 	dataCopy := data
-	l, err := NewStructsFromBytes(&dataCopy, nil, m)
+	l, err := NewStructsFromBytesWithIsSet(&dataCopy, nil, m, s.isSetEnabled)
 	if err != nil {
 		return
 	}
 	l.s = s
+	l.isSetEnabled = s.isSetEnabled
 	f := &s.fields[fieldNum]
 	f.Header = l.header
 	f.Ptr = unsafe.Pointer(l)
 }
 
 // IsSet determines if our Struct has a field set or not. If the fieldNum is invalid,
-// this simply returns false. If NoZeroTypeCompression is NOT set, then we will return
-// true for all scaler values, string and bytes.
+// this simply returns false. When the IsSet file option is enabled, this checks the
+// bitfield for accurate tracking. Otherwise, it falls back to checking if the field
+// has a header (which may not detect zero-value fields due to compression).
 func (s *Struct) IsSet(fieldNum uint16) bool {
 	if int(fieldNum) >= len(s.mapping.Fields) {
 		return false
 	}
 
-	// Check lazy decode state - if field is in raw state, check raw data
-	if s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw {
-		// Field hasn't been decoded yet - check if it exists in raw data
-		if s.fieldExistsInRaw(fieldNum) {
-			return true
+	// If IsSet tracking is enabled, check the bitfield
+	if s.isSetEnabled && s.isSetBits != nil {
+		byteIdx := int(fieldNum) / 7
+		bitIdx := uint(fieldNum) % 7
+		if byteIdx < len(s.isSetBits) {
+			return (s.isSetBits[byteIdx] & (1 << bitIdx)) != 0
 		}
-		// Field not in raw data, check scalar zero value handling
-		if !s.zeroTypeCompression {
-			return false
-		}
-		t := s.mapping.Fields[int(fieldNum)].Type
-		if t == field.FTStruct || field.IsListType(t) {
-			return false
-		}
-		return true // Scalar with zero type compression - zero value is "set"
-	}
-
-	// Not type compression means that we always have a header for a value, even the zero value.
-	if !s.zeroTypeCompression {
-		return s.fields[fieldNum].Header != nil
-	}
-
-	// Well, then if the Header isn't nil, we know it is set.
-	if s.fields[fieldNum].Header != nil {
-		return true
-	}
-
-	// The Header is nil, so only some types can still report if they are not set.
-	t := s.mapping.Fields[int(fieldNum)].Type
-	if t == field.FTStruct || field.IsListType(t) {
 		return false
 	}
 
-	return true
+	// IsSet not enabled - fall back to checking if field has a header or exists in raw data
+	// Check lazy decode raw data first
+	if s.isLazyRaw(fieldNum) {
+		return s.fieldExistsInRaw(fieldNum)
+	}
+	// Check decoded fields
+	return s.fields[fieldNum].Header != nil
 }
 
 var boolMask = bits.Mask[uint64](24, 25)
@@ -740,17 +773,36 @@ func SetBool(s *Struct, fieldNum uint16, value bool) error {
 		return err
 	}
 
+	s.markFieldSet(fieldNum)
+
 	f := s.fields[fieldNum]
+	isFromRaw := s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw
+
+	// Track if previous value was true/false for updating structTotal on transitions
+	var prevWasTrue bool
+	if f.Header != nil {
+		prevWasTrue = f.Header.Final40() != 0
+	}
+
 	if f.Header == nil {
 		f.Header = NewGenericHeader()
 		f.Header.SetFieldNum(fieldNum)
 		f.Header.SetFieldType(field.FTBool)
-
-		// Only add to total if not transitioning from raw (raw already counted)
-		if s.fieldStates == nil || s.fieldStates[fieldNum] != stateRaw {
+		// Zero-value compression: only add to total for non-zero values
+		if !isFromRaw && value {
 			XXXAddToTotal(s, 8)
 		}
+	} else if !isFromRaw {
+		// Handle true/false transitions for zero-value compression
+		if !prevWasTrue && value {
+			// Transition from false to true: add 8 bytes
+			XXXAddToTotal(s, 8)
+		} else if prevWasTrue && !value {
+			// Transition from true to false: subtract 8 bytes
+			XXXAddToTotal(s, -8)
+		}
 	}
+
 	n := conversions.BytesToNum[uint64](f.Header)
 	*n = bits.SetBit(*n, 24, value)
 	s.fields[fieldNum] = f
@@ -847,30 +899,76 @@ func SetNumber[N Number](s *Struct, fieldNum uint16, value N) error {
 	}
 	desc := s.mapping.Fields[fieldNum]
 
+	s.markFieldSet(fieldNum)
+
 	size, isFloat, err := numberToDescCheck[N](desc)
 	if err != nil {
 		return fmt.Errorf("error setting field number %d: %w", fieldNum, err)
 	}
 
 	f := s.fields[fieldNum]
+	isFromRaw := s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw
+
+	// Zero-value compression: zero values are not encoded, so they don't contribute to total
+	isZero := value == 0
+
+	// Track if previous value was zero (for updating structTotal on transitions)
+	var prevWasZero bool
+	if f.Header == nil {
+		prevWasZero = true // Unset field is treated as zero
+	} else if size < 64 {
+		prevWasZero = f.Header.Final40() == 0
+	} else {
+		// For 64-bit values, check if the data bytes are all zero
+		if f.Ptr != nil {
+			b := *(*[]byte)(f.Ptr)
+			prevWasZero = true
+			for _, v := range b {
+				if v != 0 {
+					prevWasZero = false
+					break
+				}
+			}
+		} else {
+			prevWasZero = true
+		}
+	}
+
 	// If the field isn't allocated, allocate space.
 	if f.Header == nil {
 		f.Header = NewGenericHeader()
-		// Only add to total if not transitioning from raw (raw already counted)
-		isFromRaw := s.fieldStates != nil && s.fieldStates[fieldNum] == stateRaw
 		switch size < 64 {
 		case true:
-			if !isFromRaw {
+			// Only add to total if value is non-zero and not from raw
+			if !isFromRaw && !isZero {
 				XXXAddToTotal(s, 8)
 			}
 		case false:
 			b := make([]byte, 8)
 			f.Ptr = unsafe.Pointer(&b)
-			if !isFromRaw {
+			// Only add to total if value is non-zero and not from raw
+			if !isFromRaw && !isZero {
 				XXXAddToTotal(s, 16)
 			}
 		default:
 			panic("wtf")
+		}
+	} else if !isFromRaw {
+		// Header already exists, handle zero/non-zero transitions
+		if prevWasZero && !isZero {
+			// Transitioning from zero to non-zero: add to total
+			if size < 64 {
+				XXXAddToTotal(s, 8)
+			} else {
+				XXXAddToTotal(s, 16)
+			}
+		} else if !prevWasZero && isZero {
+			// Transitioning from non-zero to zero: subtract from total
+			if size < 64 {
+				XXXAddToTotal(s, -8)
+			} else {
+				XXXAddToTotal(s, -16)
+			}
 		}
 	}
 
@@ -1020,6 +1118,8 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte, isString bool) error {
 		return fmt.Errorf("cannot set a String or Byte field to size > 1099511627775")
 	}
 
+	s.markFieldSet(fieldNum)
+
 	f := s.fields[fieldNum]
 
 	ftype := field.FTBytes
@@ -1148,11 +1248,18 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 		return err
 	}
 
+	s.markFieldSet(fieldNum)
+
 	if value.structTotal.Load() > maxDataSize {
 		return fmt.Errorf("cannot set a Struct field to size > 1099511627775")
 	}
 
 	f := s.fields[fieldNum]
+
+	// Propagate isSetEnabled BEFORE setting parent to avoid double-counting
+	if s.isSetEnabled && !value.isSetEnabled {
+		value.XXXSetIsSetEnabled()
+	}
 
 	value.parent = s
 	value.header.SetFieldNum(fieldNum)
@@ -1266,6 +1373,8 @@ func SetListBool(s *Struct, fieldNum uint16, value *Bools) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBools); err != nil {
 		return err
 	}
+
+	s.markFieldSet(fieldNum)
 
 	f := s.fields[fieldNum]
 
@@ -1385,6 +1494,8 @@ func SetListNumber[N Number](s *Struct, fieldNum uint16, value *Numbers[N]) erro
 		return fmt.Errorf("error setting field number %d: %w", fieldNum, err)
 	}
 
+	s.markFieldSet(fieldNum)
+
 	f := s.fields[fieldNum]
 
 	// Handle size adjustment based on current state
@@ -1502,10 +1613,15 @@ func SetListStructs(s *Struct, fieldNum uint16, value *Structs) error {
 		return err
 	}
 
-	value.zeroTypeCompression = s.zeroTypeCompression
+	s.markFieldSet(fieldNum)
+
+	value.isSetEnabled = s.isSetEnabled
 	for _, v := range value.data {
+		// Propagate isSetEnabled BEFORE setting parent to avoid double-counting
+		if s.isSetEnabled && !v.isSetEnabled {
+			v.XXXSetIsSetEnabled()
+		}
 		v.parent = s
-		v.zeroTypeCompression = s.zeroTypeCompression
 	}
 
 	if value.Len() > maxDataSize {
@@ -1559,6 +1675,8 @@ func AppendListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
 		return err
 	}
 
+	s.markFieldSet(fieldNum)
+
 	// Use getOrDecode to ensure the field is decoded if it exists in raw data
 	f := s.getOrDecode(fieldNum)
 
@@ -1577,7 +1695,7 @@ func AppendListStruct(s *Struct, fieldNum uint16, values ...*Struct) error {
 
 	l := (*Structs)(f.Ptr)
 	l.s = s
-	l.zeroTypeCompression = s.zeroTypeCompression
+	l.isSetEnabled = s.isSetEnabled
 
 	if len(values)+l.Len() > maxDataSize {
 		return fmt.Errorf("cannot have more than %d items in a list", maxDataSize)
@@ -1686,6 +1804,9 @@ func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
 		return err
 	}
+
+	s.markFieldSet(fieldNum)
+
 	value.s = s
 
 	f := s.fields[fieldNum]

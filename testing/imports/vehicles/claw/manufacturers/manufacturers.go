@@ -5,6 +5,7 @@
 package manufacturers
 
 import (
+    "context"
     "io"
     "bytes"
 
@@ -15,6 +16,7 @@ import (
 
 // Ensure imports are used.
 var (
+    _ context.Context
     _ = io.EOF
     _ = bytes.MinRead
 )

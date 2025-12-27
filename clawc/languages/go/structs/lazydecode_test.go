@@ -375,7 +375,7 @@ func TestLazyDecodeStruct(t *testing.T) {
 	}
 
 	inner := New(0, innerMapping)
-	inner.XXXSetNoZeroTypeCompression()
+	inner.XXXSetIsSetEnabled()
 	MustSetBool(inner, 0, true)
 
 	var buf bytes.Buffer
@@ -386,6 +386,7 @@ func TestLazyDecodeStruct(t *testing.T) {
 	encoded := buf.Bytes()
 
 	outer := New(0, outerMapping)
+	outer.XXXSetIsSetEnabled() // Enable IsSet to properly decode IsSet-enabled data
 	desc := outerMapping.Fields[0]
 
 	lazyDecodeStruct(unsafe.Pointer(outer), 0, encoded, desc)
@@ -425,7 +426,7 @@ func TestLazyDecodeStructSelfReferential(t *testing.T) {
 	selfRefMapping.Fields[1].Mapping = selfRefMapping
 
 	child := New(1, selfRefMapping)
-	child.XXXSetNoZeroTypeCompression()
+	child.XXXSetIsSetEnabled()
 	MustSetBool(child, 0, true)
 
 	var buf bytes.Buffer
@@ -436,6 +437,7 @@ func TestLazyDecodeStructSelfReferential(t *testing.T) {
 	encoded := buf.Bytes()
 
 	parent := New(0, selfRefMapping)
+	parent.XXXSetIsSetEnabled() // Enable IsSet to properly decode IsSet-enabled data
 	desc := &mapping.FieldDescr{
 		Name:    "Child",
 		Type:    field.FTStruct,
@@ -513,15 +515,15 @@ func TestLazyDecodeListStructs(t *testing.T) {
 	}
 
 	s1 := New(0, innerMapping)
-	s1.XXXSetNoZeroTypeCompression()
+	s1.XXXSetIsSetEnabled()
 	MustSetBool(s1, 0, true)
 
 	s2 := New(0, innerMapping)
-	s2.XXXSetNoZeroTypeCompression()
+	s2.XXXSetIsSetEnabled()
 	MustSetBool(s2, 0, false)
 
 	parent := New(0, outerMapping)
-	parent.XXXSetNoZeroTypeCompression()
+	parent.XXXSetIsSetEnabled()
 	MustAppendListStruct(parent, 0, s1, s2)
 
 	var buf bytes.Buffer
@@ -534,6 +536,7 @@ func TestLazyDecodeListStructs(t *testing.T) {
 	listData := fullEncoded[8:] // Skip the struct header
 
 	newParent := New(0, outerMapping)
+	newParent.XXXSetIsSetEnabled() // Enable IsSet to properly decode IsSet-enabled data
 	desc := outerMapping.Fields[0]
 
 	lazyDecodeListStructs(unsafe.Pointer(newParent), 0, listData, desc)

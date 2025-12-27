@@ -19,7 +19,7 @@ package hello // Yeah I can comment here
 version 0 // And here too
 
 // Comment.
-options [ NoZeroValueCompression() ]// Comment
+options [ IsSet() ]// Comment
 
 import (
 	"github.com/johnsiilver/something"
@@ -43,7 +43,7 @@ Struct Car {
 }
 `
 	wantOpts := map[string]Option{
-		"NoZeroValueCompression": {"NoZeroValueCompression", nil},
+		"IsSet": {"IsSet", nil},
 	}
 
 	f := New()

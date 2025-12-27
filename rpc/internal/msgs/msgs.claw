@@ -1,5 +1,7 @@
 package msgs
 
+options [ IsSet() ]
+
 // MsgType is used to determine the type of message.
 Enum MsgType uint8 {
     // TUnknown indicates a bug.

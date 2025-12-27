@@ -1145,12 +1145,15 @@ func TestDecodeListStruct(t *testing.T) {
 	msg0Mapping.MustValidate()
 
 	ls0 := New(0, lmsgMapping)
-	MustSetBool(ls0, 0, true)       // 16 bytes
-	ls1 := New(0, lmsgMapping)      // 8 bytes
-	expectedTotal := 8 + 8 + 8 + 16 // s0Header(8) + list header(8) + ls0(16) + ls1(8)
+	MustSetBool(ls0, 0, true)
+	ls1 := New(0, lmsgMapping)
+	// With IsSet enabled on s0 and propagated to ls0/ls1:
+	// s0Header(8) + s0IsSet(8) + listHeader(8) + ls0(header 8 + bool 8 + IsSet 8) + ls1(header 8 + IsSet 8)
+	// = 8 + 8 + 8 + 24 + 16 = 64 bytes
+	expectedTotal := 8 + 8 + 8 + 24 + 16
 
 	s0 := New(0, msg0Mapping)
-	s0.XXXSetNoZeroTypeCompression()
+	s0.XXXSetIsSetEnabled()
 	MustAppendListStruct(s0, 0, ls0, ls1)
 
 	buff := &bytes.Buffer{}
@@ -1201,10 +1204,10 @@ func TestDecodeStruct(t *testing.T) {
 	msg0Mapping.MustValidate()
 
 	ls0 := New(0, lmsgMapping)
-	ls0.XXXSetNoZeroTypeCompression()
+	ls0.XXXSetIsSetEnabled()
 	MustSetBool(ls0, 0, true)  // 16 bytes
 	ls1 := New(0, lmsgMapping) // 8 bytes
-	ls1.XXXSetNoZeroTypeCompression()
+	ls1.XXXSetIsSetEnabled()
 
 	numList := NewNumbers[uint8]()
 	numList.Append(0, 1, 2, 3, 4, 5, 6, 7, 8) // 24
@@ -1213,9 +1216,9 @@ func TestDecodeStruct(t *testing.T) {
 	bytesList.Append([]byte("what"), []byte("ever")) // 24 = header(8) + entry header(4) + entry(4) + entry header(4) + entry(4)
 
 	s0 := New(0, msg0Mapping)
-	s0.XXXSetNoZeroTypeCompression()
+	s0.XXXSetIsSetEnabled()
 	s1 := New(1, msg1Mapping) // 8 bytes
-	s1.XXXSetNoZeroTypeCompression()
+	s1.XXXSetIsSetEnabled()
 	MustSetBool(s1, 0, true)                     // 16 bytes
 	MustSetNumber(s1, 1, int8(1))                // 24 bytes
 	MustSetNumber(s1, 2, int16(1))               // 32 bytes
@@ -1225,15 +1228,23 @@ func TestDecodeStruct(t *testing.T) {
 	MustSetNumber(s1, 6, uint16(1))              // 72 bytes
 	MustSetNumber(s1, 7, uint32(1))              // 80 bytes
 	MustSetNumber(s1, 8, uint64(1))              // 96 bytes
-	MustSetNumber(s1, 9, float32(1.1))           // 104 bytes
-	MustSetNumber(s1, 10, float64(1.1))          // 120 bytes
-	MustSetBytes(s1, 11, []byte("Hello"), false) // 136 bytes
-	MustSetListNumber(s1, 12, numList)           // 160 bytes
-	MustSetListBytes(s1, 13, bytesList)          // 184 bytes
-	MustAppendListStruct(s1, 14, ls0, ls1)       // 216 bytes = list header(8) + ls0(16) + ls1(8)
+	MustSetNumber(s1, 9, float32(1.1))
+	MustSetNumber(s1, 10, float64(1.1))
+	MustSetBytes(s1, 11, []byte("Hello"), false)
+	MustSetListNumber(s1, 12, numList)
+	MustSetListBytes(s1, 13, bytesList)
+	MustAppendListStruct(s1, 14, ls0, ls1)
 
-	// Total for both structs: 216 + 8
-	expectedTotal := 224
+	// With IsSet enabled on all structs:
+	// s0: header(8) + IsSet(8) = 16 base
+	// s1: header(8) + IsSet(8) + all fields (including list structs with IsSet)
+	// Total s1 fields: bool(8) + int8(8) + int16(8) + int32(8) + int64(16) +
+	//                  uint8(8) + uint16(8) + uint32(8) + uint64(16) +
+	//                  float32(8) + float64(16) + bytes(16) + listNum(24) +
+	//                  listBytes(24) + listStructs(8 + ls0(24) + ls1(16))
+	// s1 = 16 + 8+8+8+8+16+8+8+8+16+8+16+16+24+24+48 = 16 + 224 = 240
+	// s0 = 16 + 240 = 256
+	expectedTotal := 256
 	if err := SetStruct(s0, 0, s1); err != nil {
 		panic(err)
 	}
@@ -1253,6 +1264,7 @@ func TestDecodeStruct(t *testing.T) {
 	}
 
 	cp := New(0, msg0Mapping)
+	cp.XXXSetIsSetEnabled() // Enable IsSet to properly decode IsSet-enabled data
 	read, err := cp.Unmarshal(buff)
 	if err != nil {
 		panic(err)
@@ -1333,7 +1345,7 @@ func TestScanFieldOffsets(t *testing.T) {
 
 	// Create and populate a struct
 	s := New(0, testMapping)
-	s.XXXSetNoZeroTypeCompression()
+	s.XXXSetIsSetEnabled()
 	MustSetBool(s, 0, true)
 	MustSetNumber(s, 1, int32(42))
 	MustSetNumber(s, 2, int64(12345))
@@ -1348,6 +1360,7 @@ func TestScanFieldOffsets(t *testing.T) {
 
 	// Unmarshal into a new struct
 	decoded := New(0, testMapping)
+	decoded.XXXSetIsSetEnabled() // Enable IsSet to properly decode IsSet-enabled data
 	_, err = decoded.Unmarshal(&buf)
 	if err != nil {
 		t.Fatalf("[TestScanFieldOffsets]: Unmarshal failed: %v", err)
@@ -1391,7 +1404,7 @@ func TestOffsetsPooling(t *testing.T) {
 
 	// Create and populate a struct
 	s := New(0, testMapping)
-	s.XXXSetNoZeroTypeCompression()
+	s.XXXSetIsSetEnabled()
 	MustSetNumber(s, 0, int32(100))
 
 	// Marshal it
@@ -1403,6 +1416,7 @@ func TestOffsetsPooling(t *testing.T) {
 
 	// Unmarshal into a new struct - this should use pooled offsets
 	decoded := New(0, testMapping)
+	decoded.XXXSetIsSetEnabled() // Enable IsSet to properly decode IsSet-enabled data
 	_, err = decoded.Unmarshal(bytes.NewReader(buf.Bytes()))
 	if err != nil {
 		t.Fatalf("[TestOffsetsPooling]: Unmarshal failed: %v", err)
@@ -1425,6 +1439,7 @@ func TestOffsetsPooling(t *testing.T) {
 
 	// Unmarshal again - should get offsets from pool
 	decoded2 := New(0, testMapping)
+	decoded2.XXXSetIsSetEnabled()
 	_, err = decoded2.Unmarshal(bytes.NewReader(buf.Bytes()))
 	if err != nil {
 		t.Fatalf("[TestOffsetsPooling]: second Unmarshal failed: %v", err)

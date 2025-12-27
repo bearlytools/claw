@@ -12,12 +12,12 @@ import (
 type validateOptArgs func(args []string) error
 
 var fileOptions = map[string]validateOptArgs{
-	"NoZeroValueCompression": valNoZeroValueCompression,
+	"IsSet": valIsSet,
 }
 
-func valNoZeroValueCompression(args []string) error {
+func valIsSet(args []string) error {
 	if len(args) != 0 {
-		return fmt.Errorf("NoZeroValueCompression takes no arguments")
+		return fmt.Errorf("IsSet takes no arguments")
 	}
 	return nil
 }

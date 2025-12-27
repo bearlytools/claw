@@ -102,6 +102,10 @@ func lazyDecodeStruct(structPtr unsafe.Pointer, fieldNum uint16, data []byte, de
 	}
 
 	sub := New(fieldNum, m)
+	// Propagate isSetEnabled to nested struct before unmarshaling
+	if s.isSetEnabled {
+		sub.XXXSetIsSetEnabled()
+	}
 	// Create a reader from the data and unmarshal
 	r := readers.Get(context.Background())
 	r.Reset(data)
@@ -291,11 +295,12 @@ func lazyDecodeListStructs(structPtr unsafe.Pointer, fieldNum uint16, data []byt
 	s := (*Struct)(structPtr)
 	m := desc.Mapping
 	dataCopy := data
-	l, err := NewStructsFromBytes(&dataCopy, nil, m)
+	l, err := NewStructsFromBytesWithIsSet(&dataCopy, nil, m, s.isSetEnabled)
 	if err != nil {
 		return
 	}
 	l.s = s
+	l.isSetEnabled = s.isSetEnabled
 	f := &s.fields[fieldNum]
 	f.Header = l.header
 	f.Ptr = unsafe.Pointer(l)

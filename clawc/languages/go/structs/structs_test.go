@@ -97,7 +97,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	// Total: 136
 
 	root := New(0, msg0Mapping)
-	root.XXXSetNoZeroTypeCompression()
+	root.XXXSetIsSetEnabled()
 
 	/////////////////////
 	// Start Scalars
@@ -335,7 +335,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): float64 field, got %v, want 1.2", gotFloat64)
 	}
 
-	var totalWithScalars int64 = 120 // Scalar sizes + 8 byte hedaer for Struct
+	var totalWithScalars int64 = 128 // Scalar sizes + 8 byte header for Struct + 8 byte IsSet
 	if root.structTotal.Load() != totalWithScalars {
 		t.Fatalf("TestBasicEncodeDecodeStruct(initial setup): .total after setting up bool + numeric fields was %d, want %d", root.structTotal.Load(), totalWithScalars)
 	}
@@ -402,7 +402,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	if err = SetStruct(root, 12, sub); err != nil {
 		panic(err)
 	}
-	totalWithStruct := totalWithBytes + 8
+	totalWithStruct := totalWithBytes + 16 // Struct header + IsSet entry (8+8)
 	if root.structTotal.Load() != totalWithStruct {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding Struct): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithStruct)
 	}
@@ -446,7 +446,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): AddListStruct() had error: %s", err)
 	}
 
-	totalWithListStruct := totalWithStruct + 8 + 16 // ListStruct header + two Struct headers
+	totalWithListStruct := totalWithStruct + 8 + 32 // ListStruct header + two Struct (headers + IsSet)
 	if root.structTotal.Load() != totalWithListStruct {
 		t.Fatalf("TestBasicEncodeDecodeStruct(adding ListStruct): root.Struct total was %d, want %d", root.structTotal.Load(), totalWithListStruct)
 	}
@@ -543,6 +543,7 @@ func TestBasicEncodeDecodeStruct(t *testing.T) {
 	written, _ := root.Marshal(buff) // We just marshalled, so no error
 	log.Println("encoder says it wrote: ", written)
 	cp := New(0, msg0Mapping)
+	cp.XXXSetIsSetEnabled() // Enable IsSet to properly decode IsSet-enabled data
 	log.Println("new root is: ", cp.structTotal.Load())
 	if _, err := cp.Unmarshal(buff); err != nil {
 		panic(err)

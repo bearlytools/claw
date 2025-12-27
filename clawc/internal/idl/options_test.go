@@ -128,14 +128,14 @@ func TestOptions(t *testing.T) {
 	}
 }
 
-func TestValNoZeroTypeCompression(t *testing.T) {
-	if err := valNoZeroValueCompression(nil); err != nil {
-		t.Fatalf("TestValNoZeroTypeCompression: nil argument gave unexpected error: %s", err)
+func TestValIsSet(t *testing.T) {
+	if err := valIsSet(nil); err != nil {
+		t.Fatalf("TestValIsSet: nil argument gave unexpected error: %s", err)
 	}
-	if err := valNoZeroValueCompression([]string{}); err != nil {
-		t.Fatalf("TestValNoZeroTypeCompression: []string{} argument gave unexpected error: %s", err)
+	if err := valIsSet([]string{}); err != nil {
+		t.Fatalf("TestValIsSet: []string{} argument gave unexpected error: %s", err)
 	}
-	if err := valNoZeroValueCompression([]string{"hello"}); err == nil {
-		t.Fatalf("TestValNoZeroTypeCompression: []string{\"hello\"} argument gave did not give error")
+	if err := valIsSet([]string{"hello"}); err == nil {
+		t.Fatalf("TestValIsSet: []string{\"hello\"} argument gave did not give error")
 	}
 }

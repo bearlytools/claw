@@ -70,34 +70,34 @@ func encoderForType(t field.Type) mapping.EncodeFunc {
 }
 
 // encodeScalar32 encodes scalar types that fit in the 40-bit header value.
-func encodeScalar32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+// Zero-value compression is always enabled - skip scalar fields with zero values.
+func encodeScalar32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	h := header.Generic(hdr)
-	if zeroComp && h.Final40() == 0 {
+	if h.Final40() == 0 {
 		return 0, nil
 	}
 	return w.Write(hdr)
 }
 
 // encodeScalar64 encodes 64-bit scalar types (int64, uint64, float64).
-func encodeScalar64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+// Zero-value compression is always enabled - skip 64-bit fields with zero values.
+func encodeScalar64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	var b *[]byte
 	if ptr != nil {
 		b = (*[]byte)(ptr)
 	}
-	if zeroComp {
-		if b == nil {
-			return 0, nil
+	if b == nil {
+		return 0, nil
+	}
+	allZero := true
+	for _, u := range *b {
+		if u != 0 {
+			allZero = false
+			break
 		}
-		allZero := true
-		for _, u := range *b {
-			if u != 0 {
-				allZero = false
-				break
-			}
-		}
-		if allZero {
-			return 0, nil
-		}
+	}
+	if allZero {
+		return 0, nil
 	}
 	written, err := w.Write(hdr)
 	if err != nil {
@@ -109,9 +109,10 @@ func encodeScalar64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.F
 }
 
 // encodeBytes encodes string and bytes fields.
-func encodeBytes(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+// Zero-value compression is always enabled - skip string/bytes with zero size.
+func encodeBytes(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	h := header.Generic(hdr)
-	if zeroComp && h.Final40() == 0 {
+	if h.Final40() == 0 {
 		return 0, nil
 	}
 	written, err := w.Write(hdr)
@@ -135,13 +136,13 @@ func encodeBytes(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.Fiel
 }
 
 // encodeStruct encodes a nested struct field.
-func encodeStruct(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeStruct(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	value := (*structs.Struct)(ptr)
 	return value.Marshal(w)
 }
 
 // encodeListBools encodes a list of booleans.
-func encodeListBools(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListBools(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	b := (*structs.Bools)(ptr)
 	if b.Len() == 0 {
 		return 0, nil
@@ -150,7 +151,7 @@ func encodeListBools(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.
 }
 
 // encodeListInt8 encodes a list of int8.
-func encodeListInt8(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListInt8(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[int8])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -159,7 +160,7 @@ func encodeListInt8(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.F
 }
 
 // encodeListUint8 encodes a list of uint8.
-func encodeListUint8(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListUint8(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[uint8])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -168,7 +169,7 @@ func encodeListUint8(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.
 }
 
 // encodeListInt16 encodes a list of int16.
-func encodeListInt16(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListInt16(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[int16])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -177,7 +178,7 @@ func encodeListInt16(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.
 }
 
 // encodeListUint16 encodes a list of uint16.
-func encodeListUint16(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListUint16(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[uint16])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -186,7 +187,7 @@ func encodeListUint16(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping
 }
 
 // encodeListInt32 encodes a list of int32.
-func encodeListInt32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListInt32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[int32])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -195,7 +196,7 @@ func encodeListInt32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.
 }
 
 // encodeListUint32 encodes a list of uint32.
-func encodeListUint32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListUint32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[uint32])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -204,7 +205,7 @@ func encodeListUint32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping
 }
 
 // encodeListFloat32 encodes a list of float32.
-func encodeListFloat32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListFloat32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[float32])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -213,7 +214,7 @@ func encodeListFloat32(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mappin
 }
 
 // encodeListInt64 encodes a list of int64.
-func encodeListInt64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListInt64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[int64])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -222,7 +223,7 @@ func encodeListInt64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.
 }
 
 // encodeListUint64 encodes a list of uint64.
-func encodeListUint64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListUint64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[uint64])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -231,7 +232,7 @@ func encodeListUint64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping
 }
 
 // encodeListFloat64 encodes a list of float64.
-func encodeListFloat64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListFloat64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Numbers[float64])(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -240,7 +241,7 @@ func encodeListFloat64(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mappin
 }
 
 // encodeListBytes encodes a list of byte slices.
-func encodeListBytes(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListBytes(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Bytes)(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -249,7 +250,7 @@ func encodeListBytes(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.
 }
 
 // encodeListStrings encodes a list of strings (stored as underlying Bytes).
-func encodeListStrings(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListStrings(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Strings)(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -259,7 +260,7 @@ func encodeListStrings(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mappin
 }
 
 // encodeListStructs encodes a list of structs.
-func encodeListStructs(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeListStructs(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	x := (*structs.Structs)(ptr)
 	if x.Len() == 0 {
 		return 0, nil
@@ -268,6 +269,6 @@ func encodeListStructs(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mappin
 }
 
 // encodeUnsupported handles unsupported field types.
-func encodeUnsupported(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr, zeroComp bool) (int, error) {
+func encodeUnsupported(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	return 0, fmt.Errorf("unsupported field type %v for encoding", desc.Type)
 }

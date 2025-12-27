@@ -1,7 +1,7 @@
 # Claw
 
 Claw's provides an easy alternative to Protocol Buffers that is free, performant and easy to use.
-The format is open, however we currently only supply libraries for Go.
+The format is open and we currently supply code generation for Go.
 
 The whys for using it:
 
@@ -27,7 +27,7 @@ The why nots:
 * Lazy init, which has proven to be substantial faster
 * Close to zero heap allocations for decode
 * One pass encode/decode
-* Supportable in Go, Rust, C++, Javascript
+* Supportable in Go, Rust, Zig, Javascript
 * Import statements that make sense instead of that protoc nonsense
 * Allow any type of serialization on top of our binary serialization if the other format can support our types
 * The binary format should be fairly easy to understand if you understand binary file formats

@@ -316,16 +316,14 @@ func TestScanSizeUnknown(t *testing.T) {
 }
 
 func TestEncodeScalar32(t *testing.T) {
+	// Zero-value compression is always on, so zero values are skipped
 	tests := []struct {
-		name     string
-		value    uint64
-		zeroComp bool
-		wantN    int
+		name  string
+		value uint64
+		wantN int
 	}{
-		{name: "Success: non-zero value without compression", value: 42, zeroComp: false, wantN: 8},
-		{name: "Success: zero value without compression", value: 0, zeroComp: false, wantN: 8},
-		{name: "Success: non-zero value with compression", value: 42, zeroComp: true, wantN: 8},
-		{name: "Success: zero value with compression skips write", value: 0, zeroComp: true, wantN: 0},
+		{name: "Success: non-zero value", value: 42, wantN: 8},
+		{name: "Success: zero value skips write", value: 0, wantN: 0},
 	}
 
 	for _, test := range tests {
@@ -335,7 +333,7 @@ func TestEncodeScalar32(t *testing.T) {
 		hdr.SetFinal40(test.value)
 
 		var buf bytes.Buffer
-		n, err := encodeScalar32(&buf, hdr, nil, nil, test.zeroComp)
+		n, err := encodeScalar32(&buf, hdr, nil, nil)
 		if err != nil {
 			t.Errorf("[TestEncodeScalar32](%s): unexpected error: %v", test.name, err)
 			continue
@@ -347,16 +345,16 @@ func TestEncodeScalar32(t *testing.T) {
 }
 
 func TestEncodeScalar64(t *testing.T) {
+	// Zero-value compression is always on, so zero values are skipped
 	tests := []struct {
-		name     string
-		data     []byte
-		zeroComp bool
-		wantN    int
+		name  string
+		data  []byte
+		wantN int
 	}{
-		{name: "Success: non-zero value without compression", data: []byte{1, 2, 3, 4, 5, 6, 7, 8}, zeroComp: false, wantN: 16},
-		{name: "Success: nil pointer with compression skips write", data: nil, zeroComp: true, wantN: 0},
-		{name: "Success: all zeros with compression skips write", data: []byte{0, 0, 0, 0, 0, 0, 0, 0}, zeroComp: true, wantN: 0},
-		{name: "Success: non-zero with compression writes", data: []byte{1, 0, 0, 0, 0, 0, 0, 0}, zeroComp: true, wantN: 16},
+		{name: "Success: non-zero value", data: []byte{1, 2, 3, 4, 5, 6, 7, 8}, wantN: 16},
+		{name: "Success: nil pointer skips write", data: nil, wantN: 0},
+		{name: "Success: all zeros skips write", data: []byte{0, 0, 0, 0, 0, 0, 0, 0}, wantN: 0},
+		{name: "Success: non-zero writes", data: []byte{1, 0, 0, 0, 0, 0, 0, 0}, wantN: 16},
 	}
 
 	for _, test := range tests {
@@ -370,7 +368,7 @@ func TestEncodeScalar64(t *testing.T) {
 		if test.data != nil {
 			ptr = unsafe.Pointer(&test.data)
 		}
-		n, err := encodeScalar64(&buf, hdr, ptr, nil, test.zeroComp)
+		n, err := encodeScalar64(&buf, hdr, ptr, nil)
 		if err != nil {
 			t.Errorf("[TestEncodeScalar64](%s): unexpected error: %v", test.name, err)
 			continue
@@ -382,15 +380,15 @@ func TestEncodeScalar64(t *testing.T) {
 }
 
 func TestEncodeBytes(t *testing.T) {
+	// Zero-value compression is always on, so empty data is skipped
 	tests := []struct {
-		name     string
-		data     []byte
-		zeroComp bool
-		wantN    int
+		name  string
+		data  []byte
+		wantN int
 	}{
-		{name: "Success: non-empty data", data: []byte("hello"), zeroComp: false, wantN: 16},
-		{name: "Success: empty with compression skips", data: nil, zeroComp: true, wantN: 0},
-		{name: "Success: 8-byte aligned data", data: []byte("12345678"), zeroComp: false, wantN: 16},
+		{name: "Success: non-empty data", data: []byte("hello"), wantN: 16},
+		{name: "Success: empty skips", data: nil, wantN: 0},
+		{name: "Success: 8-byte aligned data", data: []byte("12345678"), wantN: 16},
 	}
 
 	for _, test := range tests {
@@ -408,7 +406,7 @@ func TestEncodeBytes(t *testing.T) {
 		if test.data != nil {
 			ptr = unsafe.Pointer(&test.data)
 		}
-		n, err := encodeBytes(&buf, hdr, ptr, nil, test.zeroComp)
+		n, err := encodeBytes(&buf, hdr, ptr, nil)
 		if err != nil {
 			t.Errorf("[TestEncodeBytes](%s): unexpected error: %v", test.name, err)
 			continue
@@ -424,7 +422,7 @@ func TestEncodeUnsupported(t *testing.T) {
 	desc := &mapping.FieldDescr{Type: field.Type(255)}
 
 	var buf bytes.Buffer
-	_, err := encodeUnsupported(&buf, hdr, nil, desc, false)
+	_, err := encodeUnsupported(&buf, hdr, nil, desc)
 	if err == nil {
 		t.Error("[TestEncodeUnsupported]: expected error, got nil")
 	}

@@ -5,6 +5,7 @@
 package cars
 
 import (
+    "context"
     "io"
     "bytes"
 
@@ -19,6 +20,7 @@ import (
 
 // Ensure imports are used.
 var (
+    _ context.Context
     _ = io.EOF
     _ = bytes.MinRead
 )
@@ -82,7 +84,6 @@ type Car struct {
 // NewCar creates a new instance of Car.
 func NewCar() Car {
     s := structs.New(0, XXXMappingCar)
-    s.XXXSetNoZeroTypeCompression()
     return Car{
         s: s,
     }
@@ -167,7 +168,14 @@ func (x Car) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Car) XXXGetStruct() *structs.Struct {
     return x.s
-} 
+}
+
+// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
+// After calling Recycle, the Car nor any sub-structs should be used again.
+func (x Car) Recycle(ctx context.Context) {
+    x.s.Recycle(ctx)
+}
+ 
 
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.

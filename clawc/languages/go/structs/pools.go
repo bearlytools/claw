@@ -123,6 +123,8 @@ func init() {
 }
 
 type diffSizePools struct {
+	_4B   *sync.Pool[*[]byte]
+	_8B   *sync.Pool[*[]byte]
 	_256B *sync.Pool[*[]byte]
 	_512B *sync.Pool[*[]byte]
 	_1K   *sync.Pool[*[]byte]
@@ -135,6 +137,22 @@ type diffSizePools struct {
 
 func newDiffSizePools() diffSizePools {
 	return diffSizePools{
+		_4B: sync.NewPool(
+			context.Background(),
+			"diffPool4",
+			func() *[]byte {
+				b := make([]byte, 4)
+				return &b
+			},
+		),
+		_8B: sync.NewPool(
+			context.Background(),
+			"diffPool8",
+			func() *[]byte {
+				b := make([]byte, 8)
+				return &b
+			},
+		),
 		_256B: sync.NewPool(
 			context.Background(),
 			"diffPool256",
@@ -206,6 +224,12 @@ func newDiffSizePools() diffSizePools {
 // make sure to adjust to your needs.
 func (d *diffSizePools) Get(ctx context.Context, sizeBytes int) []byte {
 	switch {
+	case sizeBytes <= 4:
+		b := d._4B.Get(ctx)
+		return *b
+	case sizeBytes <= 8:
+		b := d._8B.Get(ctx)
+		return *b
 	case sizeBytes <= 256:
 		b := d._256B.Get(ctx)
 		return *b
@@ -238,21 +262,28 @@ func (d *diffSizePools) Get(ctx context.Context, sizeBytes int) []byte {
 // Put puts a []byte into a pool for reuse.
 func (d *diffSizePools) Put(ctx context.Context, b []byte) {
 	switch {
-	case cap(b) <= 256:
+	case cap(b) < 8:
+		d._4B.Put(ctx, &b)
+	// I want to get rid of everything > 16 and < 256.
+	case cap(b) == 8 || cap(b) <= 16:
+		d._8B.Put(ctx, &b)
+	case cap(b) < 256:
+		// Do not pool slices between 16 and 256 bytes to reduce fragmentation.
+	case cap(b) < 512:
 		d._256B.Put(ctx, &b)
-	case cap(b) <= 512:
+	case cap(b) < 1*sizes.KiB:
 		d._512B.Put(ctx, &b)
-	case cap(b) <= 1*sizes.KiB:
+	case cap(b) < 4*sizes.KiB:
 		d._1K.Put(ctx, &b)
-	case cap(b) <= 4*sizes.KiB:
+	case cap(b) < 16*sizes.KiB:
 		d._4K.Put(ctx, &b)
-	case cap(b) <= 16*sizes.KiB:
+	case cap(b) < 64*sizes.KiB:
 		d._16K.Put(ctx, &b)
-	case cap(b) <= 64*sizes.KiB:
+	case cap(b) < 256*sizes.KiB:
 		d._64K.Put(ctx, &b)
-	case cap(b) <= 256*sizes.KiB:
+	case cap(b) < 1*sizes.MiB:
 		d._256K.Put(ctx, &b)
-	case cap(b) <= 1*sizes.MiB:
+	case cap(b) == 1*sizes.MiB:
 		d._1M.Put(ctx, &b)
 	default:
 		// Larger than 1MiB - don't pool, let GC handle it

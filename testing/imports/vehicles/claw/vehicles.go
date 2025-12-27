@@ -5,6 +5,7 @@
 package vehicles
 
 import (
+    "context"
     "io"
     "bytes"
 
@@ -15,13 +16,14 @@ import (
     "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
-    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
+    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
 // Ensure imports are used.
 var (
+    _ context.Context
     _ = io.EOF
     _ = bytes.MinRead
 )
@@ -84,7 +86,6 @@ type Vehicle struct {
 // NewVehicle creates a new instance of Vehicle.
 func NewVehicle() Vehicle {
     s := structs.New(0, XXXMappingVehicle)
-    s.XXXSetNoZeroTypeCompression()
     return Vehicle{
         s: s,
     }
@@ -200,7 +201,14 @@ func (x Vehicle) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Vehicle) XXXGetStruct() *structs.Struct {
     return x.s
-} 
+}
+
+// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
+// After calling Recycle, the Vehicle nor any sub-structs should be used again.
+func (x Vehicle) Recycle(ctx context.Context) {
+    x.s.Recycle(ctx)
+}
+ 
 
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.
