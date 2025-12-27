@@ -102,8 +102,16 @@ Struct encoding is made up of two sections:
 +-------------------------------+
 |  A  |           B             |   
 
+Or with option:
+
++---------------------------------------------+
+|  A  |           B             | C0 | C1 | ...
+
+
 A (8 bytes) Generic Header
 B (up to 1 Tebibyte) of field information
+C IsSet detection entries. These are optional set by the IsSet() option. [1]byte entries, each bit reprsenting a field with 1 indicating it was set. The last bit indicates if there is another entry following 
+this one.  
 ```
 
 The field information section contains other encoded types that are decoded as they are reached. Each field in a Struct has a Generic Header, so once a decoder has moved its read index passed the Generic Header, it can read the next 8 bytes to get the field information in order to proceed with decoding.

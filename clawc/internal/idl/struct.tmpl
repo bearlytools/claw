@@ -1,8 +1,6 @@
-{{- $zeroValueCompression := false }}
-{{- if .File.Options.NoZeroValueCompression }}
-{{- $zeroValueCompression = false }}
-{{- else }}
-{{- $zeroValueCompression = true }}
+{{- $isSetEnabled := false }}
+{{- if .File.Options.IsSet }}
+{{- $isSetEnabled = true }}
 {{- end }}
 {{- if .Comment }}
 // {{ .Comment }}
@@ -14,8 +12,8 @@ type {{ .Name }} struct {
 // New{{ .Name }} creates a new instance of {{ .Name }}.
 func New{{ .Name }}() {{ .Name }} {
     s := structs.New(0, XXXMapping{{ .Name }})
-    {{- if $zeroValueCompression }}
-    s.XXXSetNoZeroTypeCompression()
+    {{- if $isSetEnabled }}
+    s.XXXSetIsSetEnabled()
     {{- end }}
     return {{ .Name }}{
         s: s,
@@ -75,7 +73,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value bool) {{ $struct.Name }} 
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -94,7 +92,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int8) {{ $struct.Name }} 
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ .Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -113,7 +111,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int16) {{ $struct.Name }}
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -132,7 +130,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int32) {{ $struct.Name }}
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -151,7 +149,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value int64) {{ $struct.Name }}
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -181,7 +179,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint8) {{ $struct.Name }}
 }
 {{- end }}
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -211,7 +209,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint16) {{ $struct.Name }
 }
 {{- end }}
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -230,7 +228,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint32) {{ $struct.Name }
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -249,7 +247,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value uint64) {{ $struct.Name }
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -268,7 +266,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float32) {{ $struct.Name 
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -287,7 +285,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value float64) {{ $struct.Name 
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -311,7 +309,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value string) {{ $struct.Name }
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -344,7 +342,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value []byte) {{ $struct.Name }
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -368,7 +366,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value {{ $field.IdentName }}) {
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -387,7 +385,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Bools) {{ $struct.Na
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -421,7 +419,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value list.Numbers[{{ $field.Go
 }
 {{- end }}
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -442,7 +440,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.Bytes) {{ $struct.
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -462,7 +460,7 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.String) {{ $struct
     return x
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }
@@ -497,7 +495,7 @@ func (x {{ $struct.Name }}) Append{{ $field.Name }}(values ...{{ $field.IdentNam
     structs.MustAppendListStruct(x.s, {{ $field.Index }}, vals...)
 }
 
-{{- if eq $zeroValueCompression false }}
+{{- if $isSetEnabled }}
 func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
     return x.s.IsSet({{ $field.Index }})
 }

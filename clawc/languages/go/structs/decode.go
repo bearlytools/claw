@@ -25,6 +25,22 @@ func (s *Struct) scanFieldOffsets(data []byte) ([]fieldOffset, error) {
 
 	ctx := context.Background()
 
+	// Calculate the end of field data (before IsSet entries)
+	fieldDataEnd := uint32(len(data))
+	if s.isSetEnabled {
+		// IsSet entries are at the end of the data (1 byte per 7 fields, padded to 8-byte alignment)
+		numBytes := (len(s.mapping.Fields) + 6) / 7
+		if numBytes == 0 {
+			numBytes = 1
+		}
+		paddedSize := ((numBytes + 7) / 8) * 8
+		isSetSize := uint32(paddedSize)
+		if isSetSize > fieldDataEnd {
+			return nil, fmt.Errorf("scanFieldOffsets: data too small for IsSet entries")
+		}
+		fieldDataEnd -= isSetSize
+	}
+
 	// Get offsets slice from pool or allocate
 	var offsets []fieldOffset
 	if s.mapping.OffsetsPool != nil {
@@ -37,8 +53,8 @@ func (s *Struct) scanFieldOffsets(data []byte) ([]fieldOffset, error) {
 	var lastFieldNum int32 = -1
 	offset := uint32(0)
 
-	for offset < uint32(len(data)) {
-		if uint32(len(data))-offset < 8 {
+	for offset < fieldDataEnd {
+		if fieldDataEnd-offset < 8 {
 			return nil, fmt.Errorf("scanFieldOffsets: not enough bytes for field header at offset %d", offset)
 		}
 
@@ -248,12 +264,69 @@ func (s *Struct) Unmarshal(r io.Reader) (int, error) {
 
 	s.decoding = false // Done setting up lazy decode infrastructure
 
+	// Parse IsSet bitfields if enabled
+	if s.isSetEnabled {
+		if err := s.parseIsSetBitfields(); err != nil {
+			return read, fmt.Errorf("failed to parse IsSet bitfields: %w", err)
+		}
+	}
+
 	st := s.structTotal.Load()
 	if read != int(st) {
 		return read, fmt.Errorf("Struct was %d in length, but only found %d worth of fields", read, st)
 	}
 
 	return read, nil
+}
+
+// parseIsSetBitfields reads IsSet entries from the end of struct data.
+// The IsSet entries are located after all field data.
+func (s *Struct) parseIsSetBitfields() error {
+	if !s.isSetEnabled || s.isSetBits == nil {
+		return nil
+	}
+
+	// Calculate expected number of IsSet bytes (1 byte per 7 fields, padded to 8-byte alignment)
+	numBytes := (len(s.mapping.Fields) + 6) / 7
+	if numBytes == 0 {
+		numBytes = 1
+	}
+	paddedSize := ((numBytes + 7) / 8) * 8
+
+	// Calculate the offset where IsSet entries start
+	// Total size = header (8) + field data + IsSet entries (padded)
+	totalSize := len(s.rawData)
+	isSetOffset := totalSize - paddedSize
+
+	if isSetOffset < 8 {
+		return fmt.Errorf("not enough data for IsSet entries: total %d, expected IsSet size %d", totalSize, paddedSize)
+	}
+
+	// Read entries from the end (only the actual bytes used, not padding)
+	for i := 0; i < numBytes; i++ {
+		entryOffset := isSetOffset + i
+		if entryOffset >= totalSize {
+			return fmt.Errorf("IsSet entry %d extends beyond data", i)
+		}
+		entry := s.rawData[entryOffset]
+
+		// Check continuation bit (bit 7)
+		hasContinuation := (entry & 0x80) != 0
+
+		// Validate continuation bit
+		if i < numBytes-1 && !hasContinuation {
+			return fmt.Errorf("missing continuation bit in IsSet entry %d", i)
+		}
+		if i == numBytes-1 && hasContinuation {
+			return fmt.Errorf("unexpected continuation bit in final IsSet entry")
+		}
+
+		// Clear continuation bit (bit 7) and store
+		s.isSetBits[i] = entry & 0x7F
+	}
+	// Remaining bytes in padded buffer are already zeroed
+
+	return nil
 }
 
 // NOTE: unmarshalFields was the old eager decode path and has been removed.
@@ -452,6 +525,10 @@ func (s *Struct) decodeStruct(buffer *[]byte, fieldNum uint16) error {
 	defer readers.Put(context.Background(), r)
 
 	sub := New(fieldNum, m)
+	// Propagate isSetEnabled to nested struct before unmarshaling
+	if s.isSetEnabled {
+		sub.XXXSetIsSetEnabled()
+	}
 	n, err := sub.Unmarshal(r)
 	if err != nil {
 		return err
@@ -467,10 +544,11 @@ func (s *Struct) decodeListStruct(buffer *[]byte, fieldNum uint16) error {
 	m := s.mapping.Fields[fieldNum].Mapping
 
 	f := s.fields[fieldNum]
-	l, err := NewStructsFromBytes(buffer, s, m)
+	l, err := NewStructsFromBytesWithIsSet(buffer, s, m, s.isSetEnabled)
 	if err != nil {
 		return err
 	}
+	l.isSetEnabled = s.isSetEnabled
 	f.Header = l.header
 	f.Ptr = unsafe.Pointer(l)
 	s.fields[fieldNum] = f

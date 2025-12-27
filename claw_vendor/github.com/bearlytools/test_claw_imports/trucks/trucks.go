@@ -5,6 +5,7 @@
 package trucks
 
 import (
+    "context"
     "io"
     "bytes"
 
@@ -19,6 +20,7 @@ import (
 
 // Ensure imports are used.
 var (
+    _ context.Context
     _ = io.EOF
     _ = bytes.MinRead
 )
@@ -82,7 +84,6 @@ type Truck struct {
 // NewTruck creates a new instance of Truck.
 func NewTruck() Truck {
     s := structs.New(0, XXXMappingTruck)
-    s.XXXSetNoZeroTypeCompression()
     return Truck{
         s: s,
     }
@@ -167,7 +168,14 @@ func (x Truck) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Truck) XXXGetStruct() *structs.Struct {
     return x.s
-} 
+}
+
+// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
+// After calling Recycle, the Truck nor any sub-structs should be used again.
+func (x Truck) Recycle(ctx context.Context) {
+    x.s.Recycle(ctx)
+}
+ 
 
 // XXXDescr returns the Struct's descriptor. This should only be used
 // by the reflect package and is has no compatibility promises like all XXX fields.
