@@ -59,30 +59,20 @@ type StructField = mapping.StructField
 
 // Struct is the basic type for holding a set of values. In claw format, every variable
 // must be contained in a Struct.
+//
+// Field ordering is optimized for cache efficiency:
+// - Hot read path fields first (mapping, header, fields)
+// - Lazy decode fields grouped together
+// - Write path fields grouped (structTotal, parent, modified)
+// - Rarely used fields at end
 type Struct struct {
-	inList bool
-
-	header GenericHeader
-	fields []StructField
-	excess []byte
-
+	// === Hot read path ===
 	// mapping holds our Mapping object that allows us to understand what field number holds what value type.
 	mapping *mapping.Map
+	header  GenericHeader
+	fields  []StructField
 
-	parent *Struct
-
-	// structTotal is the total size of this struct in bytes, including header.
-	structTotal atomic.Int64
-
-	// isSetEnabled indicates if we track which fields were explicitly set.
-	// When enabled, IsSet bitfield entries are appended to the struct during encoding.
-	isSetEnabled bool
-	// isSetBits tracks which fields have been explicitly set via Set* methods.
-	// Each byte tracks 7 fields (bit 7 is continuation flag in encoding).
-	// nil when isSetEnabled is false. Allocated from diffBuffers pool.
-	isSetBits []byte
-
-	// Lazy decoding support fields.
+	// === Lazy decoding support ===
 	// rawData holds the complete raw binary data for this struct (including header).
 	// This is populated during Unmarshal and used for lazy field decoding.
 	// Allocated from diffBuffers pool and returned on Reset/Recycle.
@@ -93,12 +83,28 @@ type Struct struct {
 	// fieldStates tracks the decode state of each field (raw, decoded, or dirty).
 	// Index corresponds to field number.
 	fieldStates []FieldState
+
+	// === Write path (grouped to reduce false sharing with read path) ===
+	// structTotal is the total size of this struct in bytes, including header.
+	structTotal atomic.Int64
+	parent      *Struct
+	// isSetBits tracks which fields have been explicitly set via Set* methods.
+	// Each byte tracks 7 fields (bit 7 is continuation flag in encoding).
+	// nil when isSetEnabled is false. Allocated from diffBuffers pool.
+	isSetBits []byte
 	// modified is true if any field has been modified via Set* or Delete* operations.
 	// When false and rawData is non-nil, Marshal can write rawData directly.
 	modified bool
+	// isSetEnabled indicates if we track which fields were explicitly set.
+	// When enabled, IsSet bitfield entries are appended to the struct during encoding.
+	isSetEnabled bool
 	// decoding is true during the Unmarshal process. This prevents the lazy decode
 	// size adjustment logic from being applied during initial decoding.
 	decoding bool
+	inList   bool
+
+	// === Rarely used ===
+	excess []byte
 }
 
 // New creates a NewStruct that is used to create a *Struct for a specific data type.
@@ -179,8 +185,6 @@ func (s *Struct) isSetBitSize() int64 {
 // NewFrom creates a new Struct that represents the same Struct type.
 func (s *Struct) NewFrom() *Struct {
 	ctx := context.Background()
-	h := GenericHeader(make([]byte, 8))
-	h.SetFieldType(field.FTStruct)
 
 	var fields []StructField
 	if s.mapping.StructFieldsPool != nil {
@@ -189,12 +193,11 @@ func (s *Struct) NewFrom() *Struct {
 		fields = make([]StructField, len(s.mapping.Fields))
 	}
 
-	n := &Struct{
-		header:  h,
-		mapping: s.mapping,
-		fields:  fields,
-	}
-	XXXAddToTotal(n, 8) // Use XXXAddToTotal to also update header
+	n := structPool.Get(ctx)
+	n.header.SetFieldType(field.FTStruct)
+	n.mapping = s.mapping
+	n.fields = fields
+	XXXAddToTotal(n, 8)
 	// Propagate isSetEnabled if the parent has it enabled
 	if s.isSetEnabled {
 		n.XXXSetIsSetEnabled()
@@ -296,9 +299,12 @@ func (s *Struct) recycleFields(ctx context.Context) {
 		case field.FTListStructs:
 			if isDirty && f.Ptr != nil {
 				list := (*Structs)(f.Ptr)
-				for _, sub := range list.data {
-					sub.Reset()
-					structPool.Put(ctx, sub)
+				// Only reset decoded structs (lazy decode means not all may be decoded)
+				for _, sub := range list.decoded {
+					if sub != nil {
+						sub.Reset()
+						structPool.Put(ctx, sub)
+					}
 				}
 				list.Reset()
 			}
@@ -1213,15 +1219,22 @@ func DeleteBytes(s *Struct, fieldNum uint16) error {
 	return nil
 }
 
-// GetStruct returns a Struct field . If the value was not set, this is returned as nil. If it was set,
-// but empty, this will be *Struct with no data.
+// GetStruct returns a Struct field. If the value was not set, this is returned as nil. If it was set,
+// but empty, this will be *Struct with no data (zero values).
+// When IsSet tracking is enabled, an explicitly set empty struct is reconstructed on read
+// even though it wasn't encoded on the wire (sparse encoding optimization).
 func GetStruct(s *Struct, fieldNum uint16) (*Struct, error) {
 	if err := validateFieldNum(fieldNum, s.mapping, field.FTStruct); err != nil {
 		return nil, err
 	}
 
 	f := s.getOrDecode(fieldNum)
-	if f.Header == nil { // The zero value
+	if f.Header == nil { // The zero value - not on wire
+		// Check if it was explicitly set to an empty struct (sparse encoding)
+		if s.IsSet(fieldNum) {
+			desc := s.mapping.Fields[fieldNum]
+			return New(fieldNum, desc.Mapping), nil
+		}
 		return nil, nil
 	}
 
@@ -1282,7 +1295,12 @@ func SetStruct(s *Struct, fieldNum uint16, value *Struct) error {
 
 	f.Header = value.header
 	f.Ptr = unsafe.Pointer(value)
-	XXXAddToTotal(s, value.structTotal.Load()) // Add child's size to parent
+	// Sparse encoding: only add to parent's total if child has actual data (not just header).
+	// Empty structs (structTotal == 8) are not encoded on the wire, so don't count them.
+	// If fields are later added to the child, XXXAddToTotal propagates via parent pointer.
+	if value.structTotal.Load() > 8 {
+		XXXAddToTotal(s, value.structTotal.Load())
+	}
 	s.fields[fieldNum] = f
 
 	// Mark as dirty and propagate modified flag (only after unmarshal is done)
@@ -1617,7 +1635,10 @@ func SetListStructs(s *Struct, fieldNum uint16, value *Structs) error {
 	s.markFieldSet(fieldNum)
 
 	value.isSetEnabled = s.isSetEnabled
-	for _, v := range value.data {
+	for _, v := range value.decoded {
+		if v == nil {
+			continue
+		}
 		// Propagate isSetEnabled BEFORE setting parent to avoid double-counting
 		if s.isSetEnabled && !v.isSetEnabled {
 			v.XXXSetIsSetEnabled()

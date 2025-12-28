@@ -136,8 +136,14 @@ func encodeBytes(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.Fiel
 }
 
 // encodeStruct encodes a nested struct field.
+// Sparse encoding: skip empty structs (header only, no field data).
+// IsSet tracking preserves the "explicitly set to empty" semantics.
 func encodeStruct(w io.Writer, hdr []byte, ptr unsafe.Pointer, desc *mapping.FieldDescr) (int, error) {
 	value := (*structs.Struct)(ptr)
+	// Sparse encoding: skip structs with only header (no field data)
+	if structs.XXXGetStructTotal(value) == 8 {
+		return 0, nil
+	}
 	return value.Marshal(w)
 }
 

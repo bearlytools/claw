@@ -153,6 +153,10 @@ func (s *Struct) encodeFieldFallback(w io.Writer, v StructField, desc *mapping.F
 		return written, err
 	case field.FTStruct:
 		value := (*Struct)(v.Ptr)
+		// Sparse encoding: skip structs with only header (no field data)
+		if value.structTotal.Load() == 8 {
+			return 0, nil
+		}
 		return value.Marshal(w)
 	case field.FTListBools:
 		b := (*Bools)(v.Ptr)
