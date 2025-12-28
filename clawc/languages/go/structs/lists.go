@@ -23,10 +23,9 @@ import (
 
 // Bools is a wrapper around a list of boolean values.
 type Bools struct {
+	s    *Struct
 	data []byte // Includes the header
 	len  int
-
-	s *Struct
 }
 
 // NewBools creates a new Bool that will be stored in a Struct field.
@@ -199,12 +198,11 @@ func (b *Bools) Encode() []byte {
 
 // Numbers represents a list of numbers
 type Numbers[I typedetect.Number] struct {
+	s           *Struct
 	data        []byte
-	sizeInBytes uint8 // 1, 2, 3, 4
 	len         int
+	sizeInBytes uint8 // 1, 2, 3, 4
 	isFloat     bool
-
-	s *Struct
 }
 
 // NewNumbers is used to create a holder for a list of numbers not decoded from an existing []byte stream.
@@ -588,11 +586,11 @@ func (n *Numbers[I]) Encode() []byte {
 // - offsets: index of start position for each item in data (len = num_items + 1)
 // - data: single contiguous buffer holding all item data
 type Bytes struct {
+	s       *Struct
 	header  GenericHeader
 	offsets []uint32 // offsets[i] = start of item i in data; offsets[len(offsets)-1] = end
 	data    []byte   // All item data stored contiguously
 
-	s        *Struct
 	dataSize atomic.Int64 // Wire size of data (item headers + item data, excludes list header)
 	padding  atomic.Int64 // Padding needed for 8-byte alignment
 }
@@ -965,14 +963,22 @@ func (s Strings) Slice() []string {
 	return slices.Collect(s.All())
 }
 
-// Structs represents a list of Struct.
+// Structs represents a list of Struct with contiguous storage and per-item lazy decode.
 type Structs struct {
-	header       header.Generic
-	data         []*Struct
-	mapping      *mapping.Map
-	s            *Struct
-	isSetEnabled bool
+	mapping *mapping.Map
+	s       *Struct
+	header  header.Generic
+
+	// Contiguous raw storage
+	rawData []byte   // All struct bytes stored contiguously
+	offsets []uint32 // offsets[i] = start of struct i; offsets[len] = end
+
+	// Lazy decode cache
+	decoded []*Struct // nil until Get(i) called
+	dirty   []bool    // true if decoded[i] was modified
+
 	size         atomic.Int64 // The size of the header + all structs in the list.
+	isSetEnabled bool
 }
 
 // NewStructs returns a new Structs for holding lists of Structs. This is used when creating a new list
@@ -1002,6 +1008,7 @@ func NewStructsFromBytes(data *[]byte, s *Struct, m *mapping.Map) (*Structs, err
 // NewStructsFromBytesWithIsSet returns a new Structs value with IsSet propagation.
 // s can be nil for lazy decoding (size is already accounted for in parent).
 // If isSetEnabled is true, each struct in the list will have IsSet tracking enabled.
+// This uses contiguous storage and per-item lazy decode for cache efficiency.
 func NewStructsFromBytesWithIsSet(data *[]byte, s *Struct, m *mapping.Map, isSetEnabled bool) (*Structs, error) {
 	if m == nil {
 		panic("bug: cannot pass nil *mapping.Map")
@@ -1015,34 +1022,50 @@ func NewStructsFromBytesWithIsSet(data *[]byte, s *Struct, m *mapping.Map, isSet
 	d.header = (*data)[:8]
 	*data = (*data)[8:] // Move past the header
 
-	if d.header.Final40() == 0 {
+	numItems := int(d.header.Final40())
+	if numItems == 0 {
 		return nil, fmt.Errorf("cannot have a ListStructs field that has zero entries")
 	}
-	d.data = make([]*Struct, d.header.Final40())
-	reader := bytes.NewReader(*data)
 
-	read := 8 // This will hold the number of bytes we have read.
-	for i := 0; i < len(d.data); i++ {
-		if len(*data) < 8 {
+	// First pass: scan to find struct boundaries and total size
+	d.offsets = make([]uint32, numItems+1)
+	tempData := *data
+	offset := uint32(0)
+
+	for i := 0; i < numItems; i++ {
+		if len(tempData) < 8 {
 			return nil, fmt.Errorf("malformed list of structs field: an item (%d) did not have a valid header", i)
 		}
+		d.offsets[i] = offset
 
-		entry := New(0, m)
-		// Propagate isSetEnabled to each struct in the list
-		if isSetEnabled {
-			entry.XXXSetIsSetEnabled()
+		// Read struct header to get size
+		structHeader := header.Generic(tempData[:8])
+		structSize := int(structHeader.Final40())
+
+		if len(tempData) < structSize {
+			return nil, fmt.Errorf("malformed list of structs field: item %d claims size %d but only %d bytes remain", i, structSize, len(tempData))
 		}
-		n, err := entry.Unmarshal(reader)
-		if err != nil {
-			return nil, err
-		}
-		read += n
-		d.data[i] = entry
+
+		offset += uint32(structSize)
+		tempData = tempData[structSize:]
 	}
+	d.offsets[numItems] = offset
 
-	*data = (*data)[read-8:] // Move past the data (-8 is for the header we alread moved past)
-	XXXAddToTotal(s, read)   // Add header + data
+	// Copy raw data contiguously
+	totalSize := int(offset)
+	d.rawData = make([]byte, totalSize)
+	copy(d.rawData, (*data)[:totalSize])
+	*data = (*data)[totalSize:]
+
+	// Initialize lazy decode cache (all nil)
+	d.decoded = make([]*Struct, numItems)
+	d.dirty = make([]bool, numItems)
+
+	// Size tracking
+	read := 8 + totalSize // header + data
+	XXXAddToTotal(s, read)
 	d.size.Store(int64(read))
+
 	return d, nil
 }
 
@@ -1055,7 +1078,10 @@ func (s *Structs) New() *Struct {
 // when recycling the Structs as it does not reset parent size counters.
 func (s *Structs) Reset() {
 	s.header = nil
-	s.data = nil
+	s.rawData = nil
+	s.offsets = nil
+	s.decoded = nil
+	s.dirty = nil
 	s.s = nil
 	s.size.Store(0)
 }
@@ -1067,16 +1093,41 @@ func (s *Structs) Map() *mapping.Map {
 
 // Len returns the number of items in the list.
 func (s *Structs) Len() int {
-	return len(s.data)
+	if len(s.offsets) == 0 {
+		return 0
+	}
+	return len(s.offsets) - 1
 }
 
-// Get gets a *Struct stored at the index.
+// Get gets a *Struct stored at the index. The struct is lazily decoded on first access.
 func (s *Structs) Get(index int) *Struct {
 	if index >= s.Len() {
 		panic(fmt.Sprintf("slice out of bounds: index %d in slice of size %d", index, s.Len()))
 	}
 
-	return s.data[index]
+	// Return cached if already decoded
+	if s.decoded[index] != nil {
+		return s.decoded[index]
+	}
+
+	// Lazy decode from raw bytes
+	start := s.offsets[index]
+	end := s.offsets[index+1]
+	rawBytes := s.rawData[start:end]
+
+	entry := New(0, s.mapping)
+	if s.isSetEnabled {
+		entry.XXXSetIsSetEnabled()
+	}
+
+	reader := bytes.NewReader(rawBytes)
+	if _, err := entry.Unmarshal(reader); err != nil {
+		panic(fmt.Sprintf("failed to decode struct %d: %v", index, err))
+	}
+
+	// Cache the decoded struct
+	s.decoded[index] = entry
+	return entry
 }
 
 // All returns an iterator over all structs in the list.
@@ -1110,7 +1161,7 @@ func (s *Structs) Range(from, to int) iter.Seq[*Struct] {
 
 // Set a number in position "index" to "value".
 func (s *Structs) Set(index int, value *Struct) error {
-	if index >= len(s.data) {
+	if index >= s.Len() {
 		return fmt.Errorf("index %d is not valid", index)
 	}
 
@@ -1127,13 +1178,20 @@ func (s *Structs) Set(index int, value *Struct) error {
 		return fmt.Errorf("you are attempting to set index %d to a Struct with a different type that the list", index)
 	}
 
-	// Remove the size of the current entry.
-	old := s.data[index]
-	oldSize := old.structTotal.Load()
+	// Calculate old size (from raw data or decoded struct)
+	var oldSize int64
+	if s.decoded[index] != nil {
+		oldSize = s.decoded[index].structTotal.Load()
+	} else {
+		// Size from raw data
+		oldSize = int64(s.offsets[index+1] - s.offsets[index])
+	}
 	XXXAddToTotal(s.s, -oldSize)
 	s.size.Add(-oldSize)
 
-	s.data[index] = value
+	// Update cache and mark dirty
+	s.decoded[index] = value
+	s.dirty[index] = true
 
 	// Add the new size.
 	newSize := value.structTotal.Load()
@@ -1148,7 +1206,7 @@ func (s *Structs) Set(index int, value *Struct) error {
 	return nil
 }
 
-// Append appends values to the list of []byte.
+// Append appends values to the list of Structs.
 func (s *Structs) Append(values ...*Struct) error {
 	oldSize := s.size.Load()
 
@@ -1177,13 +1235,41 @@ func (s *Structs) Append(values ...*Struct) error {
 		// Update our value's parent AFTER propagating isSetEnabled.
 		v.parent = s.s
 	}
-	s.data = append(s.data, values...)
+
+	// Extend offsets, decoded, dirty arrays
+	oldLen := s.Len()
+	newOffsets := make([]uint32, oldLen+len(values)+1)
+	copy(newOffsets, s.offsets)
+
+	newDecoded := make([]*Struct, oldLen+len(values))
+	copy(newDecoded, s.decoded)
+
+	newDirty := make([]bool, oldLen+len(values))
+	copy(newDirty, s.dirty)
+
+	// Append new structs (mark as dirty since they need encoding)
+	var currentOffset uint32
+	if oldLen > 0 {
+		currentOffset = s.offsets[oldLen]
+	}
+	for i, v := range values {
+		newOffsets[oldLen+i] = currentOffset
+		newDecoded[oldLen+i] = v
+		newDirty[oldLen+i] = true
+		// Estimate size for offset tracking (will be exact after encode)
+		currentOffset += uint32(v.structTotal.Load())
+	}
+	newOffsets[oldLen+len(values)] = currentOffset
+
+	s.offsets = newOffsets
+	s.decoded = newDecoded
+	s.dirty = newDirty
 
 	// Update the total the list sees.
 	s.size.Add(total)
 	XXXAddToTotal(s.s, s.size.Load()-oldSize)
 
-	updateItems(s.header, len(s.data))
+	updateItems(s.header, s.Len())
 
 	// Propagate modified flag to parent
 	if s.s != nil {
@@ -1194,11 +1280,16 @@ func (s *Structs) Append(values ...*Struct) error {
 }
 
 // Slice converts this into a standard []*Struct.
+// This triggers lazy decode for all items.
 func (s *Structs) Slice() []*Struct {
-	if len(s.data) == 0 {
+	if s.Len() == 0 {
 		return nil
 	}
-	return s.data
+	result := make([]*Struct, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		result[i] = s.Get(i) // Triggers lazy decode if needed
+	}
+	return result
 }
 
 // Encode returns the []byte to write to output to represent this Structs. If it returns nil,
@@ -1206,7 +1297,7 @@ func (s *Structs) Slice() []*Struct {
 func (s *Structs) Encode(w io.Writer) (int, error) {
 	// If we have a Structs that doesn't actually have any data, it should not be encoded as
 	// indicated by returning nil.
-	if len(s.data) == 0 {
+	if s.Len() == 0 {
 		return 0, nil
 	}
 
@@ -1214,15 +1305,61 @@ func (s *Structs) Encode(w io.Writer) (int, error) {
 	if err != nil {
 		return wrote, err
 	}
-	for index, item := range s.data {
-		item.header.SetFieldNum(uint16(index))
-		n, err := item.Marshal(w)
-		wrote += n
-		if err != nil {
+
+	// Check if any items are dirty
+	anyDirty := false
+	for _, d := range s.dirty {
+		if d {
+			anyDirty = true
+			break
+		}
+	}
+
+	// Fast path: no modifications, write raw data directly
+	if !anyDirty && s.rawData != nil {
+		// Check if any items were decoded (and potentially modified internally)
+		allClean := true
+		for _, dec := range s.decoded {
+			if dec != nil {
+				allClean = false
+				break
+			}
+		}
+		if allClean {
+			n, err := w.Write(s.rawData)
+			wrote += n
 			return wrote, err
 		}
 	}
-	return wrote, err
+
+	// Slow path: encode each item
+	for i := 0; i < s.Len(); i++ {
+		if s.dirty[i] || s.decoded[i] != nil {
+			// Encode from decoded struct
+			item := s.decoded[i]
+			if item == nil {
+				// This shouldn't happen if dirty[i] is true, but decode if needed
+				item = s.Get(i)
+			}
+			item.header.SetFieldNum(uint16(i))
+			n, err := item.Marshal(w)
+			wrote += n
+			if err != nil {
+				return wrote, err
+			}
+		} else {
+			// Write raw bytes for untouched items
+			start := s.offsets[i]
+			end := s.offsets[i+1]
+			n, err := w.Write(s.rawData[start:end])
+			wrote += n
+			if err != nil {
+				return wrote, err
+			}
+		}
+	}
+
+	return wrote, nil
 }
 
 // udpateItems updates list header information to reflect the number items.
