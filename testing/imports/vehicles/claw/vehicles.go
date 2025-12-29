@@ -8,11 +8,12 @@ import (
     "context"
     "io"
     "bytes"
+    "fmt"
 
     "github.com/bearlytools/claw/clawc/languages/go/mapping"
     "github.com/bearlytools/claw/clawc/languages/go/reflect"
     "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
-    "github.com/bearlytools/claw/clawc/languages/go/structs"
+    "github.com/bearlytools/claw/clawc/languages/go/segment"
     "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
@@ -26,6 +27,13 @@ var (
     _ context.Context
     _ = io.EOF
     _ = bytes.MinRead
+    _ = fmt.Errorf
+    _ mapping.Map
+    _ reflect.StructDescr
+    _ = runtime.RegisterPackage
+    _ segment.Struct
+    _ list.Bools
+    _ = field.FTBool
 )
 
 // SyntaxVersion is the major version of the Claw language that is being rendered.
@@ -80,15 +88,30 @@ var TypeByValue = map[uint8]string{
 
 // Vehicle describes a vehicle.
 type Vehicle struct {
-   s *structs.Struct
+   s *segment.Struct
 }
 
 // NewVehicle creates a new instance of Vehicle.
 func NewVehicle() Vehicle {
-    s := structs.New(0, XXXMappingVehicle)
+    s := segment.New(XXXMappingVehicle)
     return Vehicle{
         s: s,
     }
+}
+
+// NewVehiclePooled creates a pooled instance of Vehicle.
+// Call Release() when done to return it to the pool for reuse.
+func NewVehiclePooled(ctx context.Context) Vehicle {
+    s := segment.NewPooled(ctx, XXXMappingVehicle)
+    return Vehicle{
+        s: s,
+    }
+}
+
+// Release returns the struct to the pool for reuse.
+// After calling Release, the struct should not be used.
+func (x Vehicle) Release(ctx context.Context) {
+    segment.Release(ctx, x.s)
 }
 
 // XXXNewVehicleFrom creates a new Vehicle from our internal Struct representation.
@@ -97,18 +120,13 @@ func NewVehicle() Vehicle {
 //
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
-func XXXNewVehicleFrom(s *structs.Struct) Vehicle {
+func XXXNewVehicleFrom(s *segment.Struct) Vehicle {
     return Vehicle{s: s}
 }
 
-// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
+// Marshal marshal's the Struct to []byte.
 func (x Vehicle) Marshal() ([]byte, error) {
-    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
-    _, err := x.s.Marshal(b)
-    if err != nil {
-        return nil, err
-    }
-    return b.Bytes(), nil
+    return x.s.MarshalBytes()
 }
 
 // MarshalWriter marshals to an io.Writer.
@@ -118,97 +136,124 @@ func (x Vehicle) MarshalWriter(w io.Writer) (n int, err error) {
 
 // Unmarshal unmarshals b into the Struct.
 func (x Vehicle) Unmarshal(b []byte) error {
-    buff := bytes.NewBuffer(b)
-    _, err := x.s.Unmarshal(buff)
-    return err
+    return x.s.Unmarshal(b)
 }
 
 // UnmarshalReader unmarshals a Struct from an io.Reader.
 func (x Vehicle) UnmarshalReader (r io.Reader) (int, error) {
-    return x.s.Unmarshal(r)
+    return x.s.UnmarshalReader(r)
 }
 
 func (x Vehicle) Type() Type {
-    return Type(structs.MustGetNumber[uint8](x.s, 0))
+    return Type(segment.GetUint8(x.s, 0))
 }
 
 func (x Vehicle) SetType(value Type) Vehicle {
-    structs.MustSetNumber(x.s, 0, uint8(value))
+    segment.SetUint8(x.s, 0, uint8(value))
     return x
 }
 
 func (x Vehicle) Car() cars.Car {
-    s := structs.MustGetStruct(x.s, 1)
+    s := segment.GetNestedStruct(x.s, 1, cars.XXXMappingCar)
     return cars.XXXNewCarFrom(s)
 }
 
 func (x Vehicle) SetCar(value cars.Car) Vehicle {
-    structs.MustSetStruct(x.s, 1, value.XXXGetStruct())
+    segment.SetNestedStruct(x.s, 1, value.XXXGetStruct())
     return x
 }
 
-func (x Vehicle) Truck() []trucks.Truck {
-    l := structs.MustGetListStruct(x.s, 2)
-    if l == nil {
-        return nil
+// TruckList returns the underlying Structs list for iteration.
+// Use NewTruck() to create items and Append to add them.
+func (x Vehicle) TruckList() *segment.Structs {
+    if l := x.s.GetList(2); l != nil {
+        return l.(*segment.Structs)
     }
-    vals := make([]trucks.Truck, l.Len())
-
-    for i := range vals {
-        vals[i] = trucks.XXXNewTruckFrom(l.Get(i))
-    }
-    return vals
+    structs := segment.NewStructs(x.s, 2, trucks.XXXMappingTruck)
+    x.s.SetList(2, structs)
+    return structs
 }
 
+// TruckLen returns the number of items in the list.
+func (x Vehicle) TruckLen() int {
+    return x.TruckList().Len()
+}
+
+// TruckGet returns the item at the given index.
+func (x Vehicle) TruckGet(index int) trucks.Truck {
+    s := x.TruckList().Get(index)
+    return trucks.XXXNewTruckFrom(s)
+}
+
+// TruckAppend appends items to the list.
+func (x Vehicle) TruckAppend(values ...trucks.Truck) {
+    list := x.TruckList()
+    for _, v := range values {
+        list.Append(v.XXXGetStruct())
+    }
+}
+
+// AppendTruck is an alias for TruckAppend for backwards compatibility.
 func (x Vehicle) AppendTruck(values ...trucks.Truck) {
-    vals := make([]*structs.Struct, len(values))
-    for i, val := range values {
-        vals[i] = val.XXXGetStruct()
+    x.TruckAppend(values...)
+}
+
+// Enum list - returns a number list that can be cast to the enum type
+func (x Vehicle) Types() *segment.Numbers[Type] {
+    if l := x.s.GetList(3); l != nil {
+        return l.(*segment.Numbers[Type])
     }
-    structs.MustAppendListStruct(x.s, 2, vals...)
+    nums := segment.NewNumbers[Type](x.s, 3)
+    x.s.SetList(3, nums)
+    return nums
 }
-
-
-func (x Vehicle) Types() list.Enums[Type] {
-    n := structs.MustGetListNumber[Type](x.s, 3)
-    return list.XXXEnumsFromNumbers(n)
-}
-
-func (x Vehicle) SetTypes(value list.Enums[Type]) Vehicle {
-    n := value.XXXNumbers()
-    structs.MustSetListNumber(x.s, 3, n)
+// SetTypes sets the enum list from a list.Enums for backwards compatibility.
+func (x Vehicle) SetTypes(v list.Enums[Type]) Vehicle {
+    nums := x.Types()
+    for n := range v.All() {
+        nums.Append(n)
+    }
     return x
 }
 
-func (x Vehicle) Bools() list.Bools {
-    return list.XXXFromBools(structs.MustGetListBool(x.s, 4))
+func (x Vehicle) Bools() *segment.Bools {
+    if l := x.s.GetList(4); l != nil {
+        return l.(*segment.Bools)
+    }
+    bools := segment.NewBools(x.s, 4)
+    x.s.SetList(4, bools)
+    return bools
 }
 
-func (x Vehicle) SetBools(value list.Bools) Vehicle {
-    structs.MustSetListBool(x.s, 4, value.XXXBools())
+// SetBools sets the bool list from a list.Bools for backwards compatibility.
+func (x Vehicle) SetBools(v list.Bools) Vehicle {
+    bools := x.Bools()
+    for b := range v.All() {
+        bools.Append(b)
+    }
     return x
 }
 
 
 
 // ClawStruct returns a reflection type representing the Struct.
+// Note: Segment runtime does not fully support reflection yet.
 func (x Vehicle) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrVehicle
-    return reflect.XXXNewStruct(x.s, descr)
+    panic("segment runtime: ClawStruct not yet implemented")
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
 // this should not be used and has no compatibility guarantees.
 //
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Vehicle) XXXGetStruct() *structs.Struct {
+func (x Vehicle) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
-// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Vehicle nor any sub-structs should be used again.
+// Recycle is a no-op for segment runtime.
+// Segment runtime uses simpler memory management.
 func (x Vehicle) Recycle(ctx context.Context) {
-    x.s.Recycle(ctx)
+    // No-op for segment runtime
 }
  
 
@@ -254,6 +299,9 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/test_claw_imports/trucks",
             FieldNum: 2,
             IsEnum: false,
+            StructName: "trucks.Truck",
+            
+            Mapping: trucks.XXXMappingTruck,
         },
         {
             Name: "Types",

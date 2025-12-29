@@ -159,7 +159,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListBools" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListBools, IsNil: true}) {
                     return
                 }
@@ -185,7 +185,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListUint8" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListUint8, IsNil: true{{- if $field.IsEnum }}, IsEnum: true, EnumGroup: "{{ $field.IdentInFile }}"{{- end }}}) {
                     return
                 }
@@ -216,7 +216,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListUint16" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListUint16, IsNil: true{{- if $field.IsEnum }}, IsEnum: true, EnumGroup: "{{ $field.IdentInFile }}"{{- end }}}) {
                     return
                 }
@@ -247,7 +247,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListUint32" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListUint32, IsNil: true}) {
                     return
                 }
@@ -273,7 +273,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListUint64" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListUint64, IsNil: true}) {
                     return
                 }
@@ -299,7 +299,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListInt8" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListInt8, IsNil: true}) {
                     return
                 }
@@ -325,7 +325,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListInt16" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListInt16, IsNil: true}) {
                     return
                 }
@@ -351,7 +351,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListInt32" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListInt32, IsNil: true}) {
                     return
                 }
@@ -377,7 +377,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListInt64" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListInt64, IsNil: true}) {
                     return
                 }
@@ -403,7 +403,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListFloat32" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListFloat32, IsNil: true}) {
                     return
                 }
@@ -429,7 +429,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         {{- else if eq $field.TypeAsString "ListFloat64" }}
         {
             list := x.{{ $field.Name }}()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListFloat64, IsNil: true}) {
                     return
                 }
@@ -502,8 +502,9 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         }
         {{- else if eq $field.TypeAsString "ListStructs" }}
         {
-            list := x.{{ $field.Name }}()
-            if len(list) == 0 {
+            list := x.{{ $field.Name }}List()
+            listLen := list.Len()
+            if listLen == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListStructs, StructName: "{{ $field.IdentName }}", IsNil: true}) {
                     return
                 }
@@ -511,10 +512,11 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListStructs, StructName: "{{ $field.IdentName }}"}) {
                     return
                 }
-                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "{{ $field.Name }}", Type: field.FTListStructs, Len: len(list)}) {
+                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "{{ $field.Name }}", Type: field.FTListStructs, Len: listLen}) {
                     return
                 }
-                for _, item := range list {
+                for i := 0; i < listLen; i++ {
+                    item := x.{{ $field.Name }}Get(i)
                     for tok := range item.Walk() {
                         if !yield(tok) {
                             return

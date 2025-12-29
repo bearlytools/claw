@@ -165,11 +165,11 @@ func TestIngestRoundTripVehicle(t *testing.T) {
 		origTypes := original.Types()
 		ingTypes := ingested.Types()
 		switch {
-		case origTypes.IsNil() && !ingTypes.IsNil():
-			t.Errorf("TestIngestRoundTripVehicle(%s): Types should be nil", test.name)
-		case !origTypes.IsNil() && ingTypes.IsNil():
-			t.Errorf("TestIngestRoundTripVehicle(%s): Types should not be nil", test.name)
-		case !origTypes.IsNil() && !ingTypes.IsNil():
+		case origTypes.Len() == 0 && ingTypes.Len() != 0:
+			t.Errorf("TestIngestRoundTripVehicle(%s): Types should be empty", test.name)
+		case origTypes.Len() != 0 && ingTypes.Len() == 0:
+			t.Errorf("TestIngestRoundTripVehicle(%s): Types should not be empty", test.name)
+		case origTypes.Len() != 0 && ingTypes.Len() != 0:
 			origTypesSlice := origTypes.Slice()
 			ingTypesSlice := ingTypes.Slice()
 			if diff := pretty.Compare(origTypesSlice, ingTypesSlice); diff != "" {
@@ -182,11 +182,11 @@ func TestIngestRoundTripVehicle(t *testing.T) {
 		origBools := original.Bools()
 		ingBools := ingested.Bools()
 		switch {
-		case origBools.IsNil() && !ingBools.IsNil():
-			t.Errorf("TestIngestRoundTripVehicle(%s): Bools should be nil", test.name)
-		case !origBools.IsNil() && ingBools.IsNil():
-			t.Errorf("TestIngestRoundTripVehicle(%s): Bools should not be nil", test.name)
-		case !origBools.IsNil() && !ingBools.IsNil():
+		case origBools.Len() == 0 && ingBools.Len() != 0:
+			t.Errorf("TestIngestRoundTripVehicle(%s): Bools should be empty", test.name)
+		case origBools.Len() != 0 && ingBools.Len() == 0:
+			t.Errorf("TestIngestRoundTripVehicle(%s): Bools should not be empty", test.name)
+		case origBools.Len() != 0 && ingBools.Len() != 0:
 			origBoolsSlice := origBools.Slice()
 			ingBoolsSlice := ingBools.Slice()
 			if diff := pretty.Compare(origBoolsSlice, ingBoolsSlice); diff != "" {

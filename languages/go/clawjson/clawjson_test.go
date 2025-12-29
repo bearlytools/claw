@@ -457,11 +457,11 @@ func TestUnmarshalRoundTripVehicle(t *testing.T) {
 		origTypes := original.Types()
 		resTypes := restored.Types()
 		switch {
-		case origTypes.IsNil() && !resTypes.IsNil():
-			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Types should be nil", test.name)
-		case !origTypes.IsNil() && resTypes.IsNil():
-			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Types should not be nil", test.name)
-		case !origTypes.IsNil() && !resTypes.IsNil():
+		case origTypes.Len() == 0 && resTypes.Len() != 0:
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Types should be empty", test.name)
+		case origTypes.Len() != 0 && resTypes.Len() == 0:
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Types should not be empty", test.name)
+		case origTypes.Len() != 0 && resTypes.Len() != 0:
 			origSlice := origTypes.Slice()
 			resSlice := resTypes.Slice()
 			if diff := pretty.Compare(origSlice, resSlice); diff != "" {
@@ -473,11 +473,11 @@ func TestUnmarshalRoundTripVehicle(t *testing.T) {
 		origBools := original.Bools()
 		resBools := restored.Bools()
 		switch {
-		case origBools.IsNil() && !resBools.IsNil():
-			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Bools should be nil", test.name)
-		case !origBools.IsNil() && resBools.IsNil():
-			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Bools should not be nil", test.name)
-		case !origBools.IsNil() && !resBools.IsNil():
+		case origBools.Len() == 0 && resBools.Len() != 0:
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Bools should be empty", test.name)
+		case origBools.Len() != 0 && resBools.Len() == 0:
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Bools should not be empty", test.name)
+		case origBools.Len() != 0 && resBools.Len() != 0:
 			origSlice := origBools.Slice()
 			resSlice := resBools.Slice()
 			if diff := pretty.Compare(origSlice, resSlice); diff != "" {

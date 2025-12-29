@@ -89,7 +89,7 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
                 if err := item.XXXIngestFrom(ts, opts); err != nil {
                     return fmt.Errorf("ingesting Truck[]: %w", err)
                 }
-                x.AppendTruck(item)
+                x.TruckAppend(item)
             }
         case "Types":
             if tok.IsNil {
@@ -99,7 +99,7 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for Types")
             }
-            enums := list.NewEnums[Type]()
+            enumsList := x.Types()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -109,12 +109,11 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
                     break
                 }
                 if len(itemTok.Bytes) > 0 {
-                    enums.Append(TypeByName[itemTok.String()])
+                    enumsList.Append(TypeByName[itemTok.String()])
                 } else {
-                    enums.Append(Type(itemTok.Uint8()))
+                    enumsList.Append(Type(itemTok.Uint8()))
                 }
             }
-            x.SetTypes(enums)
         case "Bools":
             if tok.IsNil {
                 continue
@@ -123,7 +122,7 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for Bools")
             }
-            bools := list.NewBools()
+            boolsList := x.Bools()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -132,9 +131,8 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                bools.Append(itemTok.Bool())
+                boolsList.Append(itemTok.Bool())
             }
-            x.SetBools(bools)
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {

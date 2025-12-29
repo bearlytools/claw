@@ -52,8 +52,9 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
         }
         // Field 2: Truck
         {
-            list := x.Truck()
-            if len(list) == 0 {
+            list := x.TruckList()
+            listLen := list.Len()
+            if listLen == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Truck", Type: field.FTListStructs, StructName: "trucks.Truck", IsNil: true}) {
                     return
                 }
@@ -61,10 +62,11 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Truck", Type: field.FTListStructs, StructName: "trucks.Truck"}) {
                     return
                 }
-                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Truck", Type: field.FTListStructs, Len: len(list)}) {
+                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "Truck", Type: field.FTListStructs, Len: listLen}) {
                     return
                 }
-                for _, item := range list {
+                for i := 0; i < listLen; i++ {
+                    item := x.TruckGet(i)
                     for tok := range item.Walk() {
                         if !yield(tok) {
                             return
@@ -79,7 +81,7 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
         // Field 3: Types
         {
             list := x.Types()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Types", Type: field.FTListUint8, IsNil: true, IsEnum: true, EnumGroup: "Type"}) {
                     return
                 }
@@ -108,7 +110,7 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
         // Field 4: Bools
         {
             list := x.Bools()
-            if list.IsNil() || list.Len() == 0 {
+            if list.Len() == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Bools", Type: field.FTListBools, IsNil: true}) {
                     return
                 }

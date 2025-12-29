@@ -735,6 +735,12 @@ func (s StructField) TypeAsString() string {
 	return field.TypeToString(s.Type)
 }
 
+// FieldTypeConst returns the full field type constant name for use in generated code.
+// For example, for a Struct field, this returns "FTStruct".
+func (s StructField) FieldTypeConst() string {
+	return field.ConstName(s.Type)
+}
+
 // Struct represents a Claw Struct type in the file.
 type Struct struct {
 	// Comment is the comment that appears before the struct declaration.

@@ -11,7 +11,7 @@ var XXXMapping{{ .Name }} = &mapping.Map{
         {{- range $index, $field := .Fields }}
         {
             Name: "{{ $field.Name }}",
-            Type: field.{{ $field.Type }},
+            Type: field.{{ $field.FieldTypeConst }},
             Package: "{{ $field.Package }}",
             FullPath: "{{ $field.FullPath }}",
             FieldNum: {{ $index }},

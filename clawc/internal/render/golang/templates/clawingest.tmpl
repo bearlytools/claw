@@ -117,7 +117,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            bools := list.NewBools()
+            boolsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -126,9 +126,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                bools.Append(itemTok.Bool())
+                boolsList.Append(itemTok.Bool())
             }
-            x.Set{{ $field.Name }}(bools)
             {{- else if eq $field.TypeAsString "ListInt8" }}
             if tok.IsNil {
                 continue
@@ -137,7 +136,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[int8]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -146,9 +145,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Int8())
+                numsList.Append(itemTok.Int8())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListInt16" }}
             if tok.IsNil {
                 continue
@@ -157,7 +155,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[int16]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -166,9 +164,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Int16())
+                numsList.Append(itemTok.Int16())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListInt32" }}
             if tok.IsNil {
                 continue
@@ -177,7 +174,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[int32]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -186,9 +183,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Int32())
+                numsList.Append(itemTok.Int32())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListInt64" }}
             if tok.IsNil {
                 continue
@@ -197,7 +193,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[int64]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -206,9 +202,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Int64())
+                numsList.Append(itemTok.Int64())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListUint8" }}
             if tok.IsNil {
                 continue
@@ -218,7 +213,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
             {{- if $field.IsEnum }}
-            enums := list.NewEnums[{{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}]()
+            enumsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -228,14 +223,13 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                     break
                 }
                 if len(itemTok.Bytes) > 0 {
-                    enums.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}ByName[itemTok.String()])
+                    enumsList.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}ByName[itemTok.String()])
                 } else {
-                    enums.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}(itemTok.Uint8()))
+                    enumsList.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}(itemTok.Uint8()))
                 }
             }
-            x.Set{{ $field.Name }}(enums)
             {{- else }}
-            nums := list.NewNumbers[uint8]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -244,9 +238,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Uint8())
+                numsList.Append(itemTok.Uint8())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- end }}
             {{- else if eq $field.TypeAsString "ListUint16" }}
             if tok.IsNil {
@@ -257,7 +250,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
             {{- if $field.IsEnum }}
-            enums := list.NewEnums[{{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}]()
+            enumsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -267,14 +260,13 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                     break
                 }
                 if len(itemTok.Bytes) > 0 {
-                    enums.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}ByName[itemTok.String()])
+                    enumsList.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}ByName[itemTok.String()])
                 } else {
-                    enums.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}(itemTok.Uint16()))
+                    enumsList.Append({{ if $field.IsExternal }}{{ $field.Package }}.{{ end }}{{ $field.IdentInFile }}(itemTok.Uint16()))
                 }
             }
-            x.Set{{ $field.Name }}(enums)
             {{- else }}
-            nums := list.NewNumbers[uint16]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -283,9 +275,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Uint16())
+                numsList.Append(itemTok.Uint16())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- end }}
             {{- else if eq $field.TypeAsString "ListUint32" }}
             if tok.IsNil {
@@ -295,7 +286,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[uint32]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -304,9 +295,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Uint32())
+                numsList.Append(itemTok.Uint32())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListUint64" }}
             if tok.IsNil {
                 continue
@@ -315,7 +305,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[uint64]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -324,9 +314,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Uint64())
+                numsList.Append(itemTok.Uint64())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListFloat32" }}
             if tok.IsNil {
                 continue
@@ -335,7 +324,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[float32]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -344,9 +333,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Float32())
+                numsList.Append(itemTok.Float32())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListFloat64" }}
             if tok.IsNil {
                 continue
@@ -355,7 +343,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            nums := list.NewNumbers[float64]()
+            numsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -364,9 +352,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                nums.Append(itemTok.Float64())
+                numsList.Append(itemTok.Float64())
             }
-            x.Set{{ $field.Name }}(nums)
             {{- else if eq $field.TypeAsString "ListBytes" }}
             if tok.IsNil {
                 continue
@@ -375,7 +362,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            bytesList := list.NewBytes()
+            bytesList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -386,7 +373,6 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 }
                 bytesList.Append(itemTok.Bytes)
             }
-            x.Set{{ $field.Name }}(bytesList)
             {{- else if eq $field.TypeAsString "ListStrings" }}
             if tok.IsNil {
                 continue
@@ -395,7 +381,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            strs := list.NewString()
+            strsList := x.{{ $field.Name }}()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -404,9 +390,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                strs = strs.Append(itemTok.String())
+                strsList.Append(itemTok.String())
             }
-            x.Set{{ $field.Name }}(&strs)
             {{- else if eq $field.TypeAsString "ListStructs" }}
             if tok.IsNil {
                 continue
@@ -428,7 +413,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if err := item.XXXIngestFrom(ts, opts); err != nil {
                     return fmt.Errorf("ingesting {{ $field.Name }}[]: %w", err)
                 }
-                x.Append{{ $field.Name }}(item)
+                x.{{ $field.Name }}Append(item)
             }
             {{- end }}
         {{- end }}

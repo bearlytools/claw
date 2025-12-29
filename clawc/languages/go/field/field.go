@@ -104,8 +104,48 @@ var NumericListTypes = []Type{
 }
 
 // TypeToString returns the type as a string WITHOUT the leading "FT".
+// For example, FTListStructs returns "ListStructs".
 func TypeToString(t Type) string {
-	return t.String()[2:]
+	return constNames[t]
+}
+
+// ConstName returns the full constant name for the type.
+// For example, FTListStructs returns "FTListStructs".
+func ConstName(t Type) string {
+	return "FT" + constNames[t]
+}
+
+// constNames maps field types to their canonical names (without "FT" prefix).
+var constNames = map[Type]string{
+	FTUnknown:     "Unknown",
+	FTBool:        "Bool",
+	FTInt8:        "Int8",
+	FTInt16:       "Int16",
+	FTInt32:       "Int32",
+	FTInt64:       "Int64",
+	FTUint8:       "Uint8",
+	FTUint16:      "Uint16",
+	FTUint32:      "Uint32",
+	FTUint64:      "Uint64",
+	FTFloat32:     "Float32",
+	FTFloat64:     "Float64",
+	FTString:      "String",
+	FTBytes:       "Bytes",
+	FTStruct:      "Struct",
+	FTListBools:   "ListBools",
+	FTListInt8:    "ListInt8",
+	FTListInt16:   "ListInt16",
+	FTListInt32:   "ListInt32",
+	FTListInt64:   "ListInt64",
+	FTListUint8:   "ListUint8",
+	FTListUint16:  "ListUint16",
+	FTListUint32:  "ListUint32",
+	FTListUint64:  "ListUint64",
+	FTListFloat32: "ListFloat32",
+	FTListFloat64: "ListFloat64",
+	FTListBytes:   "ListBytes",
+	FTListStrings: "ListStrings",
+	FTListStructs: "ListStructs",
 }
 
 // GoType will return the Go string representation of a type.
