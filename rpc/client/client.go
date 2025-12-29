@@ -247,11 +247,13 @@ func (c *Conn) handleClose(cl msgs.Close) {
 	delete(c.sessions, cl.SessionID())
 	c.mu.Unlock()
 
+	// Send Close to closeCh so recvIter can handle it gracefully.
+	// Don't close cancelCh here - that would race with recvIter draining recvCh.
+	// cancelCh is only closed when the client explicitly calls Close().
 	select {
 	case sess.closeCh <- cl:
 	default:
 	}
-	sess.close()
 }
 
 // handlePayload processes a Payload message.
@@ -470,6 +472,26 @@ func (c *Conn) Recv(ctx context.Context, pkg, service, call string) (*RecvClient
 func recvIter(ctx context.Context, sess *session, errPtr *error) iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
 		for {
+			// Priority 1: Always try to drain recvCh first (non-blocking).
+			// This ensures we process all payloads before checking close signals.
+			select {
+			case p := <-sess.recvCh:
+				payload := p.Payload()
+				endStream := p.EndStream()
+				if endStream && len(payload) == 0 {
+					return
+				}
+				if !yield(payload) {
+					return
+				}
+				if endStream {
+					return
+				}
+				continue
+			default:
+			}
+
+			// Priority 2: Check all channels when recvCh is empty.
 			select {
 			case <-ctx.Done():
 				*errPtr = ctx.Err()
@@ -484,7 +506,6 @@ func recvIter(ctx context.Context, sess *session, errPtr *error) iter.Seq[[]byte
 			case p := <-sess.recvCh:
 				payload := p.Payload()
 				endStream := p.EndStream()
-				// If EndStream with no payload, just exit without yielding.
 				if endStream && len(payload) == 0 {
 					return
 				}
