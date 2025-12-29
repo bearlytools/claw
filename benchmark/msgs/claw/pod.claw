@@ -1,0 +1,1126 @@
+package pod
+
+options [ IsSet() ]
+
+// Time represents a timestamp.
+Struct Time {
+	Seconds int64 @0
+	Nanos int32 @1
+}
+
+// TypeMeta describes an individual object in an API response or request.
+Struct TypeMeta {
+	Kind string @0
+	ApiVersion string @1
+}
+
+// KeyValue represents a key-value pair for maps.
+Struct KeyValue {
+	Key string @0
+	Value string @1
+}
+
+// OwnerReference contains enough information to let you identify an owning object.
+Struct OwnerReference {
+	ApiVersion string @0
+	Kind string @1
+	Name string @2
+	Uid string @3
+	Controller bool @4
+	BlockOwnerDeletion bool @5
+}
+
+// ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource.
+Struct ManagedFieldsEntry {
+	Manager string @0
+	Operation string @1
+	ApiVersion string @2
+	Time Time @3
+	FieldsType string @4
+	FieldsV1 string @5
+	Subresource string @6
+}
+
+// ObjectMeta is metadata that all persisted resources must have.
+Struct ObjectMeta {
+	Name string @0
+	GenerateName string @1
+	Namespace string @2
+	SelfLink string @3
+	Uid string @4
+	ResourceVersion string @5
+	Generation int64 @6
+	CreationTimestamp Time @7
+	DeletionTimestamp Time @8
+	DeletionGracePeriodSeconds int64 @9
+	Labels []KeyValue @10
+	Annotations []KeyValue @11
+	OwnerReferences []OwnerReference @12
+	Finalizers []string @13
+	ManagedFields []ManagedFieldsEntry @14
+}
+
+// Pod is a collection of containers that can run on a host.
+Struct Pod {
+	TypeMeta TypeMeta @0
+	Metadata ObjectMeta @1
+	Spec PodSpec @2
+	Status PodStatus @3
+}
+
+// RestartPolicy describes how the container should be restarted.
+Enum RestartPolicy uint8 {
+	RestartPolicyUnspecified @0
+	RestartPolicyAlways @1
+	RestartPolicyOnFailure @2
+	RestartPolicyNever @3
+}
+
+// DNSPolicy defines how a pod's DNS will be configured.
+Enum DNSPolicy uint8 {
+	DNSPolicyUnspecified @0
+	DNSPolicyClusterFirstWithHostNet @1
+	DNSPolicyClusterFirst @2
+	DNSPolicyDefault @3
+	DNSPolicyNone @4
+}
+
+// PreemptionPolicy describes a policy for preempting pods.
+Enum PreemptionPolicy uint8 {
+	PreemptionPolicyUnspecified @0
+	PreemptionPolicyPreemptLowerPriority @1
+	PreemptionPolicyNever @2
+}
+
+// PodSpec is a description of a pod.
+Struct PodSpec {
+	Volumes []Volume @0
+	InitContainers []Container @1
+	Containers []Container @2
+	EphemeralContainers []EphemeralContainer @3
+	RestartPolicy RestartPolicy @4
+	TerminationGracePeriodSeconds int64 @5
+	ActiveDeadlineSeconds int64 @6
+	DnsPolicy DNSPolicy @7
+	NodeSelector []KeyValue @8
+	ServiceAccountName string @9
+	AutomountServiceAccountToken bool @10
+	NodeName string @11
+	HostNetwork bool @12
+	HostPid bool @13
+	HostIpc bool @14
+	ShareProcessNamespace bool @15
+	SecurityContext PodSecurityContext @16
+	ImagePullSecrets []LocalObjectReference @17
+	Hostname string @18
+	Subdomain string @19
+	Affinity Affinity @20
+	SchedulerName string @21
+	Tolerations []Toleration @22
+	HostAliases []HostAlias @23
+	PriorityClassName string @24
+	Priority int32 @25
+	DnsConfig PodDNSConfig @26
+	ReadinessGates []PodReadinessGate @27
+	RuntimeClassName string @28
+	EnableServiceLinks bool @29
+	PreemptionPolicy PreemptionPolicy @30
+	Overhead []KeyValue @31
+	TopologySpreadConstraints []TopologySpreadConstraint @32
+	SetHostnameAsFqdn bool @33
+	Os PodOS @34
+	HostUsers bool @35
+	SchedulingGates []PodSchedulingGate @36
+	ResourceClaims []PodResourceClaim @37
+	Resources ResourceRequirements @38
+}
+
+// PodPhase is a label for the condition of a pod at the current time.
+Enum PodPhase uint8 {
+	PodPhaseUnspecified @0
+	PodPhasePending @1
+	PodPhaseRunning @2
+	PodPhaseSucceeded @3
+	PodPhaseFailed @4
+	PodPhaseUnknown @5
+}
+
+// PodQOSClass defines the QoS class assigned to a pod.
+Enum PodQOSClass uint8 {
+	PodQOSClassUnspecified @0
+	PodQOSClassGuaranteed @1
+	PodQOSClassBurstable @2
+	PodQOSClassBestEffort @3
+}
+
+// PodResizeStatus defines the status of pod resize operation.
+Enum PodResizeStatus uint8 {
+	PodResizeStatusUnspecified @0
+	PodResizeStatusProposed @1
+	PodResizeStatusInProgress @2
+	PodResizeStatusDeferred @3
+	PodResizeStatusInfeasible @4
+}
+
+// PodStatus represents information about the status of a pod.
+Struct PodStatus {
+	Phase PodPhase @0
+	Conditions []PodCondition @1
+	Message string @2
+	Reason string @3
+	NominatedNodeName string @4
+	HostIp string @5
+	HostIps []HostIP @6
+	PodIp string @7
+	PodIps []PodIP @8
+	StartTime Time @9
+	InitContainerStatuses []ContainerStatus @10
+	ContainerStatuses []ContainerStatus @11
+	QosClass PodQOSClass @12
+	EphemeralContainerStatuses []ContainerStatus @13
+	Resize PodResizeStatus @14
+	ResourceClaimStatuses []PodResourceClaimStatus @15
+	ObservedGeneration int64 @16
+}
+
+// PullPolicy describes a policy for if/when to pull a container image.
+Enum PullPolicy uint8 {
+	PullPolicyUnspecified @0
+	PullPolicyAlways @1
+	PullPolicyNever @2
+	PullPolicyIfNotPresent @3
+}
+
+// TerminationMessagePolicy describes how termination messages are retrieved.
+Enum TerminationMessagePolicy uint8 {
+	TerminationMessagePolicyUnspecified @0
+	TerminationMessagePolicyFile @1
+	TerminationMessagePolicyFallbackToLogsOnError @2
+}
+
+// ContainerRestartPolicy is the restart policy for a container.
+Enum ContainerRestartPolicy uint8 {
+	ContainerRestartPolicyUnspecified @0
+	ContainerRestartPolicyAlways @1
+}
+
+// Container represents a single container that is expected to be run on the host.
+Struct Container {
+	Name string @0
+	Image string @1
+	Command []string @2
+	Args []string @3
+	WorkingDir string @4
+	Ports []ContainerPort @5
+	EnvFrom []EnvFromSource @6
+	Env []EnvVar @7
+	Resources ResourceRequirements @8
+	ResizePolicy []ContainerResizePolicy @9
+	RestartPolicy ContainerRestartPolicy @10
+	VolumeMounts []VolumeMount @11
+	VolumeDevices []VolumeDevice @12
+	LivenessProbe Probe @13
+	ReadinessProbe Probe @14
+	StartupProbe Probe @15
+	Lifecycle Lifecycle @16
+	TerminationMessagePath string @17
+	TerminationMessagePolicy TerminationMessagePolicy @18
+	ImagePullPolicy PullPolicy @19
+	SecurityContext SecurityContext @20
+	Stdin bool @21
+	StdinOnce bool @22
+	Tty bool @23
+}
+
+// EphemeralContainer is a temporary container that may be added to an existing pod.
+Struct EphemeralContainer {
+	Name string @0
+	Image string @1
+	Command []string @2
+	Args []string @3
+	WorkingDir string @4
+	Ports []ContainerPort @5
+	EnvFrom []EnvFromSource @6
+	Env []EnvVar @7
+	Resources ResourceRequirements @8
+	VolumeMounts []VolumeMount @9
+	VolumeDevices []VolumeDevice @10
+	LivenessProbe Probe @11
+	ReadinessProbe Probe @12
+	StartupProbe Probe @13
+	Lifecycle Lifecycle @14
+	TerminationMessagePath string @15
+	TerminationMessagePolicy TerminationMessagePolicy @16
+	ImagePullPolicy PullPolicy @17
+	SecurityContext SecurityContext @18
+	Stdin bool @19
+	StdinOnce bool @20
+	Tty bool @21
+	TargetContainerName string @22
+}
+
+// Protocol defines network protocols.
+Enum Protocol uint8 {
+	ProtocolUnspecified @0
+	ProtocolTcp @1
+	ProtocolUdp @2
+	ProtocolSctp @3
+}
+
+// ContainerPort represents a network port in a single container.
+Struct ContainerPort {
+	Name string @0
+	HostPort int32 @1
+	ContainerPort int32 @2
+	Protocol Protocol @3
+	HostIp string @4
+}
+
+// ContainerStatus contains the status of a container.
+Struct ContainerStatus {
+	Name string @0
+	State ContainerState @1
+	LastTerminationState ContainerState @2
+	Ready bool @3
+	RestartCount int32 @4
+	Image string @5
+	ImageId string @6
+	ContainerId string @7
+	Started bool @8
+	AllocatedResources []KeyValue @9
+	Resources ResourceRequirements @10
+	VolumeMounts []VolumeMountStatus @11
+}
+
+// ContainerState holds a possible state of container.
+Struct ContainerState {
+	Waiting ContainerStateWaiting @0
+	Running ContainerStateRunning @1
+	Terminated ContainerStateTerminated @2
+}
+
+// ContainerStateWaiting is a waiting state of a container.
+Struct ContainerStateWaiting {
+	Reason string @0
+	Message string @1
+}
+
+// ContainerStateRunning is a running state of a container.
+Struct ContainerStateRunning {
+	StartedAt Time @0
+}
+
+// ContainerStateTerminated is a terminated state of a container.
+Struct ContainerStateTerminated {
+	ExitCode int32 @0
+	Signal int32 @1
+	Reason string @2
+	Message string @3
+	StartedAt Time @4
+	FinishedAt Time @5
+	ContainerId string @6
+}
+
+// ResourceResizeRestartPolicy describes the restart policy for container resource resize.
+Enum ResourceResizeRestartPolicy uint8 {
+	ResourceResizeRestartPolicyUnspecified @0
+	ResourceResizeRestartPolicyNotRequired @1
+	ResourceResizeRestartPolicyRestartContainer @2
+}
+
+// ContainerResizePolicy represents resource resize policy for a container.
+Struct ContainerResizePolicy {
+	ResourceName string @0
+	RestartPolicy ResourceResizeRestartPolicy @1
+}
+
+// Volume represents a named volume in a pod.
+Struct Volume {
+	Name string @0
+	VolumeSource VolumeSource @1
+}
+
+// VolumeSource represents the source location of a volume to mount.
+Struct VolumeSource {
+	HostPath HostPathVolumeSource @0
+	EmptyDir EmptyDirVolumeSource @1
+	GcePersistentDisk GCEPersistentDiskVolumeSource @2
+	AwsElasticBlockStore AWSElasticBlockStoreVolumeSource @3
+	Secret SecretVolumeSource @4
+	Nfs NFSVolumeSource @5
+	PersistentVolumeClaim PersistentVolumeClaimVolumeSource @6
+	DownwardApi DownwardAPIVolumeSource @7
+	ConfigMap ConfigMapVolumeSource @8
+	Projected ProjectedVolumeSource @9
+	Csi CSIVolumeSource @10
+	Ephemeral EphemeralVolumeSource @11
+}
+
+// HostPathType describes the type of the host path.
+Enum HostPathType uint8 {
+	HostPathTypeUnspecified @0
+	HostPathTypeDirectoryOrCreate @1
+	HostPathTypeDirectory @2
+	HostPathTypeFileOrCreate @3
+	HostPathTypeFile @4
+	HostPathTypeSocket @5
+	HostPathTypeCharDevice @6
+	HostPathTypeBlockDevice @7
+}
+
+// HostPathVolumeSource represents a host path mapped into a pod.
+Struct HostPathVolumeSource {
+	Path string @0
+	Type HostPathType @1
+}
+
+// StorageMedium defines the storage medium.
+Enum StorageMedium uint8 {
+	StorageMediumUnspecified @0
+	StorageMediumDefault @1
+	StorageMediumMemory @2
+	StorageMediumHugePages @3
+	StorageMediumHugePages2Mi @4
+	StorageMediumHugePages1Gi @5
+}
+
+// EmptyDirVolumeSource represents an empty directory for a pod.
+Struct EmptyDirVolumeSource {
+	Medium StorageMedium @0
+	SizeLimit string @1
+}
+
+// GCEPersistentDiskVolumeSource represents a GCE persistent disk.
+Struct GCEPersistentDiskVolumeSource {
+	PdName string @0
+	FsType string @1
+	Partition int32 @2
+	ReadOnly bool @3
+}
+
+// AWSElasticBlockStoreVolumeSource represents an AWS EBS disk.
+Struct AWSElasticBlockStoreVolumeSource {
+	VolumeId string @0
+	FsType string @1
+	Partition int32 @2
+	ReadOnly bool @3
+}
+
+// SecretVolumeSource adapts a Secret into a volume.
+Struct SecretVolumeSource {
+	SecretName string @0
+	Items []KeyToPath @1
+	DefaultMode int32 @2
+	Optional bool @3
+}
+
+// NFSVolumeSource represents an NFS mount that lasts the lifetime of a pod.
+Struct NFSVolumeSource {
+	Server string @0
+	Path string @1
+	ReadOnly bool @2
+}
+
+// PersistentVolumeClaimVolumeSource references a PersistentVolumeClaim.
+Struct PersistentVolumeClaimVolumeSource {
+	ClaimName string @0
+	ReadOnly bool @1
+}
+
+// DownwardAPIVolumeSource represents a volume with downward API info.
+Struct DownwardAPIVolumeSource {
+	Items []DownwardAPIVolumeFile @0
+	DefaultMode int32 @1
+}
+
+// DownwardAPIVolumeFile represents info to project into a volume.
+Struct DownwardAPIVolumeFile {
+	Path string @0
+	FieldRef ObjectFieldSelector @1
+	ResourceFieldRef ResourceFieldSelector @2
+	Mode int32 @3
+}
+
+// ConfigMapVolumeSource adapts a ConfigMap into a volume.
+Struct ConfigMapVolumeSource {
+	Name string @0
+	Items []KeyToPath @1
+	DefaultMode int32 @2
+	Optional bool @3
+}
+
+// KeyToPath maps a string key to a path within a volume.
+Struct KeyToPath {
+	Key string @0
+	Path string @1
+	Mode int32 @2
+}
+
+// ProjectedVolumeSource represents a projected volume source.
+Struct ProjectedVolumeSource {
+	Sources []VolumeProjection @0
+	DefaultMode int32 @1
+}
+
+// VolumeProjection contains the projected volume sources.
+Struct VolumeProjection {
+	Secret SecretProjection @0
+	DownwardApi DownwardAPIProjection @1
+	ConfigMap ConfigMapProjection @2
+	ServiceAccountToken ServiceAccountTokenProjection @3
+	ClusterTrustBundle ClusterTrustBundleProjection @4
+}
+
+// SecretProjection adapts a secret into a projected volume.
+Struct SecretProjection {
+	Name string @0
+	Items []KeyToPath @1
+	Optional bool @2
+}
+
+// DownwardAPIProjection projects downward API info.
+Struct DownwardAPIProjection {
+	Items []DownwardAPIVolumeFile @0
+}
+
+// ConfigMapProjection adapts a ConfigMap into a projected volume.
+Struct ConfigMapProjection {
+	Name string @0
+	Items []KeyToPath @1
+	Optional bool @2
+}
+
+// ServiceAccountTokenProjection represents a projected service account token.
+Struct ServiceAccountTokenProjection {
+	Audience string @0
+	ExpirationSeconds int64 @1
+	Path string @2
+}
+
+// ClusterTrustBundleProjection describes how to select ClusterTrustBundle objects.
+Struct ClusterTrustBundleProjection {
+	Name string @0
+	SignerName string @1
+	LabelSelector LabelSelector @2
+	Optional bool @3
+	Path string @4
+}
+
+// CSIVolumeSource represents a CSI volume.
+Struct CSIVolumeSource {
+	Driver string @0
+	ReadOnly bool @1
+	FsType string @2
+	VolumeAttributes []KeyValue @3
+	NodePublishSecretRef LocalObjectReference @4
+}
+
+// EphemeralVolumeSource represents an ephemeral volume.
+Struct EphemeralVolumeSource {
+	VolumeClaimTemplate PersistentVolumeClaimTemplate @0
+}
+
+// PersistentVolumeClaimTemplate is used to produce PersistentVolumeClaim objects.
+Struct PersistentVolumeClaimTemplate {
+	Metadata ObjectMeta @0
+	Spec PersistentVolumeClaimSpec @1
+}
+
+// PersistentVolumeAccessMode describes how a volume can be mounted.
+Enum PersistentVolumeAccessMode uint8 {
+	PersistentVolumeAccessModeUnspecified @0
+	PersistentVolumeAccessModeReadWriteOnce @1
+	PersistentVolumeAccessModeReadOnlyMany @2
+	PersistentVolumeAccessModeReadWriteMany @3
+	PersistentVolumeAccessModeReadWriteOncePod @4
+}
+
+// PersistentVolumeMode describes how a volume is intended to be consumed.
+Enum PersistentVolumeMode uint8 {
+	PersistentVolumeModeUnspecified @0
+	PersistentVolumeModeBlock @1
+	PersistentVolumeModeFilesystem @2
+}
+
+// PersistentVolumeClaimSpec describes the common attributes of storage devices.
+Struct PersistentVolumeClaimSpec {
+	AccessModes []PersistentVolumeAccessMode @0
+	Selector LabelSelector @1
+	Resources ResourceRequirements @2
+	VolumeName string @3
+	StorageClassName string @4
+	VolumeMode PersistentVolumeMode @5
+	DataSource TypedLocalObjectReference @6
+	DataSourceRef TypedObjectReference @7
+	VolumeAttributesClassName []string @8
+}
+
+// MountPropagationMode describes mount propagation.
+Enum MountPropagationMode uint8 {
+	MountPropagationModeUnspecified @0
+	MountPropagationModeNone @1
+	MountPropagationModeHostToContainer @2
+	MountPropagationModeBidirectional @3
+}
+
+// RecursiveReadOnlyMode describes how the recursive read-only mode should be handled.
+Enum RecursiveReadOnlyMode uint8 {
+	RecursiveReadOnlyModeUnspecified @0
+	RecursiveReadOnlyModeDisabled @1
+	RecursiveReadOnlyModeIfPossible @2
+	RecursiveReadOnlyModeEnabled @3
+}
+
+// VolumeMount describes a mounting of a Volume within a container.
+Struct VolumeMount {
+	Name string @0
+	ReadOnly bool @1
+	RecursiveReadOnly RecursiveReadOnlyMode @2
+	MountPath string @3
+	SubPath string @4
+	MountPropagation MountPropagationMode @5
+	SubPathExpr string @6
+}
+
+// VolumeMountStatus shows status of a mount.
+Struct VolumeMountStatus {
+	Name string @0
+	MountPath string @1
+	ReadOnly bool @2
+	RecursiveReadOnly RecursiveReadOnlyMode @3
+}
+
+// VolumeDevice describes a mapping of a raw block device within a container.
+Struct VolumeDevice {
+	Name string @0
+	DevicePath string @1
+}
+
+// EnvVar represents an environment variable.
+Struct EnvVar {
+	Name string @0
+	Value string @1
+	ValueFrom EnvVarSource @2
+}
+
+// EnvVarSource represents a source for the value of an EnvVar.
+Struct EnvVarSource {
+	FieldRef ObjectFieldSelector @0
+	ResourceFieldRef ResourceFieldSelector @1
+	ConfigMapKeyRef ConfigMapKeySelector @2
+	SecretKeyRef SecretKeySelector @3
+}
+
+// EnvFromSource represents the source of a set of ConfigMaps.
+Struct EnvFromSource {
+	Prefix string @0
+	ConfigMapRef ConfigMapEnvSource @1
+	SecretRef SecretEnvSource @2
+}
+
+// ConfigMapEnvSource selects a ConfigMap to populate the environment.
+Struct ConfigMapEnvSource {
+	Name string @0
+	Optional bool @1
+}
+
+// SecretEnvSource selects a Secret to populate the environment.
+Struct SecretEnvSource {
+	Name string @0
+	Optional bool @1
+}
+
+// ObjectFieldSelector selects an APIVersioned field of an object.
+Struct ObjectFieldSelector {
+	ApiVersion string @0
+	FieldPath string @1
+}
+
+// ResourceFieldSelector represents container resources and their output format.
+Struct ResourceFieldSelector {
+	ContainerName string @0
+	Resource string @1
+	Divisor string @2
+}
+
+// ConfigMapKeySelector selects a key of a ConfigMap.
+Struct ConfigMapKeySelector {
+	Name string @0
+	Key string @1
+	Optional bool @2
+}
+
+// SecretKeySelector selects a key of a Secret.
+Struct SecretKeySelector {
+	Name string @0
+	Key string @1
+	Optional bool @2
+}
+
+// ResourceRequirements describes the compute resource requirements.
+Struct ResourceRequirements {
+	Limits []KeyValue @0
+	Requests []KeyValue @1
+	Claims []ResourceClaim @2
+}
+
+// ResourceClaim references one entry in PodSpec.ResourceClaims.
+Struct ResourceClaim {
+	Name string @0
+	Request string @1
+}
+
+// Probe describes a health check to be performed against a container.
+Struct Probe {
+	Handler ProbeHandler @0
+	InitialDelaySeconds int32 @1
+	TimeoutSeconds int32 @2
+	PeriodSeconds int32 @3
+	SuccessThreshold int32 @4
+	FailureThreshold int32 @5
+	TerminationGracePeriodSeconds int64 @6
+}
+
+// ProbeHandler defines a specific action that should be taken.
+Struct ProbeHandler {
+	Exec ExecAction @0
+	HttpGet HTTPGetAction @1
+	TcpSocket TCPSocketAction @2
+	Grpc GRPCAction @3
+}
+
+// ExecAction describes a "run in container" action.
+Struct ExecAction {
+	Command []string @0
+}
+
+// URIScheme defines URI schemes.
+Enum URIScheme uint8 {
+	URISchemeUnspecified @0
+	URISchemeHttp @1
+	URISchemeHttps @2
+}
+
+// HTTPGetAction describes an action based on HTTP Get requests.
+Struct HTTPGetAction {
+	Path string @0
+	Port IntOrString @1
+	Host string @2
+	Scheme URIScheme @3
+	HttpHeaders []HTTPHeader @4
+}
+
+// HTTPHeader describes a custom header to be used in HTTP probes.
+Struct HTTPHeader {
+	Name string @0
+	Value string @1
+}
+
+// TCPSocketAction describes an action based on opening a socket.
+Struct TCPSocketAction {
+	Port IntOrString @0
+	Host string @1
+}
+
+// GRPCAction describes an action involving a GRPC port.
+Struct GRPCAction {
+	Port int32 @0
+	Service string @1
+}
+
+// IntOrString is a type that can hold an int32 or a string.
+Struct IntOrString {
+	IntVal int32 @0
+	StrVal string @1
+	IsString bool @2
+}
+
+// Lifecycle describes actions that the management system should take.
+Struct Lifecycle {
+	PostStart LifecycleHandler @0
+	PreStop LifecycleHandler @1
+}
+
+// LifecycleHandler defines a specific action that should be taken.
+Struct LifecycleHandler {
+	Exec ExecAction @0
+	HttpGet HTTPGetAction @1
+	TcpSocket TCPSocketAction @2
+	Sleep SleepAction @3
+}
+
+// SleepAction is for sleeping in lifecycle hooks.
+Struct SleepAction {
+	Seconds int64 @0
+}
+
+// ProcMountType describes the proc mount type.
+Enum ProcMountType uint8 {
+	ProcMountTypeUnspecified @0
+	ProcMountTypeDefault @1
+	ProcMountTypeUnmasked @2
+}
+
+// SeccompProfileType describes the seccomp profile type.
+Enum SeccompProfileType uint8 {
+	SeccompProfileTypeUnspecified @0
+	SeccompProfileTypeUnconfined @1
+	SeccompProfileTypeRuntimeDefault @2
+	SeccompProfileTypeLocalhost @3
+}
+
+// AppArmorProfileType describes the AppArmor profile type.
+Enum AppArmorProfileType uint8 {
+	AppArmorProfileTypeUnspecified @0
+	AppArmorProfileTypeUnconfined @1
+	AppArmorProfileTypeRuntimeDefault @2
+	AppArmorProfileTypeLocalhost @3
+}
+
+// SecurityContext holds security configuration for a container.
+Struct SecurityContext {
+	Capabilities Capabilities @0
+	Privileged bool @1
+	SeLinuxOptions SELinuxOptions @2
+	WindowsOptions WindowsSecurityContextOptions @3
+	RunAsUser int64 @4
+	RunAsGroup int64 @5
+	RunAsNonRoot bool @6
+	ReadOnlyRootFilesystem bool @7
+	AllowPrivilegeEscalation bool @8
+	ProcMount ProcMountType @9
+	SeccompProfile SeccompProfile @10
+	AppArmorProfile AppArmorProfile @11
+}
+
+// SupplementalGroupsPolicy describes supplemental groups policy.
+Enum SupplementalGroupsPolicy uint8 {
+	SupplementalGroupsPolicyUnspecified @0
+	SupplementalGroupsPolicyMerge @1
+	SupplementalGroupsPolicyStrict @2
+}
+
+// PodFSGroupChangePolicy describes how the fsGroup should be applied.
+Enum PodFSGroupChangePolicy uint8 {
+	PodFSGroupChangePolicyUnspecified @0
+	PodFSGroupChangePolicyOnRootMismatch @1
+	PodFSGroupChangePolicyAlways @2
+}
+
+// PodSELinuxChangePolicy describes how SELinux labels should be applied.
+Enum PodSELinuxChangePolicy uint8 {
+	PodSELinuxChangePolicyUnspecified @0
+	PodSELinuxChangePolicyRecursive @1
+	PodSELinuxChangePolicyMountOption @2
+}
+
+// PodSecurityContext holds pod-level security attributes.
+Struct PodSecurityContext {
+	SeLinuxOptions SELinuxOptions @0
+	WindowsOptions WindowsSecurityContextOptions @1
+	RunAsUser int64 @2
+	RunAsGroup int64 @3
+	RunAsNonRoot bool @4
+	SupplementalGroups []int64 @5
+	SupplementalGroupsPolicy SupplementalGroupsPolicy @6
+	FsGroup int64 @7
+	Sysctls []Sysctl @8
+	FsGroupChangePolicy PodFSGroupChangePolicy @9
+	SeccompProfile SeccompProfile @10
+	AppArmorProfile AppArmorProfile @11
+	SeLinuxChangePolicy PodSELinuxChangePolicy @12
+}
+
+// Capabilities represent POSIX capabilities to add/drop.
+Struct Capabilities {
+	Add []string @0
+	Drop []string @1
+}
+
+// SELinuxOptions are the labels to be applied to the container.
+Struct SELinuxOptions {
+	User string @0
+	Role string @1
+	Type string @2
+	Level string @3
+}
+
+// WindowsSecurityContextOptions contain Windows-specific options.
+Struct WindowsSecurityContextOptions {
+	GmsaCredentialSpecName string @0
+	GmsaCredentialSpec string @1
+	RunAsUserName string @2
+	HostProcess bool @3
+}
+
+// SeccompProfile defines a pod/container's seccomp profile settings.
+Struct SeccompProfile {
+	Type SeccompProfileType @0
+	LocalhostProfile string @1
+}
+
+// AppArmorProfile defines a pod/container's AppArmor profile settings.
+Struct AppArmorProfile {
+	Type AppArmorProfileType @0
+	LocalhostProfile string @1
+}
+
+// Sysctl defines a kernel parameter to be set.
+Struct Sysctl {
+	Name string @0
+	Value string @1
+}
+
+// Affinity is a group of affinity scheduling rules.
+Struct Affinity {
+	NodeAffinity NodeAffinity @0
+	PodAffinity PodAffinity @1
+	PodAntiAffinity PodAntiAffinity @2
+}
+
+// NodeAffinity is a group of node affinity scheduling rules.
+Struct NodeAffinity {
+	RequiredDuringSchedulingIgnoredDuringExecution NodeSelector @0
+	PreferredDuringSchedulingIgnoredDuringExecution []PreferredSchedulingTerm @1
+}
+
+// NodeSelector represents the union of the results of one or more label queries.
+Struct NodeSelector {
+	NodeSelectorTerms []NodeSelectorTerm @0
+}
+
+// NodeSelectorTerm represents expressions and fields required to select node(s).
+Struct NodeSelectorTerm {
+	MatchExpressions []NodeSelectorRequirement @0
+	MatchFields []NodeSelectorRequirement @1
+}
+
+// NodeSelectorOperator represents a node selector operator.
+Enum NodeSelectorOperator uint8 {
+	NodeSelectorOperatorUnspecified @0
+	NodeSelectorOperatorIn @1
+	NodeSelectorOperatorNotIn @2
+	NodeSelectorOperatorExists @3
+	NodeSelectorOperatorDoesNotExist @4
+	NodeSelectorOperatorGt @5
+	NodeSelectorOperatorLt @6
+}
+
+// NodeSelectorRequirement is a selector that contains values and an operator.
+Struct NodeSelectorRequirement {
+	Key string @0
+	Operator NodeSelectorOperator @1
+	Values []string @2
+}
+
+// PreferredSchedulingTerm is a scheduling term with weight.
+Struct PreferredSchedulingTerm {
+	Weight int32 @0
+	Preference NodeSelectorTerm @1
+}
+
+// PodAffinity is a group of inter pod affinity scheduling rules.
+Struct PodAffinity {
+	RequiredDuringSchedulingIgnoredDuringExecution []PodAffinityTerm @0
+	PreferredDuringSchedulingIgnoredDuringExecution []WeightedPodAffinityTerm @1
+}
+
+// PodAntiAffinity is a group of inter pod anti affinity scheduling rules.
+Struct PodAntiAffinity {
+	RequiredDuringSchedulingIgnoredDuringExecution []PodAffinityTerm @0
+	PreferredDuringSchedulingIgnoredDuringExecution []WeightedPodAffinityTerm @1
+}
+
+// PodAffinityTerm defines a set of pods for this pod to co-locate/anti-locate with.
+Struct PodAffinityTerm {
+	LabelSelector LabelSelector @0
+	Namespaces []string @1
+	TopologyKey string @2
+	NamespaceSelector LabelSelector @3
+	MatchLabelKeys []string @4
+	MismatchLabelKeys []string @5
+}
+
+// WeightedPodAffinityTerm represents a pod affinity term with a weight.
+Struct WeightedPodAffinityTerm {
+	Weight int32 @0
+	PodAffinityTerm PodAffinityTerm @1
+}
+
+// LabelSelector is a label query over a set of resources.
+Struct LabelSelector {
+	MatchLabels []KeyValue @0
+	MatchExpressions []LabelSelectorRequirement @1
+}
+
+// LabelSelectorOperator represents a label selector operator.
+Enum LabelSelectorOperator uint8 {
+	LabelSelectorOperatorUnspecified @0
+	LabelSelectorOperatorIn @1
+	LabelSelectorOperatorNotIn @2
+	LabelSelectorOperatorExists @3
+	LabelSelectorOperatorDoesNotExist @4
+}
+
+// LabelSelectorRequirement is a selector that contains values and an operator.
+Struct LabelSelectorRequirement {
+	Key string @0
+	Operator LabelSelectorOperator @1
+	Values []string @2
+}
+
+// TolerationOperator represents a toleration operator.
+Enum TolerationOperator uint8 {
+	TolerationOperatorUnspecified @0
+	TolerationOperatorExists @1
+	TolerationOperatorEqual @2
+}
+
+// TaintEffect describes the effect of a taint.
+Enum TaintEffect uint8 {
+	TaintEffectUnspecified @0
+	TaintEffectNoSchedule @1
+	TaintEffectPreferNoSchedule @2
+	TaintEffectNoExecute @3
+}
+
+// Toleration defines that a pod tolerates a taint.
+Struct Toleration {
+	Key string @0
+	Operator TolerationOperator @1
+	Value string @2
+	Effect TaintEffect @3
+	TolerationSeconds int64 @4
+}
+
+// UnsatisfiableConstraintAction describes what to do when constraints can't be satisfied.
+Enum UnsatisfiableConstraintAction uint8 {
+	UnsatisfiableConstraintActionUnspecified @0
+	UnsatisfiableConstraintActionDoNotSchedule @1
+	UnsatisfiableConstraintActionScheduleAnyway @2
+}
+
+// NodeInclusionPolicy defines the type of node inclusion policy.
+Enum NodeInclusionPolicy uint8 {
+	NodeInclusionPolicyUnspecified @0
+	NodeInclusionPolicyIgnore @1
+	NodeInclusionPolicyHonor @2
+}
+
+// TopologySpreadConstraint specifies how to spread matching pods.
+Struct TopologySpreadConstraint {
+	MaxSkew int32 @0
+	TopologyKey string @1
+	WhenUnsatisfiable UnsatisfiableConstraintAction @2
+	LabelSelector LabelSelector @3
+	MinDomains int32 @4
+	NodeAffinityPolicy NodeInclusionPolicy @5
+	NodeTaintsPolicy NodeInclusionPolicy @6
+	MatchLabelKeys []string @7
+}
+
+// HostAlias holds the mapping between IP and hostnames.
+Struct HostAlias {
+	Ip string @0
+	Hostnames []string @1
+}
+
+// HostIP represents a single IP address allocated to the host.
+Struct HostIP {
+	Ip string @0
+}
+
+// PodIP represents a single IP address allocated to the pod.
+Struct PodIP {
+	Ip string @0
+}
+
+// PodConditionType describes the type of pod condition.
+Enum PodConditionType uint8 {
+	PodConditionTypeUnspecified @0
+	PodConditionTypeContainersReady @1
+	PodConditionTypeInitialized @2
+	PodConditionTypeReady @3
+	PodConditionTypePodScheduled @4
+	PodConditionTypeDisruptionTarget @5
+	PodConditionTypePodReadyToStartContainers @6
+}
+
+// ConditionStatus describes the status of a condition.
+Enum ConditionStatus uint8 {
+	ConditionStatusUnspecified @0
+	ConditionStatusTrue @1
+	ConditionStatusFalse @2
+	ConditionStatusUnknown @3
+}
+
+// PodCondition contains details for the current condition of this pod.
+Struct PodCondition {
+	Type PodConditionType @0
+	Status ConditionStatus @1
+	LastProbeTime Time @2
+	LastTransitionTime Time @3
+	Reason string @4
+	Message string @5
+}
+
+// PodDNSConfig defines the DNS parameters of a pod.
+Struct PodDNSConfig {
+	Nameservers []string @0
+	Searches []string @1
+	Options []PodDNSConfigOption @2
+}
+
+// PodDNSConfigOption defines DNS resolver options.
+Struct PodDNSConfigOption {
+	Name string @0
+	Value string @1
+}
+
+// PodReadinessGate contains the reference to a pod condition.
+Struct PodReadinessGate {
+	ConditionType PodConditionType @0
+}
+
+// PodOS defines the OS parameters of a pod.
+Struct PodOS {
+	Name string @0
+}
+
+// PodSchedulingGate is associated to a Pod to guard its scheduling.
+Struct PodSchedulingGate {
+	Name string @0
+}
+
+// PodResourceClaim references a ResourceClaim.
+Struct PodResourceClaim {
+	Name string @0
+	ResourceClaimName string @1
+	ResourceClaimTemplateName string @2
+}
+
+// PodResourceClaimStatus is stored in the PodStatus for each PodResourceClaim.
+Struct PodResourceClaimStatus {
+	Name string @0
+	ResourceClaimName string @1
+}
+
+// LocalObjectReference contains enough information to locate the referenced object.
+Struct LocalObjectReference {
+	Name string @0
+}
+
+// TypedLocalObjectReference contains enough information to locate the typed referenced object.
+Struct TypedLocalObjectReference {
+	ApiGroup string @0
+	Kind string @1
+	Name string @2
+}
+
+// TypedObjectReference contains enough information to locate the typed referenced object.
+Struct TypedObjectReference {
+	ApiGroup string @0
+	Kind string @1
+	Name string @2
+	Namespace string @3
+}

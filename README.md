@@ -11,8 +11,9 @@ The whys for using it:
 * Provides the ability to send patches for changes and apply them instead of sending entire messages
 * RPC system that can use TCP, HTTP 1.1/2 and Unix Domain Sockets
 * You can decode messages without the IDL (which only means no field names)
-* For Go, supports reflection 
+* Supports reflection 
 * Can detect fields being set vs just having the zero value via an option 
+* Use Getters and Setters and no raw field access. This allows future optimizations without breaking some weird corner case.
 
 The why nots:
 

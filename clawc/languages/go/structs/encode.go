@@ -224,7 +224,7 @@ func (s *Struct) encodeFieldFallback(w io.Writer, v StructField, desc *mapping.F
 			return 0, nil
 		}
 		return w.Write(x.Encode())
-	case field.FTListBytes:
+	case field.FTListBytes, field.FTListStrings:
 		x := (*Bytes)(v.Ptr)
 		if x.Len() == 0 {
 			return 0, nil

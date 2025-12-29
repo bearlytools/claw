@@ -1,0 +1,1093 @@
+syntax = "proto3";
+
+package k8s.core.v1;
+
+option go_package = "github.com/bearlytools/claw/benchmark/msgs/proto";
+
+// Time represents a timestamp.
+message Time {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+// TypeMeta describes an individual object in an API response or request.
+message TypeMeta {
+  string kind = 1;
+  string api_version = 2;
+}
+
+// ObjectMeta is metadata that all persisted resources must have.
+message ObjectMeta {
+  string name = 1;
+  string generate_name = 2;
+  string namespace = 3;
+  string self_link = 4;
+  string uid = 5;
+  string resource_version = 6;
+  int64 generation = 7;
+  Time creation_timestamp = 8;
+  Time deletion_timestamp = 9;
+  optional int64 deletion_grace_period_seconds = 10;
+  map<string, string> labels = 11;
+  map<string, string> annotations = 12;
+  repeated OwnerReference owner_references = 13;
+  repeated string finalizers = 14;
+  repeated ManagedFieldsEntry managed_fields = 15;
+}
+
+// OwnerReference contains enough information to let you identify an owning object.
+message OwnerReference {
+  string api_version = 1;
+  string kind = 2;
+  string name = 3;
+  string uid = 4;
+  optional bool controller = 5;
+  optional bool block_owner_deletion = 6;
+}
+
+// ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource.
+message ManagedFieldsEntry {
+  string manager = 1;
+  string operation = 2;
+  string api_version = 3;
+  Time time = 4;
+  string fields_type = 5;
+  string fields_v1 = 6;
+  string subresource = 7;
+}
+
+// Pod is a collection of containers that can run on a host.
+message Pod {
+  TypeMeta type_meta = 1;
+  ObjectMeta metadata = 2;
+  PodSpec spec = 3;
+  PodStatus status = 4;
+}
+
+// PodSpec is a description of a pod.
+message PodSpec {
+  repeated Volume volumes = 1;
+  repeated Container init_containers = 2;
+  repeated Container containers = 3;
+  repeated EphemeralContainer ephemeral_containers = 4;
+  RestartPolicy restart_policy = 5;
+  optional int64 termination_grace_period_seconds = 6;
+  optional int64 active_deadline_seconds = 7;
+  DNSPolicy dns_policy = 8;
+  map<string, string> node_selector = 9;
+  string service_account_name = 10;
+  optional bool automount_service_account_token = 11;
+  string node_name = 12;
+  bool host_network = 13;
+  bool host_pid = 14;
+  bool host_ipc = 15;
+  optional bool share_process_namespace = 16;
+  PodSecurityContext security_context = 17;
+  repeated LocalObjectReference image_pull_secrets = 18;
+  string hostname = 19;
+  string subdomain = 20;
+  Affinity affinity = 21;
+  string scheduler_name = 22;
+  repeated Toleration tolerations = 23;
+  repeated HostAlias host_aliases = 24;
+  string priority_class_name = 25;
+  optional int32 priority = 26;
+  PodDNSConfig dns_config = 27;
+  repeated PodReadinessGate readiness_gates = 28;
+  optional string runtime_class_name = 29;
+  optional bool enable_service_links = 30;
+  optional PreemptionPolicy preemption_policy = 31;
+  map<string, string> overhead = 32;
+  repeated TopologySpreadConstraint topology_spread_constraints = 33;
+  optional bool set_hostname_as_fqdn = 34;
+  PodOS os = 35;
+  optional bool host_users = 36;
+  repeated PodSchedulingGate scheduling_gates = 37;
+  repeated PodResourceClaim resource_claims = 38;
+  ResourceRequirements resources = 39;
+}
+
+// PodStatus represents information about the status of a pod.
+message PodStatus {
+  PodPhase phase = 1;
+  repeated PodCondition conditions = 2;
+  string message = 3;
+  string reason = 4;
+  string nominated_node_name = 5;
+  string host_ip = 6;
+  repeated HostIP host_ips = 7;
+  string pod_ip = 8;
+  repeated PodIP pod_ips = 9;
+  Time start_time = 10;
+  repeated ContainerStatus init_container_statuses = 11;
+  repeated ContainerStatus container_statuses = 12;
+  PodQOSClass qos_class = 13;
+  repeated ContainerStatus ephemeral_container_statuses = 14;
+  PodResizeStatus resize = 15;
+  repeated PodResourceClaimStatus resource_claim_statuses = 16;
+  int64 observed_generation = 17;
+}
+
+// Container represents a single container that is expected to be run on the host.
+message Container {
+  string name = 1;
+  string image = 2;
+  repeated string command = 3;
+  repeated string args = 4;
+  string working_dir = 5;
+  repeated ContainerPort ports = 6;
+  repeated EnvFromSource env_from = 7;
+  repeated EnvVar env = 8;
+  ResourceRequirements resources = 9;
+  repeated ContainerResizePolicy resize_policy = 10;
+  optional ContainerRestartPolicy restart_policy = 11;
+  repeated VolumeMount volume_mounts = 12;
+  repeated VolumeDevice volume_devices = 13;
+  Probe liveness_probe = 14;
+  Probe readiness_probe = 15;
+  Probe startup_probe = 16;
+  Lifecycle lifecycle = 17;
+  string termination_message_path = 18;
+  TerminationMessagePolicy termination_message_policy = 19;
+  PullPolicy image_pull_policy = 20;
+  SecurityContext security_context = 21;
+  bool stdin = 22;
+  bool stdin_once = 23;
+  bool tty = 24;
+}
+
+// EphemeralContainer is a temporary container that may be added to an existing pod.
+message EphemeralContainer {
+  string name = 1;
+  string image = 2;
+  repeated string command = 3;
+  repeated string args = 4;
+  string working_dir = 5;
+  repeated ContainerPort ports = 6;
+  repeated EnvFromSource env_from = 7;
+  repeated EnvVar env = 8;
+  ResourceRequirements resources = 9;
+  repeated VolumeMount volume_mounts = 10;
+  repeated VolumeDevice volume_devices = 11;
+  Probe liveness_probe = 12;
+  Probe readiness_probe = 13;
+  Probe startup_probe = 14;
+  Lifecycle lifecycle = 15;
+  string termination_message_path = 16;
+  TerminationMessagePolicy termination_message_policy = 17;
+  PullPolicy image_pull_policy = 18;
+  SecurityContext security_context = 19;
+  bool stdin = 20;
+  bool stdin_once = 21;
+  bool tty = 22;
+  string target_container_name = 23;
+}
+
+// ContainerPort represents a network port in a single container.
+message ContainerPort {
+  string name = 1;
+  int32 host_port = 2;
+  int32 container_port = 3;
+  Protocol protocol = 4;
+  string host_ip = 5;
+}
+
+// ContainerStatus contains the status of a container.
+message ContainerStatus {
+  string name = 1;
+  ContainerState state = 2;
+  ContainerState last_termination_state = 3;
+  bool ready = 4;
+  int32 restart_count = 5;
+  string image = 6;
+  string image_id = 7;
+  string container_id = 8;
+  optional bool started = 9;
+  map<string, string> allocated_resources = 10;
+  ResourceRequirements resources = 11;
+  repeated VolumeMountStatus volume_mounts = 12;
+}
+
+// ContainerState holds a possible state of container.
+message ContainerState {
+  ContainerStateWaiting waiting = 1;
+  ContainerStateRunning running = 2;
+  ContainerStateTerminated terminated = 3;
+}
+
+// ContainerStateWaiting is a waiting state of a container.
+message ContainerStateWaiting {
+  string reason = 1;
+  string message = 2;
+}
+
+// ContainerStateRunning is a running state of a container.
+message ContainerStateRunning {
+  Time started_at = 1;
+}
+
+// ContainerStateTerminated is a terminated state of a container.
+message ContainerStateTerminated {
+  int32 exit_code = 1;
+  int32 signal = 2;
+  string reason = 3;
+  string message = 4;
+  Time started_at = 5;
+  Time finished_at = 6;
+  string container_id = 7;
+}
+
+// ContainerResizePolicy represents resource resize policy for a container.
+message ContainerResizePolicy {
+  string resource_name = 1;
+  ResourceResizeRestartPolicy restart_policy = 2;
+}
+
+// Volume represents a named volume in a pod.
+message Volume {
+  string name = 1;
+  VolumeSource volume_source = 2;
+}
+
+// VolumeSource represents the source location of a volume to mount.
+message VolumeSource {
+  HostPathVolumeSource host_path = 1;
+  EmptyDirVolumeSource empty_dir = 2;
+  GCEPersistentDiskVolumeSource gce_persistent_disk = 3;
+  AWSElasticBlockStoreVolumeSource aws_elastic_block_store = 4;
+  SecretVolumeSource secret = 5;
+  NFSVolumeSource nfs = 6;
+  PersistentVolumeClaimVolumeSource persistent_volume_claim = 7;
+  DownwardAPIVolumeSource downward_api = 8;
+  ConfigMapVolumeSource config_map = 9;
+  ProjectedVolumeSource projected = 10;
+  CSIVolumeSource csi = 11;
+  EphemeralVolumeSource ephemeral = 12;
+}
+
+// HostPathVolumeSource represents a host path mapped into a pod.
+message HostPathVolumeSource {
+  string path = 1;
+  optional HostPathType type = 2;
+}
+
+// EmptyDirVolumeSource represents an empty directory for a pod.
+message EmptyDirVolumeSource {
+  StorageMedium medium = 1;
+  optional string size_limit = 2;
+}
+
+// GCEPersistentDiskVolumeSource represents a GCE persistent disk.
+message GCEPersistentDiskVolumeSource {
+  string pd_name = 1;
+  string fs_type = 2;
+  int32 partition = 3;
+  bool read_only = 4;
+}
+
+// AWSElasticBlockStoreVolumeSource represents an AWS EBS disk.
+message AWSElasticBlockStoreVolumeSource {
+  string volume_id = 1;
+  string fs_type = 2;
+  int32 partition = 3;
+  bool read_only = 4;
+}
+
+// SecretVolumeSource adapts a Secret into a volume.
+message SecretVolumeSource {
+  string secret_name = 1;
+  repeated KeyToPath items = 2;
+  optional int32 default_mode = 3;
+  optional bool optional = 4;
+}
+
+// NFSVolumeSource represents an NFS mount that lasts the lifetime of a pod.
+message NFSVolumeSource {
+  string server = 1;
+  string path = 2;
+  bool read_only = 3;
+}
+
+// PersistentVolumeClaimVolumeSource references a PersistentVolumeClaim.
+message PersistentVolumeClaimVolumeSource {
+  string claim_name = 1;
+  bool read_only = 2;
+}
+
+// DownwardAPIVolumeSource represents a volume with downward API info.
+message DownwardAPIVolumeSource {
+  repeated DownwardAPIVolumeFile items = 1;
+  optional int32 default_mode = 2;
+}
+
+// DownwardAPIVolumeFile represents info to project into a volume.
+message DownwardAPIVolumeFile {
+  string path = 1;
+  ObjectFieldSelector field_ref = 2;
+  ResourceFieldSelector resource_field_ref = 3;
+  optional int32 mode = 4;
+}
+
+// ConfigMapVolumeSource adapts a ConfigMap into a volume.
+message ConfigMapVolumeSource {
+  string name = 1;
+  repeated KeyToPath items = 2;
+  optional int32 default_mode = 3;
+  optional bool optional = 4;
+}
+
+// KeyToPath maps a string key to a path within a volume.
+message KeyToPath {
+  string key = 1;
+  string path = 2;
+  optional int32 mode = 3;
+}
+
+// ProjectedVolumeSource represents a projected volume source.
+message ProjectedVolumeSource {
+  repeated VolumeProjection sources = 1;
+  optional int32 default_mode = 2;
+}
+
+// VolumeProjection contains the projected volume sources.
+message VolumeProjection {
+  SecretProjection secret = 1;
+  DownwardAPIProjection downward_api = 2;
+  ConfigMapProjection config_map = 3;
+  ServiceAccountTokenProjection service_account_token = 4;
+  ClusterTrustBundleProjection cluster_trust_bundle = 5;
+}
+
+// SecretProjection adapts a secret into a projected volume.
+message SecretProjection {
+  string name = 1;
+  repeated KeyToPath items = 2;
+  optional bool optional = 3;
+}
+
+// DownwardAPIProjection projects downward API info.
+message DownwardAPIProjection {
+  repeated DownwardAPIVolumeFile items = 1;
+}
+
+// ConfigMapProjection adapts a ConfigMap into a projected volume.
+message ConfigMapProjection {
+  string name = 1;
+  repeated KeyToPath items = 2;
+  optional bool optional = 3;
+}
+
+// ServiceAccountTokenProjection represents a projected service account token.
+message ServiceAccountTokenProjection {
+  string audience = 1;
+  optional int64 expiration_seconds = 2;
+  string path = 3;
+}
+
+// ClusterTrustBundleProjection describes how to select a set of ClusterTrustBundle objects.
+message ClusterTrustBundleProjection {
+  optional string name = 1;
+  optional string signer_name = 2;
+  LabelSelector label_selector = 3;
+  optional bool optional = 4;
+  string path = 5;
+}
+
+// CSIVolumeSource represents a CSI volume.
+message CSIVolumeSource {
+  string driver = 1;
+  optional bool read_only = 2;
+  optional string fs_type = 3;
+  map<string, string> volume_attributes = 4;
+  LocalObjectReference node_publish_secret_ref = 5;
+}
+
+// EphemeralVolumeSource represents an ephemeral volume.
+message EphemeralVolumeSource {
+  PersistentVolumeClaimTemplate volume_claim_template = 1;
+}
+
+// PersistentVolumeClaimTemplate is used to produce PersistentVolumeClaim objects.
+message PersistentVolumeClaimTemplate {
+  ObjectMeta metadata = 1;
+  PersistentVolumeClaimSpec spec = 2;
+}
+
+// PersistentVolumeClaimSpec describes the common attributes of storage devices.
+message PersistentVolumeClaimSpec {
+  repeated PersistentVolumeAccessMode access_modes = 1;
+  LabelSelector selector = 2;
+  ResourceRequirements resources = 3;
+  optional string volume_name = 4;
+  optional string storage_class_name = 5;
+  optional PersistentVolumeMode volume_mode = 6;
+  TypedLocalObjectReference data_source = 7;
+  TypedObjectReference data_source_ref = 8;
+  repeated string volume_attributes_class_name = 9;
+}
+
+// VolumeMount describes a mounting of a Volume within a container.
+message VolumeMount {
+  string name = 1;
+  bool read_only = 2;
+  optional RecursiveReadOnlyMode recursive_read_only = 3;
+  string mount_path = 4;
+  string sub_path = 5;
+  optional MountPropagationMode mount_propagation = 6;
+  string sub_path_expr = 7;
+}
+
+// VolumeMountStatus shows status of a mount.
+message VolumeMountStatus {
+  string name = 1;
+  string mount_path = 2;
+  bool read_only = 3;
+  optional RecursiveReadOnlyMode recursive_read_only = 4;
+}
+
+// VolumeDevice describes a mapping of a raw block device within a container.
+message VolumeDevice {
+  string name = 1;
+  string device_path = 2;
+}
+
+// EnvVar represents an environment variable.
+message EnvVar {
+  string name = 1;
+  string value = 2;
+  EnvVarSource value_from = 3;
+}
+
+// EnvVarSource represents a source for the value of an EnvVar.
+message EnvVarSource {
+  ObjectFieldSelector field_ref = 1;
+  ResourceFieldSelector resource_field_ref = 2;
+  ConfigMapKeySelector config_map_key_ref = 3;
+  SecretKeySelector secret_key_ref = 4;
+}
+
+// EnvFromSource represents the source of a set of ConfigMaps.
+message EnvFromSource {
+  string prefix = 1;
+  ConfigMapEnvSource config_map_ref = 2;
+  SecretEnvSource secret_ref = 3;
+}
+
+// ConfigMapEnvSource selects a ConfigMap to populate the environment.
+message ConfigMapEnvSource {
+  string name = 1;
+  optional bool optional = 2;
+}
+
+// SecretEnvSource selects a Secret to populate the environment.
+message SecretEnvSource {
+  string name = 1;
+  optional bool optional = 2;
+}
+
+// ObjectFieldSelector selects an APIVersioned field of an object.
+message ObjectFieldSelector {
+  string api_version = 1;
+  string field_path = 2;
+}
+
+// ResourceFieldSelector represents container resources (cpu, memory) and their output format.
+message ResourceFieldSelector {
+  string container_name = 1;
+  string resource = 2;
+  string divisor = 3;
+}
+
+// ConfigMapKeySelector selects a key of a ConfigMap.
+message ConfigMapKeySelector {
+  string name = 1;
+  string key = 2;
+  optional bool optional = 3;
+}
+
+// SecretKeySelector selects a key of a Secret.
+message SecretKeySelector {
+  string name = 1;
+  string key = 2;
+  optional bool optional = 3;
+}
+
+// ResourceRequirements describes the compute resource requirements.
+message ResourceRequirements {
+  map<string, string> limits = 1;
+  map<string, string> requests = 2;
+  repeated ResourceClaim claims = 3;
+}
+
+// ResourceClaim references one entry in PodSpec.ResourceClaims.
+message ResourceClaim {
+  string name = 1;
+  string request = 2;
+}
+
+// Probe describes a health check to be performed against a container.
+message Probe {
+  ProbeHandler handler = 1;
+  int32 initial_delay_seconds = 2;
+  int32 timeout_seconds = 3;
+  int32 period_seconds = 4;
+  int32 success_threshold = 5;
+  int32 failure_threshold = 6;
+  optional int64 termination_grace_period_seconds = 7;
+}
+
+// ProbeHandler defines a specific action that should be taken.
+message ProbeHandler {
+  ExecAction exec = 1;
+  HTTPGetAction http_get = 2;
+  TCPSocketAction tcp_socket = 3;
+  GRPCAction grpc = 4;
+}
+
+// ExecAction describes a "run in container" action.
+message ExecAction {
+  repeated string command = 1;
+}
+
+// HTTPGetAction describes an action based on HTTP Get requests.
+message HTTPGetAction {
+  string path = 1;
+  IntOrString port = 2;
+  string host = 3;
+  URIScheme scheme = 4;
+  repeated HTTPHeader http_headers = 5;
+}
+
+// HTTPHeader describes a custom header to be used in HTTP probes.
+message HTTPHeader {
+  string name = 1;
+  string value = 2;
+}
+
+// TCPSocketAction describes an action based on opening a socket.
+message TCPSocketAction {
+  IntOrString port = 1;
+  string host = 2;
+}
+
+// GRPCAction describes an action involving a GRPC port.
+message GRPCAction {
+  int32 port = 1;
+  optional string service = 2;
+}
+
+// IntOrString is a type that can hold an int32 or a string.
+message IntOrString {
+  oneof value {
+    int32 int_val = 1;
+    string str_val = 2;
+  }
+}
+
+// Lifecycle describes actions that the management system should take.
+message Lifecycle {
+  LifecycleHandler post_start = 1;
+  LifecycleHandler pre_stop = 2;
+}
+
+// LifecycleHandler defines a specific action that should be taken.
+message LifecycleHandler {
+  ExecAction exec = 1;
+  HTTPGetAction http_get = 2;
+  TCPSocketAction tcp_socket = 3;
+  SleepAction sleep = 4;
+}
+
+// SleepAction is for sleeping in lifecycle hooks.
+message SleepAction {
+  int64 seconds = 1;
+}
+
+// SecurityContext holds security configuration for a container.
+message SecurityContext {
+  Capabilities capabilities = 1;
+  optional bool privileged = 2;
+  SELinuxOptions se_linux_options = 3;
+  WindowsSecurityContextOptions windows_options = 4;
+  optional int64 run_as_user = 5;
+  optional int64 run_as_group = 6;
+  optional bool run_as_non_root = 7;
+  optional bool read_only_root_filesystem = 8;
+  optional bool allow_privilege_escalation = 9;
+  optional ProcMountType proc_mount = 10;
+  SeccompProfile seccomp_profile = 11;
+  AppArmorProfile app_armor_profile = 12;
+}
+
+// PodSecurityContext holds pod-level security attributes.
+message PodSecurityContext {
+  SELinuxOptions se_linux_options = 1;
+  WindowsSecurityContextOptions windows_options = 2;
+  optional int64 run_as_user = 3;
+  optional int64 run_as_group = 4;
+  optional bool run_as_non_root = 5;
+  repeated int64 supplemental_groups = 6;
+  optional SupplementalGroupsPolicy supplemental_groups_policy = 7;
+  optional int64 fs_group = 8;
+  repeated Sysctl sysctls = 9;
+  optional PodFSGroupChangePolicy fs_group_change_policy = 10;
+  SeccompProfile seccomp_profile = 11;
+  AppArmorProfile app_armor_profile = 12;
+  optional PodSELinuxChangePolicy se_linux_change_policy = 13;
+}
+
+// Capabilities represent POSIX capabilities to add/drop.
+message Capabilities {
+  repeated string add = 1;
+  repeated string drop = 2;
+}
+
+// SELinuxOptions are the labels to be applied to the container.
+message SELinuxOptions {
+  string user = 1;
+  string role = 2;
+  string type = 3;
+  string level = 4;
+}
+
+// WindowsSecurityContextOptions contain Windows-specific options.
+message WindowsSecurityContextOptions {
+  optional string gmsa_credential_spec_name = 1;
+  optional string gmsa_credential_spec = 2;
+  optional string run_as_user_name = 3;
+  optional bool host_process = 4;
+}
+
+// SeccompProfile defines a pod/container's seccomp profile settings.
+message SeccompProfile {
+  SeccompProfileType type = 1;
+  optional string localhost_profile = 2;
+}
+
+// AppArmorProfile defines a pod/container's AppArmor profile settings.
+message AppArmorProfile {
+  AppArmorProfileType type = 1;
+  optional string localhost_profile = 2;
+}
+
+// Sysctl defines a kernel parameter to be set.
+message Sysctl {
+  string name = 1;
+  string value = 2;
+}
+
+// Affinity is a group of affinity scheduling rules.
+message Affinity {
+  NodeAffinity node_affinity = 1;
+  PodAffinity pod_affinity = 2;
+  PodAntiAffinity pod_anti_affinity = 3;
+}
+
+// NodeAffinity is a group of node affinity scheduling rules.
+message NodeAffinity {
+  NodeSelector required_during_scheduling_ignored_during_execution = 1;
+  repeated PreferredSchedulingTerm preferred_during_scheduling_ignored_during_execution = 2;
+}
+
+// NodeSelector represents the union of the results of one or more label queries.
+message NodeSelector {
+  repeated NodeSelectorTerm node_selector_terms = 1;
+}
+
+// NodeSelectorTerm represents expressions and fields required to select node(s).
+message NodeSelectorTerm {
+  repeated NodeSelectorRequirement match_expressions = 1;
+  repeated NodeSelectorRequirement match_fields = 2;
+}
+
+// NodeSelectorRequirement is a selector that contains values and an operator.
+message NodeSelectorRequirement {
+  string key = 1;
+  NodeSelectorOperator operator = 2;
+  repeated string values = 3;
+}
+
+// PreferredSchedulingTerm is a scheduling term with weight.
+message PreferredSchedulingTerm {
+  int32 weight = 1;
+  NodeSelectorTerm preference = 2;
+}
+
+// PodAffinity is a group of inter pod affinity scheduling rules.
+message PodAffinity {
+  repeated PodAffinityTerm required_during_scheduling_ignored_during_execution = 1;
+  repeated WeightedPodAffinityTerm preferred_during_scheduling_ignored_during_execution = 2;
+}
+
+// PodAntiAffinity is a group of inter pod anti affinity scheduling rules.
+message PodAntiAffinity {
+  repeated PodAffinityTerm required_during_scheduling_ignored_during_execution = 1;
+  repeated WeightedPodAffinityTerm preferred_during_scheduling_ignored_during_execution = 2;
+}
+
+// PodAffinityTerm defines a set of pods for this pod to co-located/anti-located with.
+message PodAffinityTerm {
+  LabelSelector label_selector = 1;
+  repeated string namespaces = 2;
+  string topology_key = 3;
+  LabelSelector namespace_selector = 4;
+  repeated string match_label_keys = 5;
+  repeated string mismatch_label_keys = 6;
+}
+
+// WeightedPodAffinityTerm represents a pod affinity term with a weight.
+message WeightedPodAffinityTerm {
+  int32 weight = 1;
+  PodAffinityTerm pod_affinity_term = 2;
+}
+
+// LabelSelector is a label query over a set of resources.
+message LabelSelector {
+  map<string, string> match_labels = 1;
+  repeated LabelSelectorRequirement match_expressions = 2;
+}
+
+// LabelSelectorRequirement is a selector that contains values and an operator.
+message LabelSelectorRequirement {
+  string key = 1;
+  LabelSelectorOperator operator = 2;
+  repeated string values = 3;
+}
+
+// Toleration defines that a pod tolerates a taint.
+message Toleration {
+  string key = 1;
+  TolerationOperator operator = 2;
+  string value = 3;
+  TaintEffect effect = 4;
+  optional int64 toleration_seconds = 5;
+}
+
+// TopologySpreadConstraint specifies how to spread matching pods.
+message TopologySpreadConstraint {
+  int32 max_skew = 1;
+  string topology_key = 2;
+  UnsatisfiableConstraintAction when_unsatisfiable = 3;
+  LabelSelector label_selector = 4;
+  optional int32 min_domains = 5;
+  optional NodeInclusionPolicy node_affinity_policy = 6;
+  optional NodeInclusionPolicy node_taints_policy = 7;
+  repeated string match_label_keys = 8;
+}
+
+// HostAlias holds the mapping between IP and hostnames.
+message HostAlias {
+  string ip = 1;
+  repeated string hostnames = 2;
+}
+
+// HostIP represents a single IP address allocated to the host.
+message HostIP {
+  string ip = 1;
+}
+
+// PodIP represents a single IP address allocated to the pod.
+message PodIP {
+  string ip = 1;
+}
+
+// PodCondition contains details for the current condition of this pod.
+message PodCondition {
+  PodConditionType type = 1;
+  ConditionStatus status = 2;
+  Time last_probe_time = 3;
+  Time last_transition_time = 4;
+  string reason = 5;
+  string message = 6;
+}
+
+// PodDNSConfig defines the DNS parameters of a pod.
+message PodDNSConfig {
+  repeated string nameservers = 1;
+  repeated string searches = 2;
+  repeated PodDNSConfigOption options = 3;
+}
+
+// PodDNSConfigOption defines DNS resolver options.
+message PodDNSConfigOption {
+  string name = 1;
+  optional string value = 2;
+}
+
+// PodReadinessGate contains the reference to a pod condition.
+message PodReadinessGate {
+  PodConditionType condition_type = 1;
+}
+
+// PodOS defines the OS parameters of a pod.
+message PodOS {
+  string name = 1;
+}
+
+// PodSchedulingGate is associated to a Pod to guard its scheduling.
+message PodSchedulingGate {
+  string name = 1;
+}
+
+// PodResourceClaim references a ResourceClaim.
+message PodResourceClaim {
+  string name = 1;
+  optional string resource_claim_name = 2;
+  optional string resource_claim_template_name = 3;
+}
+
+// PodResourceClaimStatus is stored in the PodStatus for each PodResourceClaim.
+message PodResourceClaimStatus {
+  string name = 1;
+  optional string resource_claim_name = 2;
+}
+
+// LocalObjectReference contains enough information to let you locate the referenced object.
+message LocalObjectReference {
+  string name = 1;
+}
+
+// TypedLocalObjectReference contains enough information to locate the typed referenced object.
+message TypedLocalObjectReference {
+  optional string api_group = 1;
+  string kind = 2;
+  string name = 3;
+}
+
+// TypedObjectReference contains enough information to locate the typed referenced object.
+message TypedObjectReference {
+  optional string api_group = 1;
+  string kind = 2;
+  string name = 3;
+  optional string namespace = 4;
+}
+
+// Enumerations
+
+enum RestartPolicy {
+  RESTART_POLICY_UNSPECIFIED = 0;
+  RESTART_POLICY_ALWAYS = 1;
+  RESTART_POLICY_ON_FAILURE = 2;
+  RESTART_POLICY_NEVER = 3;
+}
+
+enum PullPolicy {
+  PULL_POLICY_UNSPECIFIED = 0;
+  PULL_POLICY_ALWAYS = 1;
+  PULL_POLICY_NEVER = 2;
+  PULL_POLICY_IF_NOT_PRESENT = 3;
+}
+
+enum Protocol {
+  PROTOCOL_UNSPECIFIED = 0;
+  PROTOCOL_TCP = 1;
+  PROTOCOL_UDP = 2;
+  PROTOCOL_SCTP = 3;
+}
+
+enum DNSPolicy {
+  DNS_POLICY_UNSPECIFIED = 0;
+  DNS_POLICY_CLUSTER_FIRST_WITH_HOST_NET = 1;
+  DNS_POLICY_CLUSTER_FIRST = 2;
+  DNS_POLICY_DEFAULT = 3;
+  DNS_POLICY_NONE = 4;
+}
+
+enum PodPhase {
+  POD_PHASE_UNSPECIFIED = 0;
+  POD_PHASE_PENDING = 1;
+  POD_PHASE_RUNNING = 2;
+  POD_PHASE_SUCCEEDED = 3;
+  POD_PHASE_FAILED = 4;
+  POD_PHASE_UNKNOWN = 5;
+}
+
+enum PodQOSClass {
+  POD_QOS_CLASS_UNSPECIFIED = 0;
+  POD_QOS_CLASS_GUARANTEED = 1;
+  POD_QOS_CLASS_BURSTABLE = 2;
+  POD_QOS_CLASS_BEST_EFFORT = 3;
+}
+
+enum ContainerRestartPolicy {
+  CONTAINER_RESTART_POLICY_UNSPECIFIED = 0;
+  CONTAINER_RESTART_POLICY_ALWAYS = 1;
+}
+
+enum TerminationMessagePolicy {
+  TERMINATION_MESSAGE_POLICY_UNSPECIFIED = 0;
+  TERMINATION_MESSAGE_POLICY_FILE = 1;
+  TERMINATION_MESSAGE_POLICY_FALLBACK_TO_LOGS_ON_ERROR = 2;
+}
+
+enum URIScheme {
+  URI_SCHEME_UNSPECIFIED = 0;
+  URI_SCHEME_HTTP = 1;
+  URI_SCHEME_HTTPS = 2;
+}
+
+enum HostPathType {
+  HOST_PATH_TYPE_UNSPECIFIED = 0;
+  HOST_PATH_TYPE_DIRECTORY_OR_CREATE = 1;
+  HOST_PATH_TYPE_DIRECTORY = 2;
+  HOST_PATH_TYPE_FILE_OR_CREATE = 3;
+  HOST_PATH_TYPE_FILE = 4;
+  HOST_PATH_TYPE_SOCKET = 5;
+  HOST_PATH_TYPE_CHAR_DEVICE = 6;
+  HOST_PATH_TYPE_BLOCK_DEVICE = 7;
+}
+
+enum StorageMedium {
+  STORAGE_MEDIUM_UNSPECIFIED = 0;
+  STORAGE_MEDIUM_DEFAULT = 1;
+  STORAGE_MEDIUM_MEMORY = 2;
+  STORAGE_MEDIUM_HUGE_PAGES = 3;
+  STORAGE_MEDIUM_HUGE_PAGES_2MI = 4;
+  STORAGE_MEDIUM_HUGE_PAGES_1GI = 5;
+}
+
+enum MountPropagationMode {
+  MOUNT_PROPAGATION_MODE_UNSPECIFIED = 0;
+  MOUNT_PROPAGATION_MODE_NONE = 1;
+  MOUNT_PROPAGATION_MODE_HOST_TO_CONTAINER = 2;
+  MOUNT_PROPAGATION_MODE_BIDIRECTIONAL = 3;
+}
+
+enum RecursiveReadOnlyMode {
+  RECURSIVE_READ_ONLY_MODE_UNSPECIFIED = 0;
+  RECURSIVE_READ_ONLY_MODE_DISABLED = 1;
+  RECURSIVE_READ_ONLY_MODE_IF_POSSIBLE = 2;
+  RECURSIVE_READ_ONLY_MODE_ENABLED = 3;
+}
+
+enum PreemptionPolicy {
+  PREEMPTION_POLICY_UNSPECIFIED = 0;
+  PREEMPTION_POLICY_PREEMPT_LOWER_PRIORITY = 1;
+  PREEMPTION_POLICY_NEVER = 2;
+}
+
+enum ProcMountType {
+  PROC_MOUNT_TYPE_UNSPECIFIED = 0;
+  PROC_MOUNT_TYPE_DEFAULT = 1;
+  PROC_MOUNT_TYPE_UNMASKED = 2;
+}
+
+enum SeccompProfileType {
+  SECCOMP_PROFILE_TYPE_UNSPECIFIED = 0;
+  SECCOMP_PROFILE_TYPE_UNCONFINED = 1;
+  SECCOMP_PROFILE_TYPE_RUNTIME_DEFAULT = 2;
+  SECCOMP_PROFILE_TYPE_LOCALHOST = 3;
+}
+
+enum AppArmorProfileType {
+  APP_ARMOR_PROFILE_TYPE_UNSPECIFIED = 0;
+  APP_ARMOR_PROFILE_TYPE_UNCONFINED = 1;
+  APP_ARMOR_PROFILE_TYPE_RUNTIME_DEFAULT = 2;
+  APP_ARMOR_PROFILE_TYPE_LOCALHOST = 3;
+}
+
+enum SupplementalGroupsPolicy {
+  SUPPLEMENTAL_GROUPS_POLICY_UNSPECIFIED = 0;
+  SUPPLEMENTAL_GROUPS_POLICY_MERGE = 1;
+  SUPPLEMENTAL_GROUPS_POLICY_STRICT = 2;
+}
+
+enum PodFSGroupChangePolicy {
+  POD_FS_GROUP_CHANGE_POLICY_UNSPECIFIED = 0;
+  POD_FS_GROUP_CHANGE_POLICY_ON_ROOT_MISMATCH = 1;
+  POD_FS_GROUP_CHANGE_POLICY_ALWAYS = 2;
+}
+
+enum PodSELinuxChangePolicy {
+  POD_SE_LINUX_CHANGE_POLICY_UNSPECIFIED = 0;
+  POD_SE_LINUX_CHANGE_POLICY_RECURSIVE = 1;
+  POD_SE_LINUX_CHANGE_POLICY_MOUNT_OPTION = 2;
+}
+
+enum NodeSelectorOperator {
+  NODE_SELECTOR_OPERATOR_UNSPECIFIED = 0;
+  NODE_SELECTOR_OPERATOR_IN = 1;
+  NODE_SELECTOR_OPERATOR_NOT_IN = 2;
+  NODE_SELECTOR_OPERATOR_EXISTS = 3;
+  NODE_SELECTOR_OPERATOR_DOES_NOT_EXIST = 4;
+  NODE_SELECTOR_OPERATOR_GT = 5;
+  NODE_SELECTOR_OPERATOR_LT = 6;
+}
+
+enum LabelSelectorOperator {
+  LABEL_SELECTOR_OPERATOR_UNSPECIFIED = 0;
+  LABEL_SELECTOR_OPERATOR_IN = 1;
+  LABEL_SELECTOR_OPERATOR_NOT_IN = 2;
+  LABEL_SELECTOR_OPERATOR_EXISTS = 3;
+  LABEL_SELECTOR_OPERATOR_DOES_NOT_EXIST = 4;
+}
+
+enum TolerationOperator {
+  TOLERATION_OPERATOR_UNSPECIFIED = 0;
+  TOLERATION_OPERATOR_EXISTS = 1;
+  TOLERATION_OPERATOR_EQUAL = 2;
+}
+
+enum TaintEffect {
+  TAINT_EFFECT_UNSPECIFIED = 0;
+  TAINT_EFFECT_NO_SCHEDULE = 1;
+  TAINT_EFFECT_PREFER_NO_SCHEDULE = 2;
+  TAINT_EFFECT_NO_EXECUTE = 3;
+}
+
+enum UnsatisfiableConstraintAction {
+  UNSATISFIABLE_CONSTRAINT_ACTION_UNSPECIFIED = 0;
+  UNSATISFIABLE_CONSTRAINT_ACTION_DO_NOT_SCHEDULE = 1;
+  UNSATISFIABLE_CONSTRAINT_ACTION_SCHEDULE_ANYWAY = 2;
+}
+
+enum NodeInclusionPolicy {
+  NODE_INCLUSION_POLICY_UNSPECIFIED = 0;
+  NODE_INCLUSION_POLICY_IGNORE = 1;
+  NODE_INCLUSION_POLICY_HONOR = 2;
+}
+
+enum PodConditionType {
+  POD_CONDITION_TYPE_UNSPECIFIED = 0;
+  POD_CONDITION_TYPE_CONTAINERS_READY = 1;
+  POD_CONDITION_TYPE_INITIALIZED = 2;
+  POD_CONDITION_TYPE_READY = 3;
+  POD_CONDITION_TYPE_POD_SCHEDULED = 4;
+  POD_CONDITION_TYPE_DISRUPTION_TARGET = 5;
+  POD_CONDITION_TYPE_POD_READY_TO_START_CONTAINERS = 6;
+}
+
+enum ConditionStatus {
+  CONDITION_STATUS_UNSPECIFIED = 0;
+  CONDITION_STATUS_TRUE = 1;
+  CONDITION_STATUS_FALSE = 2;
+  CONDITION_STATUS_UNKNOWN = 3;
+}
+
+enum PodResizeStatus {
+  POD_RESIZE_STATUS_UNSPECIFIED = 0;
+  POD_RESIZE_STATUS_PROPOSED = 1;
+  POD_RESIZE_STATUS_IN_PROGRESS = 2;
+  POD_RESIZE_STATUS_DEFERRED = 3;
+  POD_RESIZE_STATUS_INFEASIBLE = 4;
+}
+
+enum PersistentVolumeAccessMode {
+  PERSISTENT_VOLUME_ACCESS_MODE_UNSPECIFIED = 0;
+  PERSISTENT_VOLUME_ACCESS_MODE_READ_WRITE_ONCE = 1;
+  PERSISTENT_VOLUME_ACCESS_MODE_READ_ONLY_MANY = 2;
+  PERSISTENT_VOLUME_ACCESS_MODE_READ_WRITE_MANY = 3;
+  PERSISTENT_VOLUME_ACCESS_MODE_READ_WRITE_ONCE_POD = 4;
+}
+
+enum PersistentVolumeMode {
+  PERSISTENT_VOLUME_MODE_UNSPECIFIED = 0;
+  PERSISTENT_VOLUME_MODE_BLOCK = 1;
+  PERSISTENT_VOLUME_MODE_FILESYSTEM = 2;
+}
+
+enum ResourceResizeRestartPolicy {
+  RESOURCE_RESIZE_RESTART_POLICY_UNSPECIFIED = 0;
+  RESOURCE_RESIZE_RESTART_POLICY_NOT_REQUIRED = 1;
+  RESOURCE_RESIZE_RESTART_POLICY_RESTART_CONTAINER = 2;
+}

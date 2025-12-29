@@ -429,12 +429,16 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- if $field.Comment -}}
 // {{ $field.Comment }}
 {{ end -}}
-func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.Bytes {
+func (x {{ $struct.Name }}) {{ $field.Name }}() *list.Bytes {
     b := structs.MustGetListBytes(x.s, {{ $field.Index }})
-    return list.XXXFromBytes(b)
+    if b == nil {
+        return nil
+    }
+    v := list.XXXFromBytes(b)
+    return &v
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.Bytes) {{ $struct.Name }} {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *list.Bytes) {{ $struct.Name }} {
     b := value.XXXBytes()
     structs.MustSetListBytes(x.s, {{ $field.Index }}, b)
     return x
@@ -450,12 +454,16 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- if $field.Comment -}}
 // {{ $field.Comment }}
 {{ end -}}
-func (x {{ $struct.Name }}) {{ $field.Name }}() *lists.String {
+func (x {{ $struct.Name }}) {{ $field.Name }}() *list.Strings {
     b := structs.MustGetListBytes(x.s, {{ $field.Index }})
-    return &lists.XXXFromStrings(b)
+    if b == nil {
+        return nil
+    }
+    v := list.XXXFromStrings(b)
+    return &v
 }
 
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *lists.String) {{ $struct.Name }} {
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value *list.Strings) {{ $struct.Name }} {
     structs.MustSetListBytes(x.s, {{ $field.Index }}, value.XXXBytes())
     return x
 }
@@ -506,7 +514,7 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 
 {{- end }}
 
-{{- end }}{{/* End if eq $field.Type */}}
+{{ end }}{{/* End if eq $field.Type */}}
 {{- end }}{{/* End range $index, $field := .Fields */}}
 
 // ClawStruct returns a reflection type representing the Struct.

@@ -16,8 +16,8 @@ import (
     "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
-    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
+    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
@@ -167,6 +167,8 @@ func (x Vehicle) AppendTruck(values ...trucks.Truck) {
     }
     structs.MustAppendListStruct(x.s, 2, vals...)
 }
+
+
 func (x Vehicle) Types() list.Enums[Type] {
     n := structs.MustGetListNumber[Type](x.s, 3)
     return list.XXXEnumsFromNumbers(n)

@@ -95,7 +95,7 @@ func ClearBit[U constraints.Unsigned](store U, pos uint8) U {
 // ClearBytes clears all the bytes at position from to position to.
 func ClearBytes(b []byte, from, to uint8) {
 	for i := from; i < to; i++ {
-		b[from] = 0
+		b[i] = 0
 	}
 }
 

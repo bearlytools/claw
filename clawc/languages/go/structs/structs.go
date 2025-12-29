@@ -1800,7 +1800,7 @@ func DeleteListStructs(s *Struct, fieldNum uint16) error {
 
 // GetListBytes returns a list of bytes at fieldNum.
 func GetListBytes(s *Struct, fieldNum uint16) (*Bytes, error) {
-	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes, field.FTListStrings); err != nil {
 		return nil, err
 	}
 
@@ -1823,7 +1823,7 @@ func MustGetListBytes(s *Struct, fieldNum uint16) *Bytes {
 }
 
 func SetListBytes(s *Struct, fieldNum uint16, value *Bytes) error {
-	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes, field.FTListStrings); err != nil {
 		return err
 	}
 
@@ -1880,7 +1880,7 @@ func MustSetListStrings(s *Struct, fieldNum uint16, value *Strings) {
 
 // DeleteListBytes deletes a list of bytes field and updates our storage total.
 func DeleteListBytes(s *Struct, fieldNum uint16) error {
-	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes); err != nil {
+	if err := validateFieldNum(fieldNum, s.mapping, field.FTListBytes, field.FTListStrings); err != nil {
 		return err
 	}
 
@@ -2115,6 +2115,14 @@ func XXXGetStructTotal(s *Struct) int64 {
 		return 0
 	}
 	return s.structTotal.Load()
+}
+
+// XXXGetHeaderSize returns the header's Final40 value for debugging.
+func XXXGetHeaderSize(s *Struct) uint64 {
+	if s == nil {
+		return 0
+	}
+	return s.header.Final40()
 }
 
 // validateFieldNum will validate that the type is described in the mapping.Map,

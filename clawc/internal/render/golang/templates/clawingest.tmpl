@@ -395,7 +395,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if !ok || listTok.Kind != clawiter.TokenListStart {
                 return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
             }
-            strs := list.NewStrings()
+            strs := list.NewString()
             for {
                 itemTok, ok := ts.Next()
                 if !ok {
@@ -404,9 +404,9 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                 if itemTok.Kind == clawiter.TokenListEnd {
                     break
                 }
-                strs.Append(itemTok.String())
+                strs = strs.Append(itemTok.String())
             }
-            x.Set{{ $field.Name }}(strs)
+            x.Set{{ $field.Name }}(&strs)
             {{- else if eq $field.TypeAsString "ListStructs" }}
             if tok.IsNil {
                 continue

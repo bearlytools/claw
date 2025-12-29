@@ -20,84 +20,6 @@ var _ list.Bools
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Close) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Close) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in Close")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "SessionID":
-            x.SetSessionID(tok.Uint32())
-        case "ErrCode":
-            if len(tok.Bytes) > 0 {
-                x.SetErrCode(ErrCodeByName[tok.String()])
-            } else {
-                x.SetErrCode(ErrCode(tok.Uint8()))
-            }
-        case "Error":
-            x.SetError(tok.String())
-        case "Metadata":
-            if tok.IsNil {
-                continue
-            }
-            listTok, ok := ts.Next()
-            if !ok || listTok.Kind != clawiter.TokenListStart {
-                return fmt.Errorf("expected TokenListStart for Metadata")
-            }
-            for {
-                peekTok, ok := ts.Peek()
-                if !ok {
-                    return fmt.Errorf("unexpected EOF in Metadata list")
-                }
-                if peekTok.Kind == clawiter.TokenListEnd {
-                    ts.Next() // consume the ListEnd
-                    break
-                }
-                item := NewMetadata()
-                if err := item.XXXIngestFrom(ts, opts); err != nil {
-                    return fmt.Errorf("ingesting Metadata[]: %w", err)
-                }
-                x.AppendMetadata(item)
-            }
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
-                continue
-            }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
 func (x *Pong) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
@@ -268,14 +190,14 @@ func (x *Msg) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOption
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Cancel) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *Close) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
     return x.XXXIngestFrom(ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Cancel) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *Close) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")
@@ -287,7 +209,7 @@ func (x *Cancel) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOpt
     for {
         tok, ok = ts.Next()
         if !ok {
-            return fmt.Errorf("unexpected EOF in Cancel")
+            return fmt.Errorf("unexpected EOF in Close")
         }
 
         if tok.Kind == clawiter.TokenStructEnd {
@@ -301,112 +223,37 @@ func (x *Cancel) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOpt
         switch tok.Name {
         case "SessionID":
             x.SetSessionID(tok.Uint32())
-        case "ReqID":
-            x.SetReqID(tok.Uint32())
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
-                continue
-            }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
-func (x *Descr) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Descr) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in Descr")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "Package":
-            x.SetPackage(tok.String())
-        case "Service":
-            x.SetService(tok.String())
-        case "Call":
-            x.SetCall(tok.String())
-        case "Type":
+        case "ErrCode":
             if len(tok.Bytes) > 0 {
-                x.SetType(RPCTypeByName[tok.String()])
+                x.SetErrCode(ErrCodeByName[tok.String()])
             } else {
-                x.SetType(RPCType(tok.Uint8()))
+                x.SetErrCode(ErrCode(tok.Uint8()))
             }
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
+        case "Error":
+            x.SetError(tok.String())
+        case "Metadata":
+            if tok.IsNil {
                 continue
             }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
-func (x *Ping) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Ping) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in Ping")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "ID":
-            x.SetID(tok.Uint32())
+            listTok, ok := ts.Next()
+            if !ok || listTok.Kind != clawiter.TokenListStart {
+                return fmt.Errorf("expected TokenListStart for Metadata")
+            }
+            for {
+                peekTok, ok := ts.Peek()
+                if !ok {
+                    return fmt.Errorf("unexpected EOF in Metadata list")
+                }
+                if peekTok.Kind == clawiter.TokenListEnd {
+                    ts.Next() // consume the ListEnd
+                    break
+                }
+                item := NewMetadata()
+                if err := item.XXXIngestFrom(ts, opts); err != nil {
+                    return fmt.Errorf("ingesting Metadata[]: %w", err)
+                }
+                x.AppendMetadata(item)
+            }
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {
@@ -476,14 +323,14 @@ func (x *GoAway) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOpt
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Metadata) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *Descr) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
     return x.XXXIngestFrom(ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Metadata) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *Descr) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")
@@ -495,7 +342,7 @@ func (x *Metadata) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestO
     for {
         tok, ok = ts.Next()
         if !ok {
-            return fmt.Errorf("unexpected EOF in Metadata")
+            return fmt.Errorf("unexpected EOF in Descr")
         }
 
         if tok.Kind == clawiter.TokenStructEnd {
@@ -507,100 +354,17 @@ func (x *Metadata) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestO
         }
 
         switch tok.Name {
-        case "Key":
-            x.SetKey(tok.String())
-        case "Value":
-            x.SetValue(tok.Bytes)
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
-                continue
-            }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
-func (x *Open) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Open) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in Open")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "OpenID":
-            x.SetOpenID(tok.Uint32())
-        case "Descr":
-            if tok.IsNil {
-                continue
-            }
-            nested := NewDescr()
-            if err := nested.XXXIngestFrom(ts, opts); err != nil {
-                return fmt.Errorf("ingesting Descr: %w", err)
-            }
-            x.SetDescr(nested)
-        case "ProtocolMajor":
-            x.SetProtocolMajor(tok.Uint8())
-        case "ProtocolMinor":
-            x.SetProtocolMinor(tok.Uint8())
-        case "DeadlineMS":
-            x.SetDeadlineMS(tok.Uint64())
-        case "MaxPayloadSize":
-            x.SetMaxPayloadSize(tok.Uint32())
-        case "TraceID":
-            x.SetTraceID(tok.Bytes)
-        case "SpanID":
-            x.SetSpanID(tok.Bytes)
-        case "Metadata":
-            if tok.IsNil {
-                continue
-            }
-            listTok, ok := ts.Next()
-            if !ok || listTok.Kind != clawiter.TokenListStart {
-                return fmt.Errorf("expected TokenListStart for Metadata")
-            }
-            for {
-                peekTok, ok := ts.Peek()
-                if !ok {
-                    return fmt.Errorf("unexpected EOF in Metadata list")
-                }
-                if peekTok.Kind == clawiter.TokenListEnd {
-                    ts.Next() // consume the ListEnd
-                    break
-                }
-                item := NewMetadata()
-                if err := item.XXXIngestFrom(ts, opts); err != nil {
-                    return fmt.Errorf("ingesting Metadata[]: %w", err)
-                }
-                x.AppendMetadata(item)
+        case "Package":
+            x.SetPackage(tok.String())
+        case "Service":
+            x.SetService(tok.String())
+        case "Call":
+            x.SetCall(tok.String())
+        case "Type":
+            if len(tok.Bytes) > 0 {
+                x.SetType(RPCTypeByName[tok.String()])
+            } else {
+                x.SetType(RPCType(tok.Uint8()))
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -770,6 +534,242 @@ func (x *Payload) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
                 }
                 x.AppendMetadata(item)
             }
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
+func (x *Open) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Open) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Open")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "OpenID":
+            x.SetOpenID(tok.Uint32())
+        case "Descr":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewDescr()
+            if err := nested.XXXIngestFrom(ts, opts); err != nil {
+                return fmt.Errorf("ingesting Descr: %w", err)
+            }
+            x.SetDescr(nested)
+        case "ProtocolMajor":
+            x.SetProtocolMajor(tok.Uint8())
+        case "ProtocolMinor":
+            x.SetProtocolMinor(tok.Uint8())
+        case "DeadlineMS":
+            x.SetDeadlineMS(tok.Uint64())
+        case "MaxPayloadSize":
+            x.SetMaxPayloadSize(tok.Uint32())
+        case "TraceID":
+            x.SetTraceID(tok.Bytes)
+        case "SpanID":
+            x.SetSpanID(tok.Bytes)
+        case "Metadata":
+            if tok.IsNil {
+                continue
+            }
+            listTok, ok := ts.Next()
+            if !ok || listTok.Kind != clawiter.TokenListStart {
+                return fmt.Errorf("expected TokenListStart for Metadata")
+            }
+            for {
+                peekTok, ok := ts.Peek()
+                if !ok {
+                    return fmt.Errorf("unexpected EOF in Metadata list")
+                }
+                if peekTok.Kind == clawiter.TokenListEnd {
+                    ts.Next() // consume the ListEnd
+                    break
+                }
+                item := NewMetadata()
+                if err := item.XXXIngestFrom(ts, opts); err != nil {
+                    return fmt.Errorf("ingesting Metadata[]: %w", err)
+                }
+                x.AppendMetadata(item)
+            }
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
+func (x *Cancel) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Cancel) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Cancel")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "SessionID":
+            x.SetSessionID(tok.Uint32())
+        case "ReqID":
+            x.SetReqID(tok.Uint32())
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
+func (x *Ping) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Ping) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Ping")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "ID":
+            x.SetID(tok.Uint32())
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
+func (x *Metadata) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Metadata) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Metadata")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "Key":
+            x.SetKey(tok.String())
+        case "Value":
+            x.SetValue(tok.Bytes)
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {
