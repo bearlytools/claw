@@ -8,11 +8,13 @@ import (
     "context"
     "io"
     "bytes"
+    "fmt"
 
     "github.com/bearlytools/claw/clawc/languages/go/mapping"
     "github.com/bearlytools/claw/clawc/languages/go/reflect"
     "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
-    "github.com/bearlytools/claw/clawc/languages/go/structs"
+    "github.com/bearlytools/claw/clawc/languages/go/segment"
+    "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
@@ -23,6 +25,13 @@ var (
     _ context.Context
     _ = io.EOF
     _ = bytes.MinRead
+    _ = fmt.Errorf
+    _ mapping.Map
+    _ reflect.StructDescr
+    _ = runtime.RegisterPackage
+    _ segment.Struct
+    _ list.Bools
+    _ = field.FTBool
 )
 
 // SyntaxVersion is the major version of the Claw language that is being rendered.
@@ -78,15 +87,30 @@ var ModelByValue = map[uint8]string{
 
 
 type Car struct {
-   s *structs.Struct
+   s *segment.Struct
 }
 
 // NewCar creates a new instance of Car.
 func NewCar() Car {
-    s := structs.New(0, XXXMappingCar)
+    s := segment.New(XXXMappingCar)
     return Car{
         s: s,
     }
+}
+
+// NewCarPooled creates a pooled instance of Car.
+// Call Release() when done to return it to the pool for reuse.
+func NewCarPooled(ctx context.Context) Car {
+    s := segment.NewPooled(ctx, XXXMappingCar)
+    return Car{
+        s: s,
+    }
+}
+
+// Release returns the struct to the pool for reuse.
+// After calling Release, the struct should not be used.
+func (x Car) Release(ctx context.Context) {
+    segment.Release(ctx, x.s)
 }
 
 // XXXNewCarFrom creates a new Car from our internal Struct representation.
@@ -95,18 +119,13 @@ func NewCar() Car {
 //
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
-func XXXNewCarFrom(s *structs.Struct) Car {
+func XXXNewCarFrom(s *segment.Struct) Car {
     return Car{s: s}
 }
 
-// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
+// Marshal marshal's the Struct to []byte.
 func (x Car) Marshal() ([]byte, error) {
-    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
-    _, err := x.s.Marshal(b)
-    if err != nil {
-        return nil, err
-    }
-    return b.Bytes(), nil
+    return x.s.MarshalBytes()
 }
 
 // MarshalWriter marshals to an io.Writer.
@@ -116,64 +135,62 @@ func (x Car) MarshalWriter(w io.Writer) (n int, err error) {
 
 // Unmarshal unmarshals b into the Struct.
 func (x Car) Unmarshal(b []byte) error {
-    buff := bytes.NewBuffer(b)
-    _, err := x.s.Unmarshal(buff)
-    return err
+    return x.s.Unmarshal(b)
 }
 
 // UnmarshalReader unmarshals a Struct from an io.Reader.
 func (x Car) UnmarshalReader (r io.Reader) (int, error) {
-    return x.s.Unmarshal(r)
+    return x.s.UnmarshalReader(r)
 }
 
 func (x Car) Manufacturer() manufacturers.Manufacturer {
-    return manufacturers.Manufacturer(structs.MustGetNumber[uint8](x.s, 0))
+    return manufacturers.Manufacturer(segment.GetUint8(x.s, 0))
 }
 
 func (x Car) SetManufacturer(value manufacturers.Manufacturer) Car {
-    structs.MustSetNumber(x.s, 0, uint8(value))
+    segment.SetUint8(x.s, 0, uint8(value))
     return x
 }
 
 func (x Car) Model() Model {
-    return Model(structs.MustGetNumber[uint8](x.s, 1))
+    return Model(segment.GetUint8(x.s, 1))
 }
 
 func (x Car) SetModel(value Model) Car {
-    structs.MustSetNumber(x.s, 1, uint8(value))
+    segment.SetUint8(x.s, 1, uint8(value))
     return x
 }
 
 
 func (x Car) Year() uint16 {
-    return structs.MustGetNumber[uint16](x.s, 2)
+    return segment.GetUint16(x.s, 2)
 }
 
 func (x Car) SetYear(value uint16) Car {
-    structs.MustSetNumber(x.s, 2, value)
+    segment.SetUint16(x.s, 2, value)
     return x
 }
 
 
 
 // ClawStruct returns a reflection type representing the Struct.
+// Note: Segment runtime does not fully support reflection yet.
 func (x Car) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrCar
-    return reflect.XXXNewStruct(x.s, descr)
+    panic("segment runtime: ClawStruct not yet implemented")
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
 // this should not be used and has no compatibility guarantees.
 //
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Car) XXXGetStruct() *structs.Struct {
+func (x Car) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
-// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Car nor any sub-structs should be used again.
+// Recycle is a no-op for segment runtime.
+// Segment runtime uses simpler memory management.
 func (x Car) Recycle(ctx context.Context) {
-    x.s.Recycle(ctx)
+    // No-op for segment runtime
 }
  
 

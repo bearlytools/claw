@@ -1173,6 +1173,25 @@ func BenchmarkCapnpMarshal(b *testing.B) {
 	}
 }
 
+// BenchmarkCapnpPooledMarshal benchmarks Cap'n Proto with arena pooling.
+// This creates, marshals, and releases the message in each iteration to show
+// the full creation cost with pooling benefits from arena reuse.
+func BenchmarkCapnpPooledMarshal(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		msg, _, err := createCapnpPod()
+		if err != nil {
+			b.Fatal(err)
+		}
+		var buf bytes.Buffer
+		err = capnp.NewEncoder(&buf).Encode(msg)
+		if err != nil {
+			b.Fatal(err)
+		}
+		msg.Release()
+	}
+}
+
 func BenchmarkCapnpUnmarshal(b *testing.B) {
 	msg, _, err := createCapnpPod()
 	if err != nil {
@@ -1194,7 +1213,31 @@ func BenchmarkCapnpUnmarshal(b *testing.B) {
 	}
 }
 
-// Benchmarks for Claw
+// BenchmarkCapnpPooledUnmarshal benchmarks Cap'n Proto unmarshal with arena pooling.
+func BenchmarkCapnpPooledUnmarshal(b *testing.B) {
+	msg, _, err := createCapnpPod()
+	if err != nil {
+		b.Fatal(err)
+	}
+	var buf bytes.Buffer
+	err = capnp.NewEncoder(&buf).Encode(msg)
+	if err != nil {
+		b.Fatal(err)
+	}
+	data := buf.Bytes()
+	msg.Release()
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		newMsg, err := capnp.Unmarshal(data)
+		if err != nil {
+			b.Fatal(err)
+		}
+		newMsg.Release()
+	}
+}
+
 func BenchmarkClawMarshal(b *testing.B) {
 	pod := createClawPod()
 	b.ResetTimer()
@@ -1221,6 +1264,25 @@ func BenchmarkClawUnmarshal(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
+	}
+}
+
+func BenchmarkClawUnmarshalPooled(b *testing.B) {
+	pod := createClawPod()
+	data, err := pod.Marshal()
+	if err != nil {
+		b.Fatal(err)
+	}
+	ctx := b.Context()
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		newPod := clawpod.NewPodPooled(ctx)
+		err := newPod.Unmarshal(data)
+		if err != nil {
+			b.Fatal(err)
+		}
+		newPod.Release(ctx)
 	}
 }
 

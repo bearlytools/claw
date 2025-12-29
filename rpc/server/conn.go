@@ -177,7 +177,12 @@ func (c *ServerConn) handleOpen(ctx context.Context, open msgs.Open) {
 	sessionID := c.nextSessionID
 	c.nextSessionID++
 
-	sess := newServerSession(sessionID, descr.Type(), handler, open.Metadata())
+	// Convert metadata list to slice.
+	md := make([]msgs.Metadata, open.MetadataLen())
+	for i := 0; i < open.MetadataLen(); i++ {
+		md[i] = open.MetadataGet(i)
+	}
+	sess := newServerSession(sessionID, descr.Type(), handler, md)
 	c.sessions[sessionID] = sess
 	c.mu.Unlock()
 
@@ -220,6 +225,8 @@ func (c *ServerConn) runHandler(ctx context.Context, sess *serverSession) {
 		stream := newBiDirStream(sess.id, c, sess.recvCh, sess.cancelCh)
 		err = h.HandleFunc(ctx, stream)
 		stream.close()
+		// Send EndStream to signal we're done sending.
+		c.sendPayload(sess.id, 0, nil, true)
 	case SendHandler:
 		stream := newRecvStream(sess.id, c, sess.recvCh, sess.cancelCh)
 		err = h.HandleFunc(ctx, stream)

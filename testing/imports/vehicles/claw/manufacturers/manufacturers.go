@@ -8,9 +8,14 @@ import (
     "context"
     "io"
     "bytes"
+    "fmt"
 
+    "github.com/bearlytools/claw/clawc/languages/go/mapping"
     "github.com/bearlytools/claw/clawc/languages/go/reflect"
     "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
+    "github.com/bearlytools/claw/clawc/languages/go/segment"
+    "github.com/bearlytools/claw/clawc/languages/go/types/list"
+    "github.com/bearlytools/claw/clawc/languages/go/field"
     
 )
 
@@ -19,6 +24,13 @@ var (
     _ context.Context
     _ = io.EOF
     _ = bytes.MinRead
+    _ = fmt.Errorf
+    _ mapping.Map
+    _ reflect.StructDescr
+    _ = runtime.RegisterPackage
+    _ segment.Struct
+    _ list.Bools
+    _ = field.FTBool
 )
 
 // SyntaxVersion is the major version of the Claw language that is being rendered.
