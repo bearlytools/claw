@@ -78,3 +78,75 @@ func TestGetSetBit(t *testing.T) {
 		}
 	}
 }
+
+func TestClearBytes(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []byte
+		from, to uint8
+		want     []byte
+	}{
+		{
+			name:  "Success: clear single byte",
+			input: []byte{0xFF, 0xFF, 0xFF, 0xFF},
+			from:  1,
+			to:    2,
+			want:  []byte{0xFF, 0x00, 0xFF, 0xFF},
+		},
+		{
+			name:  "Success: clear multiple bytes",
+			input: []byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
+			from:  2,
+			to:    6,
+			want:  []byte{0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF},
+		},
+		{
+			name:  "Success: clear from start",
+			input: []byte{0xFF, 0xFF, 0xFF, 0xFF},
+			from:  0,
+			to:    3,
+			want:  []byte{0x00, 0x00, 0x00, 0xFF},
+		},
+		{
+			name:  "Success: clear to end",
+			input: []byte{0xFF, 0xFF, 0xFF, 0xFF},
+			from:  2,
+			to:    4,
+			want:  []byte{0xFF, 0xFF, 0x00, 0x00},
+		},
+		{
+			name:  "Success: clear all bytes",
+			input: []byte{0xFF, 0xFF, 0xFF, 0xFF},
+			from:  0,
+			to:    4,
+			want:  []byte{0x00, 0x00, 0x00, 0x00},
+		},
+		{
+			name:  "Success: clear with varied byte values",
+			input: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+			from:  3,
+			to:    8,
+			want:  []byte{0x01, 0x02, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00},
+		},
+		{
+			name:  "Success: empty range does nothing",
+			input: []byte{0xFF, 0xFF, 0xFF, 0xFF},
+			from:  2,
+			to:    2,
+			want:  []byte{0xFF, 0xFF, 0xFF, 0xFF},
+		},
+	}
+
+	for _, test := range tests {
+		got := make([]byte, len(test.input))
+		copy(got, test.input)
+
+		ClearBytes(got, test.from, test.to)
+
+		for i := range got {
+			if got[i] != test.want[i] {
+				t.Errorf("[TestClearBytes(%s)]: byte %d: got 0x%02X, want 0x%02X", test.name, i, got[i], test.want[i])
+			}
+		}
+	}
+}

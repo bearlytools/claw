@@ -196,54 +196,6 @@ var ErrCodeByValue = map[uint8]string{
     14: "ErrFailedPrecondition",
     15: "ErrAlreadyExists",
 }
-// Compression indicates the compression algorithm used on a payload.
-type Compression uint8
-
-// String implements fmt.Stringer.
-func (x Compression) String() string {
-    return CompressionByValue[uint8(x)]
-}
-
-// XXXEnumGroup will return the EnumGroup descriptor for this group of enumerators.
-// This should only be used by the reflect package and is has no compatibility promises
-// like all XXX fields.
-func (x Compression) XXXEnumGroup() reflect.EnumGroup {
-    return XXXEnumGroups.Get(2)
-}
-
-// XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
-// This should only be used by the reflect package and is has no compatibility promises
-// like all XXX fields.
-func (x Compression) XXXEnumValueDescr() reflect.EnumValueDescr {
-    return XXXEnumGroups.Get(2).ByValue(uint16(x))
-}
-// This is a set of all constants representing enumerated values for enum Compression.
-const (
-    // CmpNone indicates no compression.
-    CmpNone Compression = 0
-    // CmpGzip indicates gzip compression.
-    CmpGzip Compression = 1
-    // CmpSnappy indicates snappy compression.
-    CmpSnappy Compression = 2
-    // CmpZstd indicates zstd compression.
-    CmpZstd Compression = 3
-)
-
-// CompressionByName converts a string representing the enumerator into a Compression.
-var CompressionByName = map[string]Compression{
-    "CmpGzip": 1,
-    "CmpNone": 0,
-    "CmpSnappy": 2,
-    "CmpZstd": 3,
-}
-
-// CompressionByValue converts a uint8 representing a Compression into its string name.
-var CompressionByValue = map[uint8]string{
-    0: "CmpNone",
-    1: "CmpGzip",
-    2: "CmpSnappy",
-    3: "CmpZstd",
-}
 // RPCType is the type of RPC being performed.
 type RPCType uint8
 
@@ -256,14 +208,14 @@ func (x RPCType) String() string {
 // This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x RPCType) XXXEnumGroup() reflect.EnumGroup {
-    return XXXEnumGroups.Get(3)
+    return XXXEnumGroups.Get(2)
 }
 
 // XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
 // This should only be used by the reflect package and is has no compatibility promises
 // like all XXX fields.
 func (x RPCType) XXXEnumValueDescr() reflect.EnumValueDescr {
-    return XXXEnumGroups.Get(3).ByValue(uint16(x))
+    return XXXEnumGroups.Get(2).ByValue(uint16(x))
 }
 // This is a set of all constants representing enumerated values for enum RPCType.
 const (
@@ -296,34 +248,82 @@ var RPCTypeByValue = map[uint8]string{
     3: "RTRecv",
     4: "RTBiDirectional",
 }
+// Compression indicates the compression algorithm used on a payload.
+type Compression uint8
+
+// String implements fmt.Stringer.
+func (x Compression) String() string {
+    return CompressionByValue[uint8(x)]
+}
+
+// XXXEnumGroup will return the EnumGroup descriptor for this group of enumerators.
+// This should only be used by the reflect package and is has no compatibility promises
+// like all XXX fields.
+func (x Compression) XXXEnumGroup() reflect.EnumGroup {
+    return XXXEnumGroups.Get(3)
+}
+
+// XXXEnumGroup will return the EnumValueDescr descriptor for an enumerated value.
+// This should only be used by the reflect package and is has no compatibility promises
+// like all XXX fields.
+func (x Compression) XXXEnumValueDescr() reflect.EnumValueDescr {
+    return XXXEnumGroups.Get(3).ByValue(uint16(x))
+}
+// This is a set of all constants representing enumerated values for enum Compression.
+const (
+    // CmpNone indicates no compression.
+    CmpNone Compression = 0
+    // CmpGzip indicates gzip compression.
+    CmpGzip Compression = 1
+    // CmpSnappy indicates snappy compression.
+    CmpSnappy Compression = 2
+    // CmpZstd indicates zstd compression.
+    CmpZstd Compression = 3
+)
+
+// CompressionByName converts a string representing the enumerator into a Compression.
+var CompressionByName = map[string]Compression{
+    "CmpGzip": 1,
+    "CmpNone": 0,
+    "CmpSnappy": 2,
+    "CmpZstd": 3,
+}
+
+// CompressionByValue converts a uint8 representing a Compression into its string name.
+var CompressionByValue = map[uint8]string{
+    0: "CmpNone",
+    1: "CmpGzip",
+    2: "CmpSnappy",
+    3: "CmpZstd",
+}
 
 
-// Metadata represents a key-value pair for request/response metadata.
-type Metadata struct {
+// Descr gives the description of the RPC so that it can match up with the other side.
+type Descr struct {
    s *structs.Struct
 }
 
-// NewMetadata creates a new instance of Metadata.
-func NewMetadata() Metadata {
-    s := structs.New(0, XXXMappingMetadata)
+// NewDescr creates a new instance of Descr.
+func NewDescr() Descr {
+    s := structs.New(0, XXXMappingDescr)
     s.XXXSetIsSetEnabled()
-    return Metadata{
+    return Descr{
         s: s,
     }
 }
 
-// XXXNewMetadataFrom creates a new Metadata from our internal Struct representation.
+// XXXNewDescrFrom creates a new Descr from our internal Struct representation.
 // As with all things marked XXX*, this should not be used and has not compatibility
 // guarantees.
 //
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
-func XXXNewMetadataFrom(s *structs.Struct) Metadata {
-    return Metadata{s: s}
+func XXXNewDescrFrom(s *structs.Struct) Descr {
+    return Descr{s: s}
 }
 
 // Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
-func (x Metadata) Marshal() ([]byte, error) {
+func (x Descr) Marshal() ([]byte, error) {
     b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
     _, err := x.s.Marshal(b)
     if err != nil {
@@ -333,24 +333,24 @@ func (x Metadata) Marshal() ([]byte, error) {
 }
 
 // MarshalWriter marshals to an io.Writer.
-func (x Metadata) MarshalWriter(w io.Writer) (n int, err error) {
+func (x Descr) MarshalWriter(w io.Writer) (n int, err error) {
     return x.s.Marshal(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
-func (x Metadata) Unmarshal(b []byte) error {
+func (x Descr) Unmarshal(b []byte) error {
     buff := bytes.NewBuffer(b)
     _, err := x.s.Unmarshal(buff)
     return err
 }
 
 // UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x Metadata) UnmarshalReader (r io.Reader) (int, error) {
+func (x Descr) UnmarshalReader (r io.Reader) (int, error) {
     return x.s.Unmarshal(r)
 }
 
-// Key is the metadata key.
-func (x Metadata) Key() string {
+// Package is the package the RPC is defined in.
+func (x Descr) Package() string {
     ptr := structs.MustGetBytes(x.s, 0)
     if ptr == nil {
         return ""
@@ -358,47 +358,69 @@ func (x Metadata) Key() string {
     return conversions.ByteSlice2String(*ptr)
 }
 
-func (x Metadata) SetKey(value string) Metadata {
+func (x Descr) SetPackage(value string) Descr {
     b := conversions.UnsafeGetBytes(value)
     structs.MustSetBytes(x.s, 0, b, true)
     return x
 }
-func (x Metadata) IsSetKey() bool{
+func (x Descr) IsSetPackage() bool{
     return x.s.IsSet(0)
 }
 
-// Value is the metadata value.
-func (x Metadata) Value() []byte {
+// Service is the name of the service the RPC is defined in.
+func (x Descr) Service() string {
     ptr := structs.MustGetBytes(x.s, 1)
     if ptr == nil {
-        return nil
+        return ""
     }
-    return *ptr
+    return conversions.ByteSlice2String(*ptr)
 }
 
-func (x Metadata) SafeGetValue() []byte {
-    ptr := structs.MustGetBytes(x.s, 1)
-    if ptr == nil {
-        return nil
-    }
-    b := make([]byte, len(*ptr))
-    copy(b, *ptr)
-    return b
-}
-
-func (x Metadata) SetValue(value []byte) Metadata {
-    structs.MustSetBytes(x.s, 1, value, false)
+func (x Descr) SetService(value string) Descr {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, 1, b, true)
     return x
 }
-func (x Metadata) IsSetValue() bool{
+func (x Descr) IsSetService() bool{
     return x.s.IsSet(1)
+}
+
+// Call is the name of the call the RPC defines.
+func (x Descr) Call() string {
+    ptr := structs.MustGetBytes(x.s, 2)
+    if ptr == nil {
+        return ""
+    }
+    return conversions.ByteSlice2String(*ptr)
+}
+
+func (x Descr) SetCall(value string) Descr {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, 2, b, true)
+    return x
+}
+func (x Descr) IsSetCall() bool{
+    return x.s.IsSet(2)
+}
+
+// Type is the type of RPC being performed.
+func (x Descr) Type() RPCType {
+    return RPCType(structs.MustGetNumber[uint8](x.s, 3))
+}
+
+func (x Descr) SetType(value RPCType) Descr {
+    structs.MustSetNumber(x.s, 3, uint8(value))
+    return x
+}
+func (x Descr) IsSetType() bool{
+    return x.s.IsSet(3)
 }
 
 
 
 // ClawStruct returns a reflection type representing the Struct.
-func (x Metadata) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrMetadata
+func (x Descr) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrDescr
     return reflect.XXXNewStruct(x.s, descr)
 }
 
@@ -406,13 +428,13 @@ func (x Metadata) ClawStruct() reflect.Struct{
 // this should not be used and has no compatibility guarantees.
 //
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Metadata) XXXGetStruct() *structs.Struct {
+func (x Descr) XXXGetStruct() *structs.Struct {
     return x.s
 }
 
 // Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Metadata nor any sub-structs should be used again.
-func (x Metadata) Recycle(ctx context.Context) {
+// After calling Recycle, the Descr nor any sub-structs should be used again.
+func (x Descr) Recycle(ctx context.Context) {
     x.s.Recycle(ctx)
 }
  
@@ -421,8 +443,399 @@ func (x Metadata) Recycle(ctx context.Context) {
 // by the reflect package and is has no compatibility promises like all XXX fields.
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-func (x Metadata) XXXDescr() reflect.StructDescr {
+func (x Descr) XXXDescr() reflect.StructDescr {
     return XXXPackageDescr.Structs().Get(0)
+}
+
+// OpenAck is the response to an Open message.
+type OpenAck struct {
+   s *structs.Struct
+}
+
+// NewOpenAck creates a new instance of OpenAck.
+func NewOpenAck() OpenAck {
+    s := structs.New(0, XXXMappingOpenAck)
+    s.XXXSetIsSetEnabled()
+    return OpenAck{
+        s: s,
+    }
+}
+
+// XXXNewOpenAckFrom creates a new OpenAck from our internal Struct representation.
+// As with all things marked XXX*, this should not be used and has not compatibility
+// guarantees.
+//
+// Deprecated: This is not actually deprecated, but it should not be used directly nor
+// show up in any documentation.
+func XXXNewOpenAckFrom(s *structs.Struct) OpenAck {
+    return OpenAck{s: s}
+}
+
+// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
+func (x OpenAck) Marshal() ([]byte, error) {
+    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
+    _, err := x.s.Marshal(b)
+    if err != nil {
+        return nil, err
+    }
+    return b.Bytes(), nil
+}
+
+// MarshalWriter marshals to an io.Writer.
+func (x OpenAck) MarshalWriter(w io.Writer) (n int, err error) {
+    return x.s.Marshal(w)
+}
+
+// Unmarshal unmarshals b into the Struct.
+func (x OpenAck) Unmarshal(b []byte) error {
+    buff := bytes.NewBuffer(b)
+    _, err := x.s.Unmarshal(buff)
+    return err
+}
+
+// UnmarshalReader unmarshals a Struct from an io.Reader.
+func (x OpenAck) UnmarshalReader (r io.Reader) (int, error) {
+    return x.s.Unmarshal(r)
+}
+
+// OpenID is the ID of the Open message being acknowledged.
+func (x OpenAck) OpenID() uint32 {
+    return structs.MustGetNumber[uint32](x.s, 0)
+}
+
+func (x OpenAck) SetOpenID(value uint32) OpenAck {
+    structs.MustSetNumber(x.s, 0, value)
+    return x
+}
+func (x OpenAck) IsSetOpenID() bool{
+    return x.s.IsSet(0)
+}
+
+// SessionID is the ID of the session.
+func (x OpenAck) SessionID() uint32 {
+    return structs.MustGetNumber[uint32](x.s, 1)
+}
+
+func (x OpenAck) SetSessionID(value uint32) OpenAck {
+    structs.MustSetNumber(x.s, 1, value)
+    return x
+}
+func (x OpenAck) IsSetSessionID() bool{
+    return x.s.IsSet(1)
+}
+
+// ProtocolMajor is the major version of the protocol the server will use.
+
+func (x OpenAck) ProtocolMajor() uint8 {
+    return structs.MustGetNumber[uint8](x.s, 2)
+}
+
+func (x OpenAck) SetProtocolMajor(value uint8) OpenAck {
+    structs.MustSetNumber(x.s, 2, value)
+    return x
+}
+func (x OpenAck) IsSetProtocolMajor() bool{
+    return x.s.IsSet(2)
+}
+
+// ProtocolMinor is the minor version of the protocol the server will use.
+
+func (x OpenAck) ProtocolMinor() uint8 {
+    return structs.MustGetNumber[uint8](x.s, 3)
+}
+
+func (x OpenAck) SetProtocolMinor(value uint8) OpenAck {
+    structs.MustSetNumber(x.s, 3, value)
+    return x
+}
+func (x OpenAck) IsSetProtocolMinor() bool{
+    return x.s.IsSet(3)
+}
+
+// MaxPayloadSize is the maximum payload size the server will accept.
+func (x OpenAck) MaxPayloadSize() uint32 {
+    return structs.MustGetNumber[uint32](x.s, 4)
+}
+
+func (x OpenAck) SetMaxPayloadSize(value uint32) OpenAck {
+    structs.MustSetNumber(x.s, 4, value)
+    return x
+}
+func (x OpenAck) IsSetMaxPayloadSize() bool{
+    return x.s.IsSet(4)
+}
+
+// ErrCode is a code describing an error if the open was rejected. 0 indicates success.
+func (x OpenAck) ErrCode() ErrCode {
+    return ErrCode(structs.MustGetNumber[uint8](x.s, 5))
+}
+
+func (x OpenAck) SetErrCode(value ErrCode) OpenAck {
+    structs.MustSetNumber(x.s, 5, uint8(value))
+    return x
+}
+func (x OpenAck) IsSetErrCode() bool{
+    return x.s.IsSet(5)
+}
+
+// Error is an error message if the open was rejected.
+func (x OpenAck) Error() string {
+    ptr := structs.MustGetBytes(x.s, 6)
+    if ptr == nil {
+        return ""
+    }
+    return conversions.ByteSlice2String(*ptr)
+}
+
+func (x OpenAck) SetError(value string) OpenAck {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, 6, b, true)
+    return x
+}
+func (x OpenAck) IsSetError() bool{
+    return x.s.IsSet(6)
+}
+
+// Metadata is the response metadata (headers).
+func (x OpenAck) Metadata() []Metadata {
+    l := structs.MustGetListStruct(x.s, 7)
+    if l == nil {
+        return nil
+    }
+    vals := make([]Metadata, l.Len())
+
+    for i := range vals {
+        vals[i] = Metadata{s: l.Get(i)}
+    }
+    return vals
+}
+
+func (x OpenAck) AppendMetadata(values ...Metadata) {
+    vals := make([]*structs.Struct, len(values))
+    for i, val := range values {
+        vals[i] = val.XXXGetStruct()
+    }
+    structs.MustAppendListStruct(x.s, 7, vals...)
+}
+func (x OpenAck) IsSetMetadata() bool{
+    return x.s.IsSet(7)
+}
+
+
+
+// ClawStruct returns a reflection type representing the Struct.
+func (x OpenAck) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrOpenAck
+    return reflect.XXXNewStruct(x.s, descr)
+}
+
+// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
+// this should not be used and has no compatibility guarantees.
+//
+// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
+func (x OpenAck) XXXGetStruct() *structs.Struct {
+    return x.s
+}
+
+// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
+// After calling Recycle, the OpenAck nor any sub-structs should be used again.
+func (x OpenAck) Recycle(ctx context.Context) {
+    x.s.Recycle(ctx)
+}
+ 
+
+// XXXDescr returns the Struct's descriptor. This should only be used
+// by the reflect package and is has no compatibility promises like all XXX fields.
+//
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
+func (x OpenAck) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs().Get(1)
+}
+
+// Payload is a payload message.
+type Payload struct {
+   s *structs.Struct
+}
+
+// NewPayload creates a new instance of Payload.
+func NewPayload() Payload {
+    s := structs.New(0, XXXMappingPayload)
+    s.XXXSetIsSetEnabled()
+    return Payload{
+        s: s,
+    }
+}
+
+// XXXNewPayloadFrom creates a new Payload from our internal Struct representation.
+// As with all things marked XXX*, this should not be used and has not compatibility
+// guarantees.
+//
+// Deprecated: This is not actually deprecated, but it should not be used directly nor
+// show up in any documentation.
+func XXXNewPayloadFrom(s *structs.Struct) Payload {
+    return Payload{s: s}
+}
+
+// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
+func (x Payload) Marshal() ([]byte, error) {
+    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
+    _, err := x.s.Marshal(b)
+    if err != nil {
+        return nil, err
+    }
+    return b.Bytes(), nil
+}
+
+// MarshalWriter marshals to an io.Writer.
+func (x Payload) MarshalWriter(w io.Writer) (n int, err error) {
+    return x.s.Marshal(w)
+}
+
+// Unmarshal unmarshals b into the Struct.
+func (x Payload) Unmarshal(b []byte) error {
+    buff := bytes.NewBuffer(b)
+    _, err := x.s.Unmarshal(buff)
+    return err
+}
+
+// UnmarshalReader unmarshals a Struct from an io.Reader.
+func (x Payload) UnmarshalReader (r io.Reader) (int, error) {
+    return x.s.Unmarshal(r)
+}
+
+// SessionID is the ID of the session on this connection.
+func (x Payload) SessionID() uint32 {
+    return structs.MustGetNumber[uint32](x.s, 0)
+}
+
+func (x Payload) SetSessionID(value uint32) Payload {
+    structs.MustSetNumber(x.s, 0, value)
+    return x
+}
+func (x Payload) IsSetSessionID() bool{
+    return x.s.IsSet(0)
+}
+
+// ReqID is the ID of the request. If this is not Synchronous, this is 0.
+func (x Payload) ReqID() uint32 {
+    return structs.MustGetNumber[uint32](x.s, 1)
+}
+
+func (x Payload) SetReqID(value uint32) Payload {
+    structs.MustSetNumber(x.s, 1, value)
+    return x
+}
+func (x Payload) IsSetReqID() bool{
+    return x.s.IsSet(1)
+}
+
+// Payload is the payload of a request.
+func (x Payload) Payload() []byte {
+    ptr := structs.MustGetBytes(x.s, 2)
+    if ptr == nil {
+        return nil
+    }
+    return *ptr
+}
+
+func (x Payload) SafeGetPayload() []byte {
+    ptr := structs.MustGetBytes(x.s, 2)
+    if ptr == nil {
+        return nil
+    }
+    b := make([]byte, len(*ptr))
+    copy(b, *ptr)
+    return b
+}
+
+func (x Payload) SetPayload(value []byte) Payload {
+    structs.MustSetBytes(x.s, 2, value, false)
+    return x
+}
+func (x Payload) IsSetPayload() bool{
+    return x.s.IsSet(2)
+}
+
+// EndStream indicates the sender is done sending. They may still receive.
+func (x Payload) EndStream() bool {
+    return structs.MustGetBool(x.s, 3)
+}
+
+func (x Payload) SetEndStream(value bool) Payload {
+    structs.MustSetBool(x.s, 3, value)
+    return x
+}
+func (x Payload) IsSetEndStream() bool{
+    return x.s.IsSet(3)
+}
+
+// Compression indicates the compression algorithm used on the payload.
+func (x Payload) Compression() Compression {
+    return Compression(structs.MustGetNumber[uint8](x.s, 4))
+}
+
+func (x Payload) SetCompression(value Compression) Payload {
+    structs.MustSetNumber(x.s, 4, uint8(value))
+    return x
+}
+func (x Payload) IsSetCompression() bool{
+    return x.s.IsSet(4)
+}
+
+// Metadata is per-message metadata.
+func (x Payload) Metadata() []Metadata {
+    l := structs.MustGetListStruct(x.s, 5)
+    if l == nil {
+        return nil
+    }
+    vals := make([]Metadata, l.Len())
+
+    for i := range vals {
+        vals[i] = Metadata{s: l.Get(i)}
+    }
+    return vals
+}
+
+func (x Payload) AppendMetadata(values ...Metadata) {
+    vals := make([]*structs.Struct, len(values))
+    for i, val := range values {
+        vals[i] = val.XXXGetStruct()
+    }
+    structs.MustAppendListStruct(x.s, 5, vals...)
+}
+func (x Payload) IsSetMetadata() bool{
+    return x.s.IsSet(5)
+}
+
+
+
+// ClawStruct returns a reflection type representing the Struct.
+func (x Payload) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrPayload
+    return reflect.XXXNewStruct(x.s, descr)
+}
+
+// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
+// this should not be used and has no compatibility guarantees.
+//
+// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
+func (x Payload) XXXGetStruct() *structs.Struct {
+    return x.s
+}
+
+// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
+// After calling Recycle, the Payload nor any sub-structs should be used again.
+func (x Payload) Recycle(ctx context.Context) {
+    x.s.Recycle(ctx)
+}
+ 
+
+// XXXDescr returns the Struct's descriptor. This should only be used
+// by the reflect package and is has no compatibility promises like all XXX fields.
+//
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
+func (x Payload) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs().Get(2)
 }
 
 // Open is the open message for an RPC.
@@ -636,6 +1049,8 @@ func (x Open) IsSetMetadata() bool{
     return x.s.IsSet(8)
 }
 
+
+
 // ClawStruct returns a reflection type representing the Struct.
 func (x Open) ClawStruct() reflect.Struct{
     descr := XXXStructDescrOpen
@@ -662,35 +1077,35 @@ func (x Open) Recycle(ctx context.Context) {
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Open) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(1)
+    return XXXPackageDescr.Structs().Get(3)
 }
 
-// OpenAck is the response to an Open message.
-type OpenAck struct {
+// Cancel is a message sent to cancel an RPC. Works for all RPC types.
+type Cancel struct {
    s *structs.Struct
 }
 
-// NewOpenAck creates a new instance of OpenAck.
-func NewOpenAck() OpenAck {
-    s := structs.New(0, XXXMappingOpenAck)
+// NewCancel creates a new instance of Cancel.
+func NewCancel() Cancel {
+    s := structs.New(0, XXXMappingCancel)
     s.XXXSetIsSetEnabled()
-    return OpenAck{
+    return Cancel{
         s: s,
     }
 }
 
-// XXXNewOpenAckFrom creates a new OpenAck from our internal Struct representation.
+// XXXNewCancelFrom creates a new Cancel from our internal Struct representation.
 // As with all things marked XXX*, this should not be used and has not compatibility
 // guarantees.
 //
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
-func XXXNewOpenAckFrom(s *structs.Struct) OpenAck {
-    return OpenAck{s: s}
+func XXXNewCancelFrom(s *structs.Struct) Cancel {
+    return Cancel{s: s}
 }
 
 // Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
-func (x OpenAck) Marshal() ([]byte, error) {
+func (x Cancel) Marshal() ([]byte, error) {
     b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
     _, err := x.s.Marshal(b)
     if err != nil {
@@ -700,148 +1115,53 @@ func (x OpenAck) Marshal() ([]byte, error) {
 }
 
 // MarshalWriter marshals to an io.Writer.
-func (x OpenAck) MarshalWriter(w io.Writer) (n int, err error) {
+func (x Cancel) MarshalWriter(w io.Writer) (n int, err error) {
     return x.s.Marshal(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
-func (x OpenAck) Unmarshal(b []byte) error {
+func (x Cancel) Unmarshal(b []byte) error {
     buff := bytes.NewBuffer(b)
     _, err := x.s.Unmarshal(buff)
     return err
 }
 
 // UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x OpenAck) UnmarshalReader (r io.Reader) (int, error) {
+func (x Cancel) UnmarshalReader (r io.Reader) (int, error) {
     return x.s.Unmarshal(r)
 }
 
-// OpenID is the ID of the Open message being acknowledged.
-func (x OpenAck) OpenID() uint32 {
+// SessionID is the ID of the session being cancelled.
+func (x Cancel) SessionID() uint32 {
     return structs.MustGetNumber[uint32](x.s, 0)
 }
 
-func (x OpenAck) SetOpenID(value uint32) OpenAck {
+func (x Cancel) SetSessionID(value uint32) Cancel {
     structs.MustSetNumber(x.s, 0, value)
     return x
 }
-func (x OpenAck) IsSetOpenID() bool{
+func (x Cancel) IsSetSessionID() bool{
     return x.s.IsSet(0)
 }
 
-// SessionID is the ID of the session.
-func (x OpenAck) SessionID() uint32 {
+// ReqID is the ID of the request that is being cancelled. For non-Synchronous RPCs, this is 0.
+func (x Cancel) ReqID() uint32 {
     return structs.MustGetNumber[uint32](x.s, 1)
 }
 
-func (x OpenAck) SetSessionID(value uint32) OpenAck {
+func (x Cancel) SetReqID(value uint32) Cancel {
     structs.MustSetNumber(x.s, 1, value)
     return x
 }
-func (x OpenAck) IsSetSessionID() bool{
+func (x Cancel) IsSetReqID() bool{
     return x.s.IsSet(1)
 }
 
-// ProtocolMajor is the major version of the protocol the server will use.
 
-func (x OpenAck) ProtocolMajor() uint8 {
-    return structs.MustGetNumber[uint8](x.s, 2)
-}
-
-func (x OpenAck) SetProtocolMajor(value uint8) OpenAck {
-    structs.MustSetNumber(x.s, 2, value)
-    return x
-}
-func (x OpenAck) IsSetProtocolMajor() bool{
-    return x.s.IsSet(2)
-}
-
-// ProtocolMinor is the minor version of the protocol the server will use.
-
-func (x OpenAck) ProtocolMinor() uint8 {
-    return structs.MustGetNumber[uint8](x.s, 3)
-}
-
-func (x OpenAck) SetProtocolMinor(value uint8) OpenAck {
-    structs.MustSetNumber(x.s, 3, value)
-    return x
-}
-func (x OpenAck) IsSetProtocolMinor() bool{
-    return x.s.IsSet(3)
-}
-
-// MaxPayloadSize is the maximum payload size the server will accept.
-func (x OpenAck) MaxPayloadSize() uint32 {
-    return structs.MustGetNumber[uint32](x.s, 4)
-}
-
-func (x OpenAck) SetMaxPayloadSize(value uint32) OpenAck {
-    structs.MustSetNumber(x.s, 4, value)
-    return x
-}
-func (x OpenAck) IsSetMaxPayloadSize() bool{
-    return x.s.IsSet(4)
-}
-
-// ErrCode is a code describing an error if the open was rejected. 0 indicates success.
-func (x OpenAck) ErrCode() ErrCode {
-    return ErrCode(structs.MustGetNumber[uint8](x.s, 5))
-}
-
-func (x OpenAck) SetErrCode(value ErrCode) OpenAck {
-    structs.MustSetNumber(x.s, 5, uint8(value))
-    return x
-}
-func (x OpenAck) IsSetErrCode() bool{
-    return x.s.IsSet(5)
-}
-
-// Error is an error message if the open was rejected.
-func (x OpenAck) Error() string {
-    ptr := structs.MustGetBytes(x.s, 6)
-    if ptr == nil {
-        return ""
-    }
-    return conversions.ByteSlice2String(*ptr)
-}
-
-func (x OpenAck) SetError(value string) OpenAck {
-    b := conversions.UnsafeGetBytes(value)
-    structs.MustSetBytes(x.s, 6, b, true)
-    return x
-}
-func (x OpenAck) IsSetError() bool{
-    return x.s.IsSet(6)
-}
-
-// Metadata is the response metadata (headers).
-func (x OpenAck) Metadata() []Metadata {
-    l := structs.MustGetListStruct(x.s, 7)
-    if l == nil {
-        return nil
-    }
-    vals := make([]Metadata, l.Len())
-
-    for i := range vals {
-        vals[i] = Metadata{s: l.Get(i)}
-    }
-    return vals
-}
-
-func (x OpenAck) AppendMetadata(values ...Metadata) {
-    vals := make([]*structs.Struct, len(values))
-    for i, val := range values {
-        vals[i] = val.XXXGetStruct()
-    }
-    structs.MustAppendListStruct(x.s, 7, vals...)
-}
-func (x OpenAck) IsSetMetadata() bool{
-    return x.s.IsSet(7)
-}
 
 // ClawStruct returns a reflection type representing the Struct.
-func (x OpenAck) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrOpenAck
+func (x Cancel) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrCancel
     return reflect.XXXNewStruct(x.s, descr)
 }
 
@@ -849,13 +1169,13 @@ func (x OpenAck) ClawStruct() reflect.Struct{
 // this should not be used and has no compatibility guarantees.
 //
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x OpenAck) XXXGetStruct() *structs.Struct {
+func (x Cancel) XXXGetStruct() *structs.Struct {
     return x.s
 }
 
 // Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the OpenAck nor any sub-structs should be used again.
-func (x OpenAck) Recycle(ctx context.Context) {
+// After calling Recycle, the Cancel nor any sub-structs should be used again.
+func (x Cancel) Recycle(ctx context.Context) {
     x.s.Recycle(ctx)
 }
  
@@ -864,36 +1184,36 @@ func (x OpenAck) Recycle(ctx context.Context) {
 // by the reflect package and is has no compatibility promises like all XXX fields.
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-func (x OpenAck) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(2)
+func (x Cancel) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs().Get(4)
 }
 
-// Payload is a payload message.
-type Payload struct {
+// Ping is a keepalive ping message.
+type Ping struct {
    s *structs.Struct
 }
 
-// NewPayload creates a new instance of Payload.
-func NewPayload() Payload {
-    s := structs.New(0, XXXMappingPayload)
+// NewPing creates a new instance of Ping.
+func NewPing() Ping {
+    s := structs.New(0, XXXMappingPing)
     s.XXXSetIsSetEnabled()
-    return Payload{
+    return Ping{
         s: s,
     }
 }
 
-// XXXNewPayloadFrom creates a new Payload from our internal Struct representation.
+// XXXNewPingFrom creates a new Ping from our internal Struct representation.
 // As with all things marked XXX*, this should not be used and has not compatibility
 // guarantees.
 //
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
-func XXXNewPayloadFrom(s *structs.Struct) Payload {
-    return Payload{s: s}
+func XXXNewPingFrom(s *structs.Struct) Ping {
+    return Ping{s: s}
 }
 
 // Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
-func (x Payload) Marshal() ([]byte, error) {
+func (x Ping) Marshal() ([]byte, error) {
     b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
     _, err := x.s.Marshal(b)
     if err != nil {
@@ -903,59 +1223,146 @@ func (x Payload) Marshal() ([]byte, error) {
 }
 
 // MarshalWriter marshals to an io.Writer.
-func (x Payload) MarshalWriter(w io.Writer) (n int, err error) {
+func (x Ping) MarshalWriter(w io.Writer) (n int, err error) {
     return x.s.Marshal(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
-func (x Payload) Unmarshal(b []byte) error {
+func (x Ping) Unmarshal(b []byte) error {
     buff := bytes.NewBuffer(b)
     _, err := x.s.Unmarshal(buff)
     return err
 }
 
 // UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x Payload) UnmarshalReader (r io.Reader) (int, error) {
+func (x Ping) UnmarshalReader (r io.Reader) (int, error) {
     return x.s.Unmarshal(r)
 }
 
-// SessionID is the ID of the session on this connection.
-func (x Payload) SessionID() uint32 {
+// ID is the ping identifier, echoed back in the Pong.
+func (x Ping) ID() uint32 {
     return structs.MustGetNumber[uint32](x.s, 0)
 }
 
-func (x Payload) SetSessionID(value uint32) Payload {
+func (x Ping) SetID(value uint32) Ping {
     structs.MustSetNumber(x.s, 0, value)
     return x
 }
-func (x Payload) IsSetSessionID() bool{
+func (x Ping) IsSetID() bool{
     return x.s.IsSet(0)
 }
 
-// ReqID is the ID of the request. If this is not Synchronous, this is 0.
-func (x Payload) ReqID() uint32 {
-    return structs.MustGetNumber[uint32](x.s, 1)
+
+
+// ClawStruct returns a reflection type representing the Struct.
+func (x Ping) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrPing
+    return reflect.XXXNewStruct(x.s, descr)
 }
 
-func (x Payload) SetReqID(value uint32) Payload {
-    structs.MustSetNumber(x.s, 1, value)
+// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
+// this should not be used and has no compatibility guarantees.
+//
+// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
+func (x Ping) XXXGetStruct() *structs.Struct {
+    return x.s
+}
+
+// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
+// After calling Recycle, the Ping nor any sub-structs should be used again.
+func (x Ping) Recycle(ctx context.Context) {
+    x.s.Recycle(ctx)
+}
+ 
+
+// XXXDescr returns the Struct's descriptor. This should only be used
+// by the reflect package and is has no compatibility promises like all XXX fields.
+//
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
+func (x Ping) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs().Get(5)
+}
+
+// Metadata represents a key-value pair for request/response metadata.
+type Metadata struct {
+   s *structs.Struct
+}
+
+// NewMetadata creates a new instance of Metadata.
+func NewMetadata() Metadata {
+    s := structs.New(0, XXXMappingMetadata)
+    s.XXXSetIsSetEnabled()
+    return Metadata{
+        s: s,
+    }
+}
+
+// XXXNewMetadataFrom creates a new Metadata from our internal Struct representation.
+// As with all things marked XXX*, this should not be used and has not compatibility
+// guarantees.
+//
+// Deprecated: This is not actually deprecated, but it should not be used directly nor
+// show up in any documentation.
+func XXXNewMetadataFrom(s *structs.Struct) Metadata {
+    return Metadata{s: s}
+}
+
+// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
+func (x Metadata) Marshal() ([]byte, error) {
+    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
+    _, err := x.s.Marshal(b)
+    if err != nil {
+        return nil, err
+    }
+    return b.Bytes(), nil
+}
+
+// MarshalWriter marshals to an io.Writer.
+func (x Metadata) MarshalWriter(w io.Writer) (n int, err error) {
+    return x.s.Marshal(w)
+}
+
+// Unmarshal unmarshals b into the Struct.
+func (x Metadata) Unmarshal(b []byte) error {
+    buff := bytes.NewBuffer(b)
+    _, err := x.s.Unmarshal(buff)
+    return err
+}
+
+// UnmarshalReader unmarshals a Struct from an io.Reader.
+func (x Metadata) UnmarshalReader (r io.Reader) (int, error) {
+    return x.s.Unmarshal(r)
+}
+
+// Key is the metadata key.
+func (x Metadata) Key() string {
+    ptr := structs.MustGetBytes(x.s, 0)
+    if ptr == nil {
+        return ""
+    }
+    return conversions.ByteSlice2String(*ptr)
+}
+
+func (x Metadata) SetKey(value string) Metadata {
+    b := conversions.UnsafeGetBytes(value)
+    structs.MustSetBytes(x.s, 0, b, true)
     return x
 }
-func (x Payload) IsSetReqID() bool{
-    return x.s.IsSet(1)
+func (x Metadata) IsSetKey() bool{
+    return x.s.IsSet(0)
 }
 
-// Payload is the payload of a request.
-func (x Payload) Payload() []byte {
-    ptr := structs.MustGetBytes(x.s, 2)
+// Value is the metadata value.
+func (x Metadata) Value() []byte {
+    ptr := structs.MustGetBytes(x.s, 1)
     if ptr == nil {
         return nil
     }
     return *ptr
 }
 
-func (x Payload) SafeGetPayload() []byte {
-    ptr := structs.MustGetBytes(x.s, 2)
+func (x Metadata) SafeGetValue() []byte {
+    ptr := structs.MustGetBytes(x.s, 1)
     if ptr == nil {
         return nil
     }
@@ -964,218 +1371,19 @@ func (x Payload) SafeGetPayload() []byte {
     return b
 }
 
-func (x Payload) SetPayload(value []byte) Payload {
-    structs.MustSetBytes(x.s, 2, value, false)
+func (x Metadata) SetValue(value []byte) Metadata {
+    structs.MustSetBytes(x.s, 1, value, false)
     return x
 }
-func (x Payload) IsSetPayload() bool{
-    return x.s.IsSet(2)
-}
-
-// EndStream indicates the sender is done sending. They may still receive.
-func (x Payload) EndStream() bool {
-    return structs.MustGetBool(x.s, 3)
-}
-
-func (x Payload) SetEndStream(value bool) Payload {
-    structs.MustSetBool(x.s, 3, value)
-    return x
-}
-func (x Payload) IsSetEndStream() bool{
-    return x.s.IsSet(3)
-}
-
-// Compression indicates the compression algorithm used on the payload.
-func (x Payload) Compression() Compression {
-    return Compression(structs.MustGetNumber[uint8](x.s, 4))
-}
-
-func (x Payload) SetCompression(value Compression) Payload {
-    structs.MustSetNumber(x.s, 4, uint8(value))
-    return x
-}
-func (x Payload) IsSetCompression() bool{
-    return x.s.IsSet(4)
-}
-
-// Metadata is per-message metadata.
-func (x Payload) Metadata() []Metadata {
-    l := structs.MustGetListStruct(x.s, 5)
-    if l == nil {
-        return nil
-    }
-    vals := make([]Metadata, l.Len())
-
-    for i := range vals {
-        vals[i] = Metadata{s: l.Get(i)}
-    }
-    return vals
-}
-
-func (x Payload) AppendMetadata(values ...Metadata) {
-    vals := make([]*structs.Struct, len(values))
-    for i, val := range values {
-        vals[i] = val.XXXGetStruct()
-    }
-    structs.MustAppendListStruct(x.s, 5, vals...)
-}
-func (x Payload) IsSetMetadata() bool{
-    return x.s.IsSet(5)
-}
-
-// ClawStruct returns a reflection type representing the Struct.
-func (x Payload) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrPayload
-    return reflect.XXXNewStruct(x.s, descr)
-}
-
-// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
-// this should not be used and has no compatibility guarantees.
-//
-// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Payload) XXXGetStruct() *structs.Struct {
-    return x.s
-}
-
-// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Payload nor any sub-structs should be used again.
-func (x Payload) Recycle(ctx context.Context) {
-    x.s.Recycle(ctx)
-}
- 
-
-// XXXDescr returns the Struct's descriptor. This should only be used
-// by the reflect package and is has no compatibility promises like all XXX fields.
-//
-// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-func (x Payload) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(3)
-}
-
-// Close is a message that closes the session. If ErrCode is set then the session close is due to some type
-// of error.
-type Close struct {
-   s *structs.Struct
-}
-
-// NewClose creates a new instance of Close.
-func NewClose() Close {
-    s := structs.New(0, XXXMappingClose)
-    s.XXXSetIsSetEnabled()
-    return Close{
-        s: s,
-    }
-}
-
-// XXXNewCloseFrom creates a new Close from our internal Struct representation.
-// As with all things marked XXX*, this should not be used and has not compatibility
-// guarantees.
-//
-// Deprecated: This is not actually deprecated, but it should not be used directly nor
-// show up in any documentation.
-func XXXNewCloseFrom(s *structs.Struct) Close {
-    return Close{s: s}
-}
-
-// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
-func (x Close) Marshal() ([]byte, error) {
-    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
-    _, err := x.s.Marshal(b)
-    if err != nil {
-        return nil, err
-    }
-    return b.Bytes(), nil
-}
-
-// MarshalWriter marshals to an io.Writer.
-func (x Close) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
-}
-
-// Unmarshal unmarshals b into the Struct.
-func (x Close) Unmarshal(b []byte) error {
-    buff := bytes.NewBuffer(b)
-    _, err := x.s.Unmarshal(buff)
-    return err
-}
-
-// UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x Close) UnmarshalReader (r io.Reader) (int, error) {
-    return x.s.Unmarshal(r)
-}
-
-// SessionID is the ID of the session that is closing.
-func (x Close) SessionID() uint32 {
-    return structs.MustGetNumber[uint32](x.s, 0)
-}
-
-func (x Close) SetSessionID(value uint32) Close {
-    structs.MustSetNumber(x.s, 0, value)
-    return x
-}
-func (x Close) IsSetSessionID() bool{
-    return x.s.IsSet(0)
-}
-
-// ErrCode is a code describing the error type. 0 indicates no error.
-func (x Close) ErrCode() ErrCode {
-    return ErrCode(structs.MustGetNumber[uint8](x.s, 1))
-}
-
-func (x Close) SetErrCode(value ErrCode) Close {
-    structs.MustSetNumber(x.s, 1, uint8(value))
-    return x
-}
-func (x Close) IsSetErrCode() bool{
+func (x Metadata) IsSetValue() bool{
     return x.s.IsSet(1)
 }
 
-// Error is an error message.
-func (x Close) Error() string {
-    ptr := structs.MustGetBytes(x.s, 2)
-    if ptr == nil {
-        return ""
-    }
-    return conversions.ByteSlice2String(*ptr)
-}
 
-func (x Close) SetError(value string) Close {
-    b := conversions.UnsafeGetBytes(value)
-    structs.MustSetBytes(x.s, 2, b, true)
-    return x
-}
-func (x Close) IsSetError() bool{
-    return x.s.IsSet(2)
-}
-
-// Metadata is trailing metadata sent with the close.
-func (x Close) Metadata() []Metadata {
-    l := structs.MustGetListStruct(x.s, 3)
-    if l == nil {
-        return nil
-    }
-    vals := make([]Metadata, l.Len())
-
-    for i := range vals {
-        vals[i] = Metadata{s: l.Get(i)}
-    }
-    return vals
-}
-
-func (x Close) AppendMetadata(values ...Metadata) {
-    vals := make([]*structs.Struct, len(values))
-    for i, val := range values {
-        vals[i] = val.XXXGetStruct()
-    }
-    structs.MustAppendListStruct(x.s, 3, vals...)
-}
-func (x Close) IsSetMetadata() bool{
-    return x.s.IsSet(3)
-}
 
 // ClawStruct returns a reflection type representing the Struct.
-func (x Close) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrClose
+func (x Metadata) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrMetadata
     return reflect.XXXNewStruct(x.s, descr)
 }
 
@@ -1183,13 +1391,13 @@ func (x Close) ClawStruct() reflect.Struct{
 // this should not be used and has no compatibility guarantees.
 //
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Close) XXXGetStruct() *structs.Struct {
+func (x Metadata) XXXGetStruct() *structs.Struct {
     return x.s
 }
 
 // Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Close nor any sub-structs should be used again.
-func (x Close) Recycle(ctx context.Context) {
+// After calling Recycle, the Metadata nor any sub-structs should be used again.
+func (x Metadata) Recycle(ctx context.Context) {
     x.s.Recycle(ctx)
 }
  
@@ -1198,8 +1406,8 @@ func (x Close) Recycle(ctx context.Context) {
 // by the reflect package and is has no compatibility promises like all XXX fields.
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-func (x Close) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(4)
+func (x Metadata) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs().Get(6)
 }
 
 // Pong is a keepalive pong response.
@@ -1294,7 +1502,7 @@ func (x Pong) Recycle(ctx context.Context) {
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Pong) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(5)
+    return XXXPackageDescr.Structs().Get(7)
 }
 
 // Msg represents any message that we decode on the wire.
@@ -1501,35 +1709,36 @@ func (x Msg) Recycle(ctx context.Context) {
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Msg) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(6)
+    return XXXPackageDescr.Structs().Get(8)
 }
 
-// Cancel is a message sent to cancel an RPC. Works for all RPC types.
-type Cancel struct {
+// Close is a message that closes the session. If ErrCode is set then the session close is due to some type
+// of error.
+type Close struct {
    s *structs.Struct
 }
 
-// NewCancel creates a new instance of Cancel.
-func NewCancel() Cancel {
-    s := structs.New(0, XXXMappingCancel)
+// NewClose creates a new instance of Close.
+func NewClose() Close {
+    s := structs.New(0, XXXMappingClose)
     s.XXXSetIsSetEnabled()
-    return Cancel{
+    return Close{
         s: s,
     }
 }
 
-// XXXNewCancelFrom creates a new Cancel from our internal Struct representation.
+// XXXNewCloseFrom creates a new Close from our internal Struct representation.
 // As with all things marked XXX*, this should not be used and has not compatibility
 // guarantees.
 //
 // Deprecated: This is not actually deprecated, but it should not be used directly nor
 // show up in any documentation.
-func XXXNewCancelFrom(s *structs.Struct) Cancel {
-    return Cancel{s: s}
+func XXXNewCloseFrom(s *structs.Struct) Close {
+    return Close{s: s}
 }
 
 // Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
-func (x Cancel) Marshal() ([]byte, error) {
+func (x Close) Marshal() ([]byte, error) {
     b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
     _, err := x.s.Marshal(b)
     if err != nil {
@@ -1539,168 +1748,50 @@ func (x Cancel) Marshal() ([]byte, error) {
 }
 
 // MarshalWriter marshals to an io.Writer.
-func (x Cancel) MarshalWriter(w io.Writer) (n int, err error) {
+func (x Close) MarshalWriter(w io.Writer) (n int, err error) {
     return x.s.Marshal(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
-func (x Cancel) Unmarshal(b []byte) error {
+func (x Close) Unmarshal(b []byte) error {
     buff := bytes.NewBuffer(b)
     _, err := x.s.Unmarshal(buff)
     return err
 }
 
 // UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x Cancel) UnmarshalReader (r io.Reader) (int, error) {
+func (x Close) UnmarshalReader (r io.Reader) (int, error) {
     return x.s.Unmarshal(r)
 }
 
-// SessionID is the ID of the session being cancelled.
-func (x Cancel) SessionID() uint32 {
+// SessionID is the ID of the session that is closing.
+func (x Close) SessionID() uint32 {
     return structs.MustGetNumber[uint32](x.s, 0)
 }
 
-func (x Cancel) SetSessionID(value uint32) Cancel {
+func (x Close) SetSessionID(value uint32) Close {
     structs.MustSetNumber(x.s, 0, value)
     return x
 }
-func (x Cancel) IsSetSessionID() bool{
+func (x Close) IsSetSessionID() bool{
     return x.s.IsSet(0)
 }
 
-// ReqID is the ID of the request that is being cancelled. For non-Synchronous RPCs, this is 0.
-func (x Cancel) ReqID() uint32 {
-    return structs.MustGetNumber[uint32](x.s, 1)
+// ErrCode is a code describing the error type. 0 indicates no error.
+func (x Close) ErrCode() ErrCode {
+    return ErrCode(structs.MustGetNumber[uint8](x.s, 1))
 }
 
-func (x Cancel) SetReqID(value uint32) Cancel {
-    structs.MustSetNumber(x.s, 1, value)
+func (x Close) SetErrCode(value ErrCode) Close {
+    structs.MustSetNumber(x.s, 1, uint8(value))
     return x
 }
-func (x Cancel) IsSetReqID() bool{
+func (x Close) IsSetErrCode() bool{
     return x.s.IsSet(1)
 }
 
-
-
-// ClawStruct returns a reflection type representing the Struct.
-func (x Cancel) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrCancel
-    return reflect.XXXNewStruct(x.s, descr)
-}
-
-// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
-// this should not be used and has no compatibility guarantees.
-//
-// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Cancel) XXXGetStruct() *structs.Struct {
-    return x.s
-}
-
-// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Cancel nor any sub-structs should be used again.
-func (x Cancel) Recycle(ctx context.Context) {
-    x.s.Recycle(ctx)
-}
- 
-
-// XXXDescr returns the Struct's descriptor. This should only be used
-// by the reflect package and is has no compatibility promises like all XXX fields.
-//
-// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-func (x Cancel) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(7)
-}
-
-// Descr gives the description of the RPC so that it can match up with the other side.
-type Descr struct {
-   s *structs.Struct
-}
-
-// NewDescr creates a new instance of Descr.
-func NewDescr() Descr {
-    s := structs.New(0, XXXMappingDescr)
-    s.XXXSetIsSetEnabled()
-    return Descr{
-        s: s,
-    }
-}
-
-// XXXNewDescrFrom creates a new Descr from our internal Struct representation.
-// As with all things marked XXX*, this should not be used and has not compatibility
-// guarantees.
-//
-// Deprecated: This is not actually deprecated, but it should not be used directly nor
-// show up in any documentation.
-func XXXNewDescrFrom(s *structs.Struct) Descr {
-    return Descr{s: s}
-}
-
-// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
-func (x Descr) Marshal() ([]byte, error) {
-    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
-    _, err := x.s.Marshal(b)
-    if err != nil {
-        return nil, err
-    }
-    return b.Bytes(), nil
-}
-
-// MarshalWriter marshals to an io.Writer.
-func (x Descr) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
-}
-
-// Unmarshal unmarshals b into the Struct.
-func (x Descr) Unmarshal(b []byte) error {
-    buff := bytes.NewBuffer(b)
-    _, err := x.s.Unmarshal(buff)
-    return err
-}
-
-// UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x Descr) UnmarshalReader (r io.Reader) (int, error) {
-    return x.s.Unmarshal(r)
-}
-
-// Package is the package the RPC is defined in.
-func (x Descr) Package() string {
-    ptr := structs.MustGetBytes(x.s, 0)
-    if ptr == nil {
-        return ""
-    }
-    return conversions.ByteSlice2String(*ptr)
-}
-
-func (x Descr) SetPackage(value string) Descr {
-    b := conversions.UnsafeGetBytes(value)
-    structs.MustSetBytes(x.s, 0, b, true)
-    return x
-}
-func (x Descr) IsSetPackage() bool{
-    return x.s.IsSet(0)
-}
-
-// Service is the name of the service the RPC is defined in.
-func (x Descr) Service() string {
-    ptr := structs.MustGetBytes(x.s, 1)
-    if ptr == nil {
-        return ""
-    }
-    return conversions.ByteSlice2String(*ptr)
-}
-
-func (x Descr) SetService(value string) Descr {
-    b := conversions.UnsafeGetBytes(value)
-    structs.MustSetBytes(x.s, 1, b, true)
-    return x
-}
-func (x Descr) IsSetService() bool{
-    return x.s.IsSet(1)
-}
-
-// Call is the name of the call the RPC defines.
-func (x Descr) Call() string {
+// Error is an error message.
+func (x Close) Error() string {
     ptr := structs.MustGetBytes(x.s, 2)
     if ptr == nil {
         return ""
@@ -1708,33 +1799,45 @@ func (x Descr) Call() string {
     return conversions.ByteSlice2String(*ptr)
 }
 
-func (x Descr) SetCall(value string) Descr {
+func (x Close) SetError(value string) Close {
     b := conversions.UnsafeGetBytes(value)
     structs.MustSetBytes(x.s, 2, b, true)
     return x
 }
-func (x Descr) IsSetCall() bool{
+func (x Close) IsSetError() bool{
     return x.s.IsSet(2)
 }
 
-// Type is the type of RPC being performed.
-func (x Descr) Type() RPCType {
-    return RPCType(structs.MustGetNumber[uint8](x.s, 3))
+// Metadata is trailing metadata sent with the close.
+func (x Close) Metadata() []Metadata {
+    l := structs.MustGetListStruct(x.s, 3)
+    if l == nil {
+        return nil
+    }
+    vals := make([]Metadata, l.Len())
+
+    for i := range vals {
+        vals[i] = Metadata{s: l.Get(i)}
+    }
+    return vals
 }
 
-func (x Descr) SetType(value RPCType) Descr {
-    structs.MustSetNumber(x.s, 3, uint8(value))
-    return x
+func (x Close) AppendMetadata(values ...Metadata) {
+    vals := make([]*structs.Struct, len(values))
+    for i, val := range values {
+        vals[i] = val.XXXGetStruct()
+    }
+    structs.MustAppendListStruct(x.s, 3, vals...)
 }
-func (x Descr) IsSetType() bool{
+func (x Close) IsSetMetadata() bool{
     return x.s.IsSet(3)
 }
 
 
 
 // ClawStruct returns a reflection type representing the Struct.
-func (x Descr) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrDescr
+func (x Close) ClawStruct() reflect.Struct{
+    descr := XXXStructDescrClose
     return reflect.XXXNewStruct(x.s, descr)
 }
 
@@ -1742,13 +1845,13 @@ func (x Descr) ClawStruct() reflect.Struct{
 // this should not be used and has no compatibility guarantees.
 //
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Descr) XXXGetStruct() *structs.Struct {
+func (x Close) XXXGetStruct() *structs.Struct {
     return x.s
 }
 
 // Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Descr nor any sub-structs should be used again.
-func (x Descr) Recycle(ctx context.Context) {
+// After calling Recycle, the Close nor any sub-structs should be used again.
+func (x Close) Recycle(ctx context.Context) {
     x.s.Recycle(ctx)
 }
  
@@ -1757,102 +1860,7 @@ func (x Descr) Recycle(ctx context.Context) {
 // by the reflect package and is has no compatibility promises like all XXX fields.
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-func (x Descr) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(8)
-}
-
-// Ping is a keepalive ping message.
-type Ping struct {
-   s *structs.Struct
-}
-
-// NewPing creates a new instance of Ping.
-func NewPing() Ping {
-    s := structs.New(0, XXXMappingPing)
-    s.XXXSetIsSetEnabled()
-    return Ping{
-        s: s,
-    }
-}
-
-// XXXNewPingFrom creates a new Ping from our internal Struct representation.
-// As with all things marked XXX*, this should not be used and has not compatibility
-// guarantees.
-//
-// Deprecated: This is not actually deprecated, but it should not be used directly nor
-// show up in any documentation.
-func XXXNewPingFrom(s *structs.Struct) Ping {
-    return Ping{s: s}
-}
-
-// Marshal marshal's the Struct to []byte. You should consider using MarshalWriter() instead.
-func (x Ping) Marshal() ([]byte, error) {
-    b := bytes.NewBuffer(make([]byte, 0, int(structs.XXXGetStructTotal(x.s))))
-    _, err := x.s.Marshal(b)
-    if err != nil {
-        return nil, err
-    }
-    return b.Bytes(), nil
-}
-
-// MarshalWriter marshals to an io.Writer.
-func (x Ping) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
-}
-
-// Unmarshal unmarshals b into the Struct.
-func (x Ping) Unmarshal(b []byte) error {
-    buff := bytes.NewBuffer(b)
-    _, err := x.s.Unmarshal(buff)
-    return err
-}
-
-// UnmarshalReader unmarshals a Struct from an io.Reader.
-func (x Ping) UnmarshalReader (r io.Reader) (int, error) {
-    return x.s.Unmarshal(r)
-}
-
-// ID is the ping identifier, echoed back in the Pong.
-func (x Ping) ID() uint32 {
-    return structs.MustGetNumber[uint32](x.s, 0)
-}
-
-func (x Ping) SetID(value uint32) Ping {
-    structs.MustSetNumber(x.s, 0, value)
-    return x
-}
-func (x Ping) IsSetID() bool{
-    return x.s.IsSet(0)
-}
-
-
-
-// ClawStruct returns a reflection type representing the Struct.
-func (x Ping) ClawStruct() reflect.Struct{
-    descr := XXXStructDescrPing
-    return reflect.XXXNewStruct(x.s, descr)
-}
-
-// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
-// this should not be used and has no compatibility guarantees.
-//
-// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
-func (x Ping) XXXGetStruct() *structs.Struct {
-    return x.s
-}
-
-// Recycle resets the Struct and all sub-Structs contained within and returns them to the pool for reuse.
-// After calling Recycle, the Ping nor any sub-structs should be used again.
-func (x Ping) Recycle(ctx context.Context) {
-    x.s.Recycle(ctx)
-}
- 
-
-// XXXDescr returns the Struct's descriptor. This should only be used
-// by the reflect package and is has no compatibility promises like all XXX fields.
-//
-// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
-func (x Ping) XXXDescr() reflect.StructDescr {
+func (x Close) XXXDescr() reflect.StructDescr {
     return XXXPackageDescr.Structs().Get(9)
 }
 
@@ -1984,6 +1992,196 @@ func (x GoAway) XXXDescr() reflect.StructDescr {
 
 // Everything below this line is internal details.
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXMappingMetadata = &mapping.Map{
+    Name: "Metadata",
+    Pkg: "msgs",
+    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
+    Fields: []*mapping.FieldDescr{
+        {
+            Name: "Key",
+            Type: field.FTString,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 0,
+            IsEnum: false,
+        },
+        {
+            Name: "Value",
+            Type: field.FTBytes,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 1,
+            IsEnum: false,
+        },
+    },
+}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXMappingPong = &mapping.Map{
+    Name: "Pong",
+    Pkg: "msgs",
+    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
+    Fields: []*mapping.FieldDescr{
+        {
+            Name: "ID",
+            Type: field.FTUint32,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 0,
+            IsEnum: false,
+        },
+    },
+}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXMappingMsg = &mapping.Map{
+    Name: "Msg",
+    Pkg: "msgs",
+    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
+    Fields: []*mapping.FieldDescr{
+        {
+            Name: "Type",
+            Type: field.FTUint8,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 0,
+            IsEnum: true,
+            EnumGroup: "MsgType",
+        },
+        {
+            Name: "Open",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 1,
+            IsEnum: false,
+            StructName: "Open",
+            
+            Mapping: XXXMappingOpen,
+        },
+        {
+            Name: "OpenAck",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 2,
+            IsEnum: false,
+            StructName: "OpenAck",
+            
+            Mapping: XXXMappingOpenAck,
+        },
+        {
+            Name: "Close",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 3,
+            IsEnum: false,
+            StructName: "Close",
+            
+            Mapping: XXXMappingClose,
+        },
+        {
+            Name: "Payload",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 4,
+            IsEnum: false,
+            StructName: "Payload",
+            
+            Mapping: XXXMappingPayload,
+        },
+        {
+            Name: "Cancel",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 5,
+            IsEnum: false,
+            StructName: "Cancel",
+            
+            Mapping: XXXMappingCancel,
+        },
+        {
+            Name: "Ping",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 6,
+            IsEnum: false,
+            StructName: "Ping",
+            
+            Mapping: XXXMappingPing,
+        },
+        {
+            Name: "Pong",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 7,
+            IsEnum: false,
+            StructName: "Pong",
+            
+            Mapping: XXXMappingPong,
+        },
+        {
+            Name: "GoAway",
+            Type: field.FTStruct,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 8,
+            IsEnum: false,
+            StructName: "GoAway",
+            
+            Mapping: XXXMappingGoAway,
+        },
+    },
+}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXMappingClose = &mapping.Map{
+    Name: "Close",
+    Pkg: "msgs",
+    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
+    Fields: []*mapping.FieldDescr{
+        {
+            Name: "SessionID",
+            Type: field.FTUint32,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 0,
+            IsEnum: false,
+        },
+        {
+            Name: "ErrCode",
+            Type: field.FTUint8,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 1,
+            IsEnum: true,
+            EnumGroup: "ErrCode",
+        },
+        {
+            Name: "Error",
+            Type: field.FTString,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 2,
+            IsEnum: false,
+        },
+        {
+            Name: "Metadata",
+            Type: field.FTListStructs,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 3,
+            IsEnum: false,
+        },
+    },
+}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingGoAway = &mapping.Map{
     Name: "GoAway",
     Pkg: "msgs",
@@ -2018,13 +2216,13 @@ var XXXMappingGoAway = &mapping.Map{
 }
 
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
-var XXXMappingMetadata = &mapping.Map{
-    Name: "Metadata",
+var XXXMappingDescr = &mapping.Map{
+    Name: "Descr",
     Pkg: "msgs",
     Path: "github.com/bearlytools/claw/rpc/internal/msgs",
     Fields: []*mapping.FieldDescr{
         {
-            Name: "Key",
+            Name: "Package",
             Type: field.FTString,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
@@ -2032,96 +2230,29 @@ var XXXMappingMetadata = &mapping.Map{
             IsEnum: false,
         },
         {
-            Name: "Value",
-            Type: field.FTBytes,
+            Name: "Service",
+            Type: field.FTString,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
         },
-    },
-}
-
-// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
-var XXXMappingOpen = &mapping.Map{
-    Name: "Open",
-    Pkg: "msgs",
-    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
-    Fields: []*mapping.FieldDescr{
         {
-            Name: "OpenID",
-            Type: field.FTUint32,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 0,
-            IsEnum: false,
-        },
-        {
-            Name: "Descr",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 1,
-            IsEnum: false,
-            StructName: "Descr",
-            
-            Mapping: XXXMappingDescr,
-        },
-        {
-            Name: "ProtocolMajor",
-            Type: field.FTUint8,
+            Name: "Call",
+            Type: field.FTString,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
         },
         {
-            Name: "ProtocolMinor",
+            Name: "Type",
             Type: field.FTUint8,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 3,
-            IsEnum: false,
-        },
-        {
-            Name: "DeadlineMS",
-            Type: field.FTUint64,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 4,
-            IsEnum: false,
-        },
-        {
-            Name: "MaxPayloadSize",
-            Type: field.FTUint32,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 5,
-            IsEnum: false,
-        },
-        {
-            Name: "TraceID",
-            Type: field.FTBytes,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 6,
-            IsEnum: false,
-        },
-        {
-            Name: "SpanID",
-            Type: field.FTBytes,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 7,
-            IsEnum: false,
-        },
-        {
-            Name: "Metadata",
-            Type: field.FTListStructs,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 8,
-            IsEnum: false,
+            IsEnum: true,
+            EnumGroup: "RPCType",
         },
     },
 }
@@ -2259,13 +2390,13 @@ var XXXMappingPayload = &mapping.Map{
 }
 
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
-var XXXMappingClose = &mapping.Map{
-    Name: "Close",
+var XXXMappingOpen = &mapping.Map{
+    Name: "Open",
     Pkg: "msgs",
     Path: "github.com/bearlytools/claw/rpc/internal/msgs",
     Fields: []*mapping.FieldDescr{
         {
-            Name: "SessionID",
+            Name: "OpenID",
             Type: field.FTUint32,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
@@ -2273,20 +2404,62 @@ var XXXMappingClose = &mapping.Map{
             IsEnum: false,
         },
         {
-            Name: "ErrCode",
-            Type: field.FTUint8,
+            Name: "Descr",
+            Type: field.FTStruct,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
-            IsEnum: true,
-            EnumGroup: "ErrCode",
+            IsEnum: false,
+            StructName: "Descr",
+            
+            Mapping: XXXMappingDescr,
         },
         {
-            Name: "Error",
-            Type: field.FTString,
+            Name: "ProtocolMajor",
+            Type: field.FTUint8,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
+            IsEnum: false,
+        },
+        {
+            Name: "ProtocolMinor",
+            Type: field.FTUint8,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 3,
+            IsEnum: false,
+        },
+        {
+            Name: "DeadlineMS",
+            Type: field.FTUint64,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 4,
+            IsEnum: false,
+        },
+        {
+            Name: "MaxPayloadSize",
+            Type: field.FTUint32,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 5,
+            IsEnum: false,
+        },
+        {
+            Name: "TraceID",
+            Type: field.FTBytes,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 6,
+            IsEnum: false,
+        },
+        {
+            Name: "SpanID",
+            Type: field.FTBytes,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 7,
             IsEnum: false,
         },
         {
@@ -2294,131 +2467,8 @@ var XXXMappingClose = &mapping.Map{
             Type: field.FTListStructs,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 3,
-            IsEnum: false,
-        },
-    },
-}
-
-// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
-var XXXMappingPong = &mapping.Map{
-    Name: "Pong",
-    Pkg: "msgs",
-    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
-    Fields: []*mapping.FieldDescr{
-        {
-            Name: "ID",
-            Type: field.FTUint32,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 0,
-            IsEnum: false,
-        },
-    },
-}
-
-// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
-var XXXMappingMsg = &mapping.Map{
-    Name: "Msg",
-    Pkg: "msgs",
-    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
-    Fields: []*mapping.FieldDescr{
-        {
-            Name: "Type",
-            Type: field.FTUint8,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 0,
-            IsEnum: true,
-            EnumGroup: "MsgType",
-        },
-        {
-            Name: "Open",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 1,
-            IsEnum: false,
-            StructName: "Open",
-            
-            Mapping: XXXMappingOpen,
-        },
-        {
-            Name: "OpenAck",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 2,
-            IsEnum: false,
-            StructName: "OpenAck",
-            
-            Mapping: XXXMappingOpenAck,
-        },
-        {
-            Name: "Close",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 3,
-            IsEnum: false,
-            StructName: "Close",
-            
-            Mapping: XXXMappingClose,
-        },
-        {
-            Name: "Payload",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 4,
-            IsEnum: false,
-            StructName: "Payload",
-            
-            Mapping: XXXMappingPayload,
-        },
-        {
-            Name: "Cancel",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 5,
-            IsEnum: false,
-            StructName: "Cancel",
-            
-            Mapping: XXXMappingCancel,
-        },
-        {
-            Name: "Ping",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 6,
-            IsEnum: false,
-            StructName: "Ping",
-            
-            Mapping: XXXMappingPing,
-        },
-        {
-            Name: "Pong",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 7,
-            IsEnum: false,
-            StructName: "Pong",
-            
-            Mapping: XXXMappingPong,
-        },
-        {
-            Name: "GoAway",
-            Type: field.FTStruct,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 8,
             IsEnum: false,
-            StructName: "GoAway",
-            
-            Mapping: XXXMappingGoAway,
         },
     },
 }
@@ -2449,48 +2499,6 @@ var XXXMappingCancel = &mapping.Map{
 }
 
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
-var XXXMappingDescr = &mapping.Map{
-    Name: "Descr",
-    Pkg: "msgs",
-    Path: "github.com/bearlytools/claw/rpc/internal/msgs",
-    Fields: []*mapping.FieldDescr{
-        {
-            Name: "Package",
-            Type: field.FTString,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 0,
-            IsEnum: false,
-        },
-        {
-            Name: "Service",
-            Type: field.FTString,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 1,
-            IsEnum: false,
-        },
-        {
-            Name: "Call",
-            Type: field.FTString,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 2,
-            IsEnum: false,
-        },
-        {
-            Name: "Type",
-            Type: field.FTUint8,
-            Package: "msgs",
-            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
-            FieldNum: 3,
-            IsEnum: true,
-            EnumGroup: "RPCType",
-        },
-    },
-}
-
-// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingPing = &mapping.Map{
     Name: "Ping",
     Pkg: "msgs",
@@ -2510,17 +2518,17 @@ var XXXMappingPing = &mapping.Map{
 
 // init initializes all mapping function pointer tables for O(1) dispatch.
 func init() {
-    XXXMappingDescr.Init()
-    XXXMappingPing.Init()
-    XXXMappingGoAway.Init()
-    XXXMappingMetadata.Init()
     XXXMappingOpen.Init()
-    XXXMappingOpenAck.Init()
-    XXXMappingPayload.Init()
-    XXXMappingClose.Init()
+    XXXMappingCancel.Init()
+    XXXMappingPing.Init()
+    XXXMappingMetadata.Init()
     XXXMappingPong.Init()
     XXXMappingMsg.Init()
-    XXXMappingCancel.Init()
+    XXXMappingClose.Init()
+    XXXMappingGoAway.Init()
+    XXXMappingDescr.Init()
+    XXXMappingOpenAck.Init()
+    XXXMappingPayload.Init()
 }
 
 
@@ -2667,34 +2675,6 @@ var XXXEnumGroupErrCode = reflect.XXXEnumGroupImpl{
     },
 }
 
-var XXXEnumGroupCompression = reflect.XXXEnumGroupImpl{
-    GroupName: "Compression",
-    GroupLen: 4,
-    EnumSize: 8,
-    Descrs: []reflect.EnumValueDescr{
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "CmpNone",
-            EnumNumber: 0,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "CmpGzip",
-            EnumNumber: 1,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "CmpSnappy",
-            EnumNumber: 2,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "CmpZstd",
-            EnumNumber: 3,
-            EnumSize: 8,
-        },
-    },
-}
-
 var XXXEnumGroupRPCType = reflect.XXXEnumGroupImpl{
     GroupName: "RPCType",
     GroupLen: 5,
@@ -2728,84 +2708,177 @@ var XXXEnumGroupRPCType = reflect.XXXEnumGroupImpl{
     },
 }
 
+var XXXEnumGroupCompression = reflect.XXXEnumGroupImpl{
+    GroupName: "Compression",
+    GroupLen: 4,
+    EnumSize: 8,
+    Descrs: []reflect.EnumValueDescr{
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "CmpNone",
+            EnumNumber: 0,
+            EnumSize: 8,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "CmpGzip",
+            EnumNumber: 1,
+            EnumSize: 8,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "CmpSnappy",
+            EnumNumber: 2,
+            EnumSize: 8,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "CmpZstd",
+            EnumNumber: 3,
+            EnumSize: 8,
+        },
+    },
+}
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
     List:   []reflect.EnumGroup{
-        XXXEnumGroupErrCode,
-        XXXEnumGroupCompression,
-        XXXEnumGroupRPCType,
         XXXEnumGroupMsgType,
+        XXXEnumGroupErrCode,
+        XXXEnumGroupRPCType,
+        XXXEnumGroupCompression,
     },
     Lookup: map[string]reflect.EnumGroup{
-        "RPCType": XXXEnumGroupRPCType,
+        "Compression": XXXEnumGroupCompression,
         "MsgType": XXXEnumGroupMsgType,
         "ErrCode": XXXEnumGroupErrCode,
-        "Compression": XXXEnumGroupCompression,
+        "RPCType": XXXEnumGroupRPCType,
     },
 }
  
 
 
-var XXXStructDescrMetadata = &reflect.XXXStructDescrImpl{
-    Name:      "Metadata",
-    Pkg:       XXXMappingMetadata.Pkg,
-    Path:      XXXMappingMetadata.Path,
-    Mapping:   XXXMappingMetadata,
+var XXXStructDescrMsg = &reflect.XXXStructDescrImpl{
+    Name:      "Msg",
+    Pkg:       XXXMappingMsg.Pkg,
+    Path:      XXXMappingMsg.Path,
+    Mapping:   XXXMappingMsg,
     FieldList: []reflect.FieldDescr {
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMetadata.Fields[0],  
+            FD:  XXXMappingMsg.Fields[0],
+            EG: XXXEnumGroupMsgType, 
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMetadata.Fields[1],  
+            FD:  XXXMappingMsg.Fields[1],
+            SD: XXXStructDescrOpen,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingMsg.Fields[2],
+            SD: XXXStructDescrOpenAck,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingMsg.Fields[3],
+            SD: XXXStructDescrClose,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingMsg.Fields[4],
+            SD: XXXStructDescrPayload,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingMsg.Fields[5],
+            SD: XXXStructDescrCancel,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingMsg.Fields[6],
+            SD: XXXStructDescrPing,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingMsg.Fields[7],
+            SD: XXXStructDescrPong,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingMsg.Fields[8],
+            SD: XXXStructDescrGoAway,  
         },  
     },
 }
 
-var XXXStructDescrOpen = &reflect.XXXStructDescrImpl{
-    Name:      "Open",
-    Pkg:       XXXMappingOpen.Pkg,
-    Path:      XXXMappingOpen.Path,
-    Mapping:   XXXMappingOpen,
+var XXXStructDescrClose = &reflect.XXXStructDescrImpl{
+    Name:      "Close",
+    Pkg:       XXXMappingClose.Pkg,
+    Path:      XXXMappingClose.Path,
+    Mapping:   XXXMappingClose,
     FieldList: []reflect.FieldDescr {
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[0],  
+            FD:  XXXMappingClose.Fields[0],  
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[1],
-            SD: XXXStructDescrDescr,  
+            FD:  XXXMappingClose.Fields[1],
+            EG: XXXEnumGroupErrCode, 
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[2],  
+            FD:  XXXMappingClose.Fields[2],  
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[3],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[4],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[5],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[6],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[7],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingOpen.Fields[8],
+            FD:  XXXMappingClose.Fields[3],
             SD: XXXStructDescrMetadata,  
+        },  
+    },
+}
+
+var XXXStructDescrGoAway = &reflect.XXXStructDescrImpl{
+    Name:      "GoAway",
+    Pkg:       XXXMappingGoAway.Pkg,
+    Path:      XXXMappingGoAway.Path,
+    Mapping:   XXXMappingGoAway,
+    FieldList: []reflect.FieldDescr {
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingGoAway.Fields[0],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingGoAway.Fields[1],
+            EG: XXXEnumGroupErrCode, 
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingGoAway.Fields[2],  
+        },  
+    },
+}
+
+var XXXStructDescrDescr = &reflect.XXXStructDescrImpl{
+    Name:      "Descr",
+    Pkg:       XXXMappingDescr.Pkg,
+    Path:      XXXMappingDescr.Path,
+    Mapping:   XXXMappingDescr,
+    FieldList: []reflect.FieldDescr {
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingDescr.Fields[0],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingDescr.Fields[1],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingDescr.Fields[2],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingDescr.Fields[3],
+            EG: XXXEnumGroupRPCType, 
         },  
     },
 }
@@ -2888,96 +2961,49 @@ var XXXStructDescrPayload = &reflect.XXXStructDescrImpl{
     },
 }
 
-var XXXStructDescrClose = &reflect.XXXStructDescrImpl{
-    Name:      "Close",
-    Pkg:       XXXMappingClose.Pkg,
-    Path:      XXXMappingClose.Path,
-    Mapping:   XXXMappingClose,
+var XXXStructDescrOpen = &reflect.XXXStructDescrImpl{
+    Name:      "Open",
+    Pkg:       XXXMappingOpen.Pkg,
+    Path:      XXXMappingOpen.Path,
+    Mapping:   XXXMappingOpen,
     FieldList: []reflect.FieldDescr {
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingClose.Fields[0],  
+            FD:  XXXMappingOpen.Fields[0],  
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingClose.Fields[1],
-            EG: XXXEnumGroupErrCode, 
+            FD:  XXXMappingOpen.Fields[1],
+            SD: XXXStructDescrDescr,  
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingClose.Fields[2],  
+            FD:  XXXMappingOpen.Fields[2],  
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingClose.Fields[3],
+            FD:  XXXMappingOpen.Fields[3],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingOpen.Fields[4],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingOpen.Fields[5],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingOpen.Fields[6],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingOpen.Fields[7],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingOpen.Fields[8],
             SD: XXXStructDescrMetadata,  
-        },  
-    },
-}
-
-var XXXStructDescrPong = &reflect.XXXStructDescrImpl{
-    Name:      "Pong",
-    Pkg:       XXXMappingPong.Pkg,
-    Path:      XXXMappingPong.Path,
-    Mapping:   XXXMappingPong,
-    FieldList: []reflect.FieldDescr {
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingPong.Fields[0],  
-        },  
-    },
-}
-
-var XXXStructDescrMsg = &reflect.XXXStructDescrImpl{
-    Name:      "Msg",
-    Pkg:       XXXMappingMsg.Pkg,
-    Path:      XXXMappingMsg.Path,
-    Mapping:   XXXMappingMsg,
-    FieldList: []reflect.FieldDescr {
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[0],
-            EG: XXXEnumGroupMsgType, 
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[1],
-            SD: XXXStructDescrOpen,  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[2],
-            SD: XXXStructDescrOpenAck,  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[3],
-            SD: XXXStructDescrClose,  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[4],
-            SD: XXXStructDescrPayload,  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[5],
-            SD: XXXStructDescrCancel,  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[6],
-            SD: XXXStructDescrPing,  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[7],
-            SD: XXXStructDescrPong,  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingMsg.Fields[8],
-            SD: XXXStructDescrGoAway,  
         },  
     },
 }
@@ -2999,32 +3025,6 @@ var XXXStructDescrCancel = &reflect.XXXStructDescrImpl{
     },
 }
 
-var XXXStructDescrDescr = &reflect.XXXStructDescrImpl{
-    Name:      "Descr",
-    Pkg:       XXXMappingDescr.Pkg,
-    Path:      XXXMappingDescr.Path,
-    Mapping:   XXXMappingDescr,
-    FieldList: []reflect.FieldDescr {
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingDescr.Fields[0],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingDescr.Fields[1],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingDescr.Fields[2],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingDescr.Fields[3],
-            EG: XXXEnumGroupRPCType, 
-        },  
-    },
-}
-
 var XXXStructDescrPing = &reflect.XXXStructDescrImpl{
     Name:      "Ping",
     Pkg:       XXXMappingPing.Pkg,
@@ -3038,40 +3038,48 @@ var XXXStructDescrPing = &reflect.XXXStructDescrImpl{
     },
 }
 
-var XXXStructDescrGoAway = &reflect.XXXStructDescrImpl{
-    Name:      "GoAway",
-    Pkg:       XXXMappingGoAway.Pkg,
-    Path:      XXXMappingGoAway.Path,
-    Mapping:   XXXMappingGoAway,
+var XXXStructDescrMetadata = &reflect.XXXStructDescrImpl{
+    Name:      "Metadata",
+    Pkg:       XXXMappingMetadata.Pkg,
+    Path:      XXXMappingMetadata.Path,
+    Mapping:   XXXMappingMetadata,
     FieldList: []reflect.FieldDescr {
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingGoAway.Fields[0],  
+            FD:  XXXMappingMetadata.Fields[0],  
         }, 
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingGoAway.Fields[1],
-            EG: XXXEnumGroupErrCode, 
-        }, 
+            FD:  XXXMappingMetadata.Fields[1],  
+        },  
+    },
+}
+
+var XXXStructDescrPong = &reflect.XXXStructDescrImpl{
+    Name:      "Pong",
+    Pkg:       XXXMappingPong.Pkg,
+    Path:      XXXMappingPong.Path,
+    Mapping:   XXXMappingPong,
+    FieldList: []reflect.FieldDescr {
         
         reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingGoAway.Fields[2],  
+            FD:  XXXMappingPong.Fields[0],  
         },  
     },
 }
 
 var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
-    "GoAway":  XXXStructDescrGoAway,
-    "Metadata":  XXXStructDescrMetadata,
-    "Open":  XXXStructDescrOpen,
+    "Descr":  XXXStructDescrDescr,
     "OpenAck":  XXXStructDescrOpenAck,
     "Payload":  XXXStructDescrPayload,
-    "Close":  XXXStructDescrClose,
+    "Open":  XXXStructDescrOpen,
+    "Cancel":  XXXStructDescrCancel,
+    "Ping":  XXXStructDescrPing,
+    "Metadata":  XXXStructDescrMetadata,
     "Pong":  XXXStructDescrPong,
     "Msg":  XXXStructDescrMsg,
-    "Cancel":  XXXStructDescrCancel,
-    "Descr":  XXXStructDescrDescr,
-    "Ping":  XXXStructDescrPing,
+    "Close":  XXXStructDescrClose,
+    "GoAway":  XXXStructDescrGoAway,
 }
 
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
@@ -3081,15 +3089,15 @@ var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     EnumGroupsDescrs: XXXEnumGroups,
     StructsDescrs: reflect.XXXStructDescrsImpl{
         Descrs: []reflect.StructDescr{
-            XXXStructDescrClose,
+            XXXStructDescrOpen,
+            XXXStructDescrCancel,
+            XXXStructDescrPing,
+            XXXStructDescrMetadata,
             XXXStructDescrPong,
             XXXStructDescrMsg,
-            XXXStructDescrCancel,
-            XXXStructDescrDescr,
-            XXXStructDescrPing,
+            XXXStructDescrClose,
             XXXStructDescrGoAway,
-            XXXStructDescrMetadata,
-            XXXStructDescrOpen,
+            XXXStructDescrDescr,
             XXXStructDescrOpenAck,
             XXXStructDescrPayload,
         },

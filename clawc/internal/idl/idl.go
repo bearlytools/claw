@@ -700,7 +700,7 @@ type StructField struct {
 	SelfReferential bool
 }
 
-// GoListType will return the list type: "uint8", "int8", "<Enum Name>", ... for use in
+// GoListType will return the list element type: "uint8", "int8", "<Enum Name>", ... for use in
 // templates. If called on a non-list type, this will panic.
 func (s StructField) GoListType() string {
 	if !s.IsList {
@@ -710,7 +710,12 @@ func (s StructField) GoListType() string {
 		return s.IdentName
 	}
 
-	return field.GoType(s.Type)
+	// GoType returns "[]int64" for FTListInt64, but we need just "int64"
+	goType := field.GoType(s.Type)
+	if strings.HasPrefix(goType, "[]") {
+		return goType[2:]
+	}
+	return goType
 }
 
 // IdentInFile returns the IdentName, removing a package identifier if it
@@ -997,30 +1002,43 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 		f.Type = field.FTBytes
 	case "[]bool":
 		f.Type = field.FTListBools
+		f.IsList = true
 	case "[]uint8":
 		f.Type = field.FTListUint8
+		f.IsList = true
 	case "[]uint16":
 		f.Type = field.FTListUint16
+		f.IsList = true
 	case "[]uint32":
 		f.Type = field.FTListUint32
+		f.IsList = true
 	case "[]uint64":
 		f.Type = field.FTListUint64
+		f.IsList = true
 	case "[]int8":
 		f.Type = field.FTListInt8
+		f.IsList = true
 	case "[]int16":
 		f.Type = field.FTListInt16
+		f.IsList = true
 	case "[]int32":
 		f.Type = field.FTListInt32
+		f.IsList = true
 	case "[]int64":
 		f.Type = field.FTListInt64
+		f.IsList = true
 	case "[]float32":
 		f.Type = field.FTListFloat32
+		f.IsList = true
 	case "[]float64":
 		f.Type = field.FTListFloat64
+		f.IsList = true
 	case "[]string":
 		f.Type = field.FTListStrings
+		f.IsList = true
 	case "[]bytes":
 		f.Type = field.FTListBytes
+		f.IsList = true
 	default: // Struct, []Struct, or []{{Enum}}
 		ft := l.Items[1].Val
 		isList := false
@@ -1044,6 +1062,7 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 			f.SelfReferential = true
 			if isList {
 				f.Type = field.FTListStructs
+				f.IsList = true
 			} else {
 				f.Type = field.FTStruct
 			}
@@ -1078,6 +1097,7 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 				f.IdentName = ft
 				if isList {
 					f.Type = field.FTListStructs
+					f.IsList = true
 				} else {
 					f.Type = field.FTStruct
 				}

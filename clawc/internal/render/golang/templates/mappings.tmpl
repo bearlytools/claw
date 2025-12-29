@@ -19,13 +19,13 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             {{- if $field.SelfReferential }}
             SelfReferential: true,
             {{- end }}
-            {{- if eq $field.TypeAsString "Struct" }}
+            {{- if or (eq $field.TypeAsString "Struct") (eq $field.TypeAsString "ListStructs") }}
             StructName: "{{ $field.IdentName }}",
             {{- end }}
             {{- if $field.IsEnum }}
             EnumGroup: "{{ $field.IdentName }}",
             {{- end }}
-            {{- if or (eq $field.TypeAsString "Struct") (eq $field.TypeAsString "ListStruct") }}
+            {{- if or (eq $field.TypeAsString "Struct") (eq $field.TypeAsString "ListStructs") }}
             {{ if $field.IsExternal }}
             Mapping: {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }},
             {{- else }}

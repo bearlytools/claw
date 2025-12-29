@@ -43,24 +43,50 @@ func (x Metadata) Walk() iter.Seq[clawiter.Token] {
 
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x Open) Walk() iter.Seq[clawiter.Token] {
+func (x Pong) Walk() iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Open"}) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Pong"}) {
             return
         }
-        // Field 0: OpenID
+        // Field 0: ID
         {
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "OpenID", Type: field.FTUint32}
-            tok.SetUint32(x.OpenID())
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ID", Type: field.FTUint32}
+            tok.SetUint32(x.ID())
             if !yield(tok) {
                 return
             }
         }
-        // Field 1: Descr
+
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Pong"}) {
+            return
+        }
+    }
+}
+
+// Walk returns an iterator that emits tokens for serialization.
+// This walks all fields including nested structs and lists.
+func (x Msg) Walk() iter.Seq[clawiter.Token] {
+    return func(yield func(clawiter.Token) bool) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Msg"}) {
+            return
+        }
+        // Field 0: Type
         {
-            nested := x.Descr()
+            v := x.Type()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Type", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            tok.IsEnum = true
+            tok.EnumGroup = "MsgType"
+            tok.EnumName = MsgTypeByValue[uint8(v)]
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 1: Open
+        {
+            nested := x.Open()
             isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Descr", Type: field.FTStruct, StructName: "Descr", IsNil: isNil}) {
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Open", Type: field.FTStruct, StructName: "Open", IsNil: isNil}) {
                 return
             }
             if !isNil {
@@ -71,49 +97,153 @@ func (x Open) Walk() iter.Seq[clawiter.Token] {
                 }
             }
         }
-        // Field 2: ProtocolMajor
+        // Field 2: OpenAck
         {
-            v := x.ProtocolMajor()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ProtocolMajor", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
-            if !yield(tok) {
+            nested := x.OpenAck()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "OpenAck", Type: field.FTStruct, StructName: "OpenAck", IsNil: isNil}) {
                 return
             }
-        }
-        // Field 3: ProtocolMinor
-        {
-            v := x.ProtocolMinor()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ProtocolMinor", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
-            if !yield(tok) {
-                return
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
             }
         }
-        // Field 4: DeadlineMS
+        // Field 3: Close
         {
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "DeadlineMS", Type: field.FTUint64}
-            tok.SetUint64(x.DeadlineMS())
-            if !yield(tok) {
+            nested := x.Close()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Close", Type: field.FTStruct, StructName: "Close", IsNil: isNil}) {
                 return
             }
-        }
-        // Field 5: MaxPayloadSize
-        {
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "MaxPayloadSize", Type: field.FTUint32}
-            tok.SetUint32(x.MaxPayloadSize())
-            if !yield(tok) {
-                return
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
             }
         }
-        // Field 6: TraceID
-        if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "TraceID", Type: field.FTBytes, Bytes: x.TraceID()}) {
+        // Field 4: Payload
+        {
+            nested := x.Payload()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Payload", Type: field.FTStruct, StructName: "Payload", IsNil: isNil}) {
+                return
+            }
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
+            }
+        }
+        // Field 5: Cancel
+        {
+            nested := x.Cancel()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Cancel", Type: field.FTStruct, StructName: "Cancel", IsNil: isNil}) {
+                return
+            }
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
+            }
+        }
+        // Field 6: Ping
+        {
+            nested := x.Ping()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Ping", Type: field.FTStruct, StructName: "Ping", IsNil: isNil}) {
+                return
+            }
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
+            }
+        }
+        // Field 7: Pong
+        {
+            nested := x.Pong()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Pong", Type: field.FTStruct, StructName: "Pong", IsNil: isNil}) {
+                return
+            }
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
+            }
+        }
+        // Field 8: GoAway
+        {
+            nested := x.GoAway()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "GoAway", Type: field.FTStruct, StructName: "GoAway", IsNil: isNil}) {
+                return
+            }
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
+            }
+        }
+
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Msg"}) {
             return
         }
-        // Field 7: SpanID
-        if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "SpanID", Type: field.FTBytes, Bytes: x.SpanID()}) {
+    }
+}
+
+// Walk returns an iterator that emits tokens for serialization.
+// This walks all fields including nested structs and lists.
+func (x Close) Walk() iter.Seq[clawiter.Token] {
+    return func(yield func(clawiter.Token) bool) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Close"}) {
             return
         }
-        // Field 8: Metadata
+        // Field 0: SessionID
+        {
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "SessionID", Type: field.FTUint32}
+            tok.SetUint32(x.SessionID())
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 1: ErrCode
+        {
+            v := x.ErrCode()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            tok.IsEnum = true
+            tok.EnumGroup = "ErrCode"
+            tok.EnumName = ErrCodeByValue[uint8(v)]
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 2: Error
+        {
+            s := x.Error()
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Error", Type: field.FTString, Bytes: []byte(s)}) {
+                return
+            }
+        }
+        // Field 3: Metadata
         {
             list := x.Metadata()
             if len(list) == 0 {
@@ -140,7 +270,95 @@ func (x Open) Walk() iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Open"}) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Close"}) {
+            return
+        }
+    }
+}
+
+// Walk returns an iterator that emits tokens for serialization.
+// This walks all fields including nested structs and lists.
+func (x GoAway) Walk() iter.Seq[clawiter.Token] {
+    return func(yield func(clawiter.Token) bool) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GoAway"}) {
+            return
+        }
+        // Field 0: LastSessionID
+        {
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "LastSessionID", Type: field.FTUint32}
+            tok.SetUint32(x.LastSessionID())
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 1: ErrCode
+        {
+            v := x.ErrCode()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            tok.IsEnum = true
+            tok.EnumGroup = "ErrCode"
+            tok.EnumName = ErrCodeByValue[uint8(v)]
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 2: DebugData
+        {
+            s := x.DebugData()
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "DebugData", Type: field.FTString, Bytes: []byte(s)}) {
+                return
+            }
+        }
+
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GoAway"}) {
+            return
+        }
+    }
+}
+
+// Walk returns an iterator that emits tokens for serialization.
+// This walks all fields including nested structs and lists.
+func (x Descr) Walk() iter.Seq[clawiter.Token] {
+    return func(yield func(clawiter.Token) bool) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Descr"}) {
+            return
+        }
+        // Field 0: Package
+        {
+            s := x.Package()
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Package", Type: field.FTString, Bytes: []byte(s)}) {
+                return
+            }
+        }
+        // Field 1: Service
+        {
+            s := x.Service()
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Service", Type: field.FTString, Bytes: []byte(s)}) {
+                return
+            }
+        }
+        // Field 2: Call
+        {
+            s := x.Call()
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Call", Type: field.FTString, Bytes: []byte(s)}) {
+                return
+            }
+        }
+        // Field 3: Type
+        {
+            v := x.Type()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Type", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            tok.IsEnum = true
+            tok.EnumGroup = "RPCType"
+            tok.EnumName = RPCTypeByValue[uint8(v)]
+            if !yield(tok) {
+                return
+            }
+        }
+
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Descr"}) {
             return
         }
     }
@@ -329,39 +547,77 @@ func (x Payload) Walk() iter.Seq[clawiter.Token] {
 
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x Close) Walk() iter.Seq[clawiter.Token] {
+func (x Open) Walk() iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Close"}) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Open"}) {
             return
         }
-        // Field 0: SessionID
+        // Field 0: OpenID
         {
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "SessionID", Type: field.FTUint32}
-            tok.SetUint32(x.SessionID())
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "OpenID", Type: field.FTUint32}
+            tok.SetUint32(x.OpenID())
             if !yield(tok) {
                 return
             }
         }
-        // Field 1: ErrCode
+        // Field 1: Descr
         {
-            v := x.ErrCode()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint8}
+            nested := x.Descr()
+            isNil := nested.XXXGetStruct() == nil
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Descr", Type: field.FTStruct, StructName: "Descr", IsNil: isNil}) {
+                return
+            }
+            if !isNil {
+                for tok := range nested.Walk() {
+                    if !yield(tok) {
+                        return
+                    }
+                }
+            }
+        }
+        // Field 2: ProtocolMajor
+        {
+            v := x.ProtocolMajor()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ProtocolMajor", Type: field.FTUint8}
             tok.SetUint8(uint8(v))
-            tok.IsEnum = true
-            tok.EnumGroup = "ErrCode"
-            tok.EnumName = ErrCodeByValue[uint8(v)]
             if !yield(tok) {
                 return
             }
         }
-        // Field 2: Error
+        // Field 3: ProtocolMinor
         {
-            s := x.Error()
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Error", Type: field.FTString, Bytes: []byte(s)}) {
+            v := x.ProtocolMinor()
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ProtocolMinor", Type: field.FTUint8}
+            tok.SetUint8(uint8(v))
+            if !yield(tok) {
                 return
             }
         }
-        // Field 3: Metadata
+        // Field 4: DeadlineMS
+        {
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "DeadlineMS", Type: field.FTUint64}
+            tok.SetUint64(x.DeadlineMS())
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 5: MaxPayloadSize
+        {
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "MaxPayloadSize", Type: field.FTUint32}
+            tok.SetUint32(x.MaxPayloadSize())
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 6: TraceID
+        if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "TraceID", Type: field.FTBytes, Bytes: x.TraceID()}) {
+            return
+        }
+        // Field 7: SpanID
+        if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "SpanID", Type: field.FTBytes, Bytes: x.SpanID()}) {
+            return
+        }
+        // Field 8: Metadata
         {
             list := x.Metadata()
             if len(list) == 0 {
@@ -388,175 +644,7 @@ func (x Close) Walk() iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Close"}) {
-            return
-        }
-    }
-}
-
-// Walk returns an iterator that emits tokens for serialization.
-// This walks all fields including nested structs and lists.
-func (x Pong) Walk() iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Pong"}) {
-            return
-        }
-        // Field 0: ID
-        {
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ID", Type: field.FTUint32}
-            tok.SetUint32(x.ID())
-            if !yield(tok) {
-                return
-            }
-        }
-
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Pong"}) {
-            return
-        }
-    }
-}
-
-// Walk returns an iterator that emits tokens for serialization.
-// This walks all fields including nested structs and lists.
-func (x Msg) Walk() iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Msg"}) {
-            return
-        }
-        // Field 0: Type
-        {
-            v := x.Type()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Type", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
-            tok.IsEnum = true
-            tok.EnumGroup = "MsgType"
-            tok.EnumName = MsgTypeByValue[uint8(v)]
-            if !yield(tok) {
-                return
-            }
-        }
-        // Field 1: Open
-        {
-            nested := x.Open()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Open", Type: field.FTStruct, StructName: "Open", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-        // Field 2: OpenAck
-        {
-            nested := x.OpenAck()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "OpenAck", Type: field.FTStruct, StructName: "OpenAck", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-        // Field 3: Close
-        {
-            nested := x.Close()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Close", Type: field.FTStruct, StructName: "Close", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-        // Field 4: Payload
-        {
-            nested := x.Payload()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Payload", Type: field.FTStruct, StructName: "Payload", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-        // Field 5: Cancel
-        {
-            nested := x.Cancel()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Cancel", Type: field.FTStruct, StructName: "Cancel", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-        // Field 6: Ping
-        {
-            nested := x.Ping()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Ping", Type: field.FTStruct, StructName: "Ping", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-        // Field 7: Pong
-        {
-            nested := x.Pong()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Pong", Type: field.FTStruct, StructName: "Pong", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-        // Field 8: GoAway
-        {
-            nested := x.GoAway()
-            isNil := nested.XXXGetStruct() == nil
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "GoAway", Type: field.FTStruct, StructName: "GoAway", IsNil: isNil}) {
-                return
-            }
-            if !isNil {
-                for tok := range nested.Walk() {
-                    if !yield(tok) {
-                        return
-                    }
-                }
-            }
-        }
-
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Msg"}) {
+        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Open"}) {
             return
         }
     }
@@ -594,53 +682,6 @@ func (x Cancel) Walk() iter.Seq[clawiter.Token] {
 
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x Descr) Walk() iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Descr"}) {
-            return
-        }
-        // Field 0: Package
-        {
-            s := x.Package()
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Package", Type: field.FTString, Bytes: []byte(s)}) {
-                return
-            }
-        }
-        // Field 1: Service
-        {
-            s := x.Service()
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Service", Type: field.FTString, Bytes: []byte(s)}) {
-                return
-            }
-        }
-        // Field 2: Call
-        {
-            s := x.Call()
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Call", Type: field.FTString, Bytes: []byte(s)}) {
-                return
-            }
-        }
-        // Field 3: Type
-        {
-            v := x.Type()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Type", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
-            tok.IsEnum = true
-            tok.EnumGroup = "RPCType"
-            tok.EnumName = RPCTypeByValue[uint8(v)]
-            if !yield(tok) {
-                return
-            }
-        }
-
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Descr"}) {
-            return
-        }
-    }
-}
-
-// Walk returns an iterator that emits tokens for serialization.
-// This walks all fields including nested structs and lists.
 func (x Ping) Walk() iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
         if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Ping"}) {
@@ -656,47 +697,6 @@ func (x Ping) Walk() iter.Seq[clawiter.Token] {
         }
 
         if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Ping"}) {
-            return
-        }
-    }
-}
-
-// Walk returns an iterator that emits tokens for serialization.
-// This walks all fields including nested structs and lists.
-func (x GoAway) Walk() iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GoAway"}) {
-            return
-        }
-        // Field 0: LastSessionID
-        {
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "LastSessionID", Type: field.FTUint32}
-            tok.SetUint32(x.LastSessionID())
-            if !yield(tok) {
-                return
-            }
-        }
-        // Field 1: ErrCode
-        {
-            v := x.ErrCode()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
-            tok.IsEnum = true
-            tok.EnumGroup = "ErrCode"
-            tok.EnumName = ErrCodeByValue[uint8(v)]
-            if !yield(tok) {
-                return
-            }
-        }
-        // Field 2: DebugData
-        {
-            s := x.DebugData()
-            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "DebugData", Type: field.FTString, Bytes: []byte(s)}) {
-                return
-            }
-        }
-
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GoAway"}) {
             return
         }
     }
