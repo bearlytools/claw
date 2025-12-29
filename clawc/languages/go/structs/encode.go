@@ -68,17 +68,15 @@ func (s *Struct) Marshal(w io.Writer) (n int, err error) {
 		if numBytes == 0 {
 			numBytes = 1
 		}
-		for i, b := range s.isSetBits {
-			entry := b
-			// Set continuation bit (bit 7) only for actual data bytes (not padding)
-			if i < numBytes-1 {
-				entry |= 0x80
-			}
-			n, err := w.Write([]byte{entry})
-			written += n
-			if err != nil {
-				return written, err
-			}
+		// Set continuation bits directly in the slice - these will be cleared on next marshal if needed
+		for i := 0; i < numBytes-1; i++ {
+			s.isSetBits[i] |= 0x80
+		}
+		// Write all isSet bytes at once to avoid per-byte allocations
+		n, err := w.Write(s.isSetBits)
+		written += n
+		if err != nil {
+			return written, err
 		}
 	}
 	if written != int(total) {
