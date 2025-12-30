@@ -32,6 +32,9 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte) {
 	if len(value) == 0 {
 		// Sparse encoding: remove empty values
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -53,12 +56,22 @@ func SetBytes(s *Struct, fieldNum uint16, value []byte) {
 
 	s.insertField(fieldNum, data)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		// Record the actual value bytes (not the padded data)
+		valueCopy := make([]byte, len(value))
+		copy(valueCopy, value)
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: valueCopy})
+	}
 }
 
 // SetStringAsBytes sets a string field using the FTString type instead of FTBytes.
 func SetStringAsBytes(s *Struct, fieldNum uint16, value string) {
 	if len(value) == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -72,6 +85,10 @@ func SetStringAsBytes(s *Struct, fieldNum uint16, value string) {
 
 	s.insertField(fieldNum, data)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: []byte(value)})
+	}
 }
 
 // GetString gets a string field value.
@@ -119,6 +136,9 @@ func GetBytesCopy(s *Struct, fieldNum uint16) []byte {
 func SetNestedStruct(parent *Struct, fieldNum uint16, child *Struct) {
 	if child == nil {
 		parent.removeField(fieldNum)
+		if parent.recording {
+			parent.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -130,6 +150,9 @@ func SetNestedStruct(parent *Struct, fieldNum uint16, child *Struct) {
 	if child.seg.Len() <= HeaderSize {
 		// Empty struct: remove the field
 		parent.removeField(fieldNum)
+		if parent.recording {
+			parent.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -147,6 +170,13 @@ func SetNestedStruct(parent *Struct, fieldNum uint16, child *Struct) {
 
 	parent.insertField(fieldNum, data)
 	parent.markFieldSet(fieldNum)
+
+	if parent.recording {
+		// Record the entire nested struct's wire format
+		structData := make([]byte, child.seg.Len())
+		copy(structData, child.seg.data)
+		parent.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: structData})
+	}
 }
 
 // GetNestedStruct gets a nested struct field.

@@ -39,6 +39,11 @@ type Struct struct {
 	isSetEnabled bool
 	// isSetBits holds the IsSet bitfield bytes.
 	isSetBits []byte
+
+	// recording indicates whether mutation recording is enabled for patch generation.
+	recording bool
+	// recordedOps stores the recorded operations when recording is enabled.
+	recordedOps []RecordedOp
 }
 
 // dirtyList tracks a list that needs to be synced to the segment before Marshal.
@@ -51,6 +56,32 @@ type dirtyList struct {
 type ListSyncer interface {
 	SyncToSegment() error
 }
+
+// RecordedOp stores a single recorded operation for patch generation.
+// This is stored as raw data to avoid import cycles with the patch/msgs package.
+type RecordedOp struct {
+	FieldNum uint16
+	OpType   uint8 // Matches msgs.OpType values
+	Index    int32 // List index, -1 for non-list ops
+	Data     []byte
+}
+
+// OpType constants matching msgs.OpType values.
+// Defined here to avoid import cycle with patch/msgs package.
+const (
+	OpUnknown         uint8 = 0
+	OpSet             uint8 = 1
+	OpClear           uint8 = 2
+	OpStructPatch     uint8 = 3
+	OpListReplace     uint8 = 4
+	OpListSet         uint8 = 5
+	OpListInsert      uint8 = 6
+	OpListRemove      uint8 = 7
+	OpListStructPatch uint8 = 8
+)
+
+// NoListIndex is the sentinel value for non-list operations.
+const NoListIndex int32 = -1
 
 // New creates a new Struct with the given mapping.
 // The struct is initialized with an 8-byte header.
@@ -248,6 +279,8 @@ func (s *Struct) propagateSizeToParent() {
 // RegisterDirtyList registers a list that needs to be synced before Marshal.
 func (s *Struct) RegisterDirtyList(fieldNum uint16, list ListSyncer) {
 	s.dirtyLists = append(s.dirtyLists, dirtyList{fieldNum: fieldNum, list: list})
+	// Also add to lists map so GetList can find it
+	s.SetList(fieldNum, list)
 }
 
 // GetList returns a lazily-created list for a field, or nil if not yet created.
@@ -266,6 +299,15 @@ func (s *Struct) SetList(fieldNum uint16, list any) {
 	s.lists[fieldNum] = list
 }
 
+// ClearListCache removes a cached list for a field.
+// This is used when creating uncached lists to ensure subsequent
+// accesses read from segment data instead of returning stale cache.
+func (s *Struct) ClearListCache(fieldNum uint16) {
+	if s.lists != nil {
+		delete(s.lists, fieldNum)
+	}
+}
+
 // syncDirtyLists syncs all dirty lists to the segment.
 func (s *Struct) syncDirtyLists() error {
 	for _, dl := range s.dirtyLists {
@@ -275,6 +317,35 @@ func (s *Struct) syncDirtyLists() error {
 	}
 	s.dirtyLists = s.dirtyLists[:0] // Clear the list
 	return nil
+}
+
+// SyncDirtyListsForField syncs any dirty lists for a specific field number
+// and removes them from the dirty lists.
+// This is used before reading field data to ensure segment is up to date.
+func (s *Struct) SyncDirtyListsForField(fieldNum uint16) {
+	// Sync and remove entries for this field
+	newDirtyLists := s.dirtyLists[:0]
+	for _, dl := range s.dirtyLists {
+		if dl.fieldNum == fieldNum {
+			dl.list.SyncToSegment()
+			// Don't add back to newDirtyLists (removed)
+		} else {
+			newDirtyLists = append(newDirtyLists, dl)
+		}
+	}
+	s.dirtyLists = newDirtyLists
+}
+
+// removeDirtyListsForField removes any dirty list entries for a specific field
+// without syncing. This is used when clearing a field.
+func (s *Struct) removeDirtyListsForField(fieldNum uint16) {
+	newDirtyLists := s.dirtyLists[:0]
+	for _, dl := range s.dirtyLists {
+		if dl.fieldNum != fieldNum {
+			newDirtyLists = append(newDirtyLists, dl)
+		}
+	}
+	s.dirtyLists = newDirtyLists
 }
 
 // appendIsSetBitfield appends the IsSet bitfield to the segment.
@@ -438,6 +509,11 @@ func (s *Struct) FieldOffset(fieldNum uint16) (offset, size int) {
 	return int(entry.offset), int(entry.size)
 }
 
+// SegmentData returns the raw segment data bytes.
+func (s *Struct) SegmentData() []byte {
+	return s.seg.data
+}
+
 // Reset implements the Resetter interface for sync.Pool.
 // Called automatically by the pool on Put(). Clears all state for reuse.
 func (s *Struct) Reset() {
@@ -455,6 +531,8 @@ func (s *Struct) Reset() {
 	s.lists = nil
 	s.isSetEnabled = false
 	s.isSetBits = nil
+	s.recording = false
+	s.recordedOps = s.recordedOps[:0]
 }
 
 // Init initializes the struct with a mapping after getting from pool.
@@ -470,4 +548,42 @@ func (s *Struct) Init(m *mapping.Map) {
 
 	// Initialize struct header (field 0, type Struct, size 8)
 	EncodeHeader(s.seg.data[0:8], 0, field.FTStruct, 8)
+}
+
+// SetRecording enables or disables mutation recording for patch generation.
+// When enabled, all Set* operations and list mutations are recorded.
+func (s *Struct) SetRecording(enabled bool) {
+	s.recording = enabled
+	if enabled && s.recordedOps == nil {
+		s.recordedOps = make([]RecordedOp, 0, 8)
+	}
+}
+
+// Recording returns whether mutation recording is enabled.
+func (s *Struct) Recording() bool {
+	return s.recording
+}
+
+// RecordOp records a single operation. Called by Set* functions when recording is enabled.
+func (s *Struct) RecordOp(op RecordedOp) {
+	if s.recording {
+		s.recordedOps = append(s.recordedOps, op)
+	}
+}
+
+// DrainRecordedOps returns all recorded operations and clears the internal list.
+// The returned slice is safe to modify.
+func (s *Struct) DrainRecordedOps() []RecordedOp {
+	if len(s.recordedOps) == 0 {
+		return nil
+	}
+	ops := make([]RecordedOp, len(s.recordedOps))
+	copy(ops, s.recordedOps)
+	s.recordedOps = s.recordedOps[:0]
+	return ops
+}
+
+// RecordedOpsLen returns the number of recorded operations.
+func (s *Struct) RecordedOpsLen() int {
+	return len(s.recordedOps)
 }
