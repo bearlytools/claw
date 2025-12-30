@@ -302,6 +302,93 @@ func TestTokenAccessors(t *testing.T) {
 			getValue: func(tok clawiter.Token) any { return tok.String() },
 			want:     "",
 		},
+		// Map key accessors
+		{
+			name:     "Success: key bool true",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyBool(true) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyBool() },
+			want:     true,
+		},
+		{
+			name:     "Success: key bool false",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyBool(false) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyBool() },
+			want:     false,
+		},
+		{
+			name:     "Success: key int8",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyInt8(-42) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyInt8() },
+			want:     int8(-42),
+		},
+		{
+			name:     "Success: key int16",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyInt16(-1000) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyInt16() },
+			want:     int16(-1000),
+		},
+		{
+			name:     "Success: key int32",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyInt32(-100000) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyInt32() },
+			want:     int32(-100000),
+		},
+		{
+			name:     "Success: key int64",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyInt64(-9223372036854775808) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyInt64() },
+			want:     int64(-9223372036854775808),
+		},
+		{
+			name:     "Success: key uint8",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyUint8(255) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyUint8() },
+			want:     uint8(255),
+		},
+		{
+			name:     "Success: key uint16",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyUint16(65535) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyUint16() },
+			want:     uint16(65535),
+		},
+		{
+			name:     "Success: key uint32",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyUint32(4294967295) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyUint32() },
+			want:     uint32(4294967295),
+		},
+		{
+			name:     "Success: key uint64",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyUint64(18446744073709551615) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyUint64() },
+			want:     uint64(18446744073709551615),
+		},
+		{
+			name:     "Success: key float32",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyFloat32(3.14) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyFloat32() },
+			want:     float32(3.14),
+		},
+		{
+			name:     "Success: key float64",
+			setToken: func(tok *clawiter.Token) { tok.SetKeyFloat64(3.14159265358979) },
+			getValue: func(tok clawiter.Token) any { return tok.KeyFloat64() },
+			want:     3.14159265358979,
+		},
+		{
+			name: "Success: key string",
+			setToken: func(tok *clawiter.Token) {
+				tok.KeyBytes = []byte("hello key")
+			},
+			getValue: func(tok clawiter.Token) any { return tok.KeyString() },
+			want:     "hello key",
+		},
+		{
+			name:     "Success: empty key string",
+			setToken: func(tok *clawiter.Token) {},
+			getValue: func(tok clawiter.Token) any { return tok.KeyString() },
+			want:     "",
+		},
 	}
 
 	for _, test := range tests {

@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/bearlytools/claw/clawc/internal/pragma"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/clawc/languages/go/segment"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/pragma"
 )
 
 type doNotImplement pragma.DoNotImplement
@@ -38,6 +38,7 @@ type Value struct {
 	// Complex types
 	list    interfaces.List
 	aStruct interfaces.Struct
+	aMap    interfaces.Map
 }
 
 // Bool returns the boolean value stored in Value. If Value is not a bool type, this will panic.
@@ -243,6 +244,14 @@ func (v Value) List() interfaces.List {
 		panic("type is not a list type")
 	}
 	return v.list
+}
+
+// Map returns the Map value stored in Value. If Value is not a map type, this will panic.
+func (v Value) Map() interfaces.Map {
+	if v.aMap == nil {
+		panic("type is not a map type")
+	}
+	return v.aMap
 }
 
 // Struct returns the Struct value stored in Value. If Value is not a Struct type, this will panic.

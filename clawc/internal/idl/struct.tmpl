@@ -552,6 +552,103 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
+{{ else if eq $field.TypeAsString "Map" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
+{{- if $field.ValueIdentName }}
+// {{ $field.Name }}Map returns the underlying map for iteration and modification.
+// The map values are *segment.Struct - use XXXNew{{ $field.ValueIdentName }}From() to wrap them.
+func (x {{ $struct.Name }}) {{ $field.Name }}Map() *segment.Maps[{{ $field.MapKeyGoType }}, *segment.Struct] {
+    // Check if we already have this map cached
+    if m := segment.GetMapStruct[{{ $field.MapKeyGoType }}](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, {{ if $field.ValueIsExternal }}{{ $field.ValuePackage }}.XXXMapping{{ $field.ValueIdentName }}{{ else }}XXXMapping{{ $field.ValueIdentName }}{{ end }}); m != nil {
+        return m
+    }
+    // Create new empty map if no data exists
+    return segment.NewMaps[{{ $field.MapKeyGoType }}, *segment.Struct](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, field.{{ $field.ValueTypeConst }}, {{ if $field.ValueIsExternal }}{{ $field.ValuePackage }}.XXXMapping{{ $field.ValueIdentName }}{{ else }}XXXMapping{{ $field.ValueIdentName }}{{ end }})
+}
+
+// {{ $field.Name }}Get returns the value for the given key, or nil if not found.
+func (x {{ $struct.Name }}) {{ $field.Name }}Get(key {{ $field.MapKeyGoType }}) ({{ $field.ValueIdentName }}, bool) {
+    s, ok := x.{{ $field.Name }}Map().Get(key)
+    if !ok || s == nil {
+        return {{ $field.ValueIdentName }}{}, false
+    }
+    return {{ if $field.ValueIsExternal }}{{ $field.ValuePackage }}.XXXNew{{ $field.ValueIdentName }}From{{ else }}XXXNew{{ $field.ValueIdentName }}From{{ end }}(s), true
+}
+
+// {{ $field.Name }}Set sets a key-value pair in the map.
+func (x {{ $struct.Name }}) {{ $field.Name }}Set(key {{ $field.MapKeyGoType }}, value {{ $field.ValueIdentName }}) {{ $struct.Name }} {
+    x.{{ $field.Name }}Map().Set(key, value.XXXGetStruct())
+    return x
+}
+{{- else if $field.NestedMapInfo }}
+// {{ $field.Name }}Map returns the underlying map for iteration and modification.
+// Note: Nested maps are represented as Go maps for simplicity.
+func (x {{ $struct.Name }}) {{ $field.Name }}Map() *segment.Maps[{{ $field.MapKeyGoType }}, {{ $field.MapValueGoType }}] {
+    // Check if we already have this map cached
+    if m := segment.GetMapScalar[{{ $field.MapKeyGoType }}, {{ $field.MapValueGoType }}](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, field.{{ $field.ValueTypeConst }}); m != nil {
+        return m
+    }
+    // Create new empty map if no data exists
+    return segment.NewMaps[{{ $field.MapKeyGoType }}, {{ $field.MapValueGoType }}](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, field.{{ $field.ValueTypeConst }}, nil)
+}
+
+// {{ $field.Name }}Get returns the value for the given key, or false if not found.
+func (x {{ $struct.Name }}) {{ $field.Name }}Get(key {{ $field.MapKeyGoType }}) ({{ $field.MapValueGoType }}, bool) {
+    return x.{{ $field.Name }}Map().Get(key)
+}
+
+// {{ $field.Name }}Set sets a key-value pair in the map.
+func (x {{ $struct.Name }}) {{ $field.Name }}Set(key {{ $field.MapKeyGoType }}, value {{ $field.MapValueGoType }}) {{ $struct.Name }} {
+    x.{{ $field.Name }}Map().Set(key, value)
+    return x
+}
+{{- else }}
+// {{ $field.Name }}Map returns the underlying map for iteration and modification.
+func (x {{ $struct.Name }}) {{ $field.Name }}Map() *segment.Maps[{{ $field.MapKeyGoType }}, {{ $field.MapValueGoType }}] {
+    // Check if we already have this map cached
+    if m := segment.GetMapScalar[{{ $field.MapKeyGoType }}, {{ $field.MapValueGoType }}](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, field.{{ $field.ValueTypeConst }}); m != nil {
+        return m
+    }
+    // Create new empty map if no data exists
+    return segment.NewMaps[{{ $field.MapKeyGoType }}, {{ $field.MapValueGoType }}](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, field.{{ $field.ValueTypeConst }}, nil)
+}
+
+// {{ $field.Name }}Get returns the value for the given key, or false if not found.
+func (x {{ $struct.Name }}) {{ $field.Name }}Get(key {{ $field.MapKeyGoType }}) ({{ $field.MapValueGoType }}, bool) {
+    return x.{{ $field.Name }}Map().Get(key)
+}
+
+// {{ $field.Name }}Set sets a key-value pair in the map.
+func (x {{ $struct.Name }}) {{ $field.Name }}Set(key {{ $field.MapKeyGoType }}, value {{ $field.MapValueGoType }}) {{ $struct.Name }} {
+    x.{{ $field.Name }}Map().Set(key, value)
+    return x
+}
+{{- end }}
+
+// {{ $field.Name }}Delete removes a key from the map.
+func (x {{ $struct.Name }}) {{ $field.Name }}Delete(key {{ $field.MapKeyGoType }}) {{ $struct.Name }} {
+    x.{{ $field.Name }}Map().Delete(key)
+    return x
+}
+
+// {{ $field.Name }}Has returns true if the key exists in the map.
+func (x {{ $struct.Name }}) {{ $field.Name }}Has(key {{ $field.MapKeyGoType }}) bool {
+    return x.{{ $field.Name }}Map().Has(key)
+}
+
+// {{ $field.Name }}Len returns the number of entries in the map.
+func (x {{ $struct.Name }}) {{ $field.Name }}Len() int {
+    return x.{{ $field.Name }}Map().Len()
+}
+
+{{- if $isSetEnabled }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.HasField({{ $field.Index }})
+}
+{{- end }}
+
 {{ end }}{{/* End if eq $field.Type */}}
 {{- end }}{{/* End range $index, $field := .Fields */}}
 
@@ -660,6 +757,25 @@ func New{{ $struct.Name }}FromRaw(ctx context.Context, raw {{ $struct.Name }}Raw
         }
         list.SetAll(items)
     }
+{{- else if eq $field.TypeAsString "Map" }}
+    if raw.{{ $field.Name }} != nil {
+        m := x.{{ $field.Name }}Map()
+        for k, v := range raw.{{ $field.Name }} {
+            {{- if $field.ValueIdentName }}
+            {{- if $field.ValueIsExternal }}
+            if v != nil {
+                m.Set(k, {{ $field.ValuePackage }}.New{{ $field.ValueIdentName }}FromRaw(ctx, *v).XXXGetStruct())
+            }
+            {{- else }}
+            if v != nil {
+                m.Set(k, New{{ $field.ValueIdentName }}FromRaw(ctx, *v).XXXGetStruct())
+            }
+            {{- end }}
+            {{- else }}
+            m.Set(k, v)
+            {{- end }}
+        }
+    }
 {{- end }}
 {{- end }}
     return x
@@ -728,6 +844,25 @@ func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
             {{- end }}
             itemRaw := item.ToRaw()
             raw.{{ $field.Name }}[i] = &itemRaw
+        }
+    }
+{{- else if eq $field.TypeAsString "Map" }}
+    // For maps, check if there's a cached dirty map or field data
+    // Don't use HasField alone as the map may not have been synced yet
+    if m := x.{{ $field.Name }}Map(); m.Len() > 0 {
+        raw.{{ $field.Name }} = make({{ $field.RawGoType }})
+        for k, v := range m.All() {
+            {{- if $field.ValueIdentName }}
+            {{- if $field.ValueIsExternal }}
+            item := {{ $field.ValuePackage }}.XXXNew{{ $field.ValueIdentName }}From(v)
+            {{- else }}
+            item := {{ $field.ValueIdentName }}{s: v}
+            {{- end }}
+            itemRaw := item.ToRaw()
+            raw.{{ $field.Name }}[k] = &itemRaw
+            {{- else }}
+            raw.{{ $field.Name }}[k] = v
+            {{- end }}
         }
     }
 {{- end }}

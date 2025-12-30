@@ -2,7 +2,7 @@ package value
 
 import (
 	"github.com/bearlytools/claw/clawc/languages/go/field"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 )
 
 // ValueOfBool returns a Value that represents bool.
@@ -102,5 +102,13 @@ func ValueOfStruct(v interfaces.Struct) Value {
 	return Value{
 		ft:      field.FTStruct,
 		aStruct: v,
+	}
+}
+
+// ValueOfMap returns a Value that represents a Map.
+func ValueOfMap(v interfaces.Map) Value {
+	return Value{
+		ft:   field.FTMap,
+		aMap: v,
 	}
 }

@@ -39,7 +39,8 @@ const (
 	FTListBytes   Type = 52 // []bytes
 	FTListStrings Type = 53 // []string
 	FTListStructs Type = 54 // []structs
-	// Reserve 55 to 79
+	// Reserve 55 to 79 for maps and future types
+	FTMap Type = 55 // map
 )
 
 // IsList determines if a Type represents a list of entries.
@@ -55,6 +56,37 @@ func IsList(ft Type) bool {
 // This is O(1) compared to slices.Contains(ListTypes, t).
 func IsListType(ft Type) bool {
 	return ft >= FTListBools && ft <= FTListStructs
+}
+
+// IsMapType returns true if the Type represents a map type.
+func IsMapType(ft Type) bool {
+	return ft == FTMap
+}
+
+// IsValidMapKeyType returns true if the Type can be used as a map key.
+// Valid key types are: bool, all integer types, all float types, and string.
+func IsValidMapKeyType(ft Type) bool {
+	switch ft {
+	case FTBool, FTString,
+		FTInt8, FTInt16, FTInt32, FTInt64,
+		FTUint8, FTUint16, FTUint32, FTUint64,
+		FTFloat32, FTFloat64:
+		return true
+	}
+	return false
+}
+
+// IsValidMapValueType returns true if the Type can be used as a map value.
+// Valid value types are: all scalar types, string, bytes, struct, and map (for nesting).
+func IsValidMapValueType(ft Type) bool {
+	switch ft {
+	case FTBool, FTString, FTBytes, FTStruct, FTMap,
+		FTInt8, FTInt16, FTInt32, FTInt64,
+		FTUint8, FTUint16, FTUint32, FTUint64,
+		FTFloat32, FTFloat64:
+		return true
+	}
+	return false
 }
 
 // NumberTypes is a list of field types that represent a number.
@@ -146,6 +178,7 @@ var constNames = map[Type]string{
 	FTListBytes:   "ListBytes",
 	FTListStrings: "ListStrings",
 	FTListStructs: "ListStructs",
+	FTMap:         "Map",
 }
 
 // GoType will return the Go string representation of a type.

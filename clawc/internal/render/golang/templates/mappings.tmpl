@@ -32,6 +32,18 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             Mapping: XXXMapping{{ $field.IdentName }},
             {{- end }}
             {{- end }}
+            {{- if $field.IsMap }}
+            IsMap: true,
+            KeyType: field.{{ $field.KeyTypeConst }},
+            ValueType: field.{{ $field.ValueTypeConst }},
+            {{- if $field.ValueIdentName }}
+            {{- if $field.ValueIsExternal }}
+            ValueMapping: {{ $field.ValuePackage }}.XXXMapping{{ $field.ValueIdentName }},
+            {{- else }}
+            ValueMapping: XXXMapping{{ $field.ValueIdentName }},
+            {{- end }}
+            {{- end }}
+            {{- end }}
         },
         {{- end }}
     },

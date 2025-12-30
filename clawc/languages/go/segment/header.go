@@ -109,3 +109,53 @@ func MakeHeader(fieldNum uint16, fieldType field.Type, final40 uint64) []byte {
 func EncodeScalarInHeader(buf []byte, fieldNum uint16, fieldType field.Type, value uint64) {
 	EncodeHeader(buf, fieldNum, fieldType, value)
 }
+
+// Map header encoding:
+// The 40-bit final40 field is split as follows:
+//   Bits 0-7:   Key type (uint8)
+//   Bits 8-15:  Value type (uint8)
+//   Bits 16-39: Total size in bytes (24 bits = 16MB max)
+
+const (
+	mapKeyTypeShift   = 0
+	mapValueTypeShift = 8
+	mapSizeShift      = 16
+	mapKeyTypeMask    = 0xFF
+	mapValueTypeMask  = 0xFF
+	mapSizeMask       = 0xFFFFFF // 24 bits
+	MaxMapSize        = 1<<24 - 1
+)
+
+// EncodeMapHeader writes a map header to the given buffer.
+// The buffer must be at least 8 bytes.
+func EncodeMapHeader(buf []byte, fieldNum uint16, keyType, valueType field.Type, totalSize uint32) {
+	if totalSize > MaxMapSize {
+		panic("segment: map size exceeds 24 bits")
+	}
+
+	// Pack key type, value type, and size into final40
+	final40 := uint64(keyType) << mapKeyTypeShift
+	final40 |= uint64(valueType) << mapValueTypeShift
+	final40 |= uint64(totalSize) << mapSizeShift
+
+	EncodeHeader(buf, fieldNum, field.FTMap, final40)
+}
+
+// DecodeMapHeader reads map-specific fields from a header buffer.
+// Returns the key type, value type, and total size.
+func DecodeMapHeader(buf []byte) (keyType, valueType field.Type, totalSize uint32) {
+	_, _, final40 := DecodeHeader(buf)
+
+	keyType = field.Type((final40 >> mapKeyTypeShift) & mapKeyTypeMask)
+	valueType = field.Type((final40 >> mapValueTypeShift) & mapValueTypeMask)
+	totalSize = uint32((final40 >> mapSizeShift) & mapSizeMask)
+
+	return
+}
+
+// MakeMapHeader creates an 8-byte map header as a new slice.
+func MakeMapHeader(fieldNum uint16, keyType, valueType field.Type, totalSize uint32) []byte {
+	buf := make([]byte, HeaderSize)
+	EncodeMapHeader(buf, fieldNum, keyType, valueType, totalSize)
+	return buf
+}

@@ -20,6 +20,63 @@ var _ = field.FTBool
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
+func (x *Op) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ctx, ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Op) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Op")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "FieldNum":
+            x.SetFieldNum(tok.Uint16())
+        case "Type":
+            if len(tok.Bytes) > 0 {
+                x.SetType(OpTypeByName[tok.String()])
+            } else {
+                x.SetType(OpType(tok.Uint8()))
+            }
+        case "Index":
+            x.SetIndex(tok.Int32())
+        case "Data":
+            x.SetData(tok.Bytes)
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
 func (x *Patch) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
@@ -76,63 +133,6 @@ func (x *Patch) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
                 }
                 x.OpsAppend(item)
             }
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
-                continue
-            }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
-func (x *Op) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Op) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in Op")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "FieldNum":
-            x.SetFieldNum(tok.Uint16())
-        case "Type":
-            if len(tok.Bytes) > 0 {
-                x.SetType(OpTypeByName[tok.String()])
-            } else {
-                x.SetType(OpType(tok.Uint8()))
-            }
-        case "Index":
-            x.SetIndex(tok.Int32())
-        case "Data":
-            x.SetData(tok.Bytes)
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {

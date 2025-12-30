@@ -11,8 +11,8 @@ import (
     "fmt"
 
     "github.com/bearlytools/claw/clawc/languages/go/mapping"
-    "github.com/bearlytools/claw/clawc/languages/go/reflect"
-    "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
+    "github.com/bearlytools/claw/languages/go/reflect"
+    "github.com/bearlytools/claw/languages/go/reflect/runtime"
     "github.com/bearlytools/claw/clawc/languages/go/segment"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
@@ -357,11 +357,12 @@ func (x Patch) SetVersion(value uint8) Patch {
 // OpsList returns the underlying Structs list for iteration.
 // Use NewOp() to create items and Append to add them.
 func (x Patch) OpsList() *segment.Structs {
-    if l := x.s.GetList(1); l != nil {
-        return l.(*segment.Structs)
+    // Try to get cached or parse from segment
+    if structs := segment.GetListStructs(x.s, 1, XXXMappingOp); structs != nil {
+        return structs
     }
+    // Create new empty list if no data exists
     structs := segment.NewStructs(x.s, 1, XXXMappingOp)
-    x.s.SetList(1, structs)
     return structs
 }
 
@@ -645,24 +646,6 @@ var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
  
 
 
-var XXXStructDescrPatch = &reflect.XXXStructDescrImpl{
-    Name:      "Patch",
-    Pkg:       XXXMappingPatch.Pkg,
-    Path:      XXXMappingPatch.Path,
-    Mapping:   XXXMappingPatch,
-    FieldList: []reflect.FieldDescr {
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingPatch.Fields[0],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingPatch.Fields[1],
-            SD: XXXStructDescrOp,  
-        },  
-    },
-}
-
 var XXXStructDescrOp = &reflect.XXXStructDescrImpl{
     Name:      "Op",
     Pkg:       XXXMappingOp.Pkg,
@@ -685,6 +668,24 @@ var XXXStructDescrOp = &reflect.XXXStructDescrImpl{
         
         reflect.XXXFieldDescrImpl{
             FD:  XXXMappingOp.Fields[3],  
+        },  
+    },
+}
+
+var XXXStructDescrPatch = &reflect.XXXStructDescrImpl{
+    Name:      "Patch",
+    Pkg:       XXXMappingPatch.Pkg,
+    Path:      XXXMappingPatch.Path,
+    Mapping:   XXXMappingPatch,
+    FieldList: []reflect.FieldDescr {
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingPatch.Fields[0],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingPatch.Fields[1],
+            SD: XXXStructDescrOp,  
         },  
     },
 }

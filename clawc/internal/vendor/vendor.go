@@ -589,7 +589,7 @@ func (vm *VendorManager) serializeIDLFile(file *idl.File) string {
 	}
 
 	// Write enums
-	for enum := range file.Enums() {
+	for _, enum := range file.Enums() {
 		sb.WriteString(fmt.Sprintf("Enum %s {\n", enum.Name))
 		for i, entry := range enum.OrderByValues() {
 			sb.WriteString(fmt.Sprintf("    %s @%d\n", entry.Name, i))

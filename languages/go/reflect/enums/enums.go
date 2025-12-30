@@ -2,8 +2,8 @@
 package enums
 
 import (
-	"github.com/bearlytools/claw/clawc/internal/pragma"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/pragma"
 )
 
 type doNotImplement pragma.DoNotImplement

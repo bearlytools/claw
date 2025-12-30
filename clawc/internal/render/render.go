@@ -143,8 +143,8 @@ type importCheck struct {
 
 var findImports = []importCheck{
 	{"github.com/bearlytools/claw/clawc/languages/go/mapping", "mapping."},
-	{"github.com/bearlytools/claw/clawc/languages/go/reflect", "reflect."},
-	{"github.com/bearlytools/claw/clawc/languages/go/reflect/runtime", "runtime."},
+	{"github.com/bearlytools/claw/languages/go/reflect", "reflect."},
+	{"github.com/bearlytools/claw/languages/go/reflect/runtime", "runtime."},
 	{"github.com/bearlytools/claw/clawc/languages/go/conversions", "conversions."},
 	{"github.com/bearlytools/claw/clawc/languages/go/field", "field."},
 	{"github.com/bearlytools/claw/clawc/languages/go/clawiter", "clawiter."},

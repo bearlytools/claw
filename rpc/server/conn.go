@@ -9,6 +9,7 @@ import (
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 
+	"github.com/bearlytools/claw/rpc/compress"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 )
 
@@ -56,19 +57,21 @@ type ServerConn struct {
 	closed    chan struct{}
 	fatalErr  error
 
-	nextSessionID uint32
+	nextSessionID      uint32
+	defaultCompression msgs.Compression
 
 	ctx context.Context
 }
 
-func newServerConn(ctx context.Context, server *Server, transport io.ReadWriteCloser) *ServerConn {
+func newServerConn(ctx context.Context, server *Server, transport io.ReadWriteCloser, compression msgs.Compression) *ServerConn {
 	return &ServerConn{
-		server:        server,
-		transport:     transport,
-		sessions:      make(map[uint32]*serverSession),
-		closed:        make(chan struct{}),
-		nextSessionID: 1,
-		ctx:           ctx,
+		server:             server,
+		transport:          transport,
+		sessions:           make(map[uint32]*serverSession),
+		closed:             make(chan struct{}),
+		nextSessionID:      1,
+		defaultCompression: compression,
+		ctx:                ctx,
 	}
 }
 
@@ -294,6 +297,22 @@ func (c *ServerConn) handlePayload(p msgs.Payload) {
 		return
 	}
 
+	// Decompress payload if needed.
+	if p.Compression() != msgs.CmpNone && len(p.Payload()) > 0 {
+		decompressed, err := compress.Decompress(p.Compression(), p.Payload())
+		if err != nil {
+			// Log error and drop payload - can't recover from decompression failure.
+			return
+		}
+		// Create new payload with decompressed data.
+		p = msgs.NewPayload(c.ctx).
+			SetSessionID(p.SessionID()).
+			SetReqID(p.ReqID()).
+			SetPayload(decompressed).
+			SetEndStream(p.EndStream()).
+			SetCompression(msgs.CmpNone)
+	}
+
 	select {
 	case sess.recvCh <- p:
 	case <-sess.cancelCh:
@@ -368,11 +387,23 @@ func (c *ServerConn) sendClose(sessionID uint32, errCode msgs.ErrCode, errMsg st
 
 // sendPayload sends a Payload message.
 func (c *ServerConn) sendPayload(sessionID, reqID uint32, payload []byte, endStream bool) error {
+	// Compress if compression is configured and there's data to compress.
+	compressed := payload
+	compression := c.defaultCompression
+	if compression != msgs.CmpNone && len(payload) > 0 {
+		var err error
+		compressed, err = compress.Compress(compression, payload)
+		if err != nil {
+			return fmt.Errorf("compression failed: %w", err)
+		}
+	}
+
 	p := msgs.NewPayload(c.ctx).
 		SetSessionID(sessionID).
 		SetReqID(reqID).
-		SetPayload(payload).
-		SetEndStream(endStream)
+		SetPayload(compressed).
+		SetEndStream(endStream).
+		SetCompression(compression)
 
 	msg := msgs.NewMsg(c.ctx).SetType(msgs.TPayload).SetPayload(p)
 	return c.sendMsg(msg)
