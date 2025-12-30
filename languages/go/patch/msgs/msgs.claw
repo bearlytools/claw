@@ -1,0 +1,43 @@
+package msgs
+
+// OpType defines the type of patch operation.
+Enum OpType uint8 {
+	// Unknown is invalid.
+	Unknown @0
+	// Set sets a scalar/bytes/string field to a new value.
+	Set @1
+	// Clear clears a field (sets to zero value).
+	Clear @2
+	// StructPatch applies a nested patch to a struct field.
+	StructPatch @3
+	// ListReplace replaces an entire list.
+	ListReplace @4
+	// ListSet sets a value at a specific index.
+	ListSet @5
+	// ListInsert inserts a value at a specific index.
+	ListInsert @6
+	// ListRemove removes a value at a specific index.
+	ListRemove @7
+	// ListStructPatch applies a patch to a struct at a list index.
+	ListStructPatch @8
+}
+
+// Op is a single patch operation.
+Struct Op {
+	// FieldNum is the field number this operation applies to.
+	FieldNum uint16 @0
+	// Type is the operation type.
+	Type OpType @1
+	// Index is the list index (for list operations, -1 otherwise).
+	Index int32 @2
+	// Data is the encoded payload (value, nested patch, etc.).
+	Data bytes @3
+}
+
+// Patch represents a diff between two structs.
+Struct Patch {
+	// Version is the patch format version.
+	Version uint8 @0
+	// Ops is the list of operations to apply.
+	Ops []Op @1
+}

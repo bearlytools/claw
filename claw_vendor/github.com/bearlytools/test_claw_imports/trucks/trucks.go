@@ -176,6 +176,30 @@ func (x Truck) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// SetRecording enables or disables mutation recording for patch generation.
+// When enabled, all Set* operations and list mutations are recorded.
+func (x Truck) SetRecording(enabled bool) Truck {
+    x.s.SetRecording(enabled)
+    return x
+}
+
+// Recording returns whether mutation recording is enabled.
+func (x Truck) Recording() bool {
+    return x.s.Recording()
+}
+
+// DrainRecordedOps returns all recorded operations since recording was enabled
+// (or since the last DrainRecordedOps call) and clears the internal list.
+// Use patch.NewPatchFromOps() to convert these to a Patch for application.
+func (x Truck) DrainRecordedOps() []segment.RecordedOp {
+    return x.s.DrainRecordedOps()
+}
+
+// RecordedOpsLen returns the number of recorded operations.
+func (x Truck) RecordedOpsLen() int {
+    return x.s.RecordedOpsLen()
+}
+
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

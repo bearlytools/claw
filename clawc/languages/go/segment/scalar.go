@@ -17,6 +17,9 @@ func SetBool(s *Struct, fieldNum uint16, value bool) {
 	if !value {
 		// Sparse encoding: remove zero-value fields
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -26,12 +29,19 @@ func SetBool(s *Struct, fieldNum uint16, value bool) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: []byte{1}})
+	}
 }
 
 // SetInt8 sets an int8 field.
 func SetInt8(s *Struct, fieldNum uint16, value int8) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -40,12 +50,19 @@ func SetInt8(s *Struct, fieldNum uint16, value int8) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: []byte{byte(value)}})
+	}
 }
 
 // SetInt16 sets an int16 field.
 func SetInt16(s *Struct, fieldNum uint16, value int16) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -54,12 +71,19 @@ func SetInt16(s *Struct, fieldNum uint16, value int16) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeInt16(value)})
+	}
 }
 
 // SetInt32 sets an int32 field.
 func SetInt32(s *Struct, fieldNum uint16, value int32) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -68,12 +92,19 @@ func SetInt32(s *Struct, fieldNum uint16, value int32) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeInt32(value)})
+	}
 }
 
 // SetInt64 sets an int64 field. 64-bit values need header + 8 bytes data.
 func SetInt64(s *Struct, fieldNum uint16, value int64) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -84,12 +115,19 @@ func SetInt64(s *Struct, fieldNum uint16, value int64) {
 
 	s.insertField(fieldNum, data)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeInt64(value)})
+	}
 }
 
 // SetUint8 sets a uint8 field.
 func SetUint8(s *Struct, fieldNum uint16, value uint8) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -98,12 +136,19 @@ func SetUint8(s *Struct, fieldNum uint16, value uint8) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: []byte{value}})
+	}
 }
 
 // SetUint16 sets a uint16 field.
 func SetUint16(s *Struct, fieldNum uint16, value uint16) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -112,12 +157,19 @@ func SetUint16(s *Struct, fieldNum uint16, value uint16) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeUint16(value)})
+	}
 }
 
 // SetUint32 sets a uint32 field.
 func SetUint32(s *Struct, fieldNum uint16, value uint32) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -126,12 +178,19 @@ func SetUint32(s *Struct, fieldNum uint16, value uint32) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeUint32(value)})
+	}
 }
 
 // SetUint64 sets a uint64 field. 64-bit values need header + 8 bytes data.
 func SetUint64(s *Struct, fieldNum uint16, value uint64) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -142,12 +201,19 @@ func SetUint64(s *Struct, fieldNum uint16, value uint64) {
 
 	s.insertField(fieldNum, data)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeUint64(value)})
+	}
 }
 
 // SetFloat32 sets a float32 field.
 func SetFloat32(s *Struct, fieldNum uint16, value float32) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -158,12 +224,19 @@ func SetFloat32(s *Struct, fieldNum uint16, value float32) {
 
 	s.insertField(fieldNum, hdr)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeFloat32(value)})
+	}
 }
 
 // SetFloat64 sets a float64 field. 64-bit values need header + 8 bytes data.
 func SetFloat64(s *Struct, fieldNum uint16, value float64) {
 	if value == 0 {
 		s.removeField(fieldNum)
+		if s.recording {
+			s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpClear, Index: NoListIndex})
+		}
 		return
 	}
 
@@ -175,6 +248,10 @@ func SetFloat64(s *Struct, fieldNum uint16, value float64) {
 
 	s.insertField(fieldNum, data)
 	s.markFieldSet(fieldNum)
+
+	if s.recording {
+		s.RecordOp(RecordedOp{FieldNum: fieldNum, OpType: OpSet, Index: NoListIndex, Data: EncodeFloat64(value)})
+	}
 }
 
 // SetEnum sets an enum field (stored as uint16).

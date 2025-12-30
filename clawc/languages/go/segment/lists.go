@@ -37,8 +37,24 @@ func (b *Bools) Len() int {
 
 // Append adds booleans to the list.
 func (b *Bools) Append(values ...bool) {
+	startIdx := len(b.items)
 	b.items = append(b.items, values...)
 	b.dirty = true
+
+	if b.parent.recording {
+		for i, v := range values {
+			var data byte
+			if v {
+				data = 1
+			}
+			b.parent.RecordOp(RecordedOp{
+				FieldNum: b.fieldNum,
+				OpType:   OpListInsert,
+				Index:    int32(startIdx + i),
+				Data:     []byte{data},
+			})
+		}
+	}
 }
 
 // Get returns the boolean at index.
@@ -56,6 +72,19 @@ func (b *Bools) Set(index int, value bool) {
 	}
 	b.items[index] = value
 	b.dirty = true
+
+	if b.parent.recording {
+		var data byte
+		if value {
+			data = 1
+		}
+		b.parent.RecordOp(RecordedOp{
+			FieldNum: b.fieldNum,
+			OpType:   OpListSet,
+			Index:    int32(index),
+			Data:     []byte{data},
+		})
+	}
 }
 
 // SetAll replaces all items in the list.
@@ -63,6 +92,22 @@ func (b *Bools) SetAll(values []bool) {
 	b.items = make([]bool, len(values))
 	copy(b.items, values)
 	b.dirty = true
+
+	if b.parent.recording {
+		// Encode all values as bytes
+		data := make([]byte, len(values))
+		for i, v := range values {
+			if v {
+				data[i] = 1
+			}
+		}
+		b.parent.RecordOp(RecordedOp{
+			FieldNum: b.fieldNum,
+			OpType:   OpListReplace,
+			Index:    NoListIndex,
+			Data:     data,
+		})
+	}
 }
 
 // All returns an iterator over all boolean values.
@@ -148,7 +193,56 @@ type Numbers[I Number] struct {
 }
 
 // NewNumbers creates a new Numbers list attached to a struct field.
+// If the field already has data in the segment, it parses it.
 func NewNumbers[I Number](parent *Struct, fieldNum uint16) *Numbers[I] {
+	// Check if there's existing data in the segment
+	offset, size := parent.FieldOffset(fieldNum)
+	if size > 0 {
+		// Parse existing segment data
+		data := parent.seg.data[offset : offset+size]
+		if len(data) >= HeaderSize {
+			var zero I
+			itemSize := int(reflect.TypeOf(zero).Size())
+			_, _, final40 := DecodeHeader(data[0:HeaderSize])
+			totalSize := int(final40)
+			dataLen := totalSize - HeaderSize
+			// Remove padding
+			dataLen = (dataLen / itemSize) * itemSize
+
+			n := newNumbersInternal[I](parent, fieldNum)
+			n.data = make([]byte, dataLen)
+			n.len = dataLen / itemSize
+			copy(n.data, data[HeaderSize:HeaderSize+dataLen])
+
+			// Register for syncing before Marshal
+			parent.RegisterDirtyList(fieldNum, n)
+			return n
+		}
+	}
+
+	// No existing data, create empty list
+	n := newNumbersInternal[I](parent, fieldNum)
+	// Register for syncing before Marshal
+	parent.RegisterDirtyList(fieldNum, n)
+	return n
+}
+
+// NewNumbersUncached creates a new Numbers list that is NOT registered in the cache.
+// Use this when you need a temporary list that shouldn't interfere with cached lists
+// (e.g., when applying patches with primitive types to enum-typed fields).
+// It clears any existing cached list for this field so subsequent accesses will
+// read from segment data after syncing.
+func NewNumbersUncached[I Number](parent *Struct, fieldNum uint16) *Numbers[I] {
+	n := newNumbersInternal[I](parent, fieldNum)
+	// Clear any existing cached list so next access reads from segment
+	parent.ClearListCache(fieldNum)
+	// Register as dirty but DON'T add to lists cache
+	parent.dirtyLists = append(parent.dirtyLists, dirtyList{fieldNum: fieldNum, list: n})
+	return n
+}
+
+// newNumbersInternal creates a Numbers list without registering it.
+func newNumbersInternal[I Number](parent *Struct, fieldNum uint16) *Numbers[I] {
 	n := &Numbers[I]{
 		parent:   parent,
 		fieldNum: fieldNum,
@@ -183,10 +277,6 @@ func NewNumbers[I Number](parent *Struct, fieldNum uint16) *Numbers[I] {
 	}
 
 	EncodeHeader(n.header, fieldNum, ft, 0)
-
-	// Register for syncing before Marshal
-	parent.RegisterDirtyList(fieldNum, n)
-
 	return n
 }
 
@@ -204,6 +294,7 @@ func (n *Numbers[I]) Len() int {
 // Append adds values to the list.
 func (n *Numbers[I]) Append(values ...I) {
 	itemSz := n.itemSize()
+	startIdx := n.len
 
 	// Ensure capacity
 	needed := len(values) * itemSz
@@ -253,6 +344,20 @@ func (n *Numbers[I]) Append(values ...I) {
 
 	n.len += len(values)
 	n.dirty = true
+
+	if n.parent.recording {
+		for i, _ := range values {
+			offset := (startIdx + i) * itemSz
+			valBytes := make([]byte, itemSz)
+			copy(valBytes, n.data[offset:offset+itemSz])
+			n.parent.RecordOp(RecordedOp{
+				FieldNum: n.fieldNum,
+				OpType:   OpListInsert,
+				Index:    int32(startIdx + i),
+				Data:     valBytes,
+			})
+		}
+	}
 }
 
 // Get returns the value at index.
@@ -332,6 +437,17 @@ func (n *Numbers[I]) Set(index int, value I) {
 		binary.LittleEndian.PutUint64(n.data[offset:], math.Float64bits(rv.Float()))
 	}
 	n.dirty = true
+
+	if n.parent.recording {
+		valBytes := make([]byte, itemSz)
+		copy(valBytes, n.data[offset:offset+itemSz])
+		n.parent.RecordOp(RecordedOp{
+			FieldNum: n.fieldNum,
+			OpType:   OpListSet,
+			Index:    int32(index),
+			Data:     valBytes,
+		})
+	}
 }
 
 // SetAll replaces all items in the list.
@@ -372,6 +488,18 @@ func (n *Numbers[I]) SetAll(values []I) {
 		}
 	}
 	n.dirty = true
+
+	if n.parent.recording {
+		// Copy all data for ListReplace
+		dataCopy := make([]byte, len(n.data))
+		copy(dataCopy, n.data)
+		n.parent.RecordOp(RecordedOp{
+			FieldNum: n.fieldNum,
+			OpType:   OpListReplace,
+			Index:    NoListIndex,
+			Data:     dataCopy,
+		})
+	}
 }
 
 // All returns an iterator over all values.
@@ -423,10 +551,10 @@ func (n *Numbers[I]) SyncToSegment() error {
 		return nil
 	}
 
-	// Calculate total size with padding
+	// Calculate total size - NO PADDING for number lists.
+	// Padding bytes would be indistinguishable from zero-value items when parsing.
 	dataLen := len(n.data)
-	padding := paddingNeeded(dataLen)
-	totalSize := HeaderSize + dataLen + padding
+	totalSize := HeaderSize + dataLen
 
 	// Create field data
 	fieldData := make([]byte, totalSize)
@@ -499,8 +627,20 @@ func (s *Strings) Len() int {
 
 // Append adds strings to the list.
 func (s *Strings) Append(values ...string) {
+	startIdx := len(s.items)
 	s.items = append(s.items, values...)
 	s.dirty = true
+
+	if s.parent.recording {
+		for i, v := range values {
+			s.parent.RecordOp(RecordedOp{
+				FieldNum: s.fieldNum,
+				OpType:   OpListInsert,
+				Index:    int32(startIdx + i),
+				Data:     []byte(v),
+			})
+		}
+	}
 }
 
 // Get returns the string at index.
@@ -518,6 +658,15 @@ func (s *Strings) Set(index int, value string) {
 	}
 	s.items[index] = value
 	s.dirty = true
+
+	if s.parent.recording {
+		s.parent.RecordOp(RecordedOp{
+			FieldNum: s.fieldNum,
+			OpType:   OpListSet,
+			Index:    int32(index),
+			Data:     []byte(value),
+		})
+	}
 }
 
 // SetAll replaces all items in the list.
@@ -525,6 +674,38 @@ func (s *Strings) SetAll(values []string) {
 	s.items = make([]string, len(values))
 	copy(s.items, values)
 	s.dirty = true
+
+	if s.parent.recording {
+		// Encode all strings with length prefixes
+		data := encodeStringsForPatch(values)
+		s.parent.RecordOp(RecordedOp{
+			FieldNum: s.fieldNum,
+			OpType:   OpListReplace,
+			Index:    NoListIndex,
+			Data:     data,
+		})
+	}
+}
+
+// encodeStringsForPatch encodes a string slice for ListReplace patch data.
+// Format: [count:4][len1:4][data1...][len2:4][data2...]...
+func encodeStringsForPatch(values []string) []byte {
+	// Calculate total size
+	size := 4 // count
+	for _, v := range values {
+		size += 4 + len(v) // length prefix + string data
+	}
+
+	data := make([]byte, size)
+	binary.LittleEndian.PutUint32(data[:4], uint32(len(values)))
+	offset := 4
+	for _, v := range values {
+		binary.LittleEndian.PutUint32(data[offset:], uint32(len(v)))
+		offset += 4
+		copy(data[offset:], v)
+		offset += len(v)
+	}
+	return data
 }
 
 // All returns an iterator over all strings.
@@ -633,8 +814,22 @@ func (b *Bytes) Len() int {
 
 // Append adds byte slices to the list.
 func (b *Bytes) Append(values ...[]byte) {
+	startIdx := len(b.items)
 	b.items = append(b.items, values...)
 	b.dirty = true
+
+	if b.parent.recording {
+		for i, v := range values {
+			valueCopy := make([]byte, len(v))
+			copy(valueCopy, v)
+			b.parent.RecordOp(RecordedOp{
+				FieldNum: b.fieldNum,
+				OpType:   OpListInsert,
+				Index:    int32(startIdx + i),
+				Data:     valueCopy,
+			})
+		}
+	}
 }
 
 // Get returns the bytes at index.
@@ -653,6 +848,17 @@ func (b *Bytes) Set(index int, value []byte) {
 	b.items[index] = make([]byte, len(value))
 	copy(b.items[index], value)
 	b.dirty = true
+
+	if b.parent.recording {
+		valueCopy := make([]byte, len(value))
+		copy(valueCopy, value)
+		b.parent.RecordOp(RecordedOp{
+			FieldNum: b.fieldNum,
+			OpType:   OpListSet,
+			Index:    int32(index),
+			Data:     valueCopy,
+		})
+	}
 }
 
 // SetAll replaces all items in the list.
@@ -663,6 +869,38 @@ func (b *Bytes) SetAll(values [][]byte) {
 		copy(b.items[i], v)
 	}
 	b.dirty = true
+
+	if b.parent.recording {
+		// Encode all bytes with length prefixes
+		data := encodeBytesForPatch(values)
+		b.parent.RecordOp(RecordedOp{
+			FieldNum: b.fieldNum,
+			OpType:   OpListReplace,
+			Index:    NoListIndex,
+			Data:     data,
+		})
+	}
+}
+
+// encodeBytesForPatch encodes a bytes slice for ListReplace patch data.
+// Format: [count:4][len1:4][data1...][len2:4][data2...]...
+func encodeBytesForPatch(values [][]byte) []byte {
+	// Calculate total size
+	size := 4 // count
+	for _, v := range values {
+		size += 4 + len(v) // length prefix + data
+	}
+
+	data := make([]byte, size)
+	binary.LittleEndian.PutUint32(data[:4], uint32(len(values)))
+	offset := 4
+	for _, v := range values {
+		binary.LittleEndian.PutUint32(data[offset:], uint32(len(v)))
+		offset += 4
+		copy(data[offset:], v)
+		offset += len(v)
+	}
+	return data
 }
 
 // All returns an iterator over all byte slices.
@@ -816,8 +1054,24 @@ func (s *Structs) Len() int {
 
 // Append adds structs to the list.
 func (s *Structs) Append(values ...*Struct) {
+	startIdx := len(s.items)
 	s.items = append(s.items, values...)
 	s.dirty = true
+
+	if s.parent.recording {
+		for i, v := range values {
+			// Sync the struct and get its wire format
+			v.syncDirtyLists()
+			structData := make([]byte, v.seg.Len())
+			copy(structData, v.seg.data)
+			s.parent.RecordOp(RecordedOp{
+				FieldNum: s.fieldNum,
+				OpType:   OpListInsert,
+				Index:    int32(startIdx + i),
+				Data:     structData,
+			})
+		}
+	}
 }
 
 // Get returns the struct at index.
@@ -840,6 +1094,19 @@ func (s *Structs) Set(index int, value *Struct) {
 	}
 	s.items[index] = value
 	s.dirty = true
+
+	if s.parent.recording {
+		// Sync the struct and get its wire format
+		value.syncDirtyLists()
+		structData := make([]byte, value.seg.Len())
+		copy(structData, value.seg.data)
+		s.parent.RecordOp(RecordedOp{
+			FieldNum: s.fieldNum,
+			OpType:   OpListSet,
+			Index:    int32(index),
+			Data:     structData,
+		})
+	}
 }
 
 // SetAll replaces all items in the list.
@@ -847,6 +1114,37 @@ func (s *Structs) SetAll(values []*Struct) {
 	s.items = make([]*Struct, len(values))
 	copy(s.items, values)
 	s.dirty = true
+
+	if s.parent.recording {
+		// Encode all structs for ListReplace
+		data := encodeStructsForPatch(values)
+		s.parent.RecordOp(RecordedOp{
+			FieldNum: s.fieldNum,
+			OpType:   OpListReplace,
+			Index:    NoListIndex,
+			Data:     data,
+		})
+	}
+}
+
+// encodeStructsForPatch encodes a struct slice for ListReplace patch data.
+// Format: [count:4][struct1...][struct2...]...
+func encodeStructsForPatch(values []*Struct) []byte {
+	// Calculate total size
+	size := 4 // count
+	for _, v := range values {
+		v.syncDirtyLists()
+		size += v.seg.Len()
+	}
+
+	data := make([]byte, size)
+	binary.LittleEndian.PutUint32(data[:4], uint32(len(values)))
+	offset := 4
+	for _, v := range values {
+		copy(data[offset:], v.seg.data)
+		offset += v.seg.Len()
+	}
+	return data
 }
 
 // All returns an iterator over all structs.

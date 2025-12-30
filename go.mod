@@ -10,7 +10,6 @@ require (
 )
 
 require (
-	capnproto.org/go/capnp/v3 v3.1.0-alpha.2 // indirect
 	github.com/Azure/retry v0.0.0-20250701224816-85c6a88f883d // indirect
 	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
@@ -96,7 +95,6 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e // indirect
 	google.golang.org/grpc v1.73.0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
@@ -114,9 +112,11 @@ require (
 )
 
 require (
+	capnproto.org/go/capnp/v3 v3.1.0-alpha.2
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e
 	github.com/gopherfs/fs v0.0.0-20220204202500-4538e04c7abb
 	github.com/gostdlib/base v0.0.0-20251216181915-f10250b44e96
 	golang.org/x/net v0.41.0
+	google.golang.org/protobuf v1.36.6
 )
