@@ -79,6 +79,16 @@ type FieldDescr struct {
 	SelfReferential bool
 	// Mapping is provided if .Type == FTStruct || FTListStruct. This will describe the Structs fields.
 	Mapping *Map
+
+	// Map-specific fields (only set when Type == FTMap)
+	// IsMap indicates if this field is a map type.
+	IsMap bool
+	// KeyType is the type of the map key.
+	KeyType field.Type
+	// ValueType is the type of the map value.
+	ValueType field.Type
+	// ValueMapping is provided if ValueType == FTStruct. This describes the value Struct's fields.
+	ValueMapping *Map
 }
 
 func (f *FieldDescr) Validate() error {
@@ -89,6 +99,21 @@ func (f *FieldDescr) Validate() error {
 		}
 		if err := f.Mapping.validate(); err != nil {
 			return fmt.Errorf(".%s%w", f.Name, err)
+		}
+	case field.FTMap:
+		if !f.IsMap {
+			return fmt.Errorf(".%s: type was FTMap but IsMap was false", f.Name)
+		}
+		if !field.IsValidMapKeyType(f.KeyType) {
+			return fmt.Errorf(".%s: invalid map key type %v", f.Name, f.KeyType)
+		}
+		if f.ValueType == field.FTStruct && f.ValueMapping == nil {
+			return fmt.Errorf(".%s: map value type is struct but ValueMapping == nil", f.Name)
+		}
+		if f.ValueMapping != nil {
+			if err := f.ValueMapping.validate(); err != nil {
+				return fmt.Errorf(".%s%w", f.Name, err)
+			}
 		}
 	}
 	return nil
@@ -160,6 +185,10 @@ func (m *Map) Init() {
 	for _, f := range m.Fields {
 		if f.Mapping != nil && f.Mapping != m { // avoid self-reference loop
 			f.Mapping.Init()
+		}
+		// Also init value mappings for map fields
+		if f.ValueMapping != nil && f.ValueMapping != m {
+			f.ValueMapping.Init()
 		}
 	}
 }

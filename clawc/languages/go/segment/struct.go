@@ -78,6 +78,8 @@ const (
 	OpListInsert      uint8 = 6
 	OpListRemove      uint8 = 7
 	OpListStructPatch uint8 = 8
+	OpMapSet          uint8 = 9
+	OpMapDelete       uint8 = 10
 )
 
 // NoListIndex is the sentinel value for non-list operations.

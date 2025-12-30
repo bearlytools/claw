@@ -19,6 +19,9 @@ const (
 	TokenField                        // A field (scalar or announces complex type)
 	TokenListStart                    // Beginning of a list
 	TokenListEnd                      // End of a list
+	TokenMapStart                     // Beginning of a map
+	TokenMapEnd                       // End of a map
+	TokenMapEntry                     // A key-value pair in a map
 )
 
 // Token represents a single event in the walk stream.
@@ -49,6 +52,16 @@ type Token struct {
 
 	// Len is the list length (for TokenListStart).
 	Len int
+
+	// Map-related fields (for TokenMapStart and TokenMapEntry)
+	// KeyType is the type of map keys.
+	KeyType field.Type
+	// ValueType is the type of map values.
+	ValueType field.Type
+	// Key holds the map key value (uses same encoding as data/Bytes).
+	Key uint64
+	// KeyBytes holds string/bytes map keys.
+	KeyBytes []byte
 }
 
 // Bool returns the boolean value. Only valid when Type == FTBool.
@@ -131,3 +144,85 @@ func (t *Token) SetFloat32(v float32) { t.data = uint64(math.Float32bits(v)) }
 
 // SetFloat64 sets the float64 value in the token.
 func (t *Token) SetFloat64(v float64) { t.data = math.Float64bits(v) }
+
+// Map key accessor methods
+
+// KeyBool returns the boolean key value.
+func (t Token) KeyBool() bool { return t.Key != 0 }
+
+// KeyInt8 returns the int8 key value.
+func (t Token) KeyInt8() int8 { return int8(t.Key) }
+
+// KeyInt16 returns the int16 key value.
+func (t Token) KeyInt16() int16 { return int16(t.Key) }
+
+// KeyInt32 returns the int32 key value.
+func (t Token) KeyInt32() int32 { return int32(t.Key) }
+
+// KeyInt64 returns the int64 key value.
+func (t Token) KeyInt64() int64 { return int64(t.Key) }
+
+// KeyUint8 returns the uint8 key value.
+func (t Token) KeyUint8() uint8 { return uint8(t.Key) }
+
+// KeyUint16 returns the uint16 key value.
+func (t Token) KeyUint16() uint16 { return uint16(t.Key) }
+
+// KeyUint32 returns the uint32 key value.
+func (t Token) KeyUint32() uint32 { return uint32(t.Key) }
+
+// KeyUint64 returns the uint64 key value.
+func (t Token) KeyUint64() uint64 { return t.Key }
+
+// KeyFloat32 returns the float32 key value.
+func (t Token) KeyFloat32() float32 { return math.Float32frombits(uint32(t.Key)) }
+
+// KeyFloat64 returns the float64 key value.
+func (t Token) KeyFloat64() float64 { return math.Float64frombits(t.Key) }
+
+// KeyString returns the string key value.
+func (t Token) KeyString() string {
+	if len(t.KeyBytes) == 0 {
+		return ""
+	}
+	return unsafe.String(&t.KeyBytes[0], len(t.KeyBytes))
+}
+
+// SetKeyBool sets a boolean key.
+func (t *Token) SetKeyBool(v bool) {
+	if v {
+		t.Key = 1
+	} else {
+		t.Key = 0
+	}
+}
+
+// SetKeyInt8 sets an int8 key.
+func (t *Token) SetKeyInt8(v int8) { t.Key = uint64(v) }
+
+// SetKeyInt16 sets an int16 key.
+func (t *Token) SetKeyInt16(v int16) { t.Key = uint64(v) }
+
+// SetKeyInt32 sets an int32 key.
+func (t *Token) SetKeyInt32(v int32) { t.Key = uint64(v) }
+
+// SetKeyInt64 sets an int64 key.
+func (t *Token) SetKeyInt64(v int64) { t.Key = uint64(v) }
+
+// SetKeyUint8 sets a uint8 key.
+func (t *Token) SetKeyUint8(v uint8) { t.Key = uint64(v) }
+
+// SetKeyUint16 sets a uint16 key.
+func (t *Token) SetKeyUint16(v uint16) { t.Key = uint64(v) }
+
+// SetKeyUint32 sets a uint32 key.
+func (t *Token) SetKeyUint32(v uint32) { t.Key = uint64(v) }
+
+// SetKeyUint64 sets a uint64 key.
+func (t *Token) SetKeyUint64(v uint64) { t.Key = v }
+
+// SetKeyFloat32 sets a float32 key.
+func (t *Token) SetKeyFloat32(v float32) { t.Key = uint64(math.Float32bits(v)) }
+
+// SetKeyFloat64 sets a float64 key.
+func (t *Token) SetKeyFloat64(v float64) { t.Key = math.Float64bits(v) }

@@ -3,8 +3,8 @@ package reflect
 import (
 	"fmt"
 
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/value"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
 )
 
 // Number represents all int, uint and float types.
@@ -46,6 +46,11 @@ func ValueOfList(v List) Value {
 // ValueOfStruct will return the value v as a Value type.
 func ValueOfStruct(v Struct) Value {
 	return value.ValueOfStruct(v)
+}
+
+// ValueOfMap will return the value v as a Value type.
+func ValueOfMap(v Map) Value {
+	return value.ValueOfMap(v)
 }
 
 // ListFrom will create a List type from the following types:

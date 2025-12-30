@@ -7,12 +7,12 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/bearlytools/claw/clawc/internal/pragma"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
 	"github.com/bearlytools/claw/clawc/languages/go/segment"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/pragma"
+	"github.com/bearlytools/claw/languages/go/reflect/runtime"
 )
 
 // PackageDescrImpl is the implementation of PackageDescr.
@@ -191,6 +191,27 @@ func (f FieldDescrImpl) ItemType() string {
 		panic(fmt.Sprintf("cannot call ItemType() on non list of Struct(%s)", f.FD.Type))
 	}
 	return f.SD.StructName()
+}
+
+// IsMap returns true if this field is a map type.
+func (f FieldDescrImpl) IsMap() bool {
+	return f.FD.Type == field.FTMap
+}
+
+// MapKeyType returns the key type for map fields.
+func (f FieldDescrImpl) MapKeyType() field.Type {
+	if f.FD.Type != field.FTMap {
+		panic(fmt.Sprintf("cannot call MapKeyType() on non-map field(%s)", f.FD.Type))
+	}
+	return f.FD.KeyType
+}
+
+// MapValueType returns the value type for map fields.
+func (f FieldDescrImpl) MapValueType() field.Type {
+	if f.FD.Type != field.FTMap {
+		panic(fmt.Sprintf("cannot call MapValueType() on non-map field(%s)", f.FD.Type))
+	}
+	return f.FD.ValueType
 }
 
 type ListBools struct {
@@ -401,6 +422,194 @@ func (l ListStructs) Append(v interfaces.Value) {
 func (l ListStructs) New() interfaces.Struct {
 	newStruct := segment.New(l.sd.Mapping)
 	return NewStruct(newStruct, l.sd)
+}
+
+// MapImpl is a generic map implementation that wraps segment.Maps.
+// It provides a type-erased interface for reflection access to maps.
+type MapImpl[K segment.MapKey, V any] struct {
+	m        *segment.Maps[K, V]
+	keyType  field.Type
+	valType  field.Type
+	valDescr *StructDescrImpl // for struct-valued maps
+	doNotImplement
+}
+
+// NewMapImpl creates a new MapImpl wrapping a segment.Maps.
+func NewMapImpl[K segment.MapKey, V any](m *segment.Maps[K, V], keyType, valType field.Type, valDescr *StructDescrImpl) MapImpl[K, V] {
+	return MapImpl[K, V]{m: m, keyType: keyType, valType: valType, valDescr: valDescr}
+}
+
+func (m MapImpl[K, V]) KeyType() field.Type   { return m.keyType }
+func (m MapImpl[K, V]) ValueType() field.Type { return m.valType }
+func (m MapImpl[K, V]) Len() int              { return m.m.Len() }
+
+func (m MapImpl[K, V]) Has(key interfaces.Value) bool {
+	k := m.extractKey(key)
+	return m.m.Has(k)
+}
+
+func (m MapImpl[K, V]) Get(key interfaces.Value) interfaces.Value {
+	k := m.extractKey(key)
+	v, ok := m.m.Get(k)
+	if !ok {
+		return nil
+	}
+	return m.wrapValue(v)
+}
+
+func (m MapImpl[K, V]) Set(key interfaces.Value, val interfaces.Value) {
+	k := m.extractKey(key)
+	v := m.extractValue(val)
+	m.m.Set(k, v)
+}
+
+func (m MapImpl[K, V]) Delete(key interfaces.Value) {
+	k := m.extractKey(key)
+	m.m.Delete(k)
+}
+
+func (m MapImpl[K, V]) Range(f func(key, val interfaces.Value) bool) {
+	for k, v := range m.m.All() {
+		if !f(m.wrapKey(k), m.wrapValue(v)) {
+			return
+		}
+	}
+}
+
+func (m MapImpl[K, V]) extractKey(key interfaces.Value) K {
+	var zero K
+	switch any(zero).(type) {
+	case string:
+		return any(key.String()).(K)
+	case bool:
+		return any(key.Bool()).(K)
+	case int8:
+		return any(int8(key.Int())).(K)
+	case int16:
+		return any(int16(key.Int())).(K)
+	case int32:
+		return any(int32(key.Int())).(K)
+	case int64:
+		return any(key.Int()).(K)
+	case uint8:
+		return any(uint8(key.Uint())).(K)
+	case uint16:
+		return any(uint16(key.Uint())).(K)
+	case uint32:
+		return any(uint32(key.Uint())).(K)
+	case uint64:
+		return any(key.Uint()).(K)
+	case float32:
+		return any(float32(key.Float())).(K)
+	case float64:
+		return any(key.Float()).(K)
+	default:
+		panic(fmt.Sprintf("unsupported map key type: %T", zero))
+	}
+}
+
+func (m MapImpl[K, V]) wrapKey(k K) interfaces.Value {
+	switch v := any(k).(type) {
+	case string:
+		return ValueOfString(v)
+	case bool:
+		return ValueOfBool(v)
+	case int8:
+		return ValueOfNumber(v)
+	case int16:
+		return ValueOfNumber(v)
+	case int32:
+		return ValueOfNumber(v)
+	case int64:
+		return ValueOfNumber(v)
+	case uint8:
+		return ValueOfNumber(v)
+	case uint16:
+		return ValueOfNumber(v)
+	case uint32:
+		return ValueOfNumber(v)
+	case uint64:
+		return ValueOfNumber(v)
+	case float32:
+		return ValueOfNumber(v)
+	case float64:
+		return ValueOfNumber(v)
+	default:
+		panic(fmt.Sprintf("unsupported map key type: %T", k))
+	}
+}
+
+func (m MapImpl[K, V]) wrapValue(v V) interfaces.Value {
+	switch m.valType {
+	case field.FTStruct:
+		if s, ok := any(v).(*segment.Struct); ok && s != nil {
+			return ValueOfStruct(NewStruct(s, m.valDescr))
+		}
+		return nil
+	case field.FTString:
+		return ValueOfString(any(v).(string))
+	case field.FTBool:
+		return ValueOfBool(any(v).(bool))
+	case field.FTInt8:
+		return ValueOfNumber(any(v).(int8))
+	case field.FTInt16:
+		return ValueOfNumber(any(v).(int16))
+	case field.FTInt32:
+		return ValueOfNumber(any(v).(int32))
+	case field.FTInt64:
+		return ValueOfNumber(any(v).(int64))
+	case field.FTUint8:
+		return ValueOfNumber(any(v).(uint8))
+	case field.FTUint16:
+		return ValueOfNumber(any(v).(uint16))
+	case field.FTUint32:
+		return ValueOfNumber(any(v).(uint32))
+	case field.FTUint64:
+		return ValueOfNumber(any(v).(uint64))
+	case field.FTFloat32:
+		return ValueOfNumber(any(v).(float32))
+	case field.FTFloat64:
+		return ValueOfNumber(any(v).(float64))
+	default:
+		panic(fmt.Sprintf("unsupported map value type: %s", m.valType))
+	}
+}
+
+func (m MapImpl[K, V]) extractValue(val interfaces.Value) V {
+	var zero V
+	switch m.valType {
+	case field.FTStruct:
+		if s := val.Struct(); s != nil {
+			return any(RealStruct(s)).(V)
+		}
+		return zero
+	case field.FTString:
+		return any(val.String()).(V)
+	case field.FTBool:
+		return any(val.Bool()).(V)
+	case field.FTInt8:
+		return any(int8(val.Int())).(V)
+	case field.FTInt16:
+		return any(int16(val.Int())).(V)
+	case field.FTInt32:
+		return any(int32(val.Int())).(V)
+	case field.FTInt64:
+		return any(val.Int()).(V)
+	case field.FTUint8:
+		return any(uint8(val.Uint())).(V)
+	case field.FTUint16:
+		return any(uint16(val.Uint())).(V)
+	case field.FTUint32:
+		return any(uint32(val.Uint())).(V)
+	case field.FTUint64:
+		return any(val.Uint()).(V)
+	case field.FTFloat32:
+		return any(float32(val.Float())).(V)
+	case field.FTFloat64:
+		return any(val.Float()).(V)
+	default:
+		panic(fmt.Sprintf("unsupported map value type: %s", m.valType))
+	}
 }
 
 type StructImpl struct {

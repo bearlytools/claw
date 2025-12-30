@@ -103,7 +103,7 @@ func (f *File) Validate() error {
 	return nil
 }
 
-// Structs returns all Structs that were decoded.
+// Structs returns all Structs that were decoded, sorted by name for deterministic ordering.
 func (f *File) Structs() []Struct {
 	if f.Identifers == nil {
 		return nil
@@ -116,28 +116,29 @@ func (f *File) Structs() []Struct {
 			ret = append(ret, v)
 		}
 	}
+	slices.SortFunc(ret, func(a, b Struct) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
 	return ret
 }
 
-// Enums returns all Enums that were decoded.
-func (f *File) Enums() chan Enum {
-	ch := make(chan Enum, 1)
-
+// Enums returns all Enums that were decoded, sorted by name for deterministic ordering.
+func (f *File) Enums() []Enum {
 	if f.Identifers == nil {
-		close(ch)
-		return ch
+		return nil
 	}
 
-	go func() {
-		defer close(ch)
-		for _, i := range f.Identifers {
-			switch v := i.(type) {
-			case Enum:
-				ch <- v
-			}
+	var ret []Enum
+	for _, i := range f.Identifers {
+		switch v := i.(type) {
+		case Enum:
+			ret = append(ret, v)
 		}
-	}()
-	return ch
+	}
+	slices.SortFunc(ret, func(a, b Enum) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+	return ret
 }
 
 // PkgImports returns a deduped list of all Claw packages that need importing.
@@ -698,6 +699,173 @@ type StructField struct {
 	IdentName string
 	// SelfReferential indicates this type is the same Struct type as the containing Struct.
 	SelfReferential bool
+
+	// Map-related fields
+	// IsMap indicates if this field is a map type.
+	IsMap bool
+	// KeyType is the field type of the map key (only set if IsMap is true).
+	KeyType field.Type
+	// ValueType is the field type of the map value (only set if IsMap is true).
+	ValueType field.Type
+	// ValueIdentName is the name of the Struct for map values (if value is a struct).
+	ValueIdentName string
+	// ValueIsExternal indicates the map value type is externally defined.
+	ValueIsExternal bool
+	// ValuePackage is the package name for external map value types.
+	ValuePackage string
+	// ValueFullPath is the full import path for external map value types.
+	ValueFullPath string
+	// NestedMapInfo contains info about nested maps (map[K]map[K2]V2).
+	NestedMapInfo *MapTypeInfo
+}
+
+// MapTypeInfo contains information about a map type, used for nested maps.
+type MapTypeInfo struct {
+	KeyType        field.Type
+	ValueType      field.Type
+	ValueIdentName string
+	ValueIsExternal bool
+	ValuePackage   string
+	ValueFullPath  string
+	NestedMapInfo  *MapTypeInfo // For map[K]map[K2]V2
+}
+
+// MapKeyGoType returns the Go type string for the map key.
+func (s StructField) MapKeyGoType() string {
+	if !s.IsMap {
+		panic(fmt.Sprintf("bug: field name %s is not a map", s.Name))
+	}
+	return fieldTypeToGoType(s.KeyType)
+}
+
+// MapValueGoType returns the Go type string for the map value.
+func (s StructField) MapValueGoType() string {
+	if !s.IsMap {
+		panic(fmt.Sprintf("bug: field name %s is not a map", s.Name))
+	}
+	if s.NestedMapInfo != nil {
+		// Nested map
+		return s.nestedMapGoType(s.NestedMapInfo)
+	}
+	if s.ValueIdentName != "" {
+		// Struct value
+		if s.ValueIsExternal {
+			return "*" + s.ValuePackage + "." + s.valueIdentInFile()
+		}
+		return "*" + s.ValueIdentName
+	}
+	return fieldTypeToGoType(s.ValueType)
+}
+
+// MapRawValueGoType returns the Go type string for the map value in Raw struct context.
+func (s StructField) MapRawValueGoType() string {
+	if !s.IsMap {
+		panic(fmt.Sprintf("bug: field name %s is not a map", s.Name))
+	}
+	if s.NestedMapInfo != nil {
+		// Nested map - recursive Raw type
+		return s.nestedMapRawGoType(s.NestedMapInfo)
+	}
+	if s.ValueIdentName != "" {
+		// Struct value
+		if s.ValueIsExternal {
+			return "*" + s.ValuePackage + "." + s.valueIdentInFile() + "Raw"
+		}
+		return "*" + s.ValueIdentName + "Raw"
+	}
+	return fieldTypeToGoType(s.ValueType)
+}
+
+// nestedMapGoType recursively builds the Go type for nested maps.
+func (s StructField) nestedMapGoType(info *MapTypeInfo) string {
+	keyType := fieldTypeToGoType(info.KeyType)
+	var valType string
+	if info.NestedMapInfo != nil {
+		valType = s.nestedMapGoType(info.NestedMapInfo)
+	} else if info.ValueIdentName != "" {
+		if info.ValueIsExternal {
+			valType = "*" + info.ValuePackage + "." + info.ValueIdentName
+		} else {
+			valType = "*" + info.ValueIdentName
+		}
+	} else {
+		valType = fieldTypeToGoType(info.ValueType)
+	}
+	return "map[" + keyType + "]" + valType
+}
+
+// nestedMapRawGoType recursively builds the Raw Go type for nested maps.
+func (s StructField) nestedMapRawGoType(info *MapTypeInfo) string {
+	keyType := fieldTypeToGoType(info.KeyType)
+	var valType string
+	if info.NestedMapInfo != nil {
+		valType = s.nestedMapRawGoType(info.NestedMapInfo)
+	} else if info.ValueIdentName != "" {
+		if info.ValueIsExternal {
+			valType = "*" + info.ValuePackage + "." + info.ValueIdentName + "Raw"
+		} else {
+			valType = "*" + info.ValueIdentName + "Raw"
+		}
+	} else {
+		valType = fieldTypeToGoType(info.ValueType)
+	}
+	return "map[" + keyType + "]" + valType
+}
+
+// valueIdentInFile returns just the type name portion of ValueIdentName.
+func (s StructField) valueIdentInFile() string {
+	sp := strings.Split(s.ValueIdentName, ".")
+	switch len(sp) {
+	case 1:
+		return sp[0]
+	case 2:
+		return sp[1]
+	}
+	return s.ValueIdentName
+}
+
+// KeyTypeConst returns the field type constant name for the map key.
+func (s StructField) KeyTypeConst() string {
+	return field.ConstName(s.KeyType)
+}
+
+// ValueTypeConst returns the field type constant name for the map value.
+func (s StructField) ValueTypeConst() string {
+	return field.ConstName(s.ValueType)
+}
+
+// fieldTypeToGoType converts a field.Type to its Go type string.
+func fieldTypeToGoType(ft field.Type) string {
+	switch ft {
+	case field.FTBool:
+		return "bool"
+	case field.FTInt8:
+		return "int8"
+	case field.FTInt16:
+		return "int16"
+	case field.FTInt32:
+		return "int32"
+	case field.FTInt64:
+		return "int64"
+	case field.FTUint8:
+		return "uint8"
+	case field.FTUint16:
+		return "uint16"
+	case field.FTUint32:
+		return "uint32"
+	case field.FTUint64:
+		return "uint64"
+	case field.FTFloat32:
+		return "float32"
+	case field.FTFloat64:
+		return "float64"
+	case field.FTString:
+		return "string"
+	case field.FTBytes:
+		return "[]byte"
+	default:
+		return "any"
+	}
 }
 
 // GoListType will return the list element type: "uint8", "int8", "<Enum Name>", ... for use in
@@ -838,6 +1006,10 @@ func (s StructField) RawGoType() string {
 			return "[]*" + s.Package + "." + s.IdentInFile() + "Raw"
 		}
 		return "[]*" + s.IdentName + "Raw"
+	case field.FTMap:
+		keyType := fieldTypeToGoType(s.KeyType)
+		valType := s.MapRawValueGoType()
+		return "map[" + keyType + "]" + valType
 	}
 	panic(fmt.Sprintf("RawGoType: unsupported type %v for field %s", s.Type, s.Name))
 }
@@ -1146,8 +1318,25 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 	case "[]bytes":
 		f.Type = field.FTListBytes
 		f.IsList = true
-	default: // Struct, []Struct, or []{{Enum}}
+	default: // Struct, []Struct, []{{Enum}}, or map[K]V
 		ft := l.Items[1].Val
+
+		// Check for map types first
+		if strings.HasPrefix(ft, "map[") {
+			keyType, valType, valIdent, nestedInfo, err := s.parseMapType(ft, l.LineNum)
+			if err != nil {
+				return err
+			}
+			f.Type = field.FTMap
+			f.IsMap = true
+			f.KeyType = keyType
+			f.ValueType = valType
+			f.ValueIdentName = valIdent
+			f.NestedMapInfo = nestedInfo
+			// Go to field number parsing
+			goto parseFieldNum
+		}
+
 		isList := false
 		if strings.HasPrefix(ft, "[]") {
 			ft = strings.Split(ft, "[]")[1]
@@ -1230,6 +1419,7 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 		}
 	}
 
+parseFieldNum:
 	fieldNum := l.Items[2].Val
 	if !strings.HasPrefix(fieldNum, "@") {
 		return fmt.Errorf("[Line %d]: Struct %q has field %q without a valid field number, %q", l.LineNum, s.Name, f.Name, fieldNum)
@@ -1249,6 +1439,129 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 		return fmt.Errorf("[Line %d]: error: %w", l.LineNum, err)
 	}
 	return nil
+}
+
+// parseMapType parses a map type string like "map[string]int32" or "map[string]map[int32]bool".
+// Returns the key type, value type, value identifier (for struct values), and nested map info.
+func (s *Struct) parseMapType(mapStr string, lineNum int) (keyType, valType field.Type, valIdent string, nestedInfo *MapTypeInfo, err error) {
+	// Parse "map[K]V" format
+	if !strings.HasPrefix(mapStr, "map[") {
+		return 0, 0, "", nil, fmt.Errorf("[Line %d]: invalid map type %q", lineNum, mapStr)
+	}
+
+	// Find the closing bracket for the key
+	rest := mapStr[4:] // Skip "map["
+	bracketDepth := 1
+	keyEnd := -1
+	for i := 0; i < len(rest); i++ {
+		switch rest[i] {
+		case '[':
+			bracketDepth++
+		case ']':
+			bracketDepth--
+			if bracketDepth == 0 {
+				keyEnd = i
+				break
+			}
+		}
+		if keyEnd >= 0 {
+			break
+		}
+	}
+
+	if keyEnd < 0 {
+		return 0, 0, "", nil, fmt.Errorf("[Line %d]: malformed map type %q: missing closing bracket", lineNum, mapStr)
+	}
+
+	keyStr := rest[:keyEnd]
+	valueStr := rest[keyEnd+1:]
+
+	// Parse key type
+	keyType, err = parseScalarType(keyStr)
+	if err != nil {
+		return 0, 0, "", nil, fmt.Errorf("[Line %d]: invalid map key type %q: %w", lineNum, keyStr, err)
+	}
+
+	// Check if key type is valid for maps
+	if !field.IsValidMapKeyType(keyType) {
+		return 0, 0, "", nil, fmt.Errorf("[Line %d]: type %q is not a valid map key type", lineNum, keyStr)
+	}
+
+	// Parse value type
+	if strings.HasPrefix(valueStr, "map[") {
+		// Nested map
+		nestedKey, nestedVal, nestedIdent, nestedNested, err := s.parseMapType(valueStr, lineNum)
+		if err != nil {
+			return 0, 0, "", nil, err
+		}
+		nestedInfo = &MapTypeInfo{
+			KeyType:        nestedKey,
+			ValueType:      nestedVal,
+			ValueIdentName: nestedIdent,
+			NestedMapInfo:  nestedNested,
+		}
+		valType = field.FTMap
+	} else {
+		// Scalar, string, bytes, or struct value
+		valType, err = parseScalarType(valueStr)
+		if err != nil {
+			// Could be a struct type
+			valType = field.FTStruct
+			valIdent = valueStr
+
+			// Check if it's an external type
+			if strings.Contains(valueStr, ".") {
+				sp := strings.Split(valueStr, ".")
+				if len(sp) == 2 {
+					if _, err := s.File.Imports.ByPkgName(sp[0]); err != nil {
+						return 0, 0, "", nil, fmt.Errorf("[Line %d]: found type %q, but %q is not a package we see imported", lineNum, valueStr, sp[0])
+					}
+					s.File.External[valueStr] = nil
+				}
+			}
+		}
+
+		// Validate value type
+		if !field.IsValidMapValueType(valType) && valType != field.FTStruct {
+			return 0, 0, "", nil, fmt.Errorf("[Line %d]: type %q is not a valid map value type", lineNum, valueStr)
+		}
+	}
+
+	return keyType, valType, valIdent, nestedInfo, nil
+}
+
+// parseScalarType converts a type string to a field.Type.
+func parseScalarType(typeStr string) (field.Type, error) {
+	switch typeStr {
+	case "bool":
+		return field.FTBool, nil
+	case "int8":
+		return field.FTInt8, nil
+	case "int16":
+		return field.FTInt16, nil
+	case "int32":
+		return field.FTInt32, nil
+	case "int64":
+		return field.FTInt64, nil
+	case "uint8":
+		return field.FTUint8, nil
+	case "uint16":
+		return field.FTUint16, nil
+	case "uint32":
+		return field.FTUint32, nil
+	case "uint64":
+		return field.FTUint64, nil
+	case "float32":
+		return field.FTFloat32, nil
+	case "float64":
+		return field.FTFloat64, nil
+	case "string":
+		return field.FTString, nil
+	case "bytes":
+		return field.FTBytes, nil
+	default:
+		return field.FTUnknown, fmt.Errorf("unknown type %q", typeStr)
+	}
 }
 
 func caseSensitiveCheck(want string, item string) error {

@@ -14,8 +14,8 @@ import (
 
 	cars "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	vehicles "github.com/bearlytools/claw/testing/imports/vehicles/claw"
 	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )

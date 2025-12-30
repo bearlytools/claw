@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 )
 
 var registry = map[string]interfaces.PackageDescr{}

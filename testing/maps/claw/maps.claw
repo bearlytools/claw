@@ -1,0 +1,21 @@
+package maps
+
+options [ IsSet() ]
+
+Struct Config {
+	Labels map[string]string @0
+	Ports map[string]int32 @1
+	Enabled map[string]bool @2
+	Counts map[int32]int64 @3
+	Ratios map[float64]string @4
+}
+
+Struct ComplexMaps {
+	Settings map[string]Setting @0
+}
+
+Struct Setting {
+	Name string @0
+	Value string @1
+	Priority int32 @2
+}

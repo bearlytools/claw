@@ -74,6 +74,11 @@ func SkipValue(ts *TokenStream, fieldTok Token) error {
 			return nil
 		}
 		return skipList(ts)
+	case field.FTMap:
+		if fieldTok.IsNil {
+			return nil
+		}
+		return skipMap(ts, fieldTok.ValueType)
 	default:
 		// Scalar values are already consumed in the field token
 		return nil
@@ -151,5 +156,42 @@ func skipListStructs(ts *TokenStream) error {
 		if err := skipStruct(ts); err != nil {
 			return err
 		}
+	}
+}
+
+// skipMap consumes and discards a map's tokens (MapStart through MapEnd).
+func skipMap(ts *TokenStream, valueType field.Type) error {
+	tok, ok := ts.Next()
+	if !ok {
+		return fmt.Errorf("expected TokenMapStart, got EOF")
+	}
+	if tok.Kind != TokenMapStart {
+		return fmt.Errorf("expected TokenMapStart, got %v", tok.Kind)
+	}
+
+	for {
+		tok, ok = ts.Next()
+		if !ok {
+			return fmt.Errorf("unexpected EOF while skipping map")
+		}
+		if tok.Kind == TokenMapEnd {
+			return nil
+		}
+		if tok.Kind != TokenMapEntry {
+			return fmt.Errorf("expected TokenMapEntry, got %v", tok.Kind)
+		}
+		// For struct values, we need to skip the nested struct
+		if valueType == field.FTStruct {
+			if err := skipStruct(ts); err != nil {
+				return err
+			}
+		}
+		// For nested maps, we need to skip recursively
+		if valueType == field.FTMap {
+			if err := skipMap(ts, tok.ValueType); err != nil {
+				return err
+			}
+		}
+		// Scalar and string values are already contained in the MapEntry token
 	}
 }

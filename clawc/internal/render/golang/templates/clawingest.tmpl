@@ -415,6 +415,86 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 }
                 x.{{ $field.Name }}Append(item)
             }
+            {{- else if eq $field.TypeAsString "Map" }}
+            if tok.IsNil {
+                continue
+            }
+            mapStartTok, ok := ts.Next()
+            if !ok || mapStartTok.Kind != clawiter.TokenMapStart {
+                return fmt.Errorf("expected TokenMapStart for {{ $field.Name }}")
+            }
+            m := x.{{ $field.Name }}Map()
+            for {
+                entryTok, ok := ts.Next()
+                if !ok {
+                    return fmt.Errorf("unexpected EOF in {{ $field.Name }} map")
+                }
+                if entryTok.Kind == clawiter.TokenMapEnd {
+                    break
+                }
+                if entryTok.Kind != clawiter.TokenMapEntry {
+                    return fmt.Errorf("expected TokenMapEntry for {{ $field.Name }}, got %v", entryTok.Kind)
+                }
+                // Get the key
+                {{- if eq $field.KeyTypeConst "FTString" }}
+                key := entryTok.KeyString()
+                {{- else if eq $field.KeyTypeConst "FTBool" }}
+                key := entryTok.KeyBool()
+                {{- else if eq $field.KeyTypeConst "FTInt8" }}
+                key := entryTok.KeyInt8()
+                {{- else if eq $field.KeyTypeConst "FTInt16" }}
+                key := entryTok.KeyInt16()
+                {{- else if eq $field.KeyTypeConst "FTInt32" }}
+                key := entryTok.KeyInt32()
+                {{- else if eq $field.KeyTypeConst "FTInt64" }}
+                key := entryTok.KeyInt64()
+                {{- else if eq $field.KeyTypeConst "FTUint8" }}
+                key := entryTok.KeyUint8()
+                {{- else if eq $field.KeyTypeConst "FTUint16" }}
+                key := entryTok.KeyUint16()
+                {{- else if eq $field.KeyTypeConst "FTUint32" }}
+                key := entryTok.KeyUint32()
+                {{- else if eq $field.KeyTypeConst "FTUint64" }}
+                key := entryTok.KeyUint64()
+                {{- else if eq $field.KeyTypeConst "FTFloat32" }}
+                key := entryTok.KeyFloat32()
+                {{- else if eq $field.KeyTypeConst "FTFloat64" }}
+                key := entryTok.KeyFloat64()
+                {{- end }}
+                // Get the value
+                {{- if $field.ValueIdentName }}
+                // Struct value - ingest from following struct tokens
+                value := {{ if $field.ValueIsExternal }}{{ $field.ValuePackage }}.New{{ $field.ValueIdentName }}(ctx){{ else }}New{{ $field.ValueIdentName }}(ctx){{ end }}
+                if err := value.XXXIngestFrom(ctx, ts, opts); err != nil {
+                    return fmt.Errorf("ingesting {{ $field.Name }}[%v]: %w", key, err)
+                }
+                m.Set(key, value.XXXGetStruct())
+                {{- else if eq $field.ValueTypeConst "FTString" }}
+                m.Set(key, entryTok.String())
+                {{- else if eq $field.ValueTypeConst "FTBool" }}
+                m.Set(key, entryTok.Bool())
+                {{- else if eq $field.ValueTypeConst "FTInt8" }}
+                m.Set(key, entryTok.Int8())
+                {{- else if eq $field.ValueTypeConst "FTInt16" }}
+                m.Set(key, entryTok.Int16())
+                {{- else if eq $field.ValueTypeConst "FTInt32" }}
+                m.Set(key, entryTok.Int32())
+                {{- else if eq $field.ValueTypeConst "FTInt64" }}
+                m.Set(key, entryTok.Int64())
+                {{- else if eq $field.ValueTypeConst "FTUint8" }}
+                m.Set(key, entryTok.Uint8())
+                {{- else if eq $field.ValueTypeConst "FTUint16" }}
+                m.Set(key, entryTok.Uint16())
+                {{- else if eq $field.ValueTypeConst "FTUint32" }}
+                m.Set(key, entryTok.Uint32())
+                {{- else if eq $field.ValueTypeConst "FTUint64" }}
+                m.Set(key, entryTok.Uint64())
+                {{- else if eq $field.ValueTypeConst "FTFloat32" }}
+                m.Set(key, entryTok.Float32())
+                {{- else if eq $field.ValueTypeConst "FTFloat64" }}
+                m.Set(key, entryTok.Float64())
+                {{- end }}
+            }
             {{- end }}
         {{- end }}
         default:

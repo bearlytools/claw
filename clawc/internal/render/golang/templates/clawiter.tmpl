@@ -528,6 +528,143 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
                 }
             }
         }
+        {{- else if eq $field.TypeAsString "Map" }}
+        {
+            m := x.{{ $field.Name }}Map()
+            if m.Len() == 0 {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTMap, KeyType: field.{{ $field.KeyTypeConst }}, ValueType: field.{{ $field.ValueTypeConst }}, IsNil: true{{- if $field.ValueIdentName }}, StructName: "{{ $field.ValueIdentName }}"{{- end }}}) {
+                    return
+                }
+            } else {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTMap, KeyType: field.{{ $field.KeyTypeConst }}, ValueType: field.{{ $field.ValueTypeConst }}{{- if $field.ValueIdentName }}, StructName: "{{ $field.ValueIdentName }}"{{- end }}}) {
+                    return
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenMapStart, Name: "{{ $field.Name }}", KeyType: field.{{ $field.KeyTypeConst }}, ValueType: field.{{ $field.ValueTypeConst }}, Len: m.Len()}) {
+                    return
+                }
+                for k, v := range m.All() {
+                    {{- if $field.ValueIdentName }}
+                    // Map with struct values
+                    tok := clawiter.Token{Kind: clawiter.TokenMapEntry, Name: "{{ $field.Name }}", KeyType: field.{{ $field.KeyTypeConst }}, ValueType: field.{{ $field.ValueTypeConst }}, StructName: "{{ $field.ValueIdentName }}"}
+                    {{- else }}
+                    tok := clawiter.Token{Kind: clawiter.TokenMapEntry, Name: "{{ $field.Name }}", KeyType: field.{{ $field.KeyTypeConst }}, ValueType: field.{{ $field.ValueTypeConst }}}
+                    {{- end }}
+                    // Set the key
+                    {{- if eq $field.KeyTypeConst "FTString" }}
+                    tok.KeyBytes = []byte(k)
+                    {{- else if eq $field.KeyTypeConst "FTBool" }}
+                    tok.SetKeyBool(k)
+                    {{- else if eq $field.KeyTypeConst "FTInt8" }}
+                    tok.SetKeyInt8(k)
+                    {{- else if eq $field.KeyTypeConst "FTInt16" }}
+                    tok.SetKeyInt16(k)
+                    {{- else if eq $field.KeyTypeConst "FTInt32" }}
+                    tok.SetKeyInt32(k)
+                    {{- else if eq $field.KeyTypeConst "FTInt64" }}
+                    tok.SetKeyInt64(k)
+                    {{- else if eq $field.KeyTypeConst "FTUint8" }}
+                    tok.SetKeyUint8(k)
+                    {{- else if eq $field.KeyTypeConst "FTUint16" }}
+                    tok.SetKeyUint16(k)
+                    {{- else if eq $field.KeyTypeConst "FTUint32" }}
+                    tok.SetKeyUint32(k)
+                    {{- else if eq $field.KeyTypeConst "FTUint64" }}
+                    tok.SetKeyUint64(k)
+                    {{- else if eq $field.KeyTypeConst "FTFloat32" }}
+                    tok.SetKeyFloat32(k)
+                    {{- else if eq $field.KeyTypeConst "FTFloat64" }}
+                    tok.SetKeyFloat64(k)
+                    {{- end }}
+                    // Set the value
+                    {{- if $field.ValueIdentName }}
+                    // Struct value - will be followed by struct walk
+                    if !yield(tok) {
+                        return
+                    }
+                    if v != nil {
+                        {{- if $field.ValueIsExternal }}
+                        wrapped := {{ $field.ValuePackage }}.XXXNew{{ $field.ValueIdentName }}From(v)
+                        {{- else }}
+                        wrapped := XXXNew{{ $field.ValueIdentName }}From(v)
+                        {{- end }}
+                        for structTok := range wrapped.Walk() {
+                            if !yield(structTok) {
+                                return
+                            }
+                        }
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTString" }}
+                    tok.Bytes = []byte(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTBool" }}
+                    tok.SetBool(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTInt8" }}
+                    tok.SetInt8(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTInt16" }}
+                    tok.SetInt16(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTInt32" }}
+                    tok.SetInt32(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTInt64" }}
+                    tok.SetInt64(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTUint8" }}
+                    tok.SetUint8(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTUint16" }}
+                    tok.SetUint16(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTUint32" }}
+                    tok.SetUint32(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTUint64" }}
+                    tok.SetUint64(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTFloat32" }}
+                    tok.SetFloat32(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTFloat64" }}
+                    tok.SetFloat64(v)
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else }}
+                    // Other value types
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- end }}
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenMapEnd, Name: "{{ $field.Name }}"}) {
+                    return
+                }
+            }
+        }
         {{- end }}
         {{- end }}
 

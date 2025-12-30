@@ -1,8 +1,8 @@
 package interfaces
 
 import (
-	"github.com/bearlytools/claw/clawc/internal/pragma"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/pragma"
 	"golang.org/x/exp/constraints"
 )
 
@@ -98,6 +98,37 @@ type List interface {
 	// New returns a newly allocated and mutable empty Struct value. This can
 	// only be used if the List represents a list of Struct values.
 	New() Struct
+
+	doNotImplement
+}
+
+// Map provides access to Claw's map types.
+type Map interface {
+	// KeyType returns the type of map keys.
+	KeyType() field.Type
+
+	// ValueType returns the type of map values.
+	ValueType() field.Type
+
+	// Len reports the number of entries in the Map.
+	Len() int
+
+	// Has returns whether a key exists in the map.
+	Has(key Value) bool
+
+	// Get retrieves the value for a key. Returns nil if the key doesn't exist.
+	Get(key Value) Value
+
+	// Set stores a key-value pair in the map.
+	Set(key Value, val Value)
+
+	// Delete removes a key from the map.
+	Delete(key Value)
+
+	// Range iterates over all key-value pairs in the map.
+	// The iteration order is sorted by key.
+	// Range returns immediately if f returns false.
+	Range(f func(key, val Value) bool)
 
 	doNotImplement
 }
@@ -213,6 +244,14 @@ type FieldDescr interface {
 	// ItemType returns the name of a Struct if the field is a list of Struct values.
 	// If not, this panics.
 	ItemType() string
+	// IsMap indicates if this field is a map type.
+	IsMap() bool
+	// MapKeyType returns the key type for map fields.
+	// Panics if the field is not a map.
+	MapKeyType() field.Type
+	// MapValueType returns the value type for map fields.
+	// Panics if the field is not a map.
+	MapValueType() field.Type
 }
 
 // Value represents a read-only Claw value. This can be used to retrieve a value or
@@ -236,6 +275,8 @@ type Value interface {
 	Uint() uint64
 	// List returns the List value stored in Value. If Value is not some list type, this will panic.
 	List() List
+	// Map returns the Map value stored in Value. If Value is not a map type, this will panic.
+	Map() Map
 	// Struct returns the Struct value stored in Value. If Value is not a Struct type, this will panic.
 	Struct() Struct
 }

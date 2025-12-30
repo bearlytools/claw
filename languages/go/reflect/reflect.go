@@ -1,9 +1,9 @@
 package reflect
 
 import (
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/enums"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
-	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/value"
+	"github.com/bearlytools/claw/languages/go/reflect/enums"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
+	"github.com/bearlytools/claw/languages/go/reflect/internal/value"
 	"github.com/bearlytools/claw/clawc/languages/go/segment"
 )
 
@@ -43,6 +43,9 @@ type EnumGroups = interfaces.EnumGroups
 // List provides access to one of Claw's list types from the int family, uint family,
 // lists of bytes/string or list of structs.
 type List = interfaces.List
+
+// Map provides access to Claw's map types with typed key-value pairs.
+type Map = interfaces.Map
 
 // The following types expose internal types for in generated claw files. Like all
 // XXX* types, these are for internal use only.

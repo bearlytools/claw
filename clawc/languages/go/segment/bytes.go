@@ -214,6 +214,12 @@ func parseFieldIndex(s *Struct) {
 	for pos+HeaderSize <= len(data) {
 		fieldNum, fieldType, final40 := DecodeHeader(data[pos : pos+HeaderSize])
 
+		// Stop if we hit an invalid field type (e.g., padding zeros)
+		// Field type 0 is not a valid type - it indicates we've hit padding
+		if fieldType == 0 {
+			break
+		}
+
 		// Calculate total field size based on type
 		var fieldSize int
 		switch fieldType {
@@ -238,6 +244,10 @@ func parseFieldIndex(s *Struct) {
 			numBytes := (count + 7) / 8
 			padding := paddingNeeded(numBytes)
 			fieldSize = HeaderSize + numBytes + padding
+		case field.FTMap:
+			// Map: decode size from final40 (bits 16-39)
+			_, _, totalSize := DecodeMapHeader(data[pos : pos+HeaderSize])
+			fieldSize = int(totalSize)
 		default:
 			// Lists and other types: final40 is total size including header
 			if field.IsListType(fieldType) {

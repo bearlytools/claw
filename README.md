@@ -1,90 +1,177 @@
 # Claw
 
-![Claw Logo](docs/claw_logo.svg)
+<p align="center">
+  <img src="docs/claw_logo_light.svg" alt="Claw Logo" width="200">
+</p>
 
-Claw's provides an easy alternative to Protocol Buffers that is free, performant and easy to use.
-The format is open and we currently supply code generation for Go.
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![GoDoc](https://godoc.org/github.com/bearlytools/claw?status.svg)](https://pkg.go.dev/github.com/bearlytools/claw)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bearlytools/claw)](https://goreportcard.com/report/github.com/bearlytools/claw)
+![Go version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)
 
-The whys for using it:
+Since you've made it this far, why don't you hit that :star: up in the right corner.
 
-* Language generation is simple and easy to use, unlike protoc
-* Lazy decode, which makes processing messages much faster
-* With no changes to any fields, encoding a received message does not requires re-encoding
-* Provides the ability to send patches for changes and apply them instead of sending entire messages
-* RPC system that can use TCP, HTTP 1.1/2 and Unix Domain Sockets
-* Supports reflection 
-* Can detect fields being set vs just having the zero value via an option 
-* Uses Getters and Setters and no raw field access. This allows future optimizations without breaking some weird corner case.
+<p align="center">
+  <strong>A fast, zero-allocation binary serialization format with code generation</strong>
+</p>
 
-The why nots:
+---
 
-* Proto has better language support
-* Proto is supported by Google (kinda, most of the Go protocol buffer people left years ago)
-* Claw is bigger on the wire due to fixed sizes and padding vs variable length encoding
+Claw is a binary serialization format and IDL (Interface Definition Language) designed for performance-critical applications. It prioritizes machine efficiency over wire size, offering lazy decoding and minimal heap allocations.
 
-### Goals:
+## Features
 
-* Be friendly to the machine at the cost of wire size
-* Zero heap allocations for data conversion to scaler types (for Go, Rust and C++)
-* Lazy init, which has proven to be substantial faster for messages
-* Close to zero heap allocations for decode
-* One pass encode/decode
-* Supportable in Go, Rust, Zig, Javascript
-* Import statements that make sense instead of that protoc nonsense
-* Allow any type of serialization on top of our binary serialization if the other format can support our types
-* The binary format should be fairly easy to understand if you understand binary file formats
-* Detection of zero value vs not set
+- **Lazy Decoding** - Only decode fields when accessed, significantly improving performance for large messages
+- **Zero Heap Allocations** - Scalar type conversions require no heap allocations for languages that can support it
+- **No Re-encoding** - Unchanged messages can be forwarded without re-encoding overhead
+- **Message Patching** - Send and apply incremental patches instead of full messages
+- **Built-in RPC** - Supports TCP, HTTP/1.1, HTTP/2, and Unix Domain Sockets
+- **Reflection Support** - Runtime introspection of message structure
+- **Set Detection** - Distinguish between unset fields and zero values via an option
+- **Simple Tooling** - Single `clawc` binary handles all code generation
 
-### Non-goals:
-* Human readable output
-* Smaller wire size (we want speed for the cost of size)
+## Quick Start
 
-## Why not Protocol Buffers:
+### Installation
 
-* Protoc - really you don't need much more than that
-* Proto2/Proto3 both have features I want and don't want, not a combination of both
-	* Proto2 - detect nil vs zero values, but I get pointers everywhere
-	* Proto3 - have zero values only except for Message types
-	* ProtocDateTime - This is more confusing than ever and annoying
-* Allocations - proto has to allocate more often, which eventually bogs down GC languages
-* Pointer values are not processor cache friendlyg
+```bash
+go install github.com/bearlytools/claw/clawc@latest
+```
 
-You might say, why not use `buf.build` tooling for your protoc problems.  I think `buf` is great, but using it in any substantial way requires me to pay. I don't want to figure out how to get my company to pay for their service (it is really easier to roll my own than to navigate what I'm sure would be a bunch of nonsense).  You can hack on `buf cli` tools to let you get around the pay model, but I feel *icky* about that. 
+### Define a Schema
 
-If you need rock solid support for every language and based on an IDL that has been around for years + can figure out how to get your company to pay for it, `buf` is the way to go. 
+Create a `cars.claw` file:
 
-SERIOUSLY, if you need support of every language and need some rock solid support, go check out `buf.build`. Combine their tools with their `connect.build` and you've got yourself some good stuff there. I'm some guy who spent several years in his free time coming up with the format and the tools. I don't get paid for this and while I will work on bugs, it isn't my job.
+```claw
+package cars
 
-Finally, I wanted zero allocations for reads and proto isn't going to provide me that (though Google's internal versions are much better in this regards). Proto is just built on too much legacy stuff and is kind of a mess between proto versions 1 - 3. Now they have releases with various dates, which to me is even worse.
+import (
+    "github.com/example/vins"
+)
 
-## Why not Capt'n Proto:
+enum Maker uint8 {
+    Unknown @0
+    Toyota @1
+    Ford @2
+    Chevy @3
+}
 
-Look, that guy is a genius. But the format is hard to understand (I don't know how many times I read his format document before I "got" it, or it could be because I'm dumb).
+Struct Car {
+    Name string @0
+    Maker Maker @1
+    Year uint16 @2
+    Vin vins.Number @3
+    PreviousVersions []Car @4
+    Image bytes @5
+}
+```
 
-The RPC mechanism is nuts.  Only he has been able to write an implementation and just for C++ that supports I think more than level 2 support.
-Every other language that does simply is loading the C++. And the Go maintainer has left the building the last time I checked.
+### Setup claw.mod and claw.work files 
 
-I don't want to write every implementation of this, so the format has to be easy to understand (at least for people who know how to write binary encoding formats) and the RPC system has to be fairly easy to implement and work with tooling.
 
-However, I learned a lot by looking at the code and format. The biggest benefit to my code was their segment based constructor. This killed allocations and marshal times. I hear Google's internal protocol buffer implementation moved to something like this, so I think they learned from him too. That is likely the whole reason they have an exerimental arena allocator that has not been removed.
+### Generate Code
 
-Is mine better than his..... Mine is easier to use for Go, my primary language.  The little benchmarking I've done shows mine to be slightly faster in the specific cases I tested. But my guess is that his is better and if you can use his time travelling RPCs, probably much better. He's smarter than I am so I'd err to him.  
+```bash
+cd <.claw file directory> && clawc
+```
 
-## Why not Flat Buffers:
+### Use in Go
 
-If you make a Message 3 levels deep with some lists, you will figure it out.  Its just hard to use. Also
-the Go version doesn't do bounds checks and the code panics on any error. And the performance wasn't really there when I tested it for various use cases I had. However, I had some questions for the author at some point and he was nice/very responsive.
+```go
+car := cars.NewCarFromRaw(
+	cars.CarRaw{
+		Name: "Chevelle",
+		Maker: cars.Chevy,
+		Year: 2024,
+	}
+)
 
-## Why not Thrift:
+// Encode
+data := car.Marshal()
 
-I just didn't like the syntax and how it layed out.  I've also never met anyone going to Thrift or pushing Thrift. Nowadays if I mention Thrift, people ask "what is that".
+// Decode (lazy - fields decoded on access)
+decoded, err := cars.UnmarshalCar(data)
+if err != nil {
+	// Do something
+}
+fmt.Println(decoded.Name())  // Fields decoded only when accessed
+```
 
-That doesn't say much for it.
+## Documentation
 
-## One more reason 
+| Document | Description |
+|----------|-------------|
+| [Schema Language](docs/schema_language/schema_language.md) | Complete IDL syntax reference |
+| [Modules](docs/modules/modules.md) | Package and import system |
+| [Compilation](docs/compilation/compilation.md) | How `clawc` processes files |
+| [Encoding](docs/encoding/encoding.md) | Binary wire format specification |
+| [Replace](docs/replace/replace.md) | Local development with replace directives |
 
-I really wanted to build my own IDL with my own format. 99% of the time I have to use crappy REST + JSON. Whem I'm lucky, I get to use grpc + proto.  
+## Design Goals
 
-There are some proto extensions that make proto better, like VTPROTO.  But most people don't use that or even know about it.  
+- Machine-friendly binary format optimized for decode speed
+- Zero heap allocations for data access in Go, Rust, and C++
+- Single-pass encode/decode operations
+- Support for Go, Rust, Zig, and JavaScript
+- Intuitive import system (no `protoc` path gymnastics)
+- Extensible serialization (JSON export support)
+- Clear binary format specification
 
-So I've now got my own format that hopefully will keep me happy and learned some things along the way.
+## Trade-offs
+
+Claw optimizes for **speed over size**. The wire format uses fixed-size encodings and alignment padding rather than variable-length encoding. If minimizing bandwidth is your primary concern, Protocol Buffers or similar formats may be more appropriate.
+
+## Comparison with Alternatives
+
+### vs Protocol Buffers
+
+Protocol Buffers is the industry standard with excellent language support and Google's backing. Choose Claw when:
+
+- You need lazy decoding for large messages
+- Heap allocations are a concern (GC pressure in high-throughput systems)
+- You want simpler tooling than `protoc` + plugins
+- You need to detect unset fields vs zero values without proto3 wrapper types
+
+Choose Protocol Buffers when:
+
+- You need broad language support
+- You need enterprise support or compliance requirements
+- Wire size is more important than decode speed
+- You're already invested in the protobuf ecosystem
+
+### vs Cap'n Proto
+
+Cap'n Proto pioneered zero-copy serialization. Claw borrows the segment-based allocation strategy. Choose Claw when:
+
+- You find Cap'n Proto's format difficult to implement
+- You need an RPC system that's easier to port across languages
+- You primarily work in Go
+
+Choose Cap'n Proto when:
+
+- You need the absolute fastest possible serialization
+- You can use the C++ implementation or its bindings
+- You need time-traveling RPC capabilities
+
+### vs FlatBuffers
+
+FlatBuffers offers zero-copy access patterns. Choose Claw when:
+
+- You need better ergonomics for nested structures
+- You want bounds checking and clear error handling
+- You need consistent performance across different message shapes
+
+## Current Status
+
+- **Go**: Full support including RPC
+- **Rust, Zig, JavaScript, Python**: Future plans
+
+## Limited Benchmarks
+
+## Contributing
+
+Contributions are welcome. Please open an issue to discuss significant changes before submitting a PR.
+
+## License
+
+[MIT License](LICENSE) - Copyright (c) 2025 John G. Doak

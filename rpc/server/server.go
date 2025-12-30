@@ -7,6 +7,8 @@ import (
 
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
+
+	"github.com/bearlytools/claw/rpc/internal/msgs"
 )
 
 // Common errors.
@@ -18,12 +20,21 @@ var (
 // Option configures a Server.
 type Option func(*Server)
 
+// WithCompression sets the default compression algorithm for server responses.
+// Use msgs.CmpNone to disable compression (default).
+func WithCompression(alg msgs.Compression) Option {
+	return func(s *Server) {
+		s.defaultCompression = alg
+	}
+}
+
 // Server handles RPC connections and dispatches to registered handlers.
 type Server struct {
-	registry *Registry
-	conns    map[*ServerConn]struct{}
-	mu       sync.Mutex
-	closed   bool
+	registry           *Registry
+	conns              map[*ServerConn]struct{}
+	mu                 sync.Mutex
+	closed             bool
+	defaultCompression msgs.Compression
 }
 
 // New creates a new RPC server.
@@ -55,7 +66,7 @@ func (s *Server) Serve(ctx context.Context, transport io.ReadWriteCloser) error 
 		return ErrClosed
 	}
 
-	conn := newServerConn(ctx, s, transport)
+	conn := newServerConn(ctx, s, transport, s.defaultCompression)
 	s.conns[conn] = struct{}{}
 	s.mu.Unlock()
 
