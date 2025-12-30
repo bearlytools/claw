@@ -1,137 +1,90 @@
 package value
 
 import (
-	"fmt"
-	"math"
-	"unsafe"
-
-	"github.com/bearlytools/claw/clawc/internal/binary"
-	"github.com/bearlytools/claw/clawc/internal/bits"
-	"github.com/bearlytools/claw/clawc/languages/go/conversions"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
-	"github.com/bearlytools/claw/clawc/languages/go/structs"
 )
-
-const maxDataSize = 1099511627775
 
 // ValueOfBool returns a Value that represents bool.
 func ValueOfBool(v bool) Value {
-	h := structs.NewGenericHeader()
-	h.SetFieldType(field.FTBool)
-	n := conversions.BytesToNum[uint64](h)
-	*n = bits.SetBit(*n, 24, v)
-	return Value{h: h}
+	return Value{
+		ft:        field.FTBool,
+		boolVal:   v,
+		hasScalar: true,
+	}
 }
 
-// ValueOfBytes returns a Value that represents []byte. Cannot be nil.
+// ValueOfBytes returns a Value that represents []byte. Can be nil.
 func ValueOfBytes(v []byte) Value {
-	return valueOfBytes(v, false)
+	return Value{
+		ft:       field.FTBytes,
+		bytesVal: v,
+	}
 }
 
-// ValueOfString returns a Value that represents a string. A string cannot be empty.
+// ValueOfString returns a Value that represents a string.
 func ValueOfString(v string) Value {
-	return valueOfBytes(conversions.UnsafeGetBytes(v), true)
-}
-
-// valueOfBytes returns a value representing a []byte. v cannot be nil or have 0 length
-// or this will panic. Also, cannot be larger than size 1099511627775.
-func valueOfBytes(v []byte, isString bool) Value {
-	if len(v) == 0 {
-		panic("cannot encode an empty Bytes value")
+	return Value{
+		ft:        field.FTString,
+		stringVal: v,
 	}
-
-	if len(v) > maxDataSize {
-		panic("cannot set a String or Byte field to size > 1099511627775")
-	}
-
-	ftype := field.FTBytes
-	if isString {
-		ftype = field.FTString
-	}
-
-	h := structs.NewGenericHeader()
-	h.SetFieldType(ftype)
-	h.SetFinal40(uint64(len(v)))
-
-	return Value{h: h, ptr: unsafe.Pointer(&v)}
 }
 
 // ValueOfEnum returns a Value that represents an enumerator.
 func ValueOfEnum[N ~uint8 | ~uint16](v N, enumGroup interfaces.EnumGroup) Value {
-	e := numberValue(v)
-	e.isEnum = true
-	e.enumGroup = enumGroup
-	return e
-}
-
-// value.ValueOfNumber will return Value representing a number type.
-func ValueOfNumber[N interfaces.Number](v N) Value {
-	return numberValue(v)
-}
-
-func numberValue[N interfaces.Number](v N) Value {
-	size := 0
-	ft := field.FTUnknown
-	isFloat := false
+	val := Value{
+		isEnum:    true,
+		enumGroup: enumGroup,
+		uintVal:   uint64(v),
+		hasScalar: true,
+	}
+	// Set the field type based on the enum size
 	switch any(v).(type) {
 	case uint8:
-		size = 8
-		ft = field.FTUint8
-	case int8:
-		size = 8
-		ft = field.FTInt8
+		val.ft = field.FTUint8
 	case uint16:
-		size = 16
-		ft = field.FTUint16
+		val.ft = field.FTUint16
+	}
+	return val
+}
+
+// ValueOfNumber returns a Value representing a number type.
+func ValueOfNumber[N interfaces.Number](v N) Value {
+	val := Value{hasScalar: true}
+
+	switch any(v).(type) {
+	case int8:
+		val.ft = field.FTInt8
+		val.intVal = int64(v)
 	case int16:
-		size = 16
-		ft = field.FTInt16
-	case uint32:
-		size = 32
-		ft = field.FTUint32
+		val.ft = field.FTInt16
+		val.intVal = int64(v)
 	case int32:
-		size = 32
-		ft = field.FTInt32
-	case uint64:
-		size = 64
-		ft = field.FTUint64
+		val.ft = field.FTInt32
+		val.intVal = int64(v)
 	case int64:
-		size = 64
-		ft = field.FTInt64
+		val.ft = field.FTInt64
+		val.intVal = int64(v)
+	case uint8:
+		val.ft = field.FTUint8
+		val.uintVal = uint64(v)
+	case uint16:
+		val.ft = field.FTUint16
+		val.uintVal = uint64(v)
+	case uint32:
+		val.ft = field.FTUint32
+		val.uintVal = uint64(v)
+	case uint64:
+		val.ft = field.FTUint64
+		val.uintVal = uint64(v)
 	case float32:
-		size = 32
-		ft = field.FTFloat32
-		isFloat = true
+		val.ft = field.FTFloat32
+		val.floatVal = float64(v)
 	case float64:
-		size = 64
-		ft = field.FTFloat64
-		isFloat = true
-	default:
-		panic(fmt.Sprintf("unsupported number type: %T", v))
+		val.ft = field.FTFloat64
+		val.floatVal = float64(v)
 	}
-
-	// Convert value to uint64.
-	var i uint64
-	if isFloat {
-		if size == 64 {
-			i = math.Float64bits(float64(v))
-		} else {
-			i = uint64(math.Float32bits(float32(v)))
-		}
-	} else {
-		i = uint64(v)
-	}
-
-	h := structs.NewGenericHeader()
-	h.SetFieldType(ft)
-	if size == 64 {
-		b := make([]byte, 8)
-		binary.Put(b, i)
-		return Value{h: h, ptr: unsafe.Pointer(&b)}
-	}
-	h.SetFinal40(i)
-	return Value{h: h}
+	return val
 }
 
 // ValueOfList returns a Value that represents List.
@@ -147,6 +100,7 @@ func ValueOfStruct(v interfaces.Struct) Value {
 		panic("v cannot be nil")
 	}
 	return Value{
+		ft:      field.FTStruct,
 		aStruct: v,
 	}
 }

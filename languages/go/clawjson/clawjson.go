@@ -3,6 +3,7 @@ package clawjson
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -311,7 +312,7 @@ func (a *Array) Reset(w io.Writer) {
 
 // Ingester is an interface for ingesting Claw tokens into a struct.
 type Ingester interface {
-	IngestWithOptions(iter.Seq[clawiter.Token], clawiter.IngestOptions) error
+	IngestWithOptions(context.Context, iter.Seq[clawiter.Token], clawiter.IngestOptions) error
 }
 
 // unmarshalOptions provides options for reading JSON into Claw structs.
@@ -331,12 +332,12 @@ func WithIgnoreUnknownFields(ignore bool) UnmarshalOption {
 }
 
 // Unmarshal parses JSON data and populates the Ingester.
-func Unmarshal(data []byte, v Ingester, options ...UnmarshalOption) error {
-	return UnmarshalReader(bytes.NewReader(data), v, options...)
+func Unmarshal(ctx context.Context, data []byte, v Ingester, options ...UnmarshalOption) error {
+	return UnmarshalReader(ctx, bytes.NewReader(data), v, options...)
 }
 
 // UnmarshalReader parses JSON from a reader and populates the Ingester.
-func UnmarshalReader(r io.Reader, v Ingester, options ...UnmarshalOption) error {
+func UnmarshalReader(ctx context.Context, r io.Reader, v Ingester, options ...UnmarshalOption) error {
 	opts := unmarshalOptions{}
 	for _, opt := range options {
 		var err error
@@ -350,7 +351,7 @@ func UnmarshalReader(r io.Reader, v Ingester, options ...UnmarshalOption) error 
 	ingestOpts := clawiter.IngestOptions{
 		IgnoreUnknownFields: opts.IgnoreUnknownFields,
 	}
-	return v.IngestWithOptions(tokens, ingestOpts)
+	return v.IngestWithOptions(ctx, tokens, ingestOpts)
 }
 
 // jsonToTokens parses JSON and yields Claw tokens.

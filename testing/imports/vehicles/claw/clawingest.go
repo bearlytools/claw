@@ -4,32 +4,32 @@
 package vehicles
 
 import (
+    "context"
     "fmt"
     "iter"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
-    "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
 )
 
 // Ensure imports are used.
+var _ context.Context
 var _ = fmt.Errorf
 var _ = field.FTBool
-var _ list.Bools
 
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Vehicle) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *Vehicle) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
-    return x.XXXIngestFrom(ts, opts)
+    return x.XXXIngestFrom(ctx, ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *Vehicle) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")
@@ -63,8 +63,8 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
             if tok.IsNil {
                 continue
             }
-            nested := cars.NewCar()
-            if err := nested.XXXIngestFrom(ts, opts); err != nil {
+            nested := cars.NewCar(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
                 return fmt.Errorf("ingesting Car: %w", err)
             }
             x.SetCar(nested)
@@ -85,8 +85,8 @@ func (x *Vehicle) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOp
                     ts.Next() // consume the ListEnd
                     break
                 }
-                item := trucks.NewTruck()
-                if err := item.XXXIngestFrom(ts, opts); err != nil {
+                item := trucks.NewTruck(ctx)
+                if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Truck[]: %w", err)
                 }
                 x.TruckAppend(item)

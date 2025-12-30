@@ -90,23 +90,16 @@ func (s *BiDirStream) Send(payload []byte) error {
 // Recv returns an iterator over received payloads.
 func (s *BiDirStream) Recv() iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
-		for {
-			select {
-			case <-s.cancelCh:
+		for p := range s.recvCh {
+			payload := p.Payload()
+			if p.EndStream() && len(payload) == 0 {
 				return
-			case p := <-s.recvCh:
-				payload := p.Payload()
-				endStream := p.EndStream()
-				// If EndStream with no payload, just exit without yielding.
-				if endStream && len(payload) == 0 {
-					return
-				}
-				if !yield(payload) {
-					return
-				}
-				if endStream {
-					return
-				}
+			}
+			if !yield(payload) {
+				return
+			}
+			if p.EndStream() {
+				return
 			}
 		}
 	}
@@ -201,23 +194,16 @@ func newRecvStream(sessionID uint32, conn *ServerConn, recvCh chan msgs.Payload,
 // Recv returns an iterator over received payloads.
 func (s *RecvStream) Recv() iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
-		for {
-			select {
-			case <-s.cancelCh:
+		for p := range s.recvCh {
+			payload := p.Payload()
+			if p.EndStream() && len(payload) == 0 {
 				return
-			case p := <-s.recvCh:
-				payload := p.Payload()
-				endStream := p.EndStream()
-				// If EndStream with no payload, just exit without yielding.
-				if endStream && len(payload) == 0 {
-					return
-				}
-				if !yield(payload) {
-					return
-				}
-				if endStream {
-					return
-				}
+			}
+			if !yield(payload) {
+				return
+			}
+			if p.EndStream() {
+				return
 			}
 		}
 	}

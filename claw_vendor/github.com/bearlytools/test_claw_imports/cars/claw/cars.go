@@ -14,7 +14,6 @@ import (
     "github.com/bearlytools/claw/clawc/languages/go/reflect"
     "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
     "github.com/bearlytools/claw/clawc/languages/go/segment"
-    "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
@@ -30,7 +29,6 @@ var (
     _ reflect.StructDescr
     _ = runtime.RegisterPackage
     _ segment.Struct
-    _ list.Bools
     _ = field.FTBool
 )
 
@@ -90,17 +88,9 @@ type Car struct {
    s *segment.Struct
 }
 
-// NewCar creates a new instance of Car.
-func NewCar() Car {
-    s := segment.New(XXXMappingCar)
-    return Car{
-        s: s,
-    }
-}
-
-// NewCarPooled creates a pooled instance of Car.
+// NewCar creates a new pooled instance of Car.
 // Call Release() when done to return it to the pool for reuse.
-func NewCarPooled(ctx context.Context) Car {
+func NewCar(ctx context.Context) Car {
     s := segment.NewPooled(ctx, XXXMappingCar)
     return Car{
         s: s,
@@ -174,9 +164,8 @@ func (x Car) SetYear(value uint16) Car {
 
 
 // ClawStruct returns a reflection type representing the Struct.
-// Note: Segment runtime does not fully support reflection yet.
 func (x Car) ClawStruct() reflect.Struct{
-    panic("segment runtime: ClawStruct not yet implemented")
+    return reflect.XXXNewStruct(x.s, x.XXXDescr())
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
@@ -187,11 +176,6 @@ func (x Car) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
-// Recycle is a no-op for segment runtime.
-// Segment runtime uses simpler memory management.
-func (x Car) Recycle(ctx context.Context) {
-    // No-op for segment runtime
-}
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

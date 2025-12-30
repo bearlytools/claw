@@ -14,7 +14,6 @@ import (
     "github.com/bearlytools/claw/clawc/languages/go/reflect"
     "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
     "github.com/bearlytools/claw/clawc/languages/go/segment"
-    "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
 )
@@ -29,7 +28,6 @@ var (
     _ reflect.StructDescr
     _ = runtime.RegisterPackage
     _ segment.Struct
-    _ list.Bools
     _ = field.FTBool
 )
 

@@ -2,6 +2,7 @@ package benchmark
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 
@@ -11,7 +12,6 @@ import (
 	capnpod "github.com/bearlytools/claw/benchmark/msgs/capn"
 	clawpod "github.com/bearlytools/claw/benchmark/msgs/claw"
 	protopod "github.com/bearlytools/claw/benchmark/msgs/proto"
-	"github.com/bearlytools/claw/clawc/languages/go/types/list"
 )
 
 const listSize = 10
@@ -334,7 +334,7 @@ func createProtoPodStatus() *protopod.PodStatus {
 
 // Helper to create a populated Claw Pod
 func createClawPod() clawpod.Pod {
-	pod := clawpod.NewPod()
+	pod := clawpod.NewPod(context.Background())
 	pod = pod.SetTypeMeta(createClawTypeMeta())
 	pod = pod.SetMetadata(createClawObjectMeta())
 	pod = pod.SetSpec(createClawPodSpec())
@@ -343,14 +343,14 @@ func createClawPod() clawpod.Pod {
 }
 
 func createClawTypeMeta() clawpod.TypeMeta {
-	tm := clawpod.NewTypeMeta()
+	tm := clawpod.NewTypeMeta(context.Background())
 	tm = tm.SetKind("Pod")
 	tm = tm.SetApiVersion("v1")
 	return tm
 }
 
 func createClawObjectMeta() clawpod.ObjectMeta {
-	om := clawpod.NewObjectMeta()
+	om := clawpod.NewObjectMeta(context.Background())
 	om = om.SetName("test-pod")
 	om = om.SetGenerateName("test-pod-")
 	om = om.SetNamespace("default")
@@ -359,14 +359,14 @@ func createClawObjectMeta() clawpod.ObjectMeta {
 	om = om.SetResourceVersion("12345")
 	om = om.SetGeneration(1)
 
-	ct := clawpod.NewTime()
+	ct := clawpod.NewTime(context.Background())
 	ct = ct.SetSeconds(1703721600)
 	ct = ct.SetNanos(0)
 	om = om.SetCreationTimestamp(ct)
 
 	labels := make([]clawpod.KeyValue, listSize)
 	for i := 0; i < listSize; i++ {
-		kv := clawpod.NewKeyValue()
+		kv := clawpod.NewKeyValue(context.Background())
 		kv = kv.SetKey(fmt.Sprintf("label-key-%d", i))
 		kv = kv.SetValue(fmt.Sprintf("label-value-%d", i))
 		labels[i] = kv
@@ -375,7 +375,7 @@ func createClawObjectMeta() clawpod.ObjectMeta {
 
 	annotations := make([]clawpod.KeyValue, listSize)
 	for i := 0; i < listSize; i++ {
-		kv := clawpod.NewKeyValue()
+		kv := clawpod.NewKeyValue(context.Background())
 		kv = kv.SetKey(fmt.Sprintf("annotation-key-%d", i))
 		kv = kv.SetValue(fmt.Sprintf("annotation-value-%d", i))
 		annotations[i] = kv
@@ -384,7 +384,7 @@ func createClawObjectMeta() clawpod.ObjectMeta {
 
 	ownerRefs := make([]clawpod.OwnerReference, listSize)
 	for i := 0; i < listSize; i++ {
-		or := clawpod.NewOwnerReference()
+		or := clawpod.NewOwnerReference(context.Background())
 		or = or.SetApiVersion("v1")
 		or = or.SetKind("ReplicaSet")
 		or = or.SetName(fmt.Sprintf("owner-%d", i))
@@ -393,24 +393,23 @@ func createClawObjectMeta() clawpod.ObjectMeta {
 	}
 	om.AppendOwnerReferences(ownerRefs...)
 
-	finalizers := list.NewString()
+	finalizers := om.Finalizers()
 	for i := 0; i < listSize; i++ {
-		finalizers = finalizers.Append(fmt.Sprintf("finalizer-%d", i))
+		finalizers.Append(fmt.Sprintf("finalizer-%d", i))
 	}
-	om = om.SetFinalizers(&finalizers)
 
 	return om
 }
 
 func createClawPodSpec() clawpod.PodSpec {
-	ps := clawpod.NewPodSpec()
+	ps := clawpod.NewPodSpec(context.Background())
 
 	volumes := make([]clawpod.Volume, listSize)
 	for i := 0; i < listSize; i++ {
-		v := clawpod.NewVolume()
+		v := clawpod.NewVolume(context.Background())
 		v = v.SetName(fmt.Sprintf("volume-%d", i))
-		vs := clawpod.NewVolumeSource()
-		ed := clawpod.NewEmptyDirVolumeSource()
+		vs := clawpod.NewVolumeSource(context.Background())
+		ed := clawpod.NewEmptyDirVolumeSource(context.Background())
 		ed = ed.SetMedium(clawpod.StorageMediumMemory)
 		vs = vs.SetEmptyDir(ed)
 		v = v.SetVolumeSource(vs)
@@ -436,7 +435,7 @@ func createClawPodSpec() clawpod.PodSpec {
 
 	nodeSelector := make([]clawpod.KeyValue, listSize)
 	for i := 0; i < listSize; i++ {
-		kv := clawpod.NewKeyValue()
+		kv := clawpod.NewKeyValue(context.Background())
 		kv = kv.SetKey(fmt.Sprintf("node-key-%d", i))
 		kv = kv.SetValue(fmt.Sprintf("node-value-%d", i))
 		nodeSelector[i] = kv
@@ -455,7 +454,7 @@ func createClawPodSpec() clawpod.PodSpec {
 
 	tolerations := make([]clawpod.Toleration, listSize)
 	for i := 0; i < listSize; i++ {
-		t := clawpod.NewToleration()
+		t := clawpod.NewToleration(context.Background())
 		t = t.SetKey(fmt.Sprintf("key-%d", i))
 		t = t.SetOperator(clawpod.TolerationOperatorEqual)
 		t = t.SetValue(fmt.Sprintf("value-%d", i))
@@ -466,13 +465,12 @@ func createClawPodSpec() clawpod.PodSpec {
 
 	hostAliases := make([]clawpod.HostAlias, listSize)
 	for i := 0; i < listSize; i++ {
-		ha := clawpod.NewHostAlias()
+		ha := clawpod.NewHostAlias(context.Background())
 		ha = ha.SetIp(fmt.Sprintf("10.0.0.%d", i))
-		hostnames := list.NewString()
+		hostnames := ha.Hostnames()
 		for j := 0; j < 3; j++ {
-			hostnames = hostnames.Append(fmt.Sprintf("host-%d-%d.example.com", i, j))
+			hostnames.Append(fmt.Sprintf("host-%d-%d.example.com", i, j))
 		}
-		ha = ha.SetHostnames(&hostnames)
 		hostAliases[i] = ha
 	}
 	ps.AppendHostAliases(hostAliases...)
@@ -480,13 +478,9 @@ func createClawPodSpec() clawpod.PodSpec {
 	ps = ps.SetPriorityClassName("high-priority")
 	ps = ps.SetPriority(1000)
 
-	dnsConfig := clawpod.NewPodDNSConfig()
-	nameservers := list.NewString()
-	nameservers = nameservers.Append("8.8.8.8", "8.8.4.4")
-	dnsConfig = dnsConfig.SetNameservers(&nameservers)
-	searches := list.NewString()
-	searches = searches.Append("default.svc.cluster.local", "svc.cluster.local")
-	dnsConfig = dnsConfig.SetSearches(&searches)
+	dnsConfig := clawpod.NewPodDNSConfig(context.Background())
+	dnsConfig.Nameservers().Append("8.8.8.8", "8.8.4.4")
+	dnsConfig.Searches().Append("default.svc.cluster.local", "svc.cluster.local")
 	ps = ps.SetDnsConfig(dnsConfig)
 
 	ps = ps.SetAffinity(createClawAffinity())
@@ -495,27 +489,25 @@ func createClawPodSpec() clawpod.PodSpec {
 }
 
 func createClawContainer(name string) clawpod.Container {
-	c := clawpod.NewContainer()
+	c := clawpod.NewContainer(context.Background())
 	c = c.SetName(name)
 	c = c.SetImage("nginx:latest")
 
-	command := list.NewString()
+	command := c.Command()
 	for i := 0; i < 3; i++ {
-		command = command.Append(fmt.Sprintf("/bin/cmd%d", i))
+		command.Append(fmt.Sprintf("/bin/cmd%d", i))
 	}
-	c = c.SetCommand(&command)
 
-	args := list.NewString()
+	args := c.Args()
 	for i := 0; i < listSize; i++ {
-		args = args.Append(fmt.Sprintf("--arg%d=value%d", i, i))
+		args.Append(fmt.Sprintf("--arg%d=value%d", i, i))
 	}
-	c = c.SetArgs(&args)
 
 	c = c.SetWorkingDir("/app")
 
 	ports := make([]clawpod.ContainerPort, 3)
 	for i := 0; i < 3; i++ {
-		p := clawpod.NewContainerPort()
+		p := clawpod.NewContainerPort(context.Background())
 		p = p.SetName(fmt.Sprintf("port-%d", i))
 		p = p.SetContainerPort(int32(8080 + i))
 		p = p.SetProtocol(clawpod.ProtocolTcp)
@@ -525,31 +517,31 @@ func createClawContainer(name string) clawpod.Container {
 
 	env := make([]clawpod.EnvVar, listSize)
 	for i := 0; i < listSize; i++ {
-		e := clawpod.NewEnvVar()
+		e := clawpod.NewEnvVar(context.Background())
 		e = e.SetName(fmt.Sprintf("ENV_%d", i))
 		e = e.SetValue(fmt.Sprintf("value-%d", i))
 		env[i] = e
 	}
 	c.AppendEnv(env...)
 
-	resources := clawpod.NewResourceRequirements()
+	resources := clawpod.NewResourceRequirements(context.Background())
 	limits := make([]clawpod.KeyValue, 2)
-	kv1 := clawpod.NewKeyValue()
+	kv1 := clawpod.NewKeyValue(context.Background())
 	kv1 = kv1.SetKey("cpu")
 	kv1 = kv1.SetValue("1000m")
 	limits[0] = kv1
-	kv2 := clawpod.NewKeyValue()
+	kv2 := clawpod.NewKeyValue(context.Background())
 	kv2 = kv2.SetKey("memory")
 	kv2 = kv2.SetValue("1Gi")
 	limits[1] = kv2
 	resources.AppendLimits(limits...)
 
 	requests := make([]clawpod.KeyValue, 2)
-	kv3 := clawpod.NewKeyValue()
+	kv3 := clawpod.NewKeyValue(context.Background())
 	kv3 = kv3.SetKey("cpu")
 	kv3 = kv3.SetValue("500m")
 	requests[0] = kv3
-	kv4 := clawpod.NewKeyValue()
+	kv4 := clawpod.NewKeyValue(context.Background())
 	kv4 = kv4.SetKey("memory")
 	kv4 = kv4.SetValue("512Mi")
 	requests[1] = kv4
@@ -558,7 +550,7 @@ func createClawContainer(name string) clawpod.Container {
 
 	volumeMounts := make([]clawpod.VolumeMount, listSize)
 	for i := 0; i < listSize; i++ {
-		vm := clawpod.NewVolumeMount()
+		vm := clawpod.NewVolumeMount(context.Background())
 		vm = vm.SetName(fmt.Sprintf("volume-%d", i))
 		vm = vm.SetMountPath(fmt.Sprintf("/mnt/volume-%d", i))
 		vm = vm.SetReadOnly(i%2 == 0)
@@ -569,11 +561,11 @@ func createClawContainer(name string) clawpod.Container {
 	c = c.SetTerminationMessagePath("/dev/termination-log")
 	c = c.SetImagePullPolicy(clawpod.PullPolicyIfNotPresent)
 
-	livenessProbe := clawpod.NewProbe()
-	handler := clawpod.NewProbeHandler()
-	httpGet := clawpod.NewHTTPGetAction()
+	livenessProbe := clawpod.NewProbe(context.Background())
+	handler := clawpod.NewProbeHandler(context.Background())
+	httpGet := clawpod.NewHTTPGetAction(context.Background())
 	httpGet = httpGet.SetPath("/healthz")
-	port := clawpod.NewIntOrString()
+	port := clawpod.NewIntOrString(context.Background())
 	port = port.SetIntVal(8080)
 	httpGet = httpGet.SetPort(port)
 	handler = handler.SetHttpGet(httpGet)
@@ -582,11 +574,11 @@ func createClawContainer(name string) clawpod.Container {
 	livenessProbe = livenessProbe.SetPeriodSeconds(30)
 	c = c.SetLivenessProbe(livenessProbe)
 
-	readinessProbe := clawpod.NewProbe()
-	handler2 := clawpod.NewProbeHandler()
-	httpGet2 := clawpod.NewHTTPGetAction()
+	readinessProbe := clawpod.NewProbe(context.Background())
+	handler2 := clawpod.NewProbeHandler(context.Background())
+	httpGet2 := clawpod.NewHTTPGetAction(context.Background())
 	httpGet2 = httpGet2.SetPath("/ready")
-	port2 := clawpod.NewIntOrString()
+	port2 := clawpod.NewIntOrString(context.Background())
 	port2 = port2.SetIntVal(8080)
 	httpGet2 = httpGet2.SetPort(port2)
 	handler2 = handler2.SetHttpGet(httpGet2)
@@ -599,35 +591,32 @@ func createClawContainer(name string) clawpod.Container {
 }
 
 func createClawPodSecurityContext() clawpod.PodSecurityContext {
-	psc := clawpod.NewPodSecurityContext()
+	psc := clawpod.NewPodSecurityContext(context.Background())
 	psc = psc.SetRunAsUser(1000)
 	psc = psc.SetRunAsGroup(1000)
 	psc = psc.SetRunAsNonRoot(true)
 
-	supplementalGroups := list.NewNumbers[int64]()
+	supplementalGroups := psc.SupplementalGroups()
 	for i := 0; i < listSize; i++ {
-		supplementalGroups = supplementalGroups.Append(int64(1000 + i))
+		supplementalGroups.Append(int64(1000 + i))
 	}
-	psc = psc.SetSupplementalGroups(supplementalGroups)
 	psc = psc.SetFsGroup(2000)
 
 	return psc
 }
 
 func createClawAffinity() clawpod.Affinity {
-	aff := clawpod.NewAffinity()
+	aff := clawpod.NewAffinity(context.Background())
 
-	nodeAff := clawpod.NewNodeAffinity()
-	nodeSelector := clawpod.NewNodeSelector()
+	nodeAff := clawpod.NewNodeAffinity(context.Background())
+	nodeSelector := clawpod.NewNodeSelector(context.Background())
 	terms := make([]clawpod.NodeSelectorTerm, 1)
-	term := clawpod.NewNodeSelectorTerm()
+	term := clawpod.NewNodeSelectorTerm(context.Background())
 	reqs := make([]clawpod.NodeSelectorRequirement, 1)
-	req := clawpod.NewNodeSelectorRequirement()
+	req := clawpod.NewNodeSelectorRequirement(context.Background())
 	req = req.SetKey("kubernetes.io/os")
 	req = req.SetOperator(clawpod.NodeSelectorOperatorIn)
-	values := list.NewString()
-	values = values.Append("linux")
-	req = req.SetValues(&values)
+	req.Values().Append("linux")
 	reqs[0] = req
 	term.AppendMatchExpressions(reqs...)
 	terms[0] = term
@@ -635,13 +624,13 @@ func createClawAffinity() clawpod.Affinity {
 	nodeAff = nodeAff.SetRequiredDuringSchedulingIgnoredDuringExecution(nodeSelector)
 	aff = aff.SetNodeAffinity(nodeAff)
 
-	podAff := clawpod.NewPodAffinity()
+	podAff := clawpod.NewPodAffinity(context.Background())
 	podTerms := make([]clawpod.PodAffinityTerm, 1)
-	podTerm := clawpod.NewPodAffinityTerm()
+	podTerm := clawpod.NewPodAffinityTerm(context.Background())
 	podTerm = podTerm.SetTopologyKey("kubernetes.io/hostname")
-	ls := clawpod.NewLabelSelector()
+	ls := clawpod.NewLabelSelector(context.Background())
 	matchLabels := make([]clawpod.KeyValue, 1)
-	kv := clawpod.NewKeyValue()
+	kv := clawpod.NewKeyValue(context.Background())
 	kv = kv.SetKey("app")
 	kv = kv.SetValue("test")
 	matchLabels[0] = kv
@@ -655,7 +644,7 @@ func createClawAffinity() clawpod.Affinity {
 }
 
 func createClawPodStatus() clawpod.PodStatus {
-	ps := clawpod.NewPodStatus()
+	ps := clawpod.NewPodStatus(context.Background())
 	ps = ps.SetPhase(clawpod.PodPhaseRunning)
 
 	conditions := make([]clawpod.PodCondition, 4)
@@ -666,10 +655,10 @@ func createClawPodStatus() clawpod.PodStatus {
 		clawpod.PodConditionTypePodScheduled,
 	}
 	for i := 0; i < 4; i++ {
-		c := clawpod.NewPodCondition()
+		c := clawpod.NewPodCondition(context.Background())
 		c = c.SetType(condTypes[i])
 		c = c.SetStatus(clawpod.ConditionStatusTrue)
-		t := clawpod.NewTime()
+		t := clawpod.NewTime(context.Background())
 		t = t.SetSeconds(1703721600)
 		c = c.SetLastTransitionTime(t)
 		conditions[i] = c
@@ -681,25 +670,25 @@ func createClawPodStatus() clawpod.PodStatus {
 	ps = ps.SetPodIp("10.244.0.5")
 
 	podIPs := make([]clawpod.PodIP, 2)
-	pip1 := clawpod.NewPodIP()
+	pip1 := clawpod.NewPodIP(context.Background())
 	pip1 = pip1.SetIp("10.244.0.5")
 	podIPs[0] = pip1
-	pip2 := clawpod.NewPodIP()
+	pip2 := clawpod.NewPodIP(context.Background())
 	pip2 = pip2.SetIp("fd00::5")
 	podIPs[1] = pip2
 	ps.AppendPodIps(podIPs...)
 
-	startTime := clawpod.NewTime()
+	startTime := clawpod.NewTime(context.Background())
 	startTime = startTime.SetSeconds(1703721600)
 	ps = ps.SetStartTime(startTime)
 
 	containerStatuses := make([]clawpod.ContainerStatus, listSize)
 	for i := 0; i < listSize; i++ {
-		cs := clawpod.NewContainerStatus()
+		cs := clawpod.NewContainerStatus(context.Background())
 		cs = cs.SetName(fmt.Sprintf("container-%d", i))
-		state := clawpod.NewContainerState()
-		running := clawpod.NewContainerStateRunning()
-		t := clawpod.NewTime()
+		state := clawpod.NewContainerState(context.Background())
+		running := clawpod.NewContainerStateRunning(context.Background())
+		t := clawpod.NewTime(context.Background())
 		t = t.SetSeconds(1703721600)
 		running = running.SetStartedAt(t)
 		state = state.SetRunning(running)
@@ -1259,7 +1248,7 @@ func BenchmarkClawUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		newPod := clawpod.NewPod()
+		newPod := clawpod.NewPod(context.Background())
 		err := newPod.Unmarshal(data)
 		if err != nil {
 			b.Fatal(err)
@@ -1277,7 +1266,7 @@ func BenchmarkClawUnmarshalPooled(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		newPod := clawpod.NewPodPooled(ctx)
+		newPod := clawpod.NewPod(ctx)
 		err := newPod.Unmarshal(data)
 		if err != nil {
 			b.Fatal(err)

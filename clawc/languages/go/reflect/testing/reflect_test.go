@@ -6,6 +6,7 @@ reflect has a circular dependency problem.
 */
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -15,7 +16,6 @@ import (
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
-	"github.com/bearlytools/claw/clawc/languages/go/types/list"
 	vehicles "github.com/bearlytools/claw/testing/imports/vehicles/claw"
 	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
@@ -85,6 +85,7 @@ func (f fieldWant) Compare(got interfaces.FieldDescr) string {
 }
 
 func TestGetStructDecr(t *testing.T) {
+	ctx := context.Background()
 	vehiclesWant := []fieldWant{
 		{
 			Name:     "Type",
@@ -127,23 +128,15 @@ func TestGetStructDecr(t *testing.T) {
 	}
 
 	// Setup a vehicle the normal way.
-	v := vehicles.NewVehicle().
+	v := vehicles.NewVehicle(ctx).
 		SetType(vehicles.Car).
-		SetCar(cars.NewCar().
+		SetCar(cars.NewCar(ctx).
 			SetYear(2010).
 			SetManufacturer(manufacturers.Toyota).
 			SetModel(cars.Venza),
 		).
-		SetBools(list.NewBools().Append(
-			true, false, true,
-		),
-		).
-		SetTypes(
-			list.NewEnums[vehicles.Type]().Append(
-				vehicles.Car,
-				vehicles.Truck,
-			),
-		)
+		SetBools(true, false, true).
+		SetTypes(vehicles.Car, vehicles.Truck)
 
 	// Setup a vehicle the reflect way.
 	vehiclesPkgDescr := vehicles.PackageDescr()

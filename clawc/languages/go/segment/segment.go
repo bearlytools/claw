@@ -12,10 +12,11 @@ type Segment struct {
 	data []byte // The wire format bytes
 }
 
-// NewSegment creates a new Segment with the given initial capacity.
-// The segment starts with 8 bytes for the struct header.
+// NewSegment creates a new Segment with the given initial capacity in bytes.
+// Anything less than 8 bytes will be rounded up to a minimum reasonable size.
+// The segment starts with 8 bytes for the struct header for len, regardless of capacity.
 func NewSegment(capacity int) *Segment {
-	if capacity < 8 {
+	if capacity < 64 {
 		capacity = 64 // Minimum reasonable size
 	}
 	s := &Segment{

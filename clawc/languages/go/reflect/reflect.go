@@ -4,7 +4,7 @@ import (
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/enums"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/value"
-	"github.com/bearlytools/claw/clawc/languages/go/structs"
+	"github.com/bearlytools/claw/clawc/languages/go/segment"
 )
 
 // ClawStruct indicates that the type represents a Claw Struct.
@@ -58,6 +58,6 @@ type (
 
 // XXXNewStruct creates a new reflect.Struct from an internal Struct representation and
 // a StructDescr. Like all XXX* methods, this is for internal use only.
-func XXXNewStruct(v *structs.Struct, descr interfaces.StructDescr) Struct {
+func XXXNewStruct(v *segment.Struct, descr interfaces.StructDescr) Struct {
 	return value.XXXNewStruct(v, descr)
 }

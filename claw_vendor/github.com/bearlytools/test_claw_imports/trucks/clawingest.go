@@ -4,31 +4,31 @@
 package trucks
 
 import (
+    "context"
     "fmt"
     "iter"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
-    "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
 // Ensure imports are used.
+var _ context.Context
 var _ = fmt.Errorf
 var _ = field.FTBool
-var _ list.Bools
 
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Truck) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *Truck) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
-    return x.XXXIngestFrom(ts, opts)
+    return x.XXXIngestFrom(ctx, ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Truck) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *Truck) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")

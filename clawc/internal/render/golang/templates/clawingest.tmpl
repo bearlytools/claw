@@ -4,35 +4,35 @@
 package {{ .File.Package }}
 
 import (
+    "context"
     "fmt"
     "iter"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
-    "github.com/bearlytools/claw/clawc/languages/go/types/list"
     {{- range .File.ExternalFieldImports }}
     "{{ $.Config.TransformImportPath . }}"
     {{- end }}
 )
 
 // Ensure imports are used.
+var _ context.Context
 var _ = fmt.Errorf
 var _ = field.FTBool
-var _ list.Bools
 
 {{- $file := .File }}
 
 {{ range $structIndex, $struct := .File.Structs }}
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *{{ $struct.Name }}) IngestWithOptions(tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *{{ $struct.Name }}) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
-    return x.XXXIngestFrom(ts, opts)
+    return x.XXXIngestFrom(ctx, ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *{{ $struct.Name }}) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")
@@ -104,8 +104,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
             if tok.IsNil {
                 continue
             }
-            nested := {{ if $field.IsExternal }}{{ $field.Package }}.New{{ $field.IdentInFile }}(){{ else }}New{{ $field.IdentInFile }}(){{ end }}
-            if err := nested.XXXIngestFrom(ts, opts); err != nil {
+            nested := {{ if $field.IsExternal }}{{ $field.Package }}.New{{ $field.IdentInFile }}(ctx){{ else }}New{{ $field.IdentInFile }}(ctx){{ end }}
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
                 return fmt.Errorf("ingesting {{ $field.Name }}: %w", err)
             }
             x.Set{{ $field.Name }}(nested)
@@ -409,8 +409,8 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ts *clawiter.TokenStream, opts clawit
                     ts.Next() // consume the ListEnd
                     break
                 }
-                item := {{ if $field.IsExternal }}{{ $field.Package }}.New{{ $field.IdentInFile }}(){{ else }}New{{ $field.IdentInFile }}(){{ end }}
-                if err := item.XXXIngestFrom(ts, opts); err != nil {
+                item := {{ if $field.IsExternal }}{{ $field.Package }}.New{{ $field.IdentInFile }}(ctx){{ else }}New{{ $field.IdentInFile }}(ctx){{ end }}
+                if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting {{ $field.Name }}[]: %w", err)
                 }
                 x.{{ $field.Name }}Append(item)
