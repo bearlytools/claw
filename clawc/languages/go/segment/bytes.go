@@ -232,6 +232,12 @@ func parseFieldIndex(s *Struct) {
 		case field.FTStruct:
 			// Struct: final40 is total size including header
 			fieldSize = int(final40)
+		case field.FTListBools:
+			// Bool lists: final40 is item count, not size
+			count := int(final40)
+			numBytes := (count + 7) / 8
+			padding := paddingNeeded(numBytes)
+			fieldSize = HeaderSize + numBytes + padding
 		default:
 			// Lists and other types: final40 is total size including header
 			if field.IsListType(fieldType) {

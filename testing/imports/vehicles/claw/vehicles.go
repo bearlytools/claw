@@ -16,8 +16,8 @@ import (
     "github.com/bearlytools/claw/clawc/languages/go/segment"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
-    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
+    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
@@ -156,11 +156,12 @@ func (x Vehicle) SetCar(value cars.Car) Vehicle {
 // TruckList returns the underlying Structs list for iteration.
 // Use NewTruck() to create items and Append to add them.
 func (x Vehicle) TruckList() *segment.Structs {
-    if l := x.s.GetList(2); l != nil {
-        return l.(*segment.Structs)
+    // Try to get cached or parse from segment
+    if structs := segment.GetListStructs(x.s, 2, trucks.XXXMappingTruck); structs != nil {
+        return structs
     }
+    // Create new empty list if no data exists
     structs := segment.NewStructs(x.s, 2, trucks.XXXMappingTruck)
-    x.s.SetList(2, structs)
     return structs
 }
 
@@ -188,13 +189,24 @@ func (x Vehicle) AppendTruck(values ...trucks.Truck) {
     x.TruckAppend(values...)
 }
 
+// TruckAppendRaw appends items to the list using Raw struct representations.
+func (x Vehicle) TruckAppendRaw(ctx context.Context, values ...*trucks.TruckRaw) {
+    list := x.TruckList()
+    for _, raw := range values {
+        if raw != nil {
+            list.Append(trucks.NewTruckFromRaw(ctx, *raw).XXXGetStruct())
+        }
+    }
+}
+
 // Enum list - returns a number list that can be cast to the enum type
 func (x Vehicle) Types() *segment.Numbers[Type] {
-    if l := x.s.GetList(3); l != nil {
-        return l.(*segment.Numbers[Type])
+    // Try to get cached or parse from segment
+    if nums := segment.GetListNumbers[Type](x.s, 3); nums != nil {
+        return nums
     }
+    // Create new empty list if no data exists
     nums := segment.NewNumbers[Type](x.s, 3)
-    x.s.SetList(3, nums)
     return nums
 }
 
@@ -206,11 +218,12 @@ func (x Vehicle) SetTypes(v ...Type) Vehicle {
 }
 
 func (x Vehicle) Bools() *segment.Bools {
-    if l := x.s.GetList(4); l != nil {
-        return l.(*segment.Bools)
+    // Try to get cached or parse from segment
+    if bools := segment.GetListBools(x.s, 4); bools != nil {
+        return bools
     }
+    // Create new empty list if no data exists
     bools := segment.NewBools(x.s, 4)
-    x.s.SetList(4, bools)
     return bools
 }
 
@@ -258,6 +271,83 @@ func (x Vehicle) DrainRecordedOps() []segment.RecordedOp {
 // RecordedOpsLen returns the number of recorded operations.
 func (x Vehicle) RecordedOpsLen() int {
     return x.s.RecordedOpsLen()
+}
+
+// VehicleRaw is a plain Go struct representation of Vehicle.
+// Zero values are not set (sparse encoding).
+type VehicleRaw struct {
+    Type Type
+    Car *cars.CarRaw
+    Truck []*trucks.TruckRaw
+    Types []Type
+    Bools []bool
+}
+
+// NewVehicleFromRaw creates a new Vehicle from a Raw struct representation.
+// Only non-zero values are set (sparse encoding).
+func NewVehicleFromRaw(ctx context.Context, raw VehicleRaw) Vehicle {
+    x := NewVehicle(ctx)
+    if raw.Type != 0 {
+        x.SetType(raw.Type)
+    }
+    if raw.Car != nil {
+        x.SetCar(cars.NewCarFromRaw(ctx, *raw.Car))
+    }
+    if raw.Truck != nil {
+        list := x.TruckList()
+        items := make([]*segment.Struct, 0, len(raw.Truck))
+        for _, r := range raw.Truck {
+            if r != nil {
+                items = append(items, trucks.NewTruckFromRaw(ctx, *r).XXXGetStruct())
+            }
+        }
+        list.SetAll(items)
+    }
+    if raw.Types != nil {
+        x.SetTypes(raw.Types...)
+    }
+    if raw.Bools != nil {
+        x.SetBools(raw.Bools...)
+    }
+    return x
+}
+
+// ToRaw converts the struct to a plain Go struct representation.
+func (x Vehicle) ToRaw() VehicleRaw {
+    raw := VehicleRaw{}
+    raw.Type = x.Type()
+    if x.s.HasField(1) {
+        nestedRaw := x.Car().ToRaw()
+        raw.Car = &nestedRaw
+    }
+    if l := x.s.GetList(2); l != nil && l.(*segment.Structs).Len() > 0 {
+        list := l.(*segment.Structs)
+        raw.Truck = make([]*trucks.TruckRaw, list.Len())
+        for i := 0; i < list.Len(); i++ {
+            item := trucks.XXXNewTruckFrom(list.Get(i))
+            itemRaw := item.ToRaw()
+            raw.Truck[i] = &itemRaw
+        }
+    } else if x.s.HasField(2) {
+        list := x.TruckList()
+        raw.Truck = make([]*trucks.TruckRaw, list.Len())
+        for i := 0; i < list.Len(); i++ {
+            item := trucks.XXXNewTruckFrom(list.Get(i))
+            itemRaw := item.ToRaw()
+            raw.Truck[i] = &itemRaw
+        }
+    }
+    if l := x.s.GetList(3); l != nil && l.(*segment.Numbers[Type]).Len() > 0 {
+        raw.Types = l.(*segment.Numbers[Type]).Slice()
+    } else if x.s.HasField(3) {
+        raw.Types = x.Types().Slice()
+    }
+    if l := x.s.GetList(4); l != nil && l.(*segment.Bools).Len() > 0 {
+        raw.Bools = l.(*segment.Bools).Slice()
+    } else if x.s.HasField(4) {
+        raw.Bools = x.Bools().Slice()
+    }
+    return raw
 }
 
  

@@ -20,14 +20,14 @@ var _ = field.FTBool
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Msg) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *Descr) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
     return x.XXXIngestFrom(ctx, ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Msg) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *Descr) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")
@@ -39,7 +39,7 @@ func (x *Msg) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts 
     for {
         tok, ok = ts.Next()
         if !ok {
-            return fmt.Errorf("unexpected EOF in Msg")
+            return fmt.Errorf("unexpected EOF in Descr")
         }
 
         if tok.Kind == clawiter.TokenStructEnd {
@@ -51,84 +51,202 @@ func (x *Msg) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts 
         }
 
         switch tok.Name {
+        case "Package":
+            x.SetPackage(tok.String())
+        case "Service":
+            x.SetService(tok.String())
+        case "Call":
+            x.SetCall(tok.String())
         case "Type":
             if len(tok.Bytes) > 0 {
-                x.SetType(MsgTypeByName[tok.String()])
+                x.SetType(RPCTypeByName[tok.String()])
             } else {
-                x.SetType(MsgType(tok.Uint8()))
+                x.SetType(RPCType(tok.Uint8()))
             }
-        case "Open":
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
+func (x *Metadata) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ctx, ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Metadata) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Metadata")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "Key":
+            x.SetKey(tok.String())
+        case "Value":
+            x.SetValue(tok.Bytes)
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
+func (x *OpenAck) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ctx, ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *OpenAck) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in OpenAck")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "OpenID":
+            x.SetOpenID(tok.Uint32())
+        case "SessionID":
+            x.SetSessionID(tok.Uint32())
+        case "ProtocolMajor":
+            x.SetProtocolMajor(tok.Uint8())
+        case "ProtocolMinor":
+            x.SetProtocolMinor(tok.Uint8())
+        case "MaxPayloadSize":
+            x.SetMaxPayloadSize(tok.Uint32())
+        case "ErrCode":
+            if len(tok.Bytes) > 0 {
+                x.SetErrCode(ErrCodeByName[tok.String()])
+            } else {
+                x.SetErrCode(ErrCode(tok.Uint8()))
+            }
+        case "Error":
+            x.SetError(tok.String())
+        case "Metadata":
             if tok.IsNil {
                 continue
             }
-            nested := NewOpen(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting Open: %w", err)
+            listTok, ok := ts.Next()
+            if !ok || listTok.Kind != clawiter.TokenListStart {
+                return fmt.Errorf("expected TokenListStart for Metadata")
             }
-            x.SetOpen(nested)
-        case "OpenAck":
-            if tok.IsNil {
+            for {
+                peekTok, ok := ts.Peek()
+                if !ok {
+                    return fmt.Errorf("unexpected EOF in Metadata list")
+                }
+                if peekTok.Kind == clawiter.TokenListEnd {
+                    ts.Next() // consume the ListEnd
+                    break
+                }
+                item := NewMetadata(ctx)
+                if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
+                    return fmt.Errorf("ingesting Metadata[]: %w", err)
+                }
+                x.MetadataAppend(item)
+            }
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
                 continue
             }
-            nested := NewOpenAck(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting OpenAck: %w", err)
-            }
-            x.SetOpenAck(nested)
-        case "Close":
-            if tok.IsNil {
-                continue
-            }
-            nested := NewClose(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting Close: %w", err)
-            }
-            x.SetClose(nested)
-        case "Payload":
-            if tok.IsNil {
-                continue
-            }
-            nested := NewPayload(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting Payload: %w", err)
-            }
-            x.SetPayload(nested)
-        case "Cancel":
-            if tok.IsNil {
-                continue
-            }
-            nested := NewCancel(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting Cancel: %w", err)
-            }
-            x.SetCancel(nested)
-        case "Ping":
-            if tok.IsNil {
-                continue
-            }
-            nested := NewPing(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting Ping: %w", err)
-            }
-            x.SetPing(nested)
-        case "Pong":
-            if tok.IsNil {
-                continue
-            }
-            nested := NewPong(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting Pong: %w", err)
-            }
-            x.SetPong(nested)
-        case "GoAway":
-            if tok.IsNil {
-                continue
-            }
-            nested := NewGoAway(ctx)
-            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
-                return fmt.Errorf("ingesting GoAway: %w", err)
-            }
-            x.SetGoAway(nested)
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// IngestWithOptions populates the struct from a token stream with options.
+// This is the inverse of Walk().
+func (x *Cancel) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+    ts := clawiter.NewTokenStream(tokens)
+    defer ts.Close()
+    return x.XXXIngestFrom(ctx, ts, opts)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Cancel) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Cancel")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "SessionID":
+            x.SetSessionID(tok.Uint32())
+        case "ReqID":
+            x.SetReqID(tok.Uint32())
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {
@@ -272,14 +390,14 @@ func (x *Ping) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Descr) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *Msg) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
     return x.XXXIngestFrom(ctx, ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Descr) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *Msg) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")
@@ -291,7 +409,7 @@ func (x *Descr) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
     for {
         tok, ok = ts.Next()
         if !ok {
-            return fmt.Errorf("unexpected EOF in Descr")
+            return fmt.Errorf("unexpected EOF in Msg")
         }
 
         if tok.Kind == clawiter.TokenStructEnd {
@@ -303,67 +421,84 @@ func (x *Descr) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
         }
 
         switch tok.Name {
-        case "Package":
-            x.SetPackage(tok.String())
-        case "Service":
-            x.SetService(tok.String())
-        case "Call":
-            x.SetCall(tok.String())
         case "Type":
             if len(tok.Bytes) > 0 {
-                x.SetType(RPCTypeByName[tok.String()])
+                x.SetType(MsgTypeByName[tok.String()])
             } else {
-                x.SetType(RPCType(tok.Uint8()))
+                x.SetType(MsgType(tok.Uint8()))
             }
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
+        case "Open":
+            if tok.IsNil {
                 continue
             }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
-func (x *Metadata) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Metadata) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in Metadata")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "Key":
-            x.SetKey(tok.String())
-        case "Value":
-            x.SetValue(tok.Bytes)
+            nested := NewOpen(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting Open: %w", err)
+            }
+            x.SetOpen(nested)
+        case "OpenAck":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewOpenAck(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting OpenAck: %w", err)
+            }
+            x.SetOpenAck(nested)
+        case "Close":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewClose(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting Close: %w", err)
+            }
+            x.SetClose(nested)
+        case "Payload":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewPayload(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting Payload: %w", err)
+            }
+            x.SetPayload(nested)
+        case "Cancel":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewCancel(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting Cancel: %w", err)
+            }
+            x.SetCancel(nested)
+        case "Ping":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewPing(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting Ping: %w", err)
+            }
+            x.SetPing(nested)
+        case "Pong":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewPong(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting Pong: %w", err)
+            }
+            x.SetPong(nested)
+        case "GoAway":
+            if tok.IsNil {
+                continue
+            }
+            nested := NewGoAway(ctx)
+            if err := nested.XXXIngestFrom(ctx, ts, opts); err != nil {
+                return fmt.Errorf("ingesting GoAway: %w", err)
+            }
+            x.SetGoAway(nested)
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {
@@ -455,147 +590,6 @@ func (x *Open) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts
                 }
                 x.MetadataAppend(item)
             }
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
-                continue
-            }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
-func (x *OpenAck) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *OpenAck) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in OpenAck")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "OpenID":
-            x.SetOpenID(tok.Uint32())
-        case "SessionID":
-            x.SetSessionID(tok.Uint32())
-        case "ProtocolMajor":
-            x.SetProtocolMajor(tok.Uint8())
-        case "ProtocolMinor":
-            x.SetProtocolMinor(tok.Uint8())
-        case "MaxPayloadSize":
-            x.SetMaxPayloadSize(tok.Uint32())
-        case "ErrCode":
-            if len(tok.Bytes) > 0 {
-                x.SetErrCode(ErrCodeByName[tok.String()])
-            } else {
-                x.SetErrCode(ErrCode(tok.Uint8()))
-            }
-        case "Error":
-            x.SetError(tok.String())
-        case "Metadata":
-            if tok.IsNil {
-                continue
-            }
-            listTok, ok := ts.Next()
-            if !ok || listTok.Kind != clawiter.TokenListStart {
-                return fmt.Errorf("expected TokenListStart for Metadata")
-            }
-            for {
-                peekTok, ok := ts.Peek()
-                if !ok {
-                    return fmt.Errorf("unexpected EOF in Metadata list")
-                }
-                if peekTok.Kind == clawiter.TokenListEnd {
-                    ts.Next() // consume the ListEnd
-                    break
-                }
-                item := NewMetadata(ctx)
-                if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
-                    return fmt.Errorf("ingesting Metadata[]: %w", err)
-                }
-                x.MetadataAppend(item)
-            }
-        default:
-            if opts.IgnoreUnknownFields {
-                if err := clawiter.SkipValue(ts, tok); err != nil {
-                    return err
-                }
-                continue
-            }
-            return fmt.Errorf("unknown field: %s", tok.Name)
-        }
-    }
-}
-
-// IngestWithOptions populates the struct from a token stream with options.
-// This is the inverse of Walk().
-func (x *GoAway) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
-    defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
-}
-
-// XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *GoAway) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
-    tok, ok := ts.Next()
-    if !ok {
-        return fmt.Errorf("expected TokenStructStart, got EOF")
-    }
-    if tok.Kind != clawiter.TokenStructStart {
-        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
-    }
-
-    for {
-        tok, ok = ts.Next()
-        if !ok {
-            return fmt.Errorf("unexpected EOF in GoAway")
-        }
-
-        if tok.Kind == clawiter.TokenStructEnd {
-            return nil
-        }
-
-        if tok.Kind != clawiter.TokenField {
-            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
-        }
-
-        switch tok.Name {
-        case "LastSessionID":
-            x.SetLastSessionID(tok.Uint32())
-        case "ErrCode":
-            if len(tok.Bytes) > 0 {
-                x.SetErrCode(ErrCodeByName[tok.String()])
-            } else {
-                x.SetErrCode(ErrCode(tok.Uint8()))
-            }
-        case "DebugData":
-            x.SetDebugData(tok.String())
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {
@@ -735,14 +729,14 @@ func (x *Pong) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts
 
 // IngestWithOptions populates the struct from a token stream with options.
 // This is the inverse of Walk().
-func (x *Cancel) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
+func (x *GoAway) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
     ts := clawiter.NewTokenStream(tokens)
     defer ts.Close()
     return x.XXXIngestFrom(ctx, ts, opts)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
-func (x *Cancel) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+func (x *GoAway) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
     tok, ok := ts.Next()
     if !ok {
         return fmt.Errorf("expected TokenStructStart, got EOF")
@@ -754,7 +748,7 @@ func (x *Cancel) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, op
     for {
         tok, ok = ts.Next()
         if !ok {
-            return fmt.Errorf("unexpected EOF in Cancel")
+            return fmt.Errorf("unexpected EOF in GoAway")
         }
 
         if tok.Kind == clawiter.TokenStructEnd {
@@ -766,10 +760,16 @@ func (x *Cancel) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, op
         }
 
         switch tok.Name {
-        case "SessionID":
-            x.SetSessionID(tok.Uint32())
-        case "ReqID":
-            x.SetReqID(tok.Uint32())
+        case "LastSessionID":
+            x.SetLastSessionID(tok.Uint32())
+        case "ErrCode":
+            if len(tok.Bytes) > 0 {
+                x.SetErrCode(ErrCodeByName[tok.String()])
+            } else {
+                x.SetErrCode(ErrCode(tok.Uint8()))
+            }
+        case "DebugData":
+            x.SetDebugData(tok.String())
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {

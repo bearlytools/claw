@@ -200,6 +200,39 @@ func (x Truck) RecordedOpsLen() int {
     return x.s.RecordedOpsLen()
 }
 
+// TruckRaw is a plain Go struct representation of Truck.
+// Zero values are not set (sparse encoding).
+type TruckRaw struct {
+    Manufacturer manufacturers.Manufacturer
+    Model Model
+    Year uint16
+}
+
+// NewTruckFromRaw creates a new Truck from a Raw struct representation.
+// Only non-zero values are set (sparse encoding).
+func NewTruckFromRaw(ctx context.Context, raw TruckRaw) Truck {
+    x := NewTruck(ctx)
+    if raw.Manufacturer != 0 {
+        x.SetManufacturer(raw.Manufacturer)
+    }
+    if raw.Model != 0 {
+        x.SetModel(raw.Model)
+    }
+    if raw.Year != 0 {
+        x.SetYear(raw.Year)
+    }
+    return x
+}
+
+// ToRaw converts the struct to a plain Go struct representation.
+func (x Truck) ToRaw() TruckRaw {
+    raw := TruckRaw{}
+    raw.Manufacturer = x.Manufacturer()
+    raw.Model = x.Model()
+    raw.Year = x.Year()
+    return raw
+}
+
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

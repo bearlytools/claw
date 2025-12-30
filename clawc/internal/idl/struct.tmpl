@@ -363,11 +363,12 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 // {{ $field.Comment }}
 {{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Bools {
-    if l := x.s.GetList({{ $field.Index }}); l != nil {
-        return l.(*segment.Bools)
+    // Try to get cached or parse from segment
+    if bools := segment.GetListBools(x.s, {{ $field.Index }}); bools != nil {
+        return bools
     }
+    // Create new empty list if no data exists
     bools := segment.NewBools(x.s, {{ $field.Index }})
-    x.s.SetList({{ $field.Index }}, bools)
     return bools
 }
 
@@ -391,20 +392,22 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- if $field.IdentName -}}
 // Enum list - returns a number list that can be cast to the enum type
 func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Numbers[{{ $field.GoListType }}] {
-    if l := x.s.GetList({{ $field.Index }}); l != nil {
-        return l.(*segment.Numbers[{{ $field.GoListType }}])
+    // Try to get cached or parse from segment
+    if nums := segment.GetListNumbers[{{ $field.GoListType }}](x.s, {{ $field.Index }}); nums != nil {
+        return nums
     }
+    // Create new empty list if no data exists
     nums := segment.NewNumbers[{{ $field.GoListType }}](x.s, {{ $field.Index }})
-    x.s.SetList({{ $field.Index }}, nums)
     return nums
 }
 {{- else }}
 func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Numbers[{{ $field.GoListType }}] {
-    if l := x.s.GetList({{ $field.Index }}); l != nil {
-        return l.(*segment.Numbers[{{ $field.GoListType }}])
+    // Try to get cached or parse from segment
+    if nums := segment.GetListNumbers[{{ $field.GoListType }}](x.s, {{ $field.Index }}); nums != nil {
+        return nums
     }
+    // Create new empty list if no data exists
     nums := segment.NewNumbers[{{ $field.GoListType }}](x.s, {{ $field.Index }})
-    x.s.SetList({{ $field.Index }}, nums)
     return nums
 }
 {{- end }}
@@ -427,11 +430,12 @@ func (x {{ $struct.Name }}) Set{{ $field.Name }}(v ...{{ $field.GoListType }}) {
 // {{ $field.Comment }}
 {{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Bytes {
-    if l := x.s.GetList({{ $field.Index }}); l != nil {
-        return l.(*segment.Bytes)
+    // Try to get cached or parse from segment
+    if b := segment.GetListBytes(x.s, {{ $field.Index }}); b != nil {
+        return b
     }
+    // Create new empty list if no data exists
     b := segment.NewBytes(x.s, {{ $field.Index }})
-    x.s.SetList({{ $field.Index }}, b)
     return b
 }
 
@@ -453,11 +457,12 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 // {{ $field.Comment }}
 {{ end -}}
 func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Strings {
-    if l := x.s.GetList({{ $field.Index }}); l != nil {
-        return l.(*segment.Strings)
+    // Try to get cached or parse from segment
+    if strs := segment.GetListStrings(x.s, {{ $field.Index }}); strs != nil {
+        return strs
     }
+    // Create new empty list if no data exists
     strs := segment.NewStrings(x.s, {{ $field.Index }})
-    x.s.SetList({{ $field.Index }}, strs)
     return strs
 }
 
@@ -481,15 +486,21 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 // {{ $field.Name }}List returns the underlying Structs list for iteration.
 // Use New{{ $field.IdentInFile }}() to create items and Append to add them.
 func (x {{ $struct.Name }}) {{ $field.Name }}List() *segment.Structs {
-    if l := x.s.GetList({{ $field.Index }}); l != nil {
-        return l.(*segment.Structs)
-    }
     {{- if $field.IsExternal }}
+    // Try to get cached or parse from segment
+    if structs := segment.GetListStructs(x.s, {{ $field.Index }}, {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }}); structs != nil {
+        return structs
+    }
+    // Create new empty list if no data exists
     structs := segment.NewStructs(x.s, {{ $field.Index }}, {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }})
     {{- else }}
+    // Try to get cached or parse from segment
+    if structs := segment.GetListStructs(x.s, {{ $field.Index }}, XXXMapping{{ $field.IdentInFile }}); structs != nil {
+        return structs
+    }
+    // Create new empty list if no data exists
     structs := segment.NewStructs(x.s, {{ $field.Index }}, XXXMapping{{ $field.IdentInFile }})
     {{- end }}
-    x.s.SetList({{ $field.Index }}, structs)
     return structs
 }
 
@@ -519,6 +530,20 @@ func (x {{ $struct.Name }}) {{ $field.Name }}Append(values ...{{ $field.IdentNam
 // Append{{ $field.Name }} is an alias for {{ $field.Name }}Append for backwards compatibility.
 func (x {{ $struct.Name }}) Append{{ $field.Name }}(values ...{{ $field.IdentName }}) {
     x.{{ $field.Name }}Append(values...)
+}
+
+// {{ $field.Name }}AppendRaw appends items to the list using Raw struct representations.
+func (x {{ $struct.Name }}) {{ $field.Name }}AppendRaw(ctx context.Context, values ...*{{ if $field.IsExternal }}{{ $field.Package }}.{{ $field.IdentInFile }}{{ else }}{{ $field.IdentName }}{{ end }}Raw) {
+    list := x.{{ $field.Name }}List()
+    for _, raw := range values {
+        if raw != nil {
+            {{- if $field.IsExternal }}
+            list.Append({{ $field.Package }}.New{{ $field.IdentInFile }}FromRaw(ctx, *raw).XXXGetStruct())
+            {{- else }}
+            list.Append(New{{ $field.IdentInFile }}FromRaw(ctx, *raw).XXXGetStruct())
+            {{- end }}
+        }
+    }
 }
 
 {{- if $isSetEnabled }}
@@ -565,5 +590,148 @@ func (x {{ $struct.Name }}) DrainRecordedOps() []segment.RecordedOp {
 // RecordedOpsLen returns the number of recorded operations.
 func (x {{ $struct.Name }}) RecordedOpsLen() int {
     return x.s.RecordedOpsLen()
+}
+
+// {{ $struct.Name }}Raw is a plain Go struct representation of {{ $struct.Name }}.
+// Zero values are not set (sparse encoding).
+type {{ $struct.Name }}Raw struct {
+{{- range $field := .Fields }}
+    {{ $field.Name }} {{ $field.RawGoType }}
+{{- end }}
+}
+
+// New{{ $struct.Name }}FromRaw creates a new {{ $struct.Name }} from a Raw struct representation.
+// Only non-zero values are set (sparse encoding).
+func New{{ $struct.Name }}FromRaw(ctx context.Context, raw {{ $struct.Name }}Raw) {{ $struct.Name }} {
+    x := New{{ $struct.Name }}(ctx)
+{{- range $field := .Fields }}
+{{- if eq $field.TypeAsString "Bool" }}
+    if raw.{{ $field.Name }} {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }})
+    }
+{{- else if eq $field.TypeAsString "Int8" "Int16" "Int32" "Int64" "Uint8" "Uint16" "Uint32" "Uint64" "Float32" "Float64" }}
+    if raw.{{ $field.Name }} != 0 {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }})
+    }
+{{- else if eq $field.TypeAsString "String" }}
+    if raw.{{ $field.Name }} != "" {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }})
+    }
+{{- else if eq $field.TypeAsString "Bytes" }}
+    if raw.{{ $field.Name }} != nil {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }})
+    }
+{{- else if eq $field.TypeAsString "Struct" }}
+    if raw.{{ $field.Name }} != nil {
+        {{- if $field.IsExternal }}
+        x.Set{{ $field.Name }}({{ $field.Package }}.New{{ $field.IdentInFile }}FromRaw(ctx, *raw.{{ $field.Name }}))
+        {{- else }}
+        x.Set{{ $field.Name }}(New{{ $field.IdentName }}FromRaw(ctx, *raw.{{ $field.Name }}))
+        {{- end }}
+    }
+{{- else if eq $field.TypeAsString "ListBools" }}
+    if raw.{{ $field.Name }} != nil {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }}...)
+    }
+{{- else if eq $field.TypeAsString "ListUint8" "ListUint16" "ListUint32" "ListUint64" "ListInt8" "ListInt16" "ListInt32" "ListInt64" "ListFloat32" "ListFloat64" }}
+    if raw.{{ $field.Name }} != nil {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }}...)
+    }
+{{- else if eq $field.TypeAsString "ListBytes" }}
+    if raw.{{ $field.Name }} != nil {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }}...)
+    }
+{{- else if eq $field.TypeAsString "ListStrings" }}
+    if raw.{{ $field.Name }} != nil {
+        x.Set{{ $field.Name }}(raw.{{ $field.Name }}...)
+    }
+{{- else if eq $field.TypeAsString "ListStructs" }}
+    if raw.{{ $field.Name }} != nil {
+        list := x.{{ $field.Name }}List()
+        items := make([]*segment.Struct, 0, len(raw.{{ $field.Name }}))
+        for _, r := range raw.{{ $field.Name }} {
+            if r != nil {
+                {{- if $field.IsExternal }}
+                items = append(items, {{ $field.Package }}.New{{ $field.IdentInFile }}FromRaw(ctx, *r).XXXGetStruct())
+                {{- else }}
+                items = append(items, New{{ $field.IdentInFile }}FromRaw(ctx, *r).XXXGetStruct())
+                {{- end }}
+            }
+        }
+        list.SetAll(items)
+    }
+{{- end }}
+{{- end }}
+    return x
+}
+
+// ToRaw converts the struct to a plain Go struct representation.
+func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
+    raw := {{ $struct.Name }}Raw{}
+{{- range $field := .Fields }}
+{{- if eq $field.TypeAsString "Bool" "Int8" "Int16" "Int32" "Int64" "Uint8" "Uint16" "Uint32" "Uint64" "Float32" "Float64" "String" }}
+    raw.{{ $field.Name }} = x.{{ $field.Name }}()
+{{- else if eq $field.TypeAsString "Bytes" }}
+    if x.s.HasField({{ $field.Index }}) {
+        raw.{{ $field.Name }} = x.{{ $field.Name }}()
+    }
+{{- else if eq $field.TypeAsString "Struct" }}
+    if x.s.HasField({{ $field.Index }}) {
+        nestedRaw := x.{{ $field.Name }}().ToRaw()
+        raw.{{ $field.Name }} = &nestedRaw
+    }
+{{- else if eq $field.TypeAsString "ListBools" }}
+    if l := x.s.GetList({{ $field.Index }}); l != nil && l.(*segment.Bools).Len() > 0 {
+        raw.{{ $field.Name }} = l.(*segment.Bools).Slice()
+    } else if x.s.HasField({{ $field.Index }}) {
+        raw.{{ $field.Name }} = x.{{ $field.Name }}().Slice()
+    }
+{{- else if eq $field.TypeAsString "ListUint8" "ListUint16" "ListUint32" "ListUint64" "ListInt8" "ListInt16" "ListInt32" "ListInt64" "ListFloat32" "ListFloat64" }}
+    if l := x.s.GetList({{ $field.Index }}); l != nil && l.(*segment.Numbers[{{ $field.GoListType }}]).Len() > 0 {
+        raw.{{ $field.Name }} = l.(*segment.Numbers[{{ $field.GoListType }}]).Slice()
+    } else if x.s.HasField({{ $field.Index }}) {
+        raw.{{ $field.Name }} = x.{{ $field.Name }}().Slice()
+    }
+{{- else if eq $field.TypeAsString "ListBytes" }}
+    if l := x.s.GetList({{ $field.Index }}); l != nil && l.(*segment.Bytes).Len() > 0 {
+        raw.{{ $field.Name }} = l.(*segment.Bytes).Slice()
+    } else if x.s.HasField({{ $field.Index }}) {
+        raw.{{ $field.Name }} = x.{{ $field.Name }}().Slice()
+    }
+{{- else if eq $field.TypeAsString "ListStrings" }}
+    if l := x.s.GetList({{ $field.Index }}); l != nil && l.(*segment.Strings).Len() > 0 {
+        raw.{{ $field.Name }} = l.(*segment.Strings).Slice()
+    } else if x.s.HasField({{ $field.Index }}) {
+        raw.{{ $field.Name }} = x.{{ $field.Name }}().Slice()
+    }
+{{- else if eq $field.TypeAsString "ListStructs" }}
+    if l := x.s.GetList({{ $field.Index }}); l != nil && l.(*segment.Structs).Len() > 0 {
+        list := l.(*segment.Structs)
+        raw.{{ $field.Name }} = make({{ $field.RawGoType }}, list.Len())
+        for i := 0; i < list.Len(); i++ {
+            {{- if $field.IsExternal }}
+            item := {{ $field.Package }}.XXXNew{{ $field.IdentInFile }}From(list.Get(i))
+            {{- else }}
+            item := {{ $field.IdentName }}{s: list.Get(i)}
+            {{- end }}
+            itemRaw := item.ToRaw()
+            raw.{{ $field.Name }}[i] = &itemRaw
+        }
+    } else if x.s.HasField({{ $field.Index }}) {
+        list := x.{{ $field.Name }}List()
+        raw.{{ $field.Name }} = make({{ $field.RawGoType }}, list.Len())
+        for i := 0; i < list.Len(); i++ {
+            {{- if $field.IsExternal }}
+            item := {{ $field.Package }}.XXXNew{{ $field.IdentInFile }}From(list.Get(i))
+            {{- else }}
+            item := {{ $field.IdentName }}{s: list.Get(i)}
+            {{- end }}
+            itemRaw := item.ToRaw()
+            raw.{{ $field.Name }}[i] = &itemRaw
+        }
+    }
+{{- end }}
+{{- end }}
+    return raw
 }
 
