@@ -28,21 +28,17 @@ func GetListBools(s *Struct, fieldNum uint16) *Bools {
 		return nil
 	}
 
-	// Get count from header or calculate from data size
+	// Get count from header - for FTListBools, final40 stores the item count
 	_, _, final40 := DecodeHeader(data[0:HeaderSize])
-	totalSize := int(final40)
-	dataBytes := totalSize - HeaderSize
+	count := int(final40)
 
 	// Unpack bits to bools
-	items := make([]bool, 0)
-	for byteIdx := 0; byteIdx < dataBytes; byteIdx++ {
-		b := data[HeaderSize+byteIdx]
-		for bitIdx := 0; bitIdx < 8; bitIdx++ {
-			if (b & (1 << uint(bitIdx))) != 0 {
-				items = append(items, true)
-			} else {
-				items = append(items, false)
-			}
+	items := make([]bool, count)
+	for i := 0; i < count; i++ {
+		byteIdx := HeaderSize + i/8
+		bitIdx := uint(i % 8)
+		if (data[byteIdx] & (1 << bitIdx)) != 0 {
+			items[i] = true
 		}
 	}
 

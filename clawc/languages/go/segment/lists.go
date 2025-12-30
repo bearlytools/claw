@@ -163,8 +163,9 @@ func (b *Bools) SyncToSegment() error {
 	totalSize := HeaderSize + numBytes + padding
 
 	fieldData := make([]byte, totalSize)
-	// Write header with total size (not item count) so parseFieldIndex can skip correctly
-	EncodeHeader(fieldData[0:8], b.fieldNum, field.FTListBools, uint64(totalSize))
+	// Write header with item count in final40 (not total size).
+	// parseFieldIndex uses the count to calculate the size for FTListBools.
+	EncodeHeader(fieldData[0:8], b.fieldNum, field.FTListBools, uint64(len(b.items)))
 
 	// Pack bools as bits
 	for i, v := range b.items {

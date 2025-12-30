@@ -741,6 +741,107 @@ func (s StructField) FieldTypeConst() string {
 	return field.ConstName(s.Type)
 }
 
+// RawGoType returns the Go type string for use in Raw struct definitions.
+// For enums, it returns the enum type name. For structs, it returns a pointer to the Raw type.
+// For lists, it returns Go slice types, using *NestedRaw for struct lists.
+func (s StructField) RawGoType() string {
+	switch s.Type {
+	case field.FTBool:
+		return "bool"
+	case field.FTInt8:
+		return "int8"
+	case field.FTInt16:
+		return "int16"
+	case field.FTInt32:
+		return "int32"
+	case field.FTInt64:
+		return "int64"
+	case field.FTUint8:
+		if s.IsEnum {
+			if s.IsExternal {
+				return s.Package + "." + s.IdentInFile()
+			}
+			return s.IdentName
+		}
+		return "uint8"
+	case field.FTUint16:
+		if s.IsEnum {
+			if s.IsExternal {
+				return s.Package + "." + s.IdentInFile()
+			}
+			return s.IdentName
+		}
+		return "uint16"
+	case field.FTUint32:
+		return "uint32"
+	case field.FTUint64:
+		return "uint64"
+	case field.FTFloat32:
+		return "float32"
+	case field.FTFloat64:
+		return "float64"
+	case field.FTString:
+		return "string"
+	case field.FTBytes:
+		return "[]byte"
+	case field.FTStruct:
+		if s.IsExternal {
+			return "*" + s.Package + "." + s.IdentInFile() + "Raw"
+		}
+		return "*" + s.IdentName + "Raw"
+	case field.FTListBools:
+		return "[]bool"
+	case field.FTListInt8:
+		if s.IsEnum {
+			if s.IsExternal {
+				return "[]" + s.Package + "." + s.IdentInFile()
+			}
+			return "[]" + s.IdentName
+		}
+		return "[]int8"
+	case field.FTListInt16:
+		return "[]int16"
+	case field.FTListInt32:
+		return "[]int32"
+	case field.FTListInt64:
+		return "[]int64"
+	case field.FTListUint8:
+		if s.IsEnum {
+			if s.IsExternal {
+				return "[]" + s.Package + "." + s.IdentInFile()
+			}
+			return "[]" + s.IdentName
+		}
+		return "[]uint8"
+	case field.FTListUint16:
+		if s.IsEnum {
+			if s.IsExternal {
+				return "[]" + s.Package + "." + s.IdentInFile()
+			}
+			return "[]" + s.IdentName
+		}
+		return "[]uint16"
+	case field.FTListUint32:
+		return "[]uint32"
+	case field.FTListUint64:
+		return "[]uint64"
+	case field.FTListFloat32:
+		return "[]float32"
+	case field.FTListFloat64:
+		return "[]float64"
+	case field.FTListBytes:
+		return "[][]byte"
+	case field.FTListStrings:
+		return "[]string"
+	case field.FTListStructs:
+		if s.IsExternal {
+			return "[]*" + s.Package + "." + s.IdentInFile() + "Raw"
+		}
+		return "[]*" + s.IdentName + "Raw"
+	}
+	panic(fmt.Sprintf("RawGoType: unsupported type %v for field %s", s.Type, s.Name))
+}
+
 // Struct represents a Claw Struct type in the file.
 type Struct struct {
 	// Comment is the comment that appears before the struct declaration.

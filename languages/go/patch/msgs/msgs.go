@@ -242,6 +242,46 @@ func (x Op) RecordedOpsLen() int {
     return x.s.RecordedOpsLen()
 }
 
+// OpRaw is a plain Go struct representation of Op.
+// Zero values are not set (sparse encoding).
+type OpRaw struct {
+    FieldNum uint16
+    Type OpType
+    Index int32
+    Data []byte
+}
+
+// NewOpFromRaw creates a new Op from a Raw struct representation.
+// Only non-zero values are set (sparse encoding).
+func NewOpFromRaw(ctx context.Context, raw OpRaw) Op {
+    x := NewOp(ctx)
+    if raw.FieldNum != 0 {
+        x.SetFieldNum(raw.FieldNum)
+    }
+    if raw.Type != 0 {
+        x.SetType(raw.Type)
+    }
+    if raw.Index != 0 {
+        x.SetIndex(raw.Index)
+    }
+    if raw.Data != nil {
+        x.SetData(raw.Data)
+    }
+    return x
+}
+
+// ToRaw converts the struct to a plain Go struct representation.
+func (x Op) ToRaw() OpRaw {
+    raw := OpRaw{}
+    raw.FieldNum = x.FieldNum()
+    raw.Type = x.Type()
+    raw.Index = x.Index()
+    if x.s.HasField(3) {
+        raw.Data = x.Data()
+    }
+    return raw
+}
+
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -349,6 +389,16 @@ func (x Patch) AppendOps(values ...Op) {
     x.OpsAppend(values...)
 }
 
+// OpsAppendRaw appends items to the list using Raw struct representations.
+func (x Patch) OpsAppendRaw(ctx context.Context, values ...*OpRaw) {
+    list := x.OpsList()
+    for _, raw := range values {
+        if raw != nil {
+            list.Append(NewOpFromRaw(ctx, *raw).XXXGetStruct())
+        }
+    }
+}
+
 
 
 // ClawStruct returns a reflection type representing the Struct.
@@ -386,6 +436,57 @@ func (x Patch) DrainRecordedOps() []segment.RecordedOp {
 // RecordedOpsLen returns the number of recorded operations.
 func (x Patch) RecordedOpsLen() int {
     return x.s.RecordedOpsLen()
+}
+
+// PatchRaw is a plain Go struct representation of Patch.
+// Zero values are not set (sparse encoding).
+type PatchRaw struct {
+    Version uint8
+    Ops []*OpRaw
+}
+
+// NewPatchFromRaw creates a new Patch from a Raw struct representation.
+// Only non-zero values are set (sparse encoding).
+func NewPatchFromRaw(ctx context.Context, raw PatchRaw) Patch {
+    x := NewPatch(ctx)
+    if raw.Version != 0 {
+        x.SetVersion(raw.Version)
+    }
+    if raw.Ops != nil {
+        list := x.OpsList()
+        items := make([]*segment.Struct, 0, len(raw.Ops))
+        for _, r := range raw.Ops {
+            if r != nil {
+                items = append(items, NewOpFromRaw(ctx, *r).XXXGetStruct())
+            }
+        }
+        list.SetAll(items)
+    }
+    return x
+}
+
+// ToRaw converts the struct to a plain Go struct representation.
+func (x Patch) ToRaw() PatchRaw {
+    raw := PatchRaw{}
+    raw.Version = x.Version()
+    if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
+        list := l.(*segment.Structs)
+        raw.Ops = make([]*OpRaw, list.Len())
+        for i := 0; i < list.Len(); i++ {
+            item := Op{s: list.Get(i)}
+            itemRaw := item.ToRaw()
+            raw.Ops[i] = &itemRaw
+        }
+    } else if x.s.HasField(1) {
+        list := x.OpsList()
+        raw.Ops = make([]*OpRaw, list.Len())
+        for i := 0; i < list.Len(); i++ {
+            item := Op{s: list.Get(i)}
+            itemRaw := item.ToRaw()
+            raw.Ops[i] = &itemRaw
+        }
+    }
+    return raw
 }
 
  
@@ -544,6 +645,24 @@ var XXXEnumGroups reflect.EnumGroups = reflect.XXXEnumGroupsImpl{
  
 
 
+var XXXStructDescrPatch = &reflect.XXXStructDescrImpl{
+    Name:      "Patch",
+    Pkg:       XXXMappingPatch.Pkg,
+    Path:      XXXMappingPatch.Path,
+    Mapping:   XXXMappingPatch,
+    FieldList: []reflect.FieldDescr {
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingPatch.Fields[0],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingPatch.Fields[1],
+            SD: XXXStructDescrOp,  
+        },  
+    },
+}
+
 var XXXStructDescrOp = &reflect.XXXStructDescrImpl{
     Name:      "Op",
     Pkg:       XXXMappingOp.Pkg,
@@ -570,24 +689,6 @@ var XXXStructDescrOp = &reflect.XXXStructDescrImpl{
     },
 }
 
-var XXXStructDescrPatch = &reflect.XXXStructDescrImpl{
-    Name:      "Patch",
-    Pkg:       XXXMappingPatch.Pkg,
-    Path:      XXXMappingPatch.Path,
-    Mapping:   XXXMappingPatch,
-    FieldList: []reflect.FieldDescr {
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingPatch.Fields[0],  
-        }, 
-        
-        reflect.XXXFieldDescrImpl{
-            FD:  XXXMappingPatch.Fields[1],
-            SD: XXXStructDescrOp,  
-        },  
-    },
-}
-
 var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
     "Op":  XXXStructDescrOp,
     "Patch":  XXXStructDescrPatch,
@@ -600,8 +701,8 @@ var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     EnumGroupsDescrs: XXXEnumGroups,
     StructsDescrs: reflect.XXXStructDescrsImpl{
         Descrs: []reflect.StructDescr{
-            XXXStructDescrPatch,
             XXXStructDescrOp,
+            XXXStructDescrPatch,
         },
     },
 }
