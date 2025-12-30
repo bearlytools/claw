@@ -3,10 +3,8 @@ package reflect
 import (
 	"fmt"
 
-	"github.com/bearlytools/claw/clawc/languages/go/conversions"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/value"
-	"github.com/bearlytools/claw/clawc/languages/go/structs"
 )
 
 // Number represents all int, uint and float types.
@@ -56,61 +54,31 @@ func ValueOfStruct(v Struct) Value {
 func ListFrom(v any) List {
 	switch t := v.(type) {
 	case []bool:
-		b := structs.NewBools(0)
-		b.Append(t...)
-		return value.NewListBools(b)
+		return value.NewListBools(t)
 	case []int8:
-		n := structs.NewNumbers[int8]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []int16:
-		n := structs.NewNumbers[int16]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []int32:
-		n := structs.NewNumbers[int32]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []int64:
-		n := structs.NewNumbers[int64]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []uint8:
-		n := structs.NewNumbers[uint8]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []uint16:
-		n := structs.NewNumbers[uint16]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []uint32:
-		n := structs.NewNumbers[uint32]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []uint64:
-		n := structs.NewNumbers[uint64]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []float32:
-		n := structs.NewNumbers[float32]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []float64:
-		n := structs.NewNumbers[float64]()
-		n.Append(t...)
-		return value.NewListNumbers(n)
+		return value.NewListNumbers(t)
 	case []string:
-		b := structs.NewBytes()
-		l := make([][]byte, 0, len(t))
-		for _, s := range t {
-			l = append(l, conversions.UnsafeGetBytes(s))
-		}
-		b.Append(l...)
-		return value.NewListStrings(b)
+		return value.NewListStrings(t)
 	case [][]byte:
-		b := structs.NewBytes()
-		b.Append(t...)
-		return value.NewListBytes(b)
+		return value.NewListBytes(t)
 	}
 	panic(fmt.Sprintf("%T is not supported", v))
 }

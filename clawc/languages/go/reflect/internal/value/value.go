@@ -3,63 +3,57 @@ package value
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"math"
-	"unsafe"
 
-	"github.com/bearlytools/claw/clawc/internal/binary"
-	"github.com/bearlytools/claw/clawc/internal/bits"
 	"github.com/bearlytools/claw/clawc/internal/pragma"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
-	"github.com/bearlytools/claw/clawc/languages/go/structs"
-	"github.com/bearlytools/claw/clawc/languages/go/structs/header"
+	"github.com/bearlytools/claw/clawc/languages/go/segment"
 )
 
 type doNotImplement pragma.DoNotImplement
 
-var boolMask = bits.Mask[uint64](24, 25)
-
 // Value represents a read-only Claw value. This can be used to retrieve a value or
 // set a value.
 type Value struct {
-	// h works like normal for all non-list and non-aStruct types. In those cases,
-	// list and aStruct should be referenced.
-	h         header.Generic
-	ptr       unsafe.Pointer
+	// ft is the field type
+	ft field.Type
+
+	// hasScalar indicates if this Value contains a scalar value
+	hasScalar bool
+
+	// Scalar value storage (only one is used based on ft)
+	boolVal  bool
+	intVal   int64
+	uintVal  uint64
+	floatVal float64
+
+	// Non-scalar storage
+	bytesVal  []byte
+	stringVal string
+
+	// Enum support
 	isEnum    bool
 	enumGroup interfaces.EnumGroup
 
+	// Complex types
 	list    interfaces.List
 	aStruct interfaces.Struct
 }
 
 // Bool returns the boolean value stored in Value. If Value is not a bool type, this will panic.
 func (v Value) Bool() bool {
-	if v.h == nil {
-		panic("Value is empty value")
+	if v.ft != field.FTBool {
+		panic("Value is not Bool, was " + v.ft.String())
 	}
-	if v.h.FieldType() != field.FTBool {
-		panic("Value is not Bool, was " + v.h.FieldType().String())
-	}
-	i := binary.Get[uint64](v.h)
-	return bits.GetValue[uint64, uint8](i, boolMask, 24) == 1
+	return v.boolVal
 }
 
 // Bytes returns the Bytes value stored in Value. If Value is not a Bytes type, this will panic.
 func (v Value) Bytes() []byte {
-	if v.h == nil {
-		panic("Value is empty value")
+	if v.ft != field.FTBytes {
+		panic("Value is not Bytes, was " + v.ft.String())
 	}
-	if v.h.FieldType() != field.FTBytes {
-		panic("Value is not Bytes, was " + v.h.FieldType().String())
-	}
-
-	if v.ptr == nil { // Set, but value is empty
-		return nil
-	}
-
-	return *(*[]byte)(v.ptr)
+	return v.bytesVal
 }
 
 // Enum returns the enumerated value stored in Value. If Value is not an Enum type, this will panic.
@@ -67,68 +61,25 @@ func (v Value) Enum() interfaces.Enum {
 	if !v.isEnum {
 		panic("Enum() called on non enum value")
 	}
-
-	log.Println("enumGroup: ", v.enumGroup)
-	log.Printf("enumGroup.ByValue(%v): ", v.h.Final40())
-	return v.enumGroup.ByValue(uint16(v.h.Final40()))
+	return v.enumGroup.ByValue(uint16(v.uintVal))
 }
 
 // Float returns the Float value stored in Value. If Value is not a Float type, this will panic.
 func (v Value) Float() float64 {
-	if v.h == nil {
-		panic("Value is empty value")
+	switch v.ft {
+	case field.FTFloat32, field.FTFloat64:
+		return v.floatVal
 	}
-
-	switch v.h.FieldType() {
-	case field.FTFloat32:
-		f, err := getNumber[float32](v, true)
-		if err != nil {
-			panic(err)
-		}
-		return float64(f)
-	case field.FTFloat64:
-		f, err := getNumber[float64](v, true)
-		if err != nil {
-			panic(err)
-		}
-		return f
-	}
-	panic("field type was not for a float32 or float64, was " + v.h.FieldType().String())
+	panic("field type was not for a float32 or float64, was " + v.ft.String())
 }
 
 // Int returns the integer value stored in Value. If Value is not an integer type, this will panic.
 func (v Value) Int() int64 {
-	if v.h == nil {
-		panic("Value is empty value")
+	switch v.ft {
+	case field.FTInt8, field.FTInt16, field.FTInt32, field.FTInt64:
+		return v.intVal
 	}
-
-	switch v.h.FieldType() {
-	case field.FTInt8:
-		i, err := getNumber[int8](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return int64(i)
-	case field.FTInt16:
-		i, err := getNumber[int16](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return int64(i)
-	case field.FTInt32:
-		i, err := getNumber[int32](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return int64(i)
-	case field.FTInt64:
-		i, err := getNumber[int64](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return i
-	}
-	panic("field type was not for a int8, int16, int32 or int64, was " + v.h.FieldType().String())
+	panic("field type was not for an int8, int16, int32 or int64, was " + v.ft.String())
 }
 
 // Any decodes the value into the any type. If the value isn't valid, this panics.
@@ -146,7 +97,7 @@ func (v Value) Int() int64 {
 //   - List of Bytes into [][]byte
 //   - List of Struct into a []reflect.Struct
 func (v Value) Any() any {
-	if v.h == nil && v.aStruct == nil && v.enumGroup == nil && v.list == nil {
+	if !v.hasScalar && v.aStruct == nil && v.enumGroup == nil && v.list == nil && v.bytesVal == nil && v.stringVal == "" {
 		return nil
 	}
 
@@ -158,7 +109,7 @@ func (v Value) Any() any {
 		return v.aStruct
 	}
 
-	switch v.h.FieldType() {
+	switch v.ft {
 	case field.FTBool:
 		return v.Bool()
 	case field.FTInt8:
@@ -182,7 +133,7 @@ func (v Value) Any() any {
 	case field.FTFloat64:
 		return v.Float()
 	case field.FTString:
-		return v.String()
+		return v.stringVal
 	case field.FTBytes:
 		return v.Bytes()
 	case field.FTListBools:
@@ -215,7 +166,7 @@ func (v Value) Any() any {
 		return structSliceFromValue(v)
 	}
 
-	panic(fmt.Sprintf("unsupportted type %v", v.h.FieldType()))
+	panic(fmt.Sprintf("unsupported type %v", v.ft))
 }
 
 // String returns the string value stored in Value. String returns the string v's underlying
@@ -225,7 +176,7 @@ func (v Value) Any() any {
 // specially. It does not call their String method implicitly but instead prints the
 // concrete values they hold.
 func (v Value) String() string {
-	if v.h == nil {
+	if v.ft == field.FTUnknown && !v.hasScalar && v.aStruct == nil && v.list == nil {
 		return "<invalid Value>"
 	}
 
@@ -234,8 +185,13 @@ func (v Value) String() string {
 		return v.Enum().Name()
 	}
 
+	// String type returns directly
+	if v.ft == field.FTString {
+		return v.stringVal
+	}
+
 	// There are two types that require special attention, Struct and []Struct.
-	switch v.h.FieldType() {
+	switch v.ft {
 	case field.FTStruct:
 		buff := bytes.Buffer{}
 		buff.WriteRune('{')
@@ -260,51 +216,25 @@ func (v Value) String() string {
 			if i != 0 {
 				buff.WriteString(", ")
 			}
-			buff.WriteString(v.String())
+			buff.WriteString(v.list.Get(i).String())
 		}
 
 		buff.WriteRune(']')
 		return buff.String()
 	}
 
-	// For enverything else, convert to the Go type and let Go's fmt.Sprint() handle the
+	// For everything else, convert to the Go type and let Go's fmt.Sprint() handle the
 	// string conversion.
 	return fmt.Sprint(v.Any())
 }
 
 // Uint returns the unsigned integer value stored in Value. If Value is not an unsigned integer type, this will panic.
 func (v Value) Uint() uint64 {
-	if v.h == nil {
-		panic("Value is empty value")
+	switch v.ft {
+	case field.FTUint8, field.FTUint16, field.FTUint32, field.FTUint64:
+		return v.uintVal
 	}
-
-	switch v.h.FieldType() {
-	case field.FTUint8:
-		i, err := getNumber[uint8](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return uint64(i)
-	case field.FTUint16:
-		i, err := getNumber[uint16](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return uint64(i)
-	case field.FTUint32:
-		i, err := getNumber[uint32](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return uint64(i)
-	case field.FTUint64:
-		i, err := getNumber[uint64](v, false)
-		if err != nil {
-			panic(err)
-		}
-		return i
-	}
-	panic("field type was not for a uint8, uint16, uint32 or uint64, was " + v.h.FieldType().String())
+	panic("field type was not for a uint8, uint16, uint32 or uint64, was " + v.ft.String())
 }
 
 // List returns the List value stored in Value. If Value is not some list type, this will panic.
@@ -392,26 +322,8 @@ func structSliceFromValue(v Value) []interfaces.Struct {
 	return x
 }
 
-// getNumber gets a number value at fieldNum.
-func getNumber[N interfaces.Number](v Value, isFloat bool) (N, error) {
-	if v.ptr == nil {
-		b := v.h[3:8]
-		if isFloat {
-			i := binary.Get[uint32](b)
-			return N(math.Float32frombits(uint32(i))), nil
-		}
-		return N(binary.Get[uint32](b)), nil
-	}
-	b := *(*[]byte)(v.ptr)
-	if isFloat {
-		i := binary.Get[uint64](b)
-		return N(math.Float64frombits(uint64(i))), nil
-	}
-	return N(binary.Get[uint64](b)), nil
-}
-
-// XXXNewStruct wraps our internal *structs.Struct objects in the reflect.Struct type.
+// XXXNewStruct wraps our internal *segment.Struct objects in the reflect.Struct type.
 // This is used in our generated code to implement the ClawStruct() method.
-func XXXNewStruct(v *structs.Struct, descr interfaces.StructDescr) interfaces.Struct {
+func XXXNewStruct(v *segment.Struct, descr interfaces.StructDescr) interfaces.Struct {
 	return StructImpl{s: v, descr: descr}
 }

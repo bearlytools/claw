@@ -11,7 +11,6 @@ import (
 	"unsafe"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
-	"github.com/bearlytools/claw/clawc/languages/go/structs/header"
 	"github.com/gostdlib/base/concurrency/sync"
 )
 
@@ -112,8 +111,6 @@ type Map struct {
 	ScanSizers   []ScanSizeFunc   // For scanFieldOffsets()
 	LazyDecoders []LazyDecodeFunc // For decodeFieldFromRaw()
 
-	// StructFieldsPool is a pool of StructField slices for use during encoding/decoding.
-	StructFieldsPool *sync.Pool[*[]StructField]
 	// FieldStates is a pool of FieldState slices for use during lazy decoding.
 	FieldStates *sync.Pool[*[]FieldState]
 	// OffsetsPool is a pool of FieldOffset slices for use during lazy decoding.
@@ -140,14 +137,6 @@ func (m *Map) Init() {
 	if RegisterLazyDecoders != nil {
 		RegisterLazyDecoders(m)
 	}
-	m.StructFieldsPool = sync.NewPool(
-		context.Background(),
-		path.Join(m.Path, m.Pkg, m.Name)+".StructFieldsPool",
-		func() *[]StructField {
-			slice := make([]StructField, len(m.Fields))
-			return &slice
-		},
-	)
 	m.FieldStates = sync.NewPool(
 		context.Background(),
 		path.Join(m.Path, m.Pkg, m.Name)+".FieldStatesPool",
@@ -198,13 +187,6 @@ func (m Map) MustValidate() {
 	if err := m.validate(); err != nil {
 		panic(err)
 	}
-}
-
-// StructField holds a struct field entry. Defined here to avoid import cycles, as I want a pool of
-// these in mapping.
-type StructField struct {
-	Header header.Generic
-	Ptr    unsafe.Pointer
 }
 
 // FieldState represents the decode state of a field in lazy decoding mode.

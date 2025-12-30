@@ -2,10 +2,10 @@ package clawjson
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 
-	"github.com/bearlytools/claw/clawc/languages/go/types/list"
 	"github.com/kylelemons/godebug/pretty"
 
 	vehicles "github.com/bearlytools/claw/testing/imports/vehicles/claw"
@@ -14,6 +14,7 @@ import (
 )
 
 func TestMarshalSimpleCar(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name    string
 		setup   func() cars.Car
@@ -23,7 +24,7 @@ func TestMarshalSimpleCar(t *testing.T) {
 		{
 			name: "Success: car with enum strings",
 			setup: func() cars.Car {
-				return cars.NewCar().
+				return cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Toyota).
 					SetModel(cars.Venza).
 					SetYear(2010)
@@ -33,7 +34,7 @@ func TestMarshalSimpleCar(t *testing.T) {
 		{
 			name: "Success: car with enum numbers",
 			setup: func() cars.Car {
-				return cars.NewCar().
+				return cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Tesla).
 					SetModel(cars.ModelS).
 					SetYear(2023)
@@ -44,7 +45,7 @@ func TestMarshalSimpleCar(t *testing.T) {
 		{
 			name: "Success: empty car (zero values)",
 			setup: func() cars.Car {
-				return cars.NewCar()
+				return cars.NewCar(ctx)
 			},
 			want: `{"Manufacturer":"Unknown","Model":"ModelUnknown","Year":0}`,
 		},
@@ -65,6 +66,7 @@ func TestMarshalSimpleCar(t *testing.T) {
 }
 
 func TestMarshalNestedStruct(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name    string
 		setup   func() vehicles.Vehicle
@@ -74,11 +76,11 @@ func TestMarshalNestedStruct(t *testing.T) {
 		{
 			name: "Success: vehicle with nested car",
 			setup: func() vehicles.Vehicle {
-				car := cars.NewCar().
+				car := cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Toyota).
 					SetModel(cars.Venza).
 					SetYear(2010)
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(ctx).
 					SetType(vehicles.Car).
 					SetCar(car)
 			},
@@ -87,7 +89,7 @@ func TestMarshalNestedStruct(t *testing.T) {
 		{
 			name: "Success: vehicle with nil car",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(ctx).
 					SetType(vehicles.Truck)
 			},
 			want: `{"Type":"Truck","Car":null,"Truck":null,"Types":null,"Bools":null}`,
@@ -109,6 +111,7 @@ func TestMarshalNestedStruct(t *testing.T) {
 }
 
 func TestMarshalLists(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name    string
 		setup   func() vehicles.Vehicle
@@ -118,24 +121,24 @@ func TestMarshalLists(t *testing.T) {
 		{
 			name: "Success: vehicle with bool list",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetBools(list.NewBools().Append(true, false, true))
+				return vehicles.NewVehicle(ctx).
+					SetBools(true, false, true)
 			},
 			want: `{"Type":"Unknown","Car":null,"Truck":null,"Types":null,"Bools":[true,false,true]}`,
 		},
 		{
 			name: "Success: vehicle with enum list (strings)",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+				return vehicles.NewVehicle(ctx).
+					SetTypes(vehicles.Car, vehicles.Truck)
 			},
 			want: `{"Type":"Unknown","Car":null,"Truck":null,"Types":["Car","Truck"],"Bools":null}`,
 		},
 		{
 			name: "Success: vehicle with enum list (numbers)",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+				return vehicles.NewVehicle(ctx).
+					SetTypes(vehicles.Car, vehicles.Truck)
 			},
 			options: []MarshalOption{WithUseEnumNumbers(true)},
 			want:    `{"Type":0,"Car":null,"Truck":null,"Types":[1,2],"Bools":null}`,
@@ -157,7 +160,8 @@ func TestMarshalLists(t *testing.T) {
 }
 
 func TestMarshalWriter(t *testing.T) {
-	car := cars.NewCar().
+	ctx := context.Background()
+	car := cars.NewCar(ctx).
 		SetManufacturer(manufacturers.Ford).
 		SetModel(cars.GT).
 		SetYear(2020)
@@ -177,6 +181,7 @@ func TestMarshalWriter(t *testing.T) {
 }
 
 func TestArray(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name    string
 		setup   func(*Array) error
@@ -193,7 +198,7 @@ func TestArray(t *testing.T) {
 		{
 			name: "Success: single element",
 			setup: func(a *Array) error {
-				car := cars.NewCar().
+				car := cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Toyota).
 					SetYear(2010)
 				return a.Write(car)
@@ -203,8 +208,8 @@ func TestArray(t *testing.T) {
 		{
 			name: "Success: multiple elements",
 			setup: func(a *Array) error {
-				car1 := cars.NewCar().SetManufacturer(manufacturers.Toyota).SetYear(2010)
-				car2 := cars.NewCar().SetManufacturer(manufacturers.Tesla).SetYear(2023)
+				car1 := cars.NewCar(ctx).SetManufacturer(manufacturers.Toyota).SetYear(2010)
+				car2 := cars.NewCar(ctx).SetManufacturer(manufacturers.Tesla).SetYear(2023)
 				if err := a.Write(car1); err != nil {
 					return err
 				}
@@ -215,7 +220,7 @@ func TestArray(t *testing.T) {
 		{
 			name: "Success: with enum numbers option",
 			setup: func(a *Array) error {
-				car := cars.NewCar().SetManufacturer(manufacturers.Ford).SetYear(2015)
+				car := cars.NewCar(ctx).SetManufacturer(manufacturers.Ford).SetYear(2015)
 				return a.Write(car)
 			},
 			options: []MarshalOption{WithUseEnumNumbers(true)},
@@ -245,16 +250,17 @@ func TestArray(t *testing.T) {
 }
 
 func TestMarshalProducesValidJSON(t *testing.T) {
-	car := cars.NewCar().
+	ctx := context.Background()
+	car := cars.NewCar(ctx).
 		SetManufacturer(manufacturers.Toyota).
 		SetModel(cars.Venza).
 		SetYear(2010)
 
-	vehicle := vehicles.NewVehicle().
+	vehicle := vehicles.NewVehicle(ctx).
 		SetType(vehicles.Car).
 		SetCar(car).
-		SetBools(list.NewBools().Append(true, false)).
-		SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+		SetBools(true, false).
+		SetTypes(vehicles.Car, vehicles.Truck)
 
 	got, err := Marshal(vehicle)
 	switch {
@@ -287,6 +293,7 @@ func TestMarshalProducesValidJSON(t *testing.T) {
 }
 
 func TestUnmarshalRoundTripCar(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name    string
 		setup   func() cars.Car
@@ -295,7 +302,7 @@ func TestUnmarshalRoundTripCar(t *testing.T) {
 		{
 			name: "Success: car with enum strings",
 			setup: func() cars.Car {
-				return cars.NewCar().
+				return cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Toyota).
 					SetModel(cars.Venza).
 					SetYear(2010)
@@ -304,7 +311,7 @@ func TestUnmarshalRoundTripCar(t *testing.T) {
 		{
 			name: "Success: car with enum numbers",
 			setup: func() cars.Car {
-				return cars.NewCar().
+				return cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Tesla).
 					SetModel(cars.ModelS).
 					SetYear(2023)
@@ -314,7 +321,7 @@ func TestUnmarshalRoundTripCar(t *testing.T) {
 		{
 			name: "Success: empty car (zero values)",
 			setup: func() cars.Car {
-				return cars.NewCar()
+				return cars.NewCar(ctx)
 			},
 		},
 	}
@@ -330,8 +337,8 @@ func TestUnmarshalRoundTripCar(t *testing.T) {
 		}
 
 		// Unmarshal back into a new struct
-		restored := cars.NewCar()
-		if err := Unmarshal(jsonData, &restored); err != nil {
+		restored := cars.NewCar(ctx)
+		if err := Unmarshal(ctx, jsonData, &restored); err != nil {
 			t.Errorf("TestUnmarshalRoundTripCar(%s): Unmarshal error: %s\nJSON: %s", test.name, err, string(jsonData))
 			continue
 		}
@@ -353,6 +360,7 @@ func TestUnmarshalRoundTripCar(t *testing.T) {
 }
 
 func TestUnmarshalRoundTripVehicle(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name    string
 		setup   func() vehicles.Vehicle
@@ -361,11 +369,11 @@ func TestUnmarshalRoundTripVehicle(t *testing.T) {
 		{
 			name: "Success: vehicle with nested car",
 			setup: func() vehicles.Vehicle {
-				car := cars.NewCar().
+				car := cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Toyota).
 					SetModel(cars.Venza).
 					SetYear(2010)
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(ctx).
 					SetType(vehicles.Car).
 					SetCar(car)
 			},
@@ -373,37 +381,37 @@ func TestUnmarshalRoundTripVehicle(t *testing.T) {
 		{
 			name: "Success: vehicle with bool list",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetBools(list.NewBools().Append(true, false, true))
+				return vehicles.NewVehicle(ctx).
+					SetBools(true, false, true)
 			},
 		},
 		{
 			name: "Success: vehicle with enum list (strings)",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+				return vehicles.NewVehicle(ctx).
+					SetTypes(vehicles.Car, vehicles.Truck)
 			},
 		},
 		{
 			name: "Success: vehicle with enum list (numbers)",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+				return vehicles.NewVehicle(ctx).
+					SetTypes(vehicles.Car, vehicles.Truck)
 			},
 			options: []MarshalOption{WithUseEnumNumbers(true)},
 		},
 		{
 			name: "Success: vehicle with all fields",
 			setup: func() vehicles.Vehicle {
-				car := cars.NewCar().
+				car := cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Ford).
 					SetModel(cars.GT).
 					SetYear(2020)
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(ctx).
 					SetType(vehicles.Car).
 					SetCar(car).
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck)).
-					SetBools(list.NewBools().Append(true, false))
+					SetTypes(vehicles.Car, vehicles.Truck).
+					SetBools(true, false)
 			},
 		},
 	}
@@ -419,8 +427,8 @@ func TestUnmarshalRoundTripVehicle(t *testing.T) {
 		}
 
 		// Unmarshal back into a new struct
-		restored := vehicles.NewVehicle()
-		if err := Unmarshal(jsonData, &restored); err != nil {
+		restored := vehicles.NewVehicle(ctx)
+		if err := Unmarshal(ctx, jsonData, &restored); err != nil {
 			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Unmarshal error: %s\nJSON: %s", test.name, err, string(jsonData))
 			continue
 		}

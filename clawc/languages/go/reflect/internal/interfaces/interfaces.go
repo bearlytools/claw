@@ -34,7 +34,6 @@ type EnumGroup interface {
 	// Name is the name of the EnumGroup.
 	Name() string
 	// Len reports the number of enum values.
-	// TODO(jdoak): Change this to be uint16
 	Len() int
 	// Get returns the ith EnumValue. It panics if out of bounds.
 	Get(i uint16) Enum
@@ -73,23 +72,6 @@ type Enum interface {
 
 	doNotImplement
 }
-
-// TODO(jdoak): Remove this?
-// Enum is the refection interface for a concrete enum value.
-/*
-type Enum interface {
-	Descriptor() EnumValueDescr
-	// Number returns the number value of the enum. This value could be a sized for
-	// uint8 or uint16, to determine the enumerator size, use .Size().
-	Number() uint16
-	// String returns the string representation of the enumerator.
-	String() string
-	// Size returns the size in bits of the enumerator.
-	Size() uint8 // Either 8 or 16
-
-	doNotImplement
-}
-*/
 
 // List provides access to one of Claw's list types from the int family, uint family,
 // lists of bytes/string or list of structs.

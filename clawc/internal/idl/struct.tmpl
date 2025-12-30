@@ -9,20 +9,9 @@ type {{ .Name }} struct {
    s *segment.Struct
 }
 
-// New{{ .Name }} creates a new instance of {{ .Name }}.
-func New{{ .Name }}() {{ .Name }} {
-    s := segment.New(XXXMapping{{ .Name }})
-    {{- if $isSetEnabled }}
-    s.SetIsSetEnabled(true)
-    {{- end }}
-    return {{ .Name }}{
-        s: s,
-    }
-}
-
-// New{{ .Name }}Pooled creates a pooled instance of {{ .Name }}.
+// New{{ .Name }} creates a new pooled instance of {{ .Name }}.
 // Call Release() when done to return it to the pool for reuse.
-func New{{ .Name }}Pooled(ctx context.Context) {{ .Name }} {
+func New{{ .Name }}(ctx context.Context) {{ .Name }} {
     s := segment.NewPooled(ctx, XXXMapping{{ .Name }})
     {{- if $isSetEnabled }}
     s.SetIsSetEnabled(true)
@@ -382,12 +371,10 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Bools {
     return bools
 }
 
-// Set{{ $field.Name }} sets the bool list from a list.Bools for backwards compatibility.
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(v list.Bools) {{ $struct.Name }} {
+// Set{{ $field.Name }} replaces all values in the bool list.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(v ...bool) {{ $struct.Name }} {
     bools := x.{{ $field.Name }}()
-    for b := range v.All() {
-        bools.Append(b)
-    }
+    bools.SetAll(v)
     return x
 }
 
@@ -428,25 +415,12 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
-{{- if $field.IsEnum }}
-// Set{{ $field.Name }} sets the enum list from a list.Enums for backwards compatibility.
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(v list.Enums[{{ $field.GoListType }}]) {{ $struct.Name }} {
+// Set{{ $field.Name }} replaces all values in the numeric list.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(v ...{{ $field.GoListType }}) {{ $struct.Name }} {
     nums := x.{{ $field.Name }}()
-    for n := range v.All() {
-        nums.Append(n)
-    }
+    nums.SetAll(v)
     return x
 }
-{{- else }}
-// Set{{ $field.Name }} sets the numeric list from a list.Numbers for backwards compatibility.
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(v list.Numbers[{{ $field.GoListType }}]) {{ $struct.Name }} {
-    nums := x.{{ $field.Name }}()
-    for n := range v.All() {
-        nums.Append(n)
-    }
-    return x
-}
-{{- end }}
 
 {{ else if eq $field.TypeAsString "ListBytes" -}}
 {{- if $field.Comment -}}
@@ -459,6 +433,13 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Bytes {
     b := segment.NewBytes(x.s, {{ $field.Index }})
     x.s.SetList({{ $field.Index }}, b)
     return b
+}
+
+// Set{{ $field.Name }} replaces all values in the bytes list.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(v ...[]byte) {{ $struct.Name }} {
+    b := x.{{ $field.Name }}()
+    b.SetAll(v)
+    return x
 }
 
 {{- if $isSetEnabled }}
@@ -480,12 +461,10 @@ func (x {{ $struct.Name }}) {{ $field.Name }}() *segment.Strings {
     return strs
 }
 
-// Set{{ $field.Name }} sets the string list from a list.Strings for backwards compatibility.
-func (x {{ $struct.Name }}) Set{{ $field.Name }}(v *list.Strings) {{ $struct.Name }} {
+// Set{{ $field.Name }} replaces all values in the string list.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(v ...string) {{ $struct.Name }} {
     strs := x.{{ $field.Name }}()
-    for s := range v.All() {
-        strs.Append(s)
-    }
+    strs.SetAll(v)
     return x
 }
 
@@ -552,9 +531,8 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{- end }}{{/* End range $index, $field := .Fields */}}
 
 // ClawStruct returns a reflection type representing the Struct.
-// Note: Segment runtime does not fully support reflection yet.
 func (x {{ $struct.Name }}) ClawStruct() reflect.Struct{
-    panic("segment runtime: ClawStruct not yet implemented")
+    return reflect.XXXNewStruct(x.s, x.XXXDescr())
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
@@ -565,8 +543,3 @@ func (x {{ $struct.Name }}) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
-// Recycle is a no-op for segment runtime.
-// Segment runtime uses simpler memory management.
-func (x {{ $struct.Name }}) Recycle(ctx context.Context) {
-    // No-op for segment runtime
-}

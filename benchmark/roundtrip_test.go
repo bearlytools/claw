@@ -1,6 +1,7 @@
 package benchmark
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -10,11 +11,11 @@ import (
 // TestClawRoundTripSimple is a simple test to diagnose unmarshal issues.
 func TestClawRoundTripSimple(t *testing.T) {
 	// Create a simple struct with nested data
-	tm := clawpod.NewTypeMeta()
+	tm := clawpod.NewTypeMeta(context.Background())
 	tm = tm.SetKind("Pod")
 	tm = tm.SetApiVersion("v1")
 
-	pod := clawpod.NewPod()
+	pod := clawpod.NewPod(context.Background())
 	pod = pod.SetTypeMeta(tm)
 
 	data, err := pod.Marshal()
@@ -24,7 +25,7 @@ func TestClawRoundTripSimple(t *testing.T) {
 
 	t.Logf("Marshaled size: %d bytes", len(data))
 
-	restored := clawpod.NewPod()
+	restored := clawpod.NewPod(context.Background())
 	if err := restored.Unmarshal(data); err != nil {
 		t.Fatalf("TestClawRoundTripSimple: Unmarshal failed: %v", err)
 	}
@@ -51,7 +52,7 @@ func TestClawRoundTrip(t *testing.T) {
 
 	t.Logf("Marshaled size: %d bytes", len(data))
 
-	restored := clawpod.NewPod()
+	restored := clawpod.NewPod(context.Background())
 	if err := restored.Unmarshal(data); err != nil {
 		t.Fatalf("TestClawRoundTrip: Unmarshal failed: %v", err)
 	}

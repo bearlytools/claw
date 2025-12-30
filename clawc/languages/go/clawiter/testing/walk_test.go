@@ -1,11 +1,11 @@
 package testing
 
 import (
+	"context"
 	"testing"
 
 	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
-	"github.com/bearlytools/claw/clawc/languages/go/types/list"
 	"github.com/kylelemons/godebug/pretty"
 
 	cars "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
@@ -71,6 +71,7 @@ func toTokenCompare(tok clawiter.Token) tokenCompare {
 }
 
 func TestWalkVehicle(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name  string
 		setup func() vehicles.Vehicle
@@ -79,11 +80,11 @@ func TestWalkVehicle(t *testing.T) {
 		{
 			name: "Success: basic vehicle with car",
 			setup: func() vehicles.Vehicle {
-				car := cars.NewCar().
+				car := cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Toyota).
 					SetModel(cars.Venza).
 					SetYear(2010)
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(ctx).
 					SetType(vehicles.Car).
 					SetCar(car)
 			},
@@ -105,9 +106,9 @@ func TestWalkVehicle(t *testing.T) {
 		{
 			name: "Success: vehicle with enum list",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(ctx).
 					SetType(vehicles.Truck).
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+					SetTypes(vehicles.Car, vehicles.Truck)
 			},
 			want: []tokenCompare{
 				{Kind: clawiter.TokenStructStart, Name: "Vehicle"},
@@ -126,8 +127,8 @@ func TestWalkVehicle(t *testing.T) {
 		{
 			name: "Success: vehicle with bool list",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetBools(list.NewBools().Append(true, false, true))
+				return vehicles.NewVehicle(ctx).
+					SetBools(true, false, true)
 			},
 			want: []tokenCompare{
 				{Kind: clawiter.TokenStructStart, Name: "Vehicle"},
@@ -159,6 +160,7 @@ func TestWalkVehicle(t *testing.T) {
 }
 
 func TestWalkCar(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name  string
 		setup func() cars.Car
@@ -167,7 +169,7 @@ func TestWalkCar(t *testing.T) {
 		{
 			name: "Success: basic car",
 			setup: func() cars.Car {
-				return cars.NewCar().
+				return cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Tesla).
 					SetModel(cars.ModelS).
 					SetYear(2023)
@@ -183,7 +185,7 @@ func TestWalkCar(t *testing.T) {
 		{
 			name: "Success: empty car",
 			setup: func() cars.Car {
-				return cars.NewCar()
+				return cars.NewCar(ctx)
 			},
 			want: []tokenCompare{
 				{Kind: clawiter.TokenStructStart, Name: "Car"},

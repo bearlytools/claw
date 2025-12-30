@@ -3,20 +3,16 @@ package value
 import (
 	"fmt"
 	"iter"
-	"log"
 	"strings"
 	"sync"
 	"unicode"
-	"unsafe"
 
 	"github.com/bearlytools/claw/clawc/internal/pragma"
-	"github.com/bearlytools/claw/clawc/languages/go/conversions"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
-	"github.com/bearlytools/claw/clawc/languages/go/structs"
-	"github.com/bearlytools/claw/clawc/languages/go/structs/header"
+	"github.com/bearlytools/claw/clawc/languages/go/segment"
 )
 
 // PackageDescrImpl is the implementation of PackageDescr.
@@ -56,117 +52,6 @@ func (p *PackageDescrImpl) Enums() interfaces.EnumGroups {
 func (p *PackageDescrImpl) Structs() interfaces.StructDescrs {
 	return p.StructsDescrs
 }
-
-/*
-// EnumGroupImpl implements EnumGroup.
-type EnumGroupImpl struct {
-	doNotImplement
-
-	// GroupName is the name of the EnumGroup.
-	GroupName string
-	// GroupLen is how many enumerated values are in this group.
-	GroupLen int
-	// EnumSize is the bit size, 8 or 16, that the values are.
-	EnumSize uint8
-	// Descrs hold the valuye descriptors.
-	Descrs []interfaces.Enum
-}
-
-// Name is the name of the enum group.
-func (e EnumGroupImpl) Name() string {
-	return e.GroupName
-}
-
-// Len reports the number of enum values.
-func (e EnumGroupImpl) Len() int {
-	return e.GroupLen
-}
-
-// Get returns the ith EnumValue. It panics if out of bounds.
-func (e EnumGroupImpl) Get(i uint16) interfaces.Enum {
-	return e.Descrs[i]
-}
-
-// ByName returns the EnumValue for an enum named s.
-// It returns nil if not found.
-func (e EnumGroupImpl) ByName(s string) interfaces.Enum {
-	// Enums are usually small and reflection is the slow path. For now,
-	// I'm going to simply use a for loop for what I think will be the majority of
-	// cases. Go's map implementation is pretty gretat, but I think this will be
-	// similar in speed for the majority of cases and not cost us another map allocation.
-	for _, descr := range e.Descrs {
-		if descr.Name() == s {
-			return descr
-		}
-	}
-	return nil
-}
-
-func (e EnumGroupImpl) ByValue(i uint16) interfaces.Enum {
-	for _, descr := range e.Descrs {
-		if descr.Number() == uint16(i) {
-			return descr
-		}
-	}
-	return nil
-}
-
-// Size returns the size in bits of the enumerator.
-func (e EnumGroupImpl) Size() uint8 {
-	return e.EnumSize
-}
-
-// EnumGroupsImpl implements reflect.EnumGroups.
-type EnumGroupsImpl struct {
-	doNotImplement
-
-	List   []interfaces.EnumGroup
-	Lookup map[string]interfaces.EnumGroup
-}
-
-// Len reports the number of enum types.
-func (e EnumGroupsImpl) Len() int {
-	return len(e.List)
-}
-
-// Get returns the ith EnumDescriptor. It panics if out of bounds.
-func (e EnumGroupsImpl) Get(i int) interfaces.EnumGroup {
-	return e.List[i]
-}
-
-// ByName returns the EnumDescriptor for an enum named s.
-// It returns nil if not found.
-func (e EnumGroupsImpl) ByName(s string) interfaces.EnumGroup {
-	return e.Lookup[s]
-}
-
-// EnumImpl implements EnumValueDescr.
-type EnumImpl struct {
-	doNotImplement
-
-	EnumName   string
-	EnumNumber uint16
-	EnumSize   uint8
-
-	// EnumGroup holds the enum gropu that this enum belongs to.
-	EnumGroup EnumGroupImpl
-}
-
-// Name returns the name of the Enum value.
-func (e EnumImpl) Name() string {
-	return e.EnumName
-}
-
-// Number returns the enum number value.
-func (e EnumImpl) Number() uint16 {
-	return e.EnumNumber
-}
-
-// Size returns the size of the value, either 8 or 16 bits.
-func (e EnumImpl) Size() uint8 {
-	return e.EnumSize
-}
-*/
 
 // StructDescrsImpl implements interfaces.StructDescrs. This stores a list of Struct
 // inside a package.
@@ -208,116 +93,9 @@ type StructDescrImpl struct {
 	Mapping *mapping.Map
 }
 
-/*
-// TODO(jdoak): Remove this.
-// NewStructDescrImpl creates a new StructDescrImpl
-func NewStructDescrImpl(m *mapping.Map) *StructDescrImpl {
-	defer log.Println("\tDONE")
-	descr := &StructDescrImpl{
-		Name:    m.Name,
-		Pkg:     m.Pkg,
-		Path:    m.Path,
-		Mapping: m,
-	}
-
-	descr.FieldList = make([]interfaces.FieldDescr, len(m.Fields))
-
-	// Load all non-enum fields and locally defined enum definitions.
-	for i, fd := range m.Fields {
-		log.Printf("\tNew: field(%s)", fd.Name)
-		// Only load fields that reference local types, as external fields
-		// have not loaded yet.
-		if fd.Package != m.Pkg {
-			log.Printf("\tNewStructDescrImpl: pkg(%s), struct(%s), skipping field(%s)", m.Pkg, m.Name, fd.Name)
-			continue
-		}
-
-		pkgDescr := runtime.PackageDescr(m.Path)
-		if pkgDescr == nil {
-			panic(fmt.Sprintf("pkg(%s), struct(%s), can't find package descriptor(%s)", m.Pkg, m.Name, m.Path))
-		}
-		if fd.IsEnum {
-			log.Println("\tLooking for local EnumGroup: ", fd.EnumGroup)
-			sp := strings.Split(fd.EnumGroup, ".")
-
-			// We only care about locally defined enums.
-			if len(sp) != 1 {
-				panic(fmt.Sprintf("\tbug: can't have FullPath == '' and enum name %s", fd.EnumGroup))
-			}
-
-			egName := fd.EnumGroup
-			eg := pkgDescr.Enums().ByName(egName)
-			if eg == nil {
-				panic(fmt.Sprintf("\tbug: EnumGroup %s could not be found in runtime[%s]", egName, pkgDescr.FullPath()))
-			}
-			fd := FieldDescrImpl{FD: fd, EG: eg}
-			descr.FieldList[i] = fd
-		} else {
-			log.Println("\tLooking for local type: ", fd.Name)
-			v := pkgDescr.Structs().ByName(fd.Name)
-			if v == nil {
-				panic(fmt.Sprintf("\tpkg(%s), struct(%s), field(%s): can't find in internal package %s", pkgDescr.PackageName(), m.Name, fd.Name, pkgDescr.PackageName()))
-			}
-			descr.FieldList[i] = FieldDescrImpl{
-				FD: fd,
-				SD: v,
-			}
-		}
-	}
-	return descr
-}
-
-// TODO(jdoak): Remove this.
-// Init initializes the StructDescrImpl's externally defined reflection types.
-// Unfortunately, we need data from other packages and this isn't available until after
-// compile time. We could static this in the repo as static code, but it makes the
-// templates more unwieldy.
-func (s *StructDescrImpl) Init() error {
-	//panic("THIS APPREARS to be running for internal and external references")
-	log.Println("Init() ran for struct: ", s.Name)
-	for i, fd := range s.Mapping.Fields {
-		// Ignore any fields that have already been defined.
-		if s.FieldList[i] != nil {
-			log.Println("skipping field: ", s.FieldList[i].Name())
-			continue
-		}
-		pkgDescr := runtime.PackageDescr(fd.FullPath)
-
-		if fd.IsEnum {
-			log.Println("external enumerator FullPath: ", fd.FullPath)
-			sp := strings.Split(fd.EnumGroup, ".")
-			if len(sp) == 1 {
-				continue
-			}
-			log.Println("Looking for external EnumGroup: ", fd.EnumGroup)
-
-			//pkgName := sp[0]
-			egName := sp[1]
-			eg := pkgDescr.Enums().ByName(egName)
-			if eg == nil {
-				return fmt.Errorf("bug(emumerator): pkg %s, struct %s, field %s: could not locate reflect reference for enum", s.Mapping.Path, s.Mapping.Name, fd.Name)
-			}
-
-			s.FieldList[i] = FieldDescrImpl{FD: fd, EG: eg}
-		} else { // It is a Struct
-			log.Println("field FullPath: ", fd.FullPath)
-			v := pkgDescr.Structs().ByName(fd.Name)
-			if v == nil {
-				return fmt.Errorf("bug(Struct): pkg(%s), struct(%s), field(%s): can't find in external package %s", pkgDescr.PackageName(), s.Name, fd.Name, pkgDescr.PackageName())
-			}
-			s.FieldList[i] = FieldDescrImpl{
-				FD: fd,
-				SD: v,
-			}
-		}
-	}
-	return nil
-}
-*/
-
 // New creates a new interfaces.Struct based on this StructDescrImpl.
 func (s StructDescrImpl) New() interfaces.Struct {
-	v := structs.New(0, s.Mapping)
+	v := segment.New(s.Mapping)
 	return StructImpl{
 		s:     v,
 		descr: s,
@@ -351,9 +129,7 @@ func (s StructDescrImpl) FieldDescrByName(name string) interfaces.FieldDescr {
 		panic("cannot call FieldDescrByName if name is the empty string or starts with a lower case letter")
 	}
 	for _, fd := range s.FieldList {
-		log.Printf("%s == %s", name, fd.Name())
 		if fd.Name() == name {
-			log.Println("return")
 			return fd
 		}
 	}
@@ -418,12 +194,12 @@ func (f FieldDescrImpl) ItemType() string {
 }
 
 type ListBools struct {
-	b *structs.Bools
+	items []bool
 	doNotImplement
 }
 
-func NewListBools(b *structs.Bools) ListBools {
-	return ListBools{b: b}
+func NewListBools(items []bool) ListBools {
+	return ListBools{items: items}
 }
 
 func (l ListBools) Type() field.Type {
@@ -431,32 +207,32 @@ func (l ListBools) Type() field.Type {
 }
 
 func (l ListBools) Len() int {
-	return l.b.Len()
+	return len(l.items)
 }
 
 func (l ListBools) Get(i int) interfaces.Value {
-	return ValueOfBool(l.b.Get(i))
+	return ValueOfBool(l.items[i])
 }
 
 func (l ListBools) Set(i int, v interfaces.Value) {
-	l.b.Set(i, v.Bool())
+	l.items[i] = v.Bool()
 }
 
 func (l ListBools) Append(v interfaces.Value) {
-	l.b.Append(v.Bool())
+	l.items = append(l.items, v.Bool())
 }
 
 func (l ListBools) New() interfaces.Struct {
-	panic("Listbools does not support New()")
+	panic("ListBools does not support New()")
 }
 
 type ListNumbers[N interfaces.Number] struct {
-	n  *structs.Numbers[N]
-	ty field.Type
+	items []N
+	ty    field.Type
 	doNotImplement
 }
 
-func NewListNumbers[N interfaces.Number](n *structs.Numbers[N]) ListNumbers[N] {
+func NewListNumbers[N interfaces.Number](items []N) ListNumbers[N] {
 	var ty field.Type
 	var t N
 
@@ -484,7 +260,7 @@ func NewListNumbers[N interfaces.Number](n *structs.Numbers[N]) ListNumbers[N] {
 	default:
 		panic("bug: unsupported field type")
 	}
-	return ListNumbers[N]{n: n, ty: ty}
+	return ListNumbers[N]{items: items, ty: ty}
 }
 
 func (l ListNumbers[N]) Type() field.Type {
@@ -492,19 +268,19 @@ func (l ListNumbers[N]) Type() field.Type {
 }
 
 func (l ListNumbers[N]) Len() int {
-	return l.n.Len()
+	return len(l.items)
 }
 
 func (l ListNumbers[N]) Get(i int) interfaces.Value {
-	return ValueOfNumber(l.n.Get(i))
+	return ValueOfNumber(l.items[i])
 }
 
 func (l ListNumbers[N]) Set(i int, v interfaces.Value) {
-	l.n.Set(i, v.Any().(N))
+	l.items[i] = v.Any().(N)
 }
 
 func (l ListNumbers[N]) Append(v interfaces.Value) {
-	l.n.Append(v.Any().(N))
+	l.items = append(l.items, v.Any().(N))
 }
 
 func (l ListNumbers[N]) New() interfaces.Struct {
@@ -512,12 +288,12 @@ func (l ListNumbers[N]) New() interfaces.Struct {
 }
 
 type ListBytes struct {
-	b *structs.Bytes
+	items [][]byte
 	doNotImplement
 }
 
-func NewListBytes(b *structs.Bytes) ListBytes {
-	return ListBytes{b: b}
+func NewListBytes(items [][]byte) ListBytes {
+	return ListBytes{items: items}
 }
 
 func (l ListBytes) Type() field.Type {
@@ -525,19 +301,19 @@ func (l ListBytes) Type() field.Type {
 }
 
 func (l ListBytes) Len() int {
-	return l.b.Len()
+	return len(l.items)
 }
 
 func (l ListBytes) Get(i int) interfaces.Value {
-	return ValueOfBytes(l.b.Get(i))
+	return ValueOfBytes(l.items[i])
 }
 
 func (l ListBytes) Set(i int, v interfaces.Value) {
-	l.b.Set(i, v.Bytes())
+	l.items[i] = v.Bytes()
 }
 
 func (l ListBytes) Append(v interfaces.Value) {
-	l.b.Append(v.Bytes())
+	l.items = append(l.items, v.Bytes())
 }
 
 func (l ListBytes) New() interfaces.Struct {
@@ -545,12 +321,12 @@ func (l ListBytes) New() interfaces.Struct {
 }
 
 type ListStrings struct {
-	b *structs.Bytes
+	items []string
 	doNotImplement
 }
 
-func NewListStrings(b *structs.Bytes) ListStrings {
-	return ListStrings{b: b}
+func NewListStrings(items []string) ListStrings {
+	return ListStrings{items: items}
 }
 
 func (l ListStrings) Type() field.Type {
@@ -558,19 +334,19 @@ func (l ListStrings) Type() field.Type {
 }
 
 func (l ListStrings) Len() int {
-	return l.b.Len()
+	return len(l.items)
 }
 
 func (l ListStrings) Get(i int) interfaces.Value {
-	return ValueOfString(conversions.ByteSlice2String(l.b.Get(i)))
+	return ValueOfString(l.items[i])
 }
 
 func (l ListStrings) Set(i int, v interfaces.Value) {
-	l.b.Set(i, conversions.UnsafeGetBytes(v.String()))
+	l.items[i] = v.String()
 }
 
 func (l ListStrings) Append(v interfaces.Value) {
-	l.b.Append(conversions.UnsafeGetBytes(v.String()))
+	l.items = append(l.items, v.String())
 }
 
 func (l ListStrings) New() interfaces.Struct {
@@ -578,23 +354,22 @@ func (l ListStrings) New() interfaces.Struct {
 }
 
 type ListStructs struct {
-	l  *structs.Structs
-	sd StructDescrImpl
+	items []*segment.Struct
+	sd    StructDescrImpl
 	doNotImplement
 }
 
-func NewListStructs(l *structs.Structs) ListStructs {
-	m := l.Map()
-
+func NewListStructs(items []*segment.Struct, m *mapping.Map) ListStructs {
 	sd := StructDescrImpl{
-		Name: m.Name,
-		Pkg:  m.Pkg,
-		Path: m.Path,
+		Name:    m.Name,
+		Pkg:     m.Pkg,
+		Path:    m.Path,
+		Mapping: m,
 	}
 	for _, fd := range m.Fields {
 		sd.FieldList = append(sd.FieldList, FieldDescrImpl{FD: fd})
 	}
-	return ListStructs{l: l, sd: sd}
+	return ListStructs{items: items, sd: sd}
 }
 
 func (l ListStructs) Type() field.Type {
@@ -602,43 +377,38 @@ func (l ListStructs) Type() field.Type {
 }
 
 func (l ListStructs) Len() int {
-	return l.l.Len()
+	return len(l.items)
 }
 
 func (l ListStructs) Get(i int) interfaces.Value {
-	v := l.l.Get(i)
-
 	s := StructImpl{
-		s:     v,
+		s:     l.items[i],
 		descr: l.sd,
 	}
 	return ValueOfStruct(s)
 }
 
 func (l ListStructs) Set(i int, v interfaces.Value) {
-	realV := v.(Value)
-	if err := l.l.Set(i, RealStruct(realV.aStruct)); err != nil {
-		panic(err)
-	}
+	impl := v.Struct().(StructImpl)
+	l.items[i] = impl.s
 }
 
 func (l ListStructs) Append(v interfaces.Value) {
 	impl := v.Struct().(StructImpl)
-	if err := l.l.Append(RealStruct(impl)); err != nil {
-		panic(err)
-	}
+	l.items = append(l.items, impl.s)
 }
 
 func (l ListStructs) New() interfaces.Struct {
-	return NewStruct(l.l.New(), l.sd)
+	newStruct := segment.New(l.sd.Mapping)
+	return NewStruct(newStruct, l.sd)
 }
 
 type StructImpl struct {
-	s     *structs.Struct
+	s     *segment.Struct
 	descr interfaces.StructDescr
 }
 
-func NewStruct(s *structs.Struct, descr interfaces.StructDescr) StructImpl {
+func NewStruct(s *segment.Struct, descr interfaces.StructDescr) StructImpl {
 	return StructImpl{s: s, descr: descr}
 }
 
@@ -647,7 +417,7 @@ func (s StructImpl) Descriptor() interfaces.StructDescr {
 }
 
 func (s StructImpl) New() interfaces.Struct {
-	n := s.s.NewFrom()
+	n := segment.New(s.s.Mapping())
 	return NewStruct(n, s.descr)
 }
 
@@ -679,191 +449,216 @@ func (s StructImpl) Get(descr interfaces.FieldDescr) interfaces.Value {
 }
 
 func (s StructImpl) Has(descr interfaces.FieldDescr) bool {
-	return s.s.IsSet(descr.FieldNum())
+	return s.s.HasField(descr.FieldNum())
 }
 
 func (s StructImpl) Clear(desc interfaces.FieldDescr) {
-	structs.DeleteField(s.s, desc.FieldNum())
+	ClearField(s.s, desc.FieldNum(), desc.Type())
 }
 
 func (s StructImpl) Set(descr interfaces.FieldDescr, v interfaces.Value) {
-	structs.SetField(s.s, descr.FieldNum(), v.Any())
+	SetField(s.s, descr.FieldNum(), descr.Type(), v.Any())
 }
 
 func (s StructImpl) NewField(descr interfaces.FieldDescr) interfaces.Value {
+	// Create a zero-value Value for the given field type
 	switch descr.Type() {
 	case field.FTBool:
-		h := header.New()
-		h.SetFieldType(field.FTBool)
-		return Value{h: h}
+		return ValueOfBool(false)
 	case field.FTInt8:
-		h := header.New()
-		h.SetFieldType(field.FTInt8)
-		return Value{h: h}
+		return ValueOfNumber[int8](0)
 	case field.FTInt16:
-		h := header.New()
-		h.SetFieldType(field.FTInt16)
-		return Value{h: h}
+		return ValueOfNumber[int16](0)
 	case field.FTInt32:
-		h := header.New()
-		h.SetFieldType(field.FTInt32)
-		return Value{h: h}
+		return ValueOfNumber[int32](0)
 	case field.FTInt64:
-		h := header.New()
-		h.SetFieldType(field.FTInt64)
-		p := []byte{0, 0, 0, 0}
-		return Value{h: h, ptr: unsafe.Pointer(&p)}
+		return ValueOfNumber[int64](0)
 	case field.FTUint8:
-		h := header.New()
-		h.SetFieldType(field.FTUint8)
 		if descr.IsEnum() {
-			return Value{h: h, isEnum: true, enumGroup: descr.EnumGroup()}
+			return ValueOfEnum[uint8](0, descr.EnumGroup())
 		}
-		return Value{h: h}
+		return ValueOfNumber[uint8](0)
 	case field.FTUint16:
-		h := header.New()
-		h.SetFieldType(field.FTUint16)
 		if descr.IsEnum() {
-			return Value{h: h, isEnum: true, enumGroup: descr.EnumGroup()}
+			return ValueOfEnum[uint16](0, descr.EnumGroup())
 		}
-		return Value{h: h}
+		return ValueOfNumber[uint16](0)
 	case field.FTUint32:
-		h := header.New()
-		h.SetFieldType(field.FTUint32)
-		return Value{h: h}
+		return ValueOfNumber[uint32](0)
 	case field.FTUint64:
-		h := header.New()
-		h.SetFieldType(field.FTUint64)
-		p := []byte{0, 0, 0, 0}
-		return Value{h: h, ptr: unsafe.Pointer(&p)}
+		return ValueOfNumber[uint64](0)
 	case field.FTFloat32:
-		h := header.New()
-		h.SetFieldType(field.FTFloat32)
-		return Value{h: h}
+		return ValueOfNumber[float32](0)
 	case field.FTFloat64:
-		h := header.New()
-		h.SetFieldType(field.FTFloat64)
-		p := []byte{0, 0, 0, 0}
-		return Value{h: h, ptr: unsafe.Pointer(&p)}
+		return ValueOfNumber[float64](0)
 	case field.FTBytes:
-		h := header.New()
-		h.SetFieldType(field.FTBytes)
-		return Value{h: h}
+		return ValueOfBytes(nil)
 	case field.FTString:
-		h := header.New()
-		h.SetFieldType(field.FTString)
-		return Value{h: h}
+		return ValueOfString("")
 	case field.FTStruct:
-		h := header.New()
-		h.SetFieldType(field.FTStruct)
-		return Value{h: h}
+		// Create a new empty struct
+		return ValueOfStruct(s.New())
 	case field.FTListBools:
-		h := header.New()
-		h.SetFieldType(field.FTListBools)
-		return Value{h: h}
+		return ValueOfList(NewListBools(nil))
 	case field.FTListInt8:
-		h := header.New()
-		h.SetFieldType(field.FTListInt8)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[int8](nil))
 	case field.FTListInt16:
-		h := header.New()
-		h.SetFieldType(field.FTListInt16)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[int16](nil))
 	case field.FTListInt32:
-		h := header.New()
-		h.SetFieldType(field.FTListInt32)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[int32](nil))
 	case field.FTListInt64:
-		h := header.New()
-		h.SetFieldType(field.FTListInt64)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[int64](nil))
 	case field.FTListUint8:
-		h := header.New()
-		h.SetFieldType(field.FTListUint8)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[uint8](nil))
 	case field.FTListUint16:
-		h := header.New()
-		h.SetFieldType(field.FTListUint16)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[uint16](nil))
 	case field.FTListUint32:
-		h := header.New()
-		h.SetFieldType(field.FTListUint32)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[uint32](nil))
 	case field.FTListUint64:
-		h := header.New()
-		h.SetFieldType(field.FTListUint64)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[uint64](nil))
 	case field.FTListFloat32:
-		h := header.New()
-		h.SetFieldType(field.FTListFloat32)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[float32](nil))
 	case field.FTListFloat64:
-		h := header.New()
-		h.SetFieldType(field.FTListFloat64)
-		return Value{h: h}
+		return ValueOfList(NewListNumbers[float64](nil))
 	case field.FTListBytes:
-		h := header.New()
-		h.SetFieldType(field.FTListBytes)
-		return Value{h: h}
+		return ValueOfList(NewListBytes(nil))
 	case field.FTListStrings:
-		h := header.New()
-		h.SetFieldType(field.FTListStrings)
-		return Value{h: h}
+		return ValueOfList(NewListStrings(nil))
 	case field.FTListStructs:
-		h := header.New()
-		h.SetFieldType(field.FTListStructs)
-		return Value{h: h}
+		// For list of structs, we need a mapping - get it from the StructDescr
+		if sd, ok := s.descr.(StructDescrImpl); ok {
+			return ValueOfList(NewListStructs(nil, sd.Mapping))
+		}
+		panic("cannot create ListStructs without mapping")
 	default:
 		panic(fmt.Sprintf("bug: unsupported type %s", descr.Type()))
 	}
 }
 
-// Struct extracts the *structs.Struct that holds all the data (not a reflect.Struct).
-func (s StructImpl) Struct() *structs.Struct {
+// Struct extracts the *segment.Struct that holds all the data (not a reflect.Struct).
+func (s StructImpl) Struct() *segment.Struct {
 	return s.s
 }
 
-// RealStruct extracts the *structs.Struct that holds all the data (not a reflect.Struct).
-func RealStruct(s interfaces.Struct) *structs.Struct {
+// RealStruct extracts the *segment.Struct that holds all the data (not a reflect.Struct).
+func RealStruct(s interfaces.Struct) *segment.Struct {
 	i := s.(StructImpl)
 	return i.s
 }
 
+// ClearField clears a field by setting it to its zero value.
+func ClearField(s *segment.Struct, fieldNum uint16, ft field.Type) {
+	switch ft {
+	case field.FTBool:
+		segment.SetBool(s, fieldNum, false)
+	case field.FTInt8:
+		segment.SetInt8(s, fieldNum, 0)
+	case field.FTInt16:
+		segment.SetInt16(s, fieldNum, 0)
+	case field.FTInt32:
+		segment.SetInt32(s, fieldNum, 0)
+	case field.FTInt64:
+		segment.SetInt64(s, fieldNum, 0)
+	case field.FTUint8:
+		segment.SetUint8(s, fieldNum, 0)
+	case field.FTUint16:
+		segment.SetUint16(s, fieldNum, 0)
+	case field.FTUint32:
+		segment.SetUint32(s, fieldNum, 0)
+	case field.FTUint64:
+		segment.SetUint64(s, fieldNum, 0)
+	case field.FTFloat32:
+		segment.SetFloat32(s, fieldNum, 0)
+	case field.FTFloat64:
+		segment.SetFloat64(s, fieldNum, 0)
+	case field.FTBytes, field.FTString:
+		segment.SetBytes(s, fieldNum, nil)
+	case field.FTStruct:
+		segment.SetNestedStruct(s, fieldNum, nil)
+	default:
+		// For list types, setting nil/empty removes the field
+		// The segment package handles this in SetBytes, etc.
+	}
+}
+
+// SetField sets a field value using the segment setters.
+func SetField(s *segment.Struct, fieldNum uint16, ft field.Type, v any) {
+	switch ft {
+	case field.FTBool:
+		segment.SetBool(s, fieldNum, v.(bool))
+	case field.FTInt8:
+		segment.SetInt8(s, fieldNum, v.(int8))
+	case field.FTInt16:
+		segment.SetInt16(s, fieldNum, v.(int16))
+	case field.FTInt32:
+		segment.SetInt32(s, fieldNum, v.(int32))
+	case field.FTInt64:
+		segment.SetInt64(s, fieldNum, v.(int64))
+	case field.FTUint8:
+		// Handle enum values which are passed as interfaces.Enum
+		if e, ok := v.(interfaces.Enum); ok {
+			segment.SetUint8(s, fieldNum, uint8(e.Number()))
+		} else {
+			segment.SetUint8(s, fieldNum, v.(uint8))
+		}
+	case field.FTUint16:
+		// Handle enum values which are passed as interfaces.Enum
+		if e, ok := v.(interfaces.Enum); ok {
+			segment.SetUint16(s, fieldNum, e.Number())
+		} else {
+			segment.SetUint16(s, fieldNum, v.(uint16))
+		}
+	case field.FTUint32:
+		segment.SetUint32(s, fieldNum, v.(uint32))
+	case field.FTUint64:
+		segment.SetUint64(s, fieldNum, v.(uint64))
+	case field.FTFloat32:
+		segment.SetFloat32(s, fieldNum, v.(float32))
+	case field.FTFloat64:
+		segment.SetFloat64(s, fieldNum, v.(float64))
+	case field.FTBytes:
+		segment.SetBytes(s, fieldNum, v.([]byte))
+	case field.FTString:
+		segment.SetStringAsBytes(s, fieldNum, v.(string))
+	case field.FTStruct:
+		// v should be an interfaces.Struct, extract the underlying segment.Struct
+		if st, ok := v.(interfaces.Struct); ok {
+			segment.SetNestedStruct(s, fieldNum, RealStruct(st))
+		}
+	default:
+		panic(fmt.Sprintf("SetField: unsupported type %s", ft))
+	}
+}
+
 // GetValue allows us to get a Value from the internal Struct representation.
 // If the value of the field is not set, GetValue() returns nil.
-func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
-	// Use IsSet() which is lazy-decode aware - it checks both decoded fields
-	// and raw byte data without triggering unnecessary decoding.
-	if !s.IsSet(fieldNum) {
+func GetValue(s *segment.Struct, fieldNum uint16) interfaces.Value {
+	if !s.HasField(fieldNum) {
 		return nil
 	}
 
-	// Get the field type from the mapping (don't access fields slice directly)
-	descr := s.Map().Fields[fieldNum]
+	// Get the field type from the mapping
+	descr := s.Mapping().Fields[fieldNum]
 
 	switch descr.Type {
 	case field.FTBool:
-		b := structs.MustGetBool(s, fieldNum)
+		b := segment.GetBool(s, fieldNum)
 		return ValueOfBool(b)
 	case field.FTInt8:
-		n := structs.MustGetNumber[int8](s, fieldNum)
+		n := segment.GetInt8(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTInt16:
-		n := structs.MustGetNumber[int16](s, fieldNum)
+		n := segment.GetInt16(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTInt32:
-		n := structs.MustGetNumber[int32](s, fieldNum)
+		n := segment.GetInt32(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTInt64:
-		n := structs.MustGetNumber[int64](s, fieldNum)
+		n := segment.GetInt64(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTUint8:
-		n := structs.MustGetNumber[uint8](s, fieldNum)
-		descr := s.Map().Fields[fieldNum]
+		n := segment.GetUint8(s, fieldNum)
 		if descr.IsEnum {
-			// TODO(jdoak): This split dynamic that I'm having to do is error prone.
-			// This should be simplified. Better yet, we really should have lookup
-			// tables that use slice index numbers to packages to make things way faster.
 			var egName string
 			sp := strings.Split(descr.EnumGroup, ".")
 			if len(sp) == 1 {
@@ -871,15 +666,13 @@ func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
 			} else {
 				egName = sp[1]
 			}
-
 			pkgDescr := runtime.PackageDescr(descr.FullPath)
 			eg := pkgDescr.Enums().ByName(egName)
 			return ValueOfEnum(n, eg)
 		}
 		return ValueOfNumber(n)
 	case field.FTUint16:
-		n := structs.MustGetNumber[uint16](s, fieldNum)
-		descr := s.Map().Fields[fieldNum]
+		n := segment.GetUint16(s, fieldNum)
 		if descr.IsEnum {
 			pkgDescr := runtime.PackageDescr(descr.FullPath)
 			eg := pkgDescr.Enums().ByName(descr.EnumGroup)
@@ -887,78 +680,153 @@ func GetValue(s *structs.Struct, fieldNum uint16) interfaces.Value {
 		}
 		return ValueOfNumber(n)
 	case field.FTUint32:
-		n := structs.MustGetNumber[uint32](s, fieldNum)
+		n := segment.GetUint32(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTUint64:
-		n := structs.MustGetNumber[uint64](s, fieldNum)
+		n := segment.GetUint64(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTFloat32:
-		n := structs.MustGetNumber[float32](s, fieldNum)
+		n := segment.GetFloat32(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTFloat64:
-		n := structs.MustGetNumber[float64](s, fieldNum)
+		n := segment.GetFloat64(s, fieldNum)
 		return ValueOfNumber(n)
 	case field.FTBytes:
-		b := structs.MustGetBytes(s, fieldNum)
-		return ValueOfBytes(*b)
+		b := segment.GetBytes(s, fieldNum)
+		return ValueOfBytes(b)
 	case field.FTString:
-		b := structs.MustGetBytes(s, fieldNum)
-		return ValueOfString(conversions.ByteSlice2String(*b))
+		str := segment.GetString(s, fieldNum)
+		return ValueOfString(str)
 	case field.FTStruct:
-		st := structs.MustGetStruct(s, fieldNum)
-
-		sd := StructDescrImpl{
-			Name: st.Map().Name,
-			Pkg:  st.Map().Pkg,
-			Path: st.Map().Path,
+		childMapping := descr.Mapping
+		if childMapping == nil {
+			panic(fmt.Sprintf("field %s has no mapping", descr.Name))
 		}
-		for _, fd := range st.Map().Fields {
+		st := segment.GetNestedStruct(s, fieldNum, childMapping)
+		if st == nil {
+			return nil
+		}
+		sd := StructDescrImpl{
+			Name:    childMapping.Name,
+			Pkg:     childMapping.Pkg,
+			Path:    childMapping.Path,
+			Mapping: childMapping,
+		}
+		for _, fd := range childMapping.Fields {
 			sd.FieldList = append(sd.FieldList, FieldDescrImpl{FD: fd})
 		}
 		return ValueOfStruct(NewStruct(st, sd))
 	case field.FTListBools:
-		l := structs.MustGetListBool(s, fieldNum)
-		return ValueOfList(ListBools{b: l})
+		items := getListBools(s, fieldNum)
+		return ValueOfList(NewListBools(items))
 	case field.FTListInt8:
-		l := structs.MustGetListNumber[int8](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[int8](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListInt16:
-		l := structs.MustGetListNumber[int16](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[int16](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListInt32:
-		l := structs.MustGetListNumber[int32](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[int32](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListInt64:
-		l := structs.MustGetListNumber[int64](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[int64](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListUint8:
-		l := structs.MustGetListNumber[uint8](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[uint8](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListUint16:
-		l := structs.MustGetListNumber[uint16](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[uint16](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListUint32:
-		l := structs.MustGetListNumber[uint32](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[uint32](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListUint64:
-		l := structs.MustGetListNumber[uint64](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[uint64](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListFloat32:
-		l := structs.MustGetListNumber[float32](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[float32](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListFloat64:
-		l := structs.MustGetListNumber[float64](s, fieldNum)
-		return ValueOfList(NewListNumbers(l))
+		items := getListNumbers[float64](s, fieldNum)
+		return ValueOfList(NewListNumbers(items))
 	case field.FTListBytes:
-		l := structs.MustGetListBytes(s, fieldNum)
-		return ValueOfList(NewListBytes(l))
+		items := getListBytes(s, fieldNum)
+		return ValueOfList(NewListBytes(items))
 	case field.FTListStrings:
-		l := structs.MustGetListBytes(s, fieldNum)
-		return ValueOfList(NewListStrings(l))
+		items := getListStrings(s, fieldNum)
+		return ValueOfList(NewListStrings(items))
 	case field.FTListStructs:
-		l := structs.MustGetListStruct(s, fieldNum)
-		return ValueOfList(NewListStructs(l))
+		childMapping := descr.Mapping
+		if childMapping == nil {
+			panic(fmt.Sprintf("field %s has no mapping", descr.Name))
+		}
+		items := getListStructs(s, fieldNum, childMapping)
+		return ValueOfList(NewListStructs(items, childMapping))
 	default:
 		panic(fmt.Sprintf("unsupported field type %s", descr.Type))
 	}
+}
+
+// getListBools parses a bool list from segment data.
+func getListBools(s *segment.Struct, fieldNum uint16) []bool {
+	offset, size := s.FieldOffset(fieldNum)
+	if size <= segment.HeaderSize {
+		return nil
+	}
+
+	data := s.SegmentBytes()[offset : offset+size]
+	// Skip header, data is packed bits
+	bitData := data[segment.HeaderSize:]
+
+	// Unpack bools from bits
+	items := make([]bool, 0)
+	for i := 0; i < len(bitData)*8; i++ {
+		byteIdx := i / 8
+		bitIdx := uint(i % 8)
+		if byteIdx < len(bitData) {
+			items = append(items, (bitData[byteIdx]&(1<<bitIdx)) != 0)
+		}
+	}
+	return items
+}
+
+// getListNumbers parses a number list from segment data.
+func getListNumbers[N segment.Number](s *segment.Struct, fieldNum uint16) []N {
+	// Create a temporary segment.Numbers to read from the parent
+	nums := segment.NewNumbers[N](s, fieldNum)
+	result := make([]N, nums.Len())
+	for i := 0; i < nums.Len(); i++ {
+		result[i] = nums.Get(i)
+	}
+	return result
+}
+
+// getListBytes parses a bytes list from segment data.
+func getListBytes(s *segment.Struct, fieldNum uint16) [][]byte {
+	bytes := segment.NewBytes(s, fieldNum)
+	result := make([][]byte, bytes.Len())
+	for i := 0; i < bytes.Len(); i++ {
+		result[i] = bytes.Get(i)
+	}
+	return result
+}
+
+// getListStrings parses a strings list from segment data.
+func getListStrings(s *segment.Struct, fieldNum uint16) []string {
+	strs := segment.NewStrings(s, fieldNum)
+	result := make([]string, strs.Len())
+	for i := 0; i < strs.Len(); i++ {
+		result[i] = strs.Get(i)
+	}
+	return result
+}
+
+// getListStructs parses a struct list from segment data.
+func getListStructs(s *segment.Struct, fieldNum uint16, m *mapping.Map) []*segment.Struct {
+	structs := segment.NewStructs(s, fieldNum, m)
+	result := make([]*segment.Struct, structs.Len())
+	for i := 0; i < structs.Len(); i++ {
+		result[i] = structs.Get(i)
+	}
+	return result
 }

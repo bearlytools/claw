@@ -74,6 +74,16 @@ func newServerConn(ctx context.Context, server *Server, transport io.ReadWriteCl
 
 // serve runs the main read loop for this connection.
 func (c *ServerConn) serve(ctx context.Context) error {
+	// Close all recvCh when serve exits. This signals handlers to drain and exit.
+	// Safe because handlePayload (the only sender) runs in this same goroutine.
+	defer func() {
+		c.mu.Lock()
+		for _, sess := range c.sessions {
+			close(sess.recvCh)
+		}
+		c.mu.Unlock()
+	}()
+
 	for {
 		select {
 		case <-c.closed:
@@ -83,7 +93,7 @@ func (c *ServerConn) serve(ctx context.Context) error {
 		default:
 		}
 
-		msg := msgs.NewMsg()
+		msg := msgs.NewMsg(ctx)
 		_, err := msg.UnmarshalReader(c.transport)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -146,12 +156,12 @@ func (c *ServerConn) goAway(ctx context.Context) {
 	lastSessionID := c.nextSessionID - 1
 	c.mu.Unlock()
 
-	ga := msgs.NewGoAway().
+	ga := msgs.NewGoAway(ctx).
 		SetLastSessionID(lastSessionID).
 		SetErrCode(msgs.ErrNone).
 		SetDebugData("server shutting down")
 
-	msg := msgs.NewMsg().SetType(msgs.TGoAway).SetGoAway(ga)
+	msg := msgs.NewMsg(ctx).SetType(msgs.TGoAway).SetGoAway(ga)
 	c.sendMsg(msg)
 }
 
@@ -248,25 +258,16 @@ func (c *ServerConn) runHandler(ctx context.Context, sess *serverSession) {
 
 // runSyncHandler handles synchronous request/response sessions.
 func (c *ServerConn) runSyncHandler(ctx context.Context, sess *serverSession, h SyncHandler) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-sess.cancelCh:
-			return nil
-		case p := <-sess.recvCh:
-			// Process request.
-			resp, err := h.HandleFunc(ctx, p.Payload(), sess.metadata)
-			if err != nil {
-				return err
-			}
-
-			// Send response with same ReqID.
-			if err := c.sendPayload(sess.id, p.ReqID(), resp, false); err != nil {
-				return err
-			}
+	for p := range sess.recvCh {
+		resp, err := h.HandleFunc(ctx, p.Payload(), sess.metadata)
+		if err != nil {
+			return err
+		}
+		if err := c.sendPayload(sess.id, p.ReqID(), resp, false); err != nil {
+			return err
 		}
 	}
+	return nil
 }
 
 // handleClose processes a Close message from the client.
@@ -279,7 +280,7 @@ func (c *ServerConn) handleClose(cl msgs.Close) {
 	c.mu.Unlock()
 
 	if ok {
-		sess.close()
+		close(sess.recvCh)
 	}
 }
 
@@ -303,17 +304,21 @@ func (c *ServerConn) handlePayload(p msgs.Payload) {
 func (c *ServerConn) handleCancel(cancel msgs.Cancel) {
 	c.mu.Lock()
 	sess, ok := c.sessions[cancel.SessionID()]
+	if ok {
+		delete(c.sessions, cancel.SessionID())
+	}
 	c.mu.Unlock()
 
 	if ok {
-		sess.close()
+		sess.close()       // Close cancelCh so handlePayload doesn't block
+		close(sess.recvCh) // Signal handler to drain and exit
 	}
 }
 
 // handlePing processes a Ping message.
 func (c *ServerConn) handlePing(ping msgs.Ping) {
-	pong := msgs.NewPong().SetID(ping.ID())
-	msg := msgs.NewMsg().SetType(msgs.TPong).SetPong(pong)
+	pong := msgs.NewPong(c.ctx).SetID(ping.ID())
+	msg := msgs.NewMsg(c.ctx).SetType(msgs.TPong).SetPong(pong)
 	c.sendMsg(msg)
 }
 
@@ -338,7 +343,7 @@ func (c *ServerConn) sendMsg(msg msgs.Msg) error {
 
 // sendOpenAck sends an OpenAck message.
 func (c *ServerConn) sendOpenAck(openID, sessionID uint32, errCode msgs.ErrCode, errMsg string) error {
-	ack := msgs.NewOpenAck().
+	ack := msgs.NewOpenAck(c.ctx).
 		SetOpenID(openID).
 		SetSessionID(sessionID).
 		SetProtocolMajor(ProtocolMajor).
@@ -346,29 +351,29 @@ func (c *ServerConn) sendOpenAck(openID, sessionID uint32, errCode msgs.ErrCode,
 		SetErrCode(errCode).
 		SetError(errMsg)
 
-	msg := msgs.NewMsg().SetType(msgs.TOpenAck).SetOpenAck(ack)
+	msg := msgs.NewMsg(c.ctx).SetType(msgs.TOpenAck).SetOpenAck(ack)
 	return c.sendMsg(msg)
 }
 
 // sendClose sends a Close message.
 func (c *ServerConn) sendClose(sessionID uint32, errCode msgs.ErrCode, errMsg string) error {
-	cl := msgs.NewClose().
+	cl := msgs.NewClose(c.ctx).
 		SetSessionID(sessionID).
 		SetErrCode(errCode).
 		SetError(errMsg)
 
-	msg := msgs.NewMsg().SetType(msgs.TClose).SetClose(cl)
+	msg := msgs.NewMsg(c.ctx).SetType(msgs.TClose).SetClose(cl)
 	return c.sendMsg(msg)
 }
 
 // sendPayload sends a Payload message.
 func (c *ServerConn) sendPayload(sessionID, reqID uint32, payload []byte, endStream bool) error {
-	p := msgs.NewPayload().
+	p := msgs.NewPayload(c.ctx).
 		SetSessionID(sessionID).
 		SetReqID(reqID).
 		SetPayload(payload).
 		SetEndStream(endStream)
 
-	msg := msgs.NewMsg().SetType(msgs.TPayload).SetPayload(p)
+	msg := msgs.NewMsg(c.ctx).SetType(msgs.TPayload).SetPayload(p)
 	return c.sendMsg(msg)
 }

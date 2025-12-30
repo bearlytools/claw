@@ -14,11 +14,10 @@ import (
     "github.com/bearlytools/claw/clawc/languages/go/reflect"
     "github.com/bearlytools/claw/clawc/languages/go/reflect/runtime"
     "github.com/bearlytools/claw/clawc/languages/go/segment"
-    "github.com/bearlytools/claw/clawc/languages/go/types/list"
     "github.com/bearlytools/claw/clawc/languages/go/field"
     
-    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
+    "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
@@ -32,7 +31,6 @@ var (
     _ reflect.StructDescr
     _ = runtime.RegisterPackage
     _ segment.Struct
-    _ list.Bools
     _ = field.FTBool
 )
 
@@ -91,17 +89,9 @@ type Vehicle struct {
    s *segment.Struct
 }
 
-// NewVehicle creates a new instance of Vehicle.
-func NewVehicle() Vehicle {
-    s := segment.New(XXXMappingVehicle)
-    return Vehicle{
-        s: s,
-    }
-}
-
-// NewVehiclePooled creates a pooled instance of Vehicle.
+// NewVehicle creates a new pooled instance of Vehicle.
 // Call Release() when done to return it to the pool for reuse.
-func NewVehiclePooled(ctx context.Context) Vehicle {
+func NewVehicle(ctx context.Context) Vehicle {
     s := segment.NewPooled(ctx, XXXMappingVehicle)
     return Vehicle{
         s: s,
@@ -207,12 +197,11 @@ func (x Vehicle) Types() *segment.Numbers[Type] {
     x.s.SetList(3, nums)
     return nums
 }
-// SetTypes sets the enum list from a list.Enums for backwards compatibility.
-func (x Vehicle) SetTypes(v list.Enums[Type]) Vehicle {
+
+// SetTypes replaces all values in the numeric list.
+func (x Vehicle) SetTypes(v ...Type) Vehicle {
     nums := x.Types()
-    for n := range v.All() {
-        nums.Append(n)
-    }
+    nums.SetAll(v)
     return x
 }
 
@@ -225,21 +214,18 @@ func (x Vehicle) Bools() *segment.Bools {
     return bools
 }
 
-// SetBools sets the bool list from a list.Bools for backwards compatibility.
-func (x Vehicle) SetBools(v list.Bools) Vehicle {
+// SetBools replaces all values in the bool list.
+func (x Vehicle) SetBools(v ...bool) Vehicle {
     bools := x.Bools()
-    for b := range v.All() {
-        bools.Append(b)
-    }
+    bools.SetAll(v)
     return x
 }
 
 
 
 // ClawStruct returns a reflection type representing the Struct.
-// Note: Segment runtime does not fully support reflection yet.
 func (x Vehicle) ClawStruct() reflect.Struct{
-    panic("segment runtime: ClawStruct not yet implemented")
+    return reflect.XXXNewStruct(x.s, x.XXXDescr())
 }
 
 // XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
@@ -250,11 +236,6 @@ func (x Vehicle) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
-// Recycle is a no-op for segment runtime.
-// Segment runtime uses simpler memory management.
-func (x Vehicle) Recycle(ctx context.Context) {
-    // No-op for segment runtime
-}
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

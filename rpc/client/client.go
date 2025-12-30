@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"sync/atomic"
 	"time"
 
 	"github.com/gostdlib/base/concurrency/sync"
@@ -104,6 +105,10 @@ type Conn struct {
 	pingTimeout    time.Duration
 	maxPayloadSize uint32
 
+	// Keepalive state (times stored as UnixNano)
+	lastActivity atomic.Int64     // Last time we sent or received data
+	pongCh       chan struct{}    // Signals pong received
+
 	ctx context.Context
 }
 
@@ -117,17 +122,24 @@ func New(ctx context.Context, transport io.ReadWriteCloser, opts ...Option) *Con
 		pingInterval:   30 * time.Second,
 		pingTimeout:    10 * time.Second,
 		maxPayloadSize: 4 * 1024 * 1024, // 4MB default
+		pongCh:         make(chan struct{}, 1),
 		ctx:            ctx,
 	}
+
+	// Initialize lastActivity to now
+	c.lastActivity.Store(time.Now().UnixNano())
 
 	for _, opt := range opts {
 		opt(c)
 	}
 
-	// Start the read loop in the pool.
+	// Start the read loop and ping loop in the pool.
 	pool := context.Pool(ctx)
 	pool.Submit(ctx, func() {
 		c.readLoop()
+	})
+	pool.Submit(ctx, func() {
+		c.pingLoop()
 	})
 
 	return c
@@ -173,8 +185,23 @@ func (c *Conn) setFatalError(err error) {
 	c.Close()
 }
 
+// markActivity updates the last activity time for keepalive tracking.
+func (c *Conn) markActivity() {
+	c.lastActivity.Store(time.Now().UnixNano())
+}
+
 // readLoop reads messages from the transport and dispatches them.
 func (c *Conn) readLoop() {
+	// Close all recvCh when readLoop exits. This signals receivers to drain and exit.
+	// Safe because handlePayload (the only sender) runs in this same goroutine.
+	defer func() {
+		c.mu.Lock()
+		for _, sess := range c.sessions {
+			close(sess.recvCh)
+		}
+		c.mu.Unlock()
+	}()
+
 	for {
 		select {
 		case <-c.closed:
@@ -184,7 +211,7 @@ func (c *Conn) readLoop() {
 		default:
 		}
 
-		msg := msgs.NewMsg()
+		msg := msgs.NewMsg(c.ctx)
 		_, err := msg.UnmarshalReader(c.transport)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -194,6 +221,9 @@ func (c *Conn) readLoop() {
 			c.setFatalError(fmt.Errorf("read error: %w", err))
 			return
 		}
+
+		// Mark activity for keepalive tracking
+		c.markActivity()
 
 		switch msg.Type() {
 		case msgs.TOpenAck:
@@ -247,13 +277,12 @@ func (c *Conn) handleClose(cl msgs.Close) {
 	delete(c.sessions, cl.SessionID())
 	c.mu.Unlock()
 
-	// Send Close to closeCh so recvIter can handle it gracefully.
-	// Don't close cancelCh here - that would race with recvIter draining recvCh.
-	// cancelCh is only closed when the client explicitly calls Close().
+	// Send Close to closeCh for error info, then close recvCh to signal end of stream.
 	select {
 	case sess.closeCh <- cl:
 	default:
 	}
+	close(sess.recvCh)
 }
 
 // handlePayload processes a Payload message.
@@ -273,7 +302,12 @@ func (c *Conn) handlePayload(p msgs.Payload) {
 
 // handlePong processes a Pong message.
 func (c *Conn) handlePong(p msgs.Pong) {
-	// TODO: Track ping/pong for keepalive.
+	// Signal the ping loop that we received a pong.
+	// Non-blocking send in case ping loop isn't waiting.
+	select {
+	case c.pongCh <- struct{}{}:
+	default:
+	}
 }
 
 // handleGoAway processes a GoAway message.
@@ -320,13 +354,13 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 	c.mu.Unlock()
 
 	// Build the Open message.
-	descr := msgs.NewDescr().
+	descr := msgs.NewDescr(ctx).
 		SetPackage(pkg).
 		SetService(service).
 		SetCall(call).
 		SetType(rpcType)
 
-	open := msgs.NewOpen().
+	open := msgs.NewOpen(ctx).
 		SetOpenID(openID).
 		SetDescr(descr).
 		SetProtocolMajor(ProtocolMajor).
@@ -341,7 +375,7 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 		}
 	}
 
-	msg := msgs.NewMsg().SetType(msgs.TOpen).SetOpen(open)
+	msg := msgs.NewMsg(ctx).SetType(msgs.TOpen).SetOpen(open)
 
 	if err := c.sendMsg(msg); err != nil {
 		c.mu.Lock()
@@ -380,34 +414,34 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 
 // closeSession sends a Close message for a session.
 func (c *Conn) closeSession(sessionID uint32, errCode msgs.ErrCode, errMsg string) error {
-	cl := msgs.NewClose().
+	cl := msgs.NewClose(c.ctx).
 		SetSessionID(sessionID).
 		SetErrCode(errCode).
 		SetError(errMsg)
 
-	msg := msgs.NewMsg().SetType(msgs.TClose).SetClose(cl)
+	msg := msgs.NewMsg(c.ctx).SetType(msgs.TClose).SetClose(cl)
 	return c.sendMsg(msg)
 }
 
 // sendPayload sends a Payload message.
 func (c *Conn) sendPayload(sessionID, reqID uint32, payload []byte, endStream bool) error {
-	p := msgs.NewPayload().
+	p := msgs.NewPayload(c.ctx).
 		SetSessionID(sessionID).
 		SetReqID(reqID).
 		SetPayload(payload).
 		SetEndStream(endStream)
 
-	msg := msgs.NewMsg().SetType(msgs.TPayload).SetPayload(p)
+	msg := msgs.NewMsg(c.ctx).SetType(msgs.TPayload).SetPayload(p)
 	return c.sendMsg(msg)
 }
 
 // sendCancel sends a Cancel message.
 func (c *Conn) sendCancel(sessionID, reqID uint32) error {
-	cancel := msgs.NewCancel().
+	cancel := msgs.NewCancel(c.ctx).
 		SetSessionID(sessionID).
 		SetReqID(reqID)
 
-	msg := msgs.NewMsg().SetType(msgs.TCancel).SetCancel(cancel)
+	msg := msgs.NewMsg(c.ctx).SetType(msgs.TCancel).SetCancel(cancel)
 	return c.sendMsg(msg)
 }
 
@@ -471,50 +505,75 @@ func (c *Conn) Recv(ctx context.Context, pkg, service, call string) (*RecvClient
 // recvIter creates an iterator for receiving payloads from a session.
 func recvIter(ctx context.Context, sess *session, errPtr *error) iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
-		for {
-			// Priority 1: Always try to drain recvCh first (non-blocking).
-			// This ensures we process all payloads before checking close signals.
-			select {
-			case p := <-sess.recvCh:
-				payload := p.Payload()
-				endStream := p.EndStream()
-				if endStream && len(payload) == 0 {
-					return
-				}
-				if !yield(payload) {
-					return
-				}
-				if endStream {
-					return
-				}
+		for p := range sess.recvCh {
+			payload := p.Payload()
+			if p.EndStream() && len(payload) == 0 {
+				break
+			}
+			if !yield(payload) {
+				return
+			}
+			if p.EndStream() {
+				break
+			}
+		}
+
+		// Check for error info from Close message.
+		select {
+		case cl := <-sess.closeCh:
+			if cl.ErrCode() != msgs.ErrNone {
+				*errPtr = fmt.Errorf("session closed with error: %s", cl.Error())
+			}
+		default:
+		}
+	}
+}
+
+// pingLoop periodically sends keepalive pings when the connection is idle.
+func (c *Conn) pingLoop() {
+	ticker := time.NewTicker(c.pingInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-c.closed:
+			return
+		case <-c.ctx.Done():
+			return
+		case <-ticker.C:
+			// Check if we've been idle for pingInterval
+			lastAct := time.Unix(0, c.lastActivity.Load())
+			if time.Since(lastAct) < c.pingInterval {
+				// Not idle, skip this ping
 				continue
+			}
+
+			// Drain any stale pong signals
+			select {
+			case <-c.pongCh:
 			default:
 			}
 
-			// Priority 2: Check all channels when recvCh is empty.
+			// Send ping
+			ping := msgs.NewPing(c.ctx)
+			msg := msgs.NewMsg(c.ctx).SetType(msgs.TPing).SetPing(ping)
+			if err := c.sendMsg(msg); err != nil {
+				// sendMsg already calls setFatalError
+				return
+			}
+
+			// Wait for pong with timeout
 			select {
-			case <-ctx.Done():
-				*errPtr = ctx.Err()
+			case <-c.closed:
 				return
-			case <-sess.cancelCh:
+			case <-c.ctx.Done():
 				return
-			case cl := <-sess.closeCh:
-				if cl.ErrCode() != msgs.ErrNone {
-					*errPtr = fmt.Errorf("session closed with error: %s", cl.Error())
-				}
+			case <-c.pongCh:
+				// Got pong, connection is healthy
+			case <-time.After(c.pingTimeout):
+				// No pong received, connection is dead
+				c.setFatalError(fmt.Errorf("keepalive timeout: no pong received within %v", c.pingTimeout))
 				return
-			case p := <-sess.recvCh:
-				payload := p.Payload()
-				endStream := p.EndStream()
-				if endStream && len(payload) == 0 {
-					return
-				}
-				if !yield(payload) {
-					return
-				}
-				if endStream {
-					return
-				}
 			}
 		}
 	}

@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
+
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 )
 
 func main() {
-	msg := msgs.NewMsg().SetType(
+	ctx := context.Background()
+	msg := msgs.NewMsg(ctx).SetType(
 		msgs.TOpen,
 	).SetPayload(
-		msgs.NewPayload().SetReqID(
+		msgs.NewPayload(ctx).SetReqID(
 			32,
 		).SetSessionID(8000).SetPayload(
 			[]byte("I love the claw format"),
@@ -23,7 +26,7 @@ func main() {
 		panic("not aligned")
 	}
 
-	var result = msgs.NewMsg()
+	var result = msgs.NewMsg(ctx)
 	if err := result.Unmarshal(b); err != nil {
 		panic(err)
 	}

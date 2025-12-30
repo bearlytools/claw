@@ -1,10 +1,10 @@
 package testing
 
 import (
+	"context"
 	"testing"
 
 	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
-	"github.com/bearlytools/claw/clawc/languages/go/types/list"
 	"github.com/kylelemons/godebug/pretty"
 
 	cars "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
@@ -13,6 +13,7 @@ import (
 )
 
 func TestIngestRoundTripCar(t *testing.T) {
+	ctx := t.Context()
 	tests := []struct {
 		name  string
 		setup func() cars.Car
@@ -20,7 +21,7 @@ func TestIngestRoundTripCar(t *testing.T) {
 		{
 			name: "Success: basic car",
 			setup: func() cars.Car {
-				return cars.NewCar().
+				return cars.NewCar(context.Background()).
 					SetManufacturer(manufacturers.Tesla).
 					SetModel(cars.ModelS).
 					SetYear(2023)
@@ -29,13 +30,13 @@ func TestIngestRoundTripCar(t *testing.T) {
 		{
 			name: "Success: empty car",
 			setup: func() cars.Car {
-				return cars.NewCar()
+				return cars.NewCar(context.Background())
 			},
 		},
 		{
 			name: "Success: Toyota Venza",
 			setup: func() cars.Car {
-				return cars.NewCar().
+				return cars.NewCar(context.Background()).
 					SetManufacturer(manufacturers.Toyota).
 					SetModel(cars.Venza).
 					SetYear(2010)
@@ -47,8 +48,8 @@ func TestIngestRoundTripCar(t *testing.T) {
 		original := test.setup()
 
 		// Round-trip: Walk -> Ingest
-		ingested := cars.NewCar()
-		if err := ingested.IngestWithOptions(original.Walk(), clawiter.IngestOptions{}); err != nil {
+		ingested := cars.NewCar(ctx)
+		if err := ingested.IngestWithOptions(ctx, original.Walk(), clawiter.IngestOptions{}); err != nil {
 			t.Errorf("TestIngestRoundTripCar(%s): Ingest error: %s", test.name, err)
 			continue
 		}
@@ -70,6 +71,7 @@ func TestIngestRoundTripCar(t *testing.T) {
 }
 
 func TestIngestRoundTripVehicle(t *testing.T) {
+	ctx := t.Context()
 	tests := []struct {
 		name  string
 		setup func() vehicles.Vehicle
@@ -77,11 +79,11 @@ func TestIngestRoundTripVehicle(t *testing.T) {
 		{
 			name: "Success: vehicle with car",
 			setup: func() vehicles.Vehicle {
-				car := cars.NewCar().
+				car := cars.NewCar(context.Background()).
 					SetManufacturer(manufacturers.Toyota).
 					SetModel(cars.Venza).
 					SetYear(2010)
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(context.Background()).
 					SetType(vehicles.Car).
 					SetCar(car)
 			},
@@ -89,36 +91,36 @@ func TestIngestRoundTripVehicle(t *testing.T) {
 		{
 			name: "Success: vehicle with enum list",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(context.Background()).
 					SetType(vehicles.Truck).
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck))
+					SetTypes(vehicles.Car, vehicles.Truck)
 			},
 		},
 		{
 			name: "Success: vehicle with bool list",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle().
-					SetBools(list.NewBools().Append(true, false, true))
+				return vehicles.NewVehicle(context.Background()).
+					SetBools(true, false, true)
 			},
 		},
 		{
 			name: "Success: empty vehicle",
 			setup: func() vehicles.Vehicle {
-				return vehicles.NewVehicle()
+				return vehicles.NewVehicle(context.Background())
 			},
 		},
 		{
 			name: "Success: vehicle with all fields",
 			setup: func() vehicles.Vehicle {
-				car := cars.NewCar().
+				car := cars.NewCar(context.Background()).
 					SetManufacturer(manufacturers.Ford).
 					SetModel(cars.GT).
 					SetYear(2020)
-				return vehicles.NewVehicle().
+				return vehicles.NewVehicle(context.Background()).
 					SetType(vehicles.Car).
 					SetCar(car).
-					SetTypes(list.NewEnums[vehicles.Type]().Append(vehicles.Car, vehicles.Truck, vehicles.Unknown)).
-					SetBools(list.NewBools().Append(true, false))
+					SetTypes(vehicles.Car, vehicles.Truck, vehicles.Unknown).
+					SetBools(true, false)
 			},
 		},
 	}
@@ -127,8 +129,8 @@ func TestIngestRoundTripVehicle(t *testing.T) {
 		original := test.setup()
 
 		// Round-trip: Walk -> Ingest
-		ingested := vehicles.NewVehicle()
-		if err := ingested.IngestWithOptions(original.Walk(), clawiter.IngestOptions{}); err != nil {
+		ingested := vehicles.NewVehicle(ctx)
+		if err := ingested.IngestWithOptions(ctx, original.Walk(), clawiter.IngestOptions{}); err != nil {
 			t.Errorf("TestIngestRoundTripVehicle(%s): Ingest error: %s", test.name, err)
 			continue
 		}
