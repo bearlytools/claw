@@ -5,7 +5,6 @@ package maps
 
 import (
     "context"
-    "iter"
     "math"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
@@ -18,13 +17,12 @@ var _ = math.Float32bits
 var _ context.Context
 
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ComplexMaps) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ComplexMaps"}) {
-            return
-        }
+func (x ComplexMaps) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ComplexMaps"}) {
+        return
+    }
         // Field 0: Settings
         {
             m := x.SettingsMap()
@@ -51,11 +49,7 @@ func (x ComplexMaps) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                     }
                     if v != nil {
                         wrapped := XXXNewSettingFrom(v)
-                        for structTok := range wrapped.Walk(ctx) {
-                            if !yield(structTok) {
-                                return
-                            }
-                        }
+                        wrapped.Walk(ctx, yield, opts...)
                     }
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenMapEnd, Name: "Settings"}) {
@@ -64,19 +58,17 @@ func (x ComplexMaps) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ComplexMaps"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ComplexMaps"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Config) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Config"}) {
-            return
-        }
+func (x Config) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Config"}) {
+        return
+    }
         // Field 0: Labels
         {
             m := x.LabelsMap()
@@ -223,19 +215,17 @@ func (x Config) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Config"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Config"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Setting) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Setting"}) {
-            return
-        }
+func (x Setting) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Setting"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -259,9 +249,8 @@ func (x Setting) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Setting"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Setting"}) {
+        return
     }
 }
 

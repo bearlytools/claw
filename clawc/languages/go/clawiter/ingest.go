@@ -8,10 +8,23 @@ import (
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 )
 
-// IngestOptions provides options for ingesting tokens into structs.
+// IngestOptions holds configuration for Ingest.
+// This is populated by IngestOption functions and passed to XXXIngestFrom.
 type IngestOptions struct {
 	// IgnoreUnknownFields causes unknown field names to be skipped instead of returning an error.
 	IgnoreUnknownFields bool
+}
+
+// IngestOption configures Ingest behavior.
+type IngestOption func(IngestOptions) (IngestOptions, error)
+
+// WithIgnoreUnknownFields sets whether to ignore unknown fields during ingestion.
+// When true, unknown fields are skipped instead of causing an error.
+func WithIgnoreUnknownFields(ignore bool) IngestOption {
+	return func(o IngestOptions) (IngestOptions, error) {
+		o.IgnoreUnknownFields = ignore
+		return o, nil
+	}
 }
 
 // TokenStream wraps an iter.Seq[Token] for pull-based consumption with peek support.

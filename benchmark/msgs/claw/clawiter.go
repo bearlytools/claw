@@ -5,7 +5,6 @@ package pod
 
 import (
     "context"
-    "iter"
     "math"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
@@ -18,13 +17,12 @@ var _ = math.Float32bits
 var _ context.Context
 
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x AWSElasticBlockStoreVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "AWSElasticBlockStoreVolumeSource"}) {
-            return
-        }
+func (x AWSElasticBlockStoreVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "AWSElasticBlockStoreVolumeSource"}) {
+        return
+    }
         // Field 0: VolumeId
         {
             s := x.VolumeId()
@@ -56,19 +54,17 @@ func (x AWSElasticBlockStoreVolumeSource) Walk(ctx context.Context) iter.Seq[cla
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "AWSElasticBlockStoreVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "AWSElasticBlockStoreVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Affinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Affinity"}) {
-            return
-        }
+func (x Affinity) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Affinity"}) {
+        return
+    }
         // Field 0: NodeAffinity
         {
             nested := x.NodeAffinity()
@@ -77,11 +73,7 @@ func (x Affinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: PodAffinity
@@ -92,11 +84,7 @@ func (x Affinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: PodAntiAffinity
@@ -107,27 +95,21 @@ func (x Affinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Affinity"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Affinity"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x AppArmorProfile) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "AppArmorProfile"}) {
-            return
-        }
+func (x AppArmorProfile) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "AppArmorProfile"}) {
+        return
+    }
         // Field 0: Type
         {
             v := x.Type()
@@ -148,19 +130,17 @@ func (x AppArmorProfile) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "AppArmorProfile"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "AppArmorProfile"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x CSIVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "CSIVolumeSource"}) {
-            return
-        }
+func (x CSIVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "CSIVolumeSource"}) {
+        return
+    }
         // Field 0: Driver
         {
             s := x.Driver()
@@ -200,11 +180,7 @@ func (x CSIVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.VolumeAttributesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "VolumeAttributes"}) {
                     return
@@ -219,27 +195,21 @@ func (x CSIVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "CSIVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "CSIVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Capabilities) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Capabilities"}) {
-            return
-        }
+func (x Capabilities) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Capabilities"}) {
+        return
+    }
         // Field 0: Add
         {
             list := x.Add()
@@ -289,19 +259,17 @@ func (x Capabilities) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Capabilities"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Capabilities"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ClusterTrustBundleProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ClusterTrustBundleProjection"}) {
-            return
-        }
+func (x ClusterTrustBundleProjection) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ClusterTrustBundleProjection"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -324,11 +292,7 @@ func (x ClusterTrustBundleProjection) Walk(ctx context.Context) iter.Seq[clawite
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: Optional
@@ -347,19 +311,17 @@ func (x ClusterTrustBundleProjection) Walk(ctx context.Context) iter.Seq[clawite
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ClusterTrustBundleProjection"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ClusterTrustBundleProjection"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ConfigMapEnvSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapEnvSource"}) {
-            return
-        }
+func (x ConfigMapEnvSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapEnvSource"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -376,19 +338,17 @@ func (x ConfigMapEnvSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapEnvSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapEnvSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ConfigMapKeySelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapKeySelector"}) {
-            return
-        }
+func (x ConfigMapKeySelector) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapKeySelector"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -412,19 +372,17 @@ func (x ConfigMapKeySelector) Walk(ctx context.Context) iter.Seq[clawiter.Token]
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapKeySelector"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapKeySelector"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ConfigMapProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapProjection"}) {
-            return
-        }
+func (x ConfigMapProjection) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapProjection"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -449,11 +407,7 @@ func (x ConfigMapProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] 
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ItemsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Items"}) {
                     return
@@ -469,19 +423,17 @@ func (x ConfigMapProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] 
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapProjection"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapProjection"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ConfigMapVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapVolumeSource"}) {
-            return
-        }
+func (x ConfigMapVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ConfigMapVolumeSource"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -506,11 +458,7 @@ func (x ConfigMapVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ItemsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Items"}) {
                     return
@@ -534,19 +482,17 @@ func (x ConfigMapVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ConfigMapVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Container"}) {
-            return
-        }
+func (x Container) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Container"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -633,11 +579,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.PortsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Ports"}) {
                     return
@@ -661,11 +603,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.EnvFromGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "EnvFrom"}) {
                     return
@@ -689,11 +627,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.EnvGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Env"}) {
                     return
@@ -708,11 +642,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 9: ResizePolicy
@@ -732,11 +662,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ResizePolicyGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "ResizePolicy"}) {
                     return
@@ -772,11 +698,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.VolumeMountsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "VolumeMounts"}) {
                     return
@@ -800,11 +722,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.VolumeDevicesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "VolumeDevices"}) {
                     return
@@ -819,11 +737,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 14: ReadinessProbe
@@ -834,11 +748,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 15: StartupProbe
@@ -849,11 +759,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 16: Lifecycle
@@ -864,11 +770,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 17: TerminationMessagePath
@@ -910,11 +812,7 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 21: Stdin
@@ -942,19 +840,17 @@ func (x Container) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Container"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Container"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ContainerPort) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerPort"}) {
-            return
-        }
+func (x ContainerPort) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerPort"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -998,19 +894,17 @@ func (x ContainerPort) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerPort"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerPort"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ContainerResizePolicy) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerResizePolicy"}) {
-            return
-        }
+func (x ContainerResizePolicy) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerResizePolicy"}) {
+        return
+    }
         // Field 0: ResourceName
         {
             s := x.ResourceName()
@@ -1031,19 +925,17 @@ func (x ContainerResizePolicy) Walk(ctx context.Context) iter.Seq[clawiter.Token
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerResizePolicy"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerResizePolicy"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ContainerState) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerState"}) {
-            return
-        }
+func (x ContainerState) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerState"}) {
+        return
+    }
         // Field 0: Waiting
         {
             nested := x.Waiting()
@@ -1052,11 +944,7 @@ func (x ContainerState) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: Running
@@ -1067,11 +955,7 @@ func (x ContainerState) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: Terminated
@@ -1082,27 +966,21 @@ func (x ContainerState) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerState"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerState"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ContainerStateRunning) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStateRunning"}) {
-            return
-        }
+func (x ContainerStateRunning) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStateRunning"}) {
+        return
+    }
         // Field 0: StartedAt
         {
             nested := x.StartedAt()
@@ -1111,27 +989,21 @@ func (x ContainerStateRunning) Walk(ctx context.Context) iter.Seq[clawiter.Token
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStateRunning"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStateRunning"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ContainerStateTerminated) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStateTerminated"}) {
-            return
-        }
+func (x ContainerStateTerminated) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStateTerminated"}) {
+        return
+    }
         // Field 0: ExitCode
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ExitCode", Type: field.FTInt32}
@@ -1170,11 +1042,7 @@ func (x ContainerStateTerminated) Walk(ctx context.Context) iter.Seq[clawiter.To
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 5: FinishedAt
@@ -1185,11 +1053,7 @@ func (x ContainerStateTerminated) Walk(ctx context.Context) iter.Seq[clawiter.To
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 6: ContainerId
@@ -1200,19 +1064,17 @@ func (x ContainerStateTerminated) Walk(ctx context.Context) iter.Seq[clawiter.To
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStateTerminated"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStateTerminated"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ContainerStateWaiting) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStateWaiting"}) {
-            return
-        }
+func (x ContainerStateWaiting) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStateWaiting"}) {
+        return
+    }
         // Field 0: Reason
         {
             s := x.Reason()
@@ -1228,19 +1090,17 @@ func (x ContainerStateWaiting) Walk(ctx context.Context) iter.Seq[clawiter.Token
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStateWaiting"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStateWaiting"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ContainerStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStatus"}) {
-            return
-        }
+func (x ContainerStatus) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ContainerStatus"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -1256,11 +1116,7 @@ func (x ContainerStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: LastTerminationState
@@ -1271,11 +1127,7 @@ func (x ContainerStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: Ready
@@ -1340,11 +1192,7 @@ func (x ContainerStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.AllocatedResourcesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "AllocatedResources"}) {
                     return
@@ -1359,11 +1207,7 @@ func (x ContainerStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 11: VolumeMounts
@@ -1383,11 +1227,7 @@ func (x ContainerStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.VolumeMountsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "VolumeMounts"}) {
                     return
@@ -1395,19 +1235,17 @@ func (x ContainerStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStatus"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ContainerStatus"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x DownwardAPIProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "DownwardAPIProjection"}) {
-            return
-        }
+func (x DownwardAPIProjection) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "DownwardAPIProjection"}) {
+        return
+    }
         // Field 0: Items
         {
             list := x.ItemsList(ctx)
@@ -1425,11 +1263,7 @@ func (x DownwardAPIProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ItemsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Items"}) {
                     return
@@ -1437,19 +1271,17 @@ func (x DownwardAPIProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "DownwardAPIProjection"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "DownwardAPIProjection"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x DownwardAPIVolumeFile) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "DownwardAPIVolumeFile"}) {
-            return
-        }
+func (x DownwardAPIVolumeFile) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "DownwardAPIVolumeFile"}) {
+        return
+    }
         // Field 0: Path
         {
             s := x.Path()
@@ -1465,11 +1297,7 @@ func (x DownwardAPIVolumeFile) Walk(ctx context.Context) iter.Seq[clawiter.Token
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: ResourceFieldRef
@@ -1480,11 +1308,7 @@ func (x DownwardAPIVolumeFile) Walk(ctx context.Context) iter.Seq[clawiter.Token
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: Mode
@@ -1496,19 +1320,17 @@ func (x DownwardAPIVolumeFile) Walk(ctx context.Context) iter.Seq[clawiter.Token
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "DownwardAPIVolumeFile"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "DownwardAPIVolumeFile"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x DownwardAPIVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "DownwardAPIVolumeSource"}) {
-            return
-        }
+func (x DownwardAPIVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "DownwardAPIVolumeSource"}) {
+        return
+    }
         // Field 0: Items
         {
             list := x.ItemsList(ctx)
@@ -1526,11 +1348,7 @@ func (x DownwardAPIVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Tok
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ItemsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Items"}) {
                     return
@@ -1546,19 +1364,17 @@ func (x DownwardAPIVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Tok
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "DownwardAPIVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "DownwardAPIVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x EmptyDirVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EmptyDirVolumeSource"}) {
-            return
-        }
+func (x EmptyDirVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EmptyDirVolumeSource"}) {
+        return
+    }
         // Field 0: Medium
         {
             v := x.Medium()
@@ -1579,19 +1395,17 @@ func (x EmptyDirVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token]
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EmptyDirVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EmptyDirVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x EnvFromSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EnvFromSource"}) {
-            return
-        }
+func (x EnvFromSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EnvFromSource"}) {
+        return
+    }
         // Field 0: Prefix
         {
             s := x.Prefix()
@@ -1607,11 +1421,7 @@ func (x EnvFromSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: SecretRef
@@ -1622,27 +1432,21 @@ func (x EnvFromSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EnvFromSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EnvFromSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x EnvVar) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EnvVar"}) {
-            return
-        }
+func (x EnvVar) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EnvVar"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -1665,27 +1469,21 @@ func (x EnvVar) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EnvVar"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EnvVar"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x EnvVarSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EnvVarSource"}) {
-            return
-        }
+func (x EnvVarSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EnvVarSource"}) {
+        return
+    }
         // Field 0: FieldRef
         {
             nested := x.FieldRef()
@@ -1694,11 +1492,7 @@ func (x EnvVarSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: ResourceFieldRef
@@ -1709,11 +1503,7 @@ func (x EnvVarSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: ConfigMapKeyRef
@@ -1724,11 +1514,7 @@ func (x EnvVarSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: SecretKeyRef
@@ -1739,27 +1525,21 @@ func (x EnvVarSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EnvVarSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EnvVarSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EphemeralContainer"}) {
-            return
-        }
+func (x EphemeralContainer) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EphemeralContainer"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -1846,11 +1626,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.PortsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Ports"}) {
                     return
@@ -1874,11 +1650,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.EnvFromGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "EnvFrom"}) {
                     return
@@ -1902,11 +1674,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.EnvGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Env"}) {
                     return
@@ -1921,11 +1689,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 9: VolumeMounts
@@ -1945,11 +1709,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.VolumeMountsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "VolumeMounts"}) {
                     return
@@ -1973,11 +1733,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.VolumeDevicesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "VolumeDevices"}) {
                     return
@@ -1992,11 +1748,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 12: ReadinessProbe
@@ -2007,11 +1759,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 13: StartupProbe
@@ -2022,11 +1770,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 14: Lifecycle
@@ -2037,11 +1781,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 15: TerminationMessagePath
@@ -2083,11 +1823,7 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 19: Stdin
@@ -2122,19 +1858,17 @@ func (x EphemeralContainer) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EphemeralContainer"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EphemeralContainer"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x EphemeralVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EphemeralVolumeSource"}) {
-            return
-        }
+func (x EphemeralVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "EphemeralVolumeSource"}) {
+        return
+    }
         // Field 0: VolumeClaimTemplate
         {
             nested := x.VolumeClaimTemplate()
@@ -2143,27 +1877,21 @@ func (x EphemeralVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EphemeralVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "EphemeralVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ExecAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ExecAction"}) {
-            return
-        }
+func (x ExecAction) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ExecAction"}) {
+        return
+    }
         // Field 0: Command
         {
             list := x.Command()
@@ -2189,19 +1917,17 @@ func (x ExecAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ExecAction"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ExecAction"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x GCEPersistentDiskVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GCEPersistentDiskVolumeSource"}) {
-            return
-        }
+func (x GCEPersistentDiskVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GCEPersistentDiskVolumeSource"}) {
+        return
+    }
         // Field 0: PdName
         {
             s := x.PdName()
@@ -2233,19 +1959,17 @@ func (x GCEPersistentDiskVolumeSource) Walk(ctx context.Context) iter.Seq[clawit
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GCEPersistentDiskVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GCEPersistentDiskVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x GRPCAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GRPCAction"}) {
-            return
-        }
+func (x GRPCAction) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GRPCAction"}) {
+        return
+    }
         // Field 0: Port
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Port", Type: field.FTInt32}
@@ -2262,19 +1986,17 @@ func (x GRPCAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GRPCAction"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GRPCAction"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x HTTPGetAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HTTPGetAction"}) {
-            return
-        }
+func (x HTTPGetAction) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HTTPGetAction"}) {
+        return
+    }
         // Field 0: Path
         {
             s := x.Path()
@@ -2290,11 +2012,7 @@ func (x HTTPGetAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: Host
@@ -2333,11 +2051,7 @@ func (x HTTPGetAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.HttpHeadersGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "HttpHeaders"}) {
                     return
@@ -2345,19 +2059,17 @@ func (x HTTPGetAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HTTPGetAction"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HTTPGetAction"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x HTTPHeader) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HTTPHeader"}) {
-            return
-        }
+func (x HTTPHeader) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HTTPHeader"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -2373,19 +2085,17 @@ func (x HTTPHeader) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HTTPHeader"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HTTPHeader"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x HostAlias) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HostAlias"}) {
-            return
-        }
+func (x HostAlias) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HostAlias"}) {
+        return
+    }
         // Field 0: Ip
         {
             s := x.Ip()
@@ -2418,19 +2128,17 @@ func (x HostAlias) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HostAlias"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HostAlias"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x HostIP) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HostIP"}) {
-            return
-        }
+func (x HostIP) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HostIP"}) {
+        return
+    }
         // Field 0: Ip
         {
             s := x.Ip()
@@ -2439,19 +2147,17 @@ func (x HostIP) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HostIP"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HostIP"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x HostPathVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HostPathVolumeSource"}) {
-            return
-        }
+func (x HostPathVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "HostPathVolumeSource"}) {
+        return
+    }
         // Field 0: Path
         {
             s := x.Path()
@@ -2472,19 +2178,17 @@ func (x HostPathVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token]
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HostPathVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "HostPathVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x IntOrString) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "IntOrString"}) {
-            return
-        }
+func (x IntOrString) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "IntOrString"}) {
+        return
+    }
         // Field 0: IntVal
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "IntVal", Type: field.FTInt32}
@@ -2509,19 +2213,17 @@ func (x IntOrString) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "IntOrString"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "IntOrString"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x KeyToPath) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "KeyToPath"}) {
-            return
-        }
+func (x KeyToPath) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "KeyToPath"}) {
+        return
+    }
         // Field 0: Key
         {
             s := x.Key()
@@ -2545,19 +2247,17 @@ func (x KeyToPath) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "KeyToPath"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "KeyToPath"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x KeyValue) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "KeyValue"}) {
-            return
-        }
+func (x KeyValue) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "KeyValue"}) {
+        return
+    }
         // Field 0: Key
         {
             s := x.Key()
@@ -2573,19 +2273,17 @@ func (x KeyValue) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "KeyValue"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "KeyValue"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x LabelSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LabelSelector"}) {
-            return
-        }
+func (x LabelSelector) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LabelSelector"}) {
+        return
+    }
         // Field 0: MatchLabels
         {
             list := x.MatchLabelsList(ctx)
@@ -2603,11 +2301,7 @@ func (x LabelSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MatchLabelsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "MatchLabels"}) {
                     return
@@ -2631,11 +2325,7 @@ func (x LabelSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MatchExpressionsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "MatchExpressions"}) {
                     return
@@ -2643,19 +2333,17 @@ func (x LabelSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LabelSelector"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LabelSelector"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x LabelSelectorRequirement) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LabelSelectorRequirement"}) {
-            return
-        }
+func (x LabelSelectorRequirement) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LabelSelectorRequirement"}) {
+        return
+    }
         // Field 0: Key
         {
             s := x.Key()
@@ -2700,19 +2388,17 @@ func (x LabelSelectorRequirement) Walk(ctx context.Context) iter.Seq[clawiter.To
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LabelSelectorRequirement"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LabelSelectorRequirement"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Lifecycle) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Lifecycle"}) {
-            return
-        }
+func (x Lifecycle) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Lifecycle"}) {
+        return
+    }
         // Field 0: PostStart
         {
             nested := x.PostStart()
@@ -2721,11 +2407,7 @@ func (x Lifecycle) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: PreStop
@@ -2736,27 +2418,21 @@ func (x Lifecycle) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Lifecycle"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Lifecycle"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x LifecycleHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LifecycleHandler"}) {
-            return
-        }
+func (x LifecycleHandler) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LifecycleHandler"}) {
+        return
+    }
         // Field 0: Exec
         {
             nested := x.Exec()
@@ -2765,11 +2441,7 @@ func (x LifecycleHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: HttpGet
@@ -2780,11 +2452,7 @@ func (x LifecycleHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: TcpSocket
@@ -2795,11 +2463,7 @@ func (x LifecycleHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: Sleep
@@ -2810,27 +2474,21 @@ func (x LifecycleHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LifecycleHandler"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LifecycleHandler"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x LocalObjectReference) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LocalObjectReference"}) {
-            return
-        }
+func (x LocalObjectReference) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "LocalObjectReference"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -2839,19 +2497,17 @@ func (x LocalObjectReference) Walk(ctx context.Context) iter.Seq[clawiter.Token]
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LocalObjectReference"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "LocalObjectReference"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ManagedFieldsEntry) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ManagedFieldsEntry"}) {
-            return
-        }
+func (x ManagedFieldsEntry) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ManagedFieldsEntry"}) {
+        return
+    }
         // Field 0: Manager
         {
             s := x.Manager()
@@ -2881,11 +2537,7 @@ func (x ManagedFieldsEntry) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: FieldsType
@@ -2910,19 +2562,17 @@ func (x ManagedFieldsEntry) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ManagedFieldsEntry"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ManagedFieldsEntry"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x NFSVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NFSVolumeSource"}) {
-            return
-        }
+func (x NFSVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NFSVolumeSource"}) {
+        return
+    }
         // Field 0: Server
         {
             s := x.Server()
@@ -2946,19 +2596,17 @@ func (x NFSVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NFSVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NFSVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x NodeAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeAffinity"}) {
-            return
-        }
+func (x NodeAffinity) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeAffinity"}) {
+        return
+    }
         // Field 0: RequiredDuringSchedulingIgnoredDuringExecution
         {
             nested := x.RequiredDuringSchedulingIgnoredDuringExecution()
@@ -2967,11 +2615,7 @@ func (x NodeAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: PreferredDuringSchedulingIgnoredDuringExecution
@@ -2991,11 +2635,7 @@ func (x NodeAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.PreferredDuringSchedulingIgnoredDuringExecutionGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "PreferredDuringSchedulingIgnoredDuringExecution"}) {
                     return
@@ -3003,19 +2643,17 @@ func (x NodeAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeAffinity"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeAffinity"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x NodeSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeSelector"}) {
-            return
-        }
+func (x NodeSelector) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeSelector"}) {
+        return
+    }
         // Field 0: NodeSelectorTerms
         {
             list := x.NodeSelectorTermsList(ctx)
@@ -3033,11 +2671,7 @@ func (x NodeSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.NodeSelectorTermsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "NodeSelectorTerms"}) {
                     return
@@ -3045,19 +2679,17 @@ func (x NodeSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeSelector"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeSelector"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x NodeSelectorRequirement) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeSelectorRequirement"}) {
-            return
-        }
+func (x NodeSelectorRequirement) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeSelectorRequirement"}) {
+        return
+    }
         // Field 0: Key
         {
             s := x.Key()
@@ -3102,19 +2734,17 @@ func (x NodeSelectorRequirement) Walk(ctx context.Context) iter.Seq[clawiter.Tok
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeSelectorRequirement"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeSelectorRequirement"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x NodeSelectorTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeSelectorTerm"}) {
-            return
-        }
+func (x NodeSelectorTerm) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "NodeSelectorTerm"}) {
+        return
+    }
         // Field 0: MatchExpressions
         {
             list := x.MatchExpressionsList(ctx)
@@ -3132,11 +2762,7 @@ func (x NodeSelectorTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MatchExpressionsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "MatchExpressions"}) {
                     return
@@ -3160,11 +2786,7 @@ func (x NodeSelectorTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MatchFieldsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "MatchFields"}) {
                     return
@@ -3172,19 +2794,17 @@ func (x NodeSelectorTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeSelectorTerm"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "NodeSelectorTerm"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ObjectFieldSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ObjectFieldSelector"}) {
-            return
-        }
+func (x ObjectFieldSelector) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ObjectFieldSelector"}) {
+        return
+    }
         // Field 0: ApiVersion
         {
             s := x.ApiVersion()
@@ -3200,19 +2820,17 @@ func (x ObjectFieldSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] 
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ObjectFieldSelector"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ObjectFieldSelector"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ObjectMeta"}) {
-            return
-        }
+func (x ObjectMeta) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ObjectMeta"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -3271,11 +2889,7 @@ func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 8: DeletionTimestamp
@@ -3286,11 +2900,7 @@ func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 9: DeletionGracePeriodSeconds
@@ -3318,11 +2928,7 @@ func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.LabelsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Labels"}) {
                     return
@@ -3346,11 +2952,7 @@ func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.AnnotationsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Annotations"}) {
                     return
@@ -3374,11 +2976,7 @@ func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.OwnerReferencesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "OwnerReferences"}) {
                     return
@@ -3426,11 +3024,7 @@ func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ManagedFieldsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "ManagedFields"}) {
                     return
@@ -3438,19 +3032,17 @@ func (x ObjectMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ObjectMeta"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ObjectMeta"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x OwnerReference) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "OwnerReference"}) {
-            return
-        }
+func (x OwnerReference) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "OwnerReference"}) {
+        return
+    }
         // Field 0: ApiVersion
         {
             s := x.ApiVersion()
@@ -3496,19 +3088,17 @@ func (x OwnerReference) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "OwnerReference"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "OwnerReference"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PersistentVolumeClaimSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PersistentVolumeClaimSpec"}) {
-            return
-        }
+func (x PersistentVolumeClaimSpec) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PersistentVolumeClaimSpec"}) {
+        return
+    }
         // Field 0: AccessModes
         {
             list := x.AccessModes()
@@ -3546,11 +3136,7 @@ func (x PersistentVolumeClaimSpec) Walk(ctx context.Context) iter.Seq[clawiter.T
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: Resources
@@ -3561,11 +3147,7 @@ func (x PersistentVolumeClaimSpec) Walk(ctx context.Context) iter.Seq[clawiter.T
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: VolumeName
@@ -3602,11 +3184,7 @@ func (x PersistentVolumeClaimSpec) Walk(ctx context.Context) iter.Seq[clawiter.T
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 7: DataSourceRef
@@ -3617,11 +3195,7 @@ func (x PersistentVolumeClaimSpec) Walk(ctx context.Context) iter.Seq[clawiter.T
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 8: VolumeAttributesClassName
@@ -3649,19 +3223,17 @@ func (x PersistentVolumeClaimSpec) Walk(ctx context.Context) iter.Seq[clawiter.T
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PersistentVolumeClaimSpec"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PersistentVolumeClaimSpec"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PersistentVolumeClaimTemplate) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PersistentVolumeClaimTemplate"}) {
-            return
-        }
+func (x PersistentVolumeClaimTemplate) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PersistentVolumeClaimTemplate"}) {
+        return
+    }
         // Field 0: Metadata
         {
             nested := x.Metadata()
@@ -3670,11 +3242,7 @@ func (x PersistentVolumeClaimTemplate) Walk(ctx context.Context) iter.Seq[clawit
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: Spec
@@ -3685,27 +3253,21 @@ func (x PersistentVolumeClaimTemplate) Walk(ctx context.Context) iter.Seq[clawit
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PersistentVolumeClaimTemplate"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PersistentVolumeClaimTemplate"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PersistentVolumeClaimVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PersistentVolumeClaimVolumeSource"}) {
-            return
-        }
+func (x PersistentVolumeClaimVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PersistentVolumeClaimVolumeSource"}) {
+        return
+    }
         // Field 0: ClaimName
         {
             s := x.ClaimName()
@@ -3722,19 +3284,17 @@ func (x PersistentVolumeClaimVolumeSource) Walk(ctx context.Context) iter.Seq[cl
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PersistentVolumeClaimVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PersistentVolumeClaimVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Pod) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Pod"}) {
-            return
-        }
+func (x Pod) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Pod"}) {
+        return
+    }
         // Field 0: TypeMeta
         {
             nested := x.TypeMeta()
@@ -3743,11 +3303,7 @@ func (x Pod) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: Metadata
@@ -3758,11 +3314,7 @@ func (x Pod) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: Spec
@@ -3773,11 +3325,7 @@ func (x Pod) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: Status
@@ -3788,27 +3336,21 @@ func (x Pod) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Pod"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Pod"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodAffinity"}) {
-            return
-        }
+func (x PodAffinity) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodAffinity"}) {
+        return
+    }
         // Field 0: RequiredDuringSchedulingIgnoredDuringExecution
         {
             list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
@@ -3826,11 +3368,7 @@ func (x PodAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.RequiredDuringSchedulingIgnoredDuringExecutionGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "RequiredDuringSchedulingIgnoredDuringExecution"}) {
                     return
@@ -3854,11 +3392,7 @@ func (x PodAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.PreferredDuringSchedulingIgnoredDuringExecutionGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "PreferredDuringSchedulingIgnoredDuringExecution"}) {
                     return
@@ -3866,19 +3400,17 @@ func (x PodAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodAffinity"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodAffinity"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodAffinityTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodAffinityTerm"}) {
-            return
-        }
+func (x PodAffinityTerm) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodAffinityTerm"}) {
+        return
+    }
         // Field 0: LabelSelector
         {
             nested := x.LabelSelector()
@@ -3887,11 +3419,7 @@ func (x PodAffinityTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: Namespaces
@@ -3933,11 +3461,7 @@ func (x PodAffinityTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: MatchLabelKeys
@@ -3989,19 +3513,17 @@ func (x PodAffinityTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodAffinityTerm"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodAffinityTerm"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodAntiAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodAntiAffinity"}) {
-            return
-        }
+func (x PodAntiAffinity) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodAntiAffinity"}) {
+        return
+    }
         // Field 0: RequiredDuringSchedulingIgnoredDuringExecution
         {
             list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
@@ -4019,11 +3541,7 @@ func (x PodAntiAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.RequiredDuringSchedulingIgnoredDuringExecutionGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "RequiredDuringSchedulingIgnoredDuringExecution"}) {
                     return
@@ -4047,11 +3565,7 @@ func (x PodAntiAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.PreferredDuringSchedulingIgnoredDuringExecutionGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "PreferredDuringSchedulingIgnoredDuringExecution"}) {
                     return
@@ -4059,19 +3573,17 @@ func (x PodAntiAffinity) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodAntiAffinity"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodAntiAffinity"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodCondition) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodCondition"}) {
-            return
-        }
+func (x PodCondition) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodCondition"}) {
+        return
+    }
         // Field 0: Type
         {
             v := x.Type()
@@ -4104,11 +3616,7 @@ func (x PodCondition) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: LastTransitionTime
@@ -4119,11 +3627,7 @@ func (x PodCondition) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: Reason
@@ -4141,19 +3645,17 @@ func (x PodCondition) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodCondition"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodCondition"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodDNSConfig) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodDNSConfig"}) {
-            return
-        }
+func (x PodDNSConfig) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodDNSConfig"}) {
+        return
+    }
         // Field 0: Nameservers
         {
             list := x.Nameservers()
@@ -4219,11 +3721,7 @@ func (x PodDNSConfig) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.OptionsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Options"}) {
                     return
@@ -4231,19 +3729,17 @@ func (x PodDNSConfig) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodDNSConfig"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodDNSConfig"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodDNSConfigOption) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodDNSConfigOption"}) {
-            return
-        }
+func (x PodDNSConfigOption) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodDNSConfigOption"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -4259,19 +3755,17 @@ func (x PodDNSConfigOption) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodDNSConfigOption"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodDNSConfigOption"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodIP) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodIP"}) {
-            return
-        }
+func (x PodIP) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodIP"}) {
+        return
+    }
         // Field 0: Ip
         {
             s := x.Ip()
@@ -4280,19 +3774,17 @@ func (x PodIP) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodIP"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodIP"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodOS) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodOS"}) {
-            return
-        }
+func (x PodOS) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodOS"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -4301,19 +3793,17 @@ func (x PodOS) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodOS"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodOS"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodReadinessGate) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodReadinessGate"}) {
-            return
-        }
+func (x PodReadinessGate) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodReadinessGate"}) {
+        return
+    }
         // Field 0: ConditionType
         {
             v := x.ConditionType()
@@ -4327,19 +3817,17 @@ func (x PodReadinessGate) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodReadinessGate"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodReadinessGate"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodResourceClaim) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodResourceClaim"}) {
-            return
-        }
+func (x PodResourceClaim) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodResourceClaim"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -4362,19 +3850,17 @@ func (x PodResourceClaim) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodResourceClaim"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodResourceClaim"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodResourceClaimStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodResourceClaimStatus"}) {
-            return
-        }
+func (x PodResourceClaimStatus) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodResourceClaimStatus"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -4390,19 +3876,17 @@ func (x PodResourceClaimStatus) Walk(ctx context.Context) iter.Seq[clawiter.Toke
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodResourceClaimStatus"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodResourceClaimStatus"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodSchedulingGate) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodSchedulingGate"}) {
-            return
-        }
+func (x PodSchedulingGate) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodSchedulingGate"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -4411,19 +3895,17 @@ func (x PodSchedulingGate) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodSchedulingGate"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodSchedulingGate"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodSecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodSecurityContext"}) {
-            return
-        }
+func (x PodSecurityContext) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodSecurityContext"}) {
+        return
+    }
         // Field 0: SeLinuxOptions
         {
             nested := x.SeLinuxOptions()
@@ -4432,11 +3914,7 @@ func (x PodSecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: WindowsOptions
@@ -4447,11 +3925,7 @@ func (x PodSecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: RunAsUser
@@ -4541,11 +4015,7 @@ func (x PodSecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.SysctlsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Sysctls"}) {
                     return
@@ -4572,11 +4042,7 @@ func (x PodSecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 11: AppArmorProfile
@@ -4587,11 +4053,7 @@ func (x PodSecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 12: SeLinuxChangePolicy
@@ -4607,19 +4069,17 @@ func (x PodSecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodSecurityContext"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodSecurityContext"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodSpec"}) {
-            return
-        }
+func (x PodSpec) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodSpec"}) {
+        return
+    }
         // Field 0: Volumes
         {
             list := x.VolumesList(ctx)
@@ -4637,11 +4097,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.VolumesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Volumes"}) {
                     return
@@ -4665,11 +4121,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.InitContainersGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "InitContainers"}) {
                     return
@@ -4693,11 +4145,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ContainersGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Containers"}) {
                     return
@@ -4721,11 +4169,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.EphemeralContainersGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "EphemeralContainers"}) {
                     return
@@ -4789,11 +4233,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.NodeSelectorGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "NodeSelector"}) {
                     return
@@ -4862,11 +4302,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 17: ImagePullSecrets
@@ -4886,11 +4322,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ImagePullSecretsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "ImagePullSecrets"}) {
                     return
@@ -4919,11 +4351,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 21: SchedulerName
@@ -4950,11 +4378,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.TolerationsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Tolerations"}) {
                     return
@@ -4978,11 +4402,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.HostAliasesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "HostAliases"}) {
                     return
@@ -5012,11 +4432,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 27: ReadinessGates
@@ -5036,11 +4452,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ReadinessGatesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "ReadinessGates"}) {
                     return
@@ -5091,11 +4503,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.OverheadGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Overhead"}) {
                     return
@@ -5119,11 +4527,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.TopologySpreadConstraintsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "TopologySpreadConstraints"}) {
                     return
@@ -5146,11 +4550,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 35: HostUsers
@@ -5178,11 +4578,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.SchedulingGatesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "SchedulingGates"}) {
                     return
@@ -5206,11 +4602,7 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ResourceClaimsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "ResourceClaims"}) {
                     return
@@ -5225,27 +4617,21 @@ func (x PodSpec) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodSpec"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodSpec"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodStatus"}) {
-            return
-        }
+func (x PodStatus) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PodStatus"}) {
+        return
+    }
         // Field 0: Phase
         {
             v := x.Phase()
@@ -5275,11 +4661,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ConditionsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Conditions"}) {
                     return
@@ -5331,11 +4713,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.HostIpsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "HostIps"}) {
                     return
@@ -5366,11 +4744,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.PodIpsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "PodIps"}) {
                     return
@@ -5385,11 +4759,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 10: InitContainerStatuses
@@ -5409,11 +4779,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.InitContainerStatusesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "InitContainerStatuses"}) {
                     return
@@ -5437,11 +4803,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ContainerStatusesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "ContainerStatuses"}) {
                     return
@@ -5477,11 +4839,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.EphemeralContainerStatusesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "EphemeralContainerStatuses"}) {
                     return
@@ -5517,11 +4875,7 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ResourceClaimStatusesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "ResourceClaimStatuses"}) {
                     return
@@ -5537,19 +4891,17 @@ func (x PodStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodStatus"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PodStatus"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x PreferredSchedulingTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PreferredSchedulingTerm"}) {
-            return
-        }
+func (x PreferredSchedulingTerm) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "PreferredSchedulingTerm"}) {
+        return
+    }
         // Field 0: Weight
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Weight", Type: field.FTInt32}
@@ -5566,27 +4918,21 @@ func (x PreferredSchedulingTerm) Walk(ctx context.Context) iter.Seq[clawiter.Tok
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PreferredSchedulingTerm"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "PreferredSchedulingTerm"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Probe) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Probe"}) {
-            return
-        }
+func (x Probe) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Probe"}) {
+        return
+    }
         // Field 0: Handler
         {
             nested := x.Handler()
@@ -5595,11 +4941,7 @@ func (x Probe) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: InitialDelaySeconds
@@ -5651,19 +4993,17 @@ func (x Probe) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Probe"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Probe"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ProbeHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ProbeHandler"}) {
-            return
-        }
+func (x ProbeHandler) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ProbeHandler"}) {
+        return
+    }
         // Field 0: Exec
         {
             nested := x.Exec()
@@ -5672,11 +5012,7 @@ func (x ProbeHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: HttpGet
@@ -5687,11 +5023,7 @@ func (x ProbeHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: TcpSocket
@@ -5702,11 +5034,7 @@ func (x ProbeHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: Grpc
@@ -5717,27 +5045,21 @@ func (x ProbeHandler) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ProbeHandler"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ProbeHandler"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ProjectedVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ProjectedVolumeSource"}) {
-            return
-        }
+func (x ProjectedVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ProjectedVolumeSource"}) {
+        return
+    }
         // Field 0: Sources
         {
             list := x.SourcesList(ctx)
@@ -5755,11 +5077,7 @@ func (x ProjectedVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.SourcesGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Sources"}) {
                     return
@@ -5775,19 +5093,17 @@ func (x ProjectedVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ProjectedVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ProjectedVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ResourceClaim) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ResourceClaim"}) {
-            return
-        }
+func (x ResourceClaim) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ResourceClaim"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -5803,19 +5119,17 @@ func (x ResourceClaim) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ResourceClaim"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ResourceClaim"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ResourceFieldSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ResourceFieldSelector"}) {
-            return
-        }
+func (x ResourceFieldSelector) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ResourceFieldSelector"}) {
+        return
+    }
         // Field 0: ContainerName
         {
             s := x.ContainerName()
@@ -5838,19 +5152,17 @@ func (x ResourceFieldSelector) Walk(ctx context.Context) iter.Seq[clawiter.Token
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ResourceFieldSelector"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ResourceFieldSelector"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ResourceRequirements) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ResourceRequirements"}) {
-            return
-        }
+func (x ResourceRequirements) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ResourceRequirements"}) {
+        return
+    }
         // Field 0: Limits
         {
             list := x.LimitsList(ctx)
@@ -5868,11 +5180,7 @@ func (x ResourceRequirements) Walk(ctx context.Context) iter.Seq[clawiter.Token]
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.LimitsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Limits"}) {
                     return
@@ -5896,11 +5204,7 @@ func (x ResourceRequirements) Walk(ctx context.Context) iter.Seq[clawiter.Token]
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.RequestsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Requests"}) {
                     return
@@ -5924,11 +5228,7 @@ func (x ResourceRequirements) Walk(ctx context.Context) iter.Seq[clawiter.Token]
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ClaimsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Claims"}) {
                     return
@@ -5936,19 +5236,17 @@ func (x ResourceRequirements) Walk(ctx context.Context) iter.Seq[clawiter.Token]
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ResourceRequirements"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ResourceRequirements"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SELinuxOptions) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SELinuxOptions"}) {
-            return
-        }
+func (x SELinuxOptions) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SELinuxOptions"}) {
+        return
+    }
         // Field 0: User
         {
             s := x.User()
@@ -5978,19 +5276,17 @@ func (x SELinuxOptions) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SELinuxOptions"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SELinuxOptions"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SeccompProfile) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SeccompProfile"}) {
-            return
-        }
+func (x SeccompProfile) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SeccompProfile"}) {
+        return
+    }
         // Field 0: Type
         {
             v := x.Type()
@@ -6011,19 +5307,17 @@ func (x SeccompProfile) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SeccompProfile"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SeccompProfile"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SecretEnvSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretEnvSource"}) {
-            return
-        }
+func (x SecretEnvSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretEnvSource"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6040,19 +5334,17 @@ func (x SecretEnvSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretEnvSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretEnvSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SecretKeySelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretKeySelector"}) {
-            return
-        }
+func (x SecretKeySelector) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretKeySelector"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6076,19 +5368,17 @@ func (x SecretKeySelector) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretKeySelector"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretKeySelector"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SecretProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretProjection"}) {
-            return
-        }
+func (x SecretProjection) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretProjection"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6113,11 +5403,7 @@ func (x SecretProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ItemsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Items"}) {
                     return
@@ -6133,19 +5419,17 @@ func (x SecretProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretProjection"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretProjection"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SecretVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretVolumeSource"}) {
-            return
-        }
+func (x SecretVolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecretVolumeSource"}) {
+        return
+    }
         // Field 0: SecretName
         {
             s := x.SecretName()
@@ -6170,11 +5454,7 @@ func (x SecretVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.ItemsGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Items"}) {
                     return
@@ -6198,19 +5478,17 @@ func (x SecretVolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretVolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecretVolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecurityContext"}) {
-            return
-        }
+func (x SecurityContext) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SecurityContext"}) {
+        return
+    }
         // Field 0: Capabilities
         {
             nested := x.Capabilities()
@@ -6219,11 +5497,7 @@ func (x SecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: Privileged
@@ -6242,11 +5516,7 @@ func (x SecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: WindowsOptions
@@ -6257,11 +5527,7 @@ func (x SecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: RunAsUser
@@ -6324,11 +5590,7 @@ func (x SecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 11: AppArmorProfile
@@ -6339,27 +5601,21 @@ func (x SecurityContext) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecurityContext"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SecurityContext"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x ServiceAccountTokenProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ServiceAccountTokenProjection"}) {
-            return
-        }
+func (x ServiceAccountTokenProjection) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ServiceAccountTokenProjection"}) {
+        return
+    }
         // Field 0: Audience
         {
             s := x.Audience()
@@ -6383,19 +5639,17 @@ func (x ServiceAccountTokenProjection) Walk(ctx context.Context) iter.Seq[clawit
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ServiceAccountTokenProjection"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "ServiceAccountTokenProjection"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x SleepAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SleepAction"}) {
-            return
-        }
+func (x SleepAction) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "SleepAction"}) {
+        return
+    }
         // Field 0: Seconds
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Seconds", Type: field.FTInt64}
@@ -6405,19 +5659,17 @@ func (x SleepAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SleepAction"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "SleepAction"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Sysctl) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Sysctl"}) {
-            return
-        }
+func (x Sysctl) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Sysctl"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6433,19 +5685,17 @@ func (x Sysctl) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Sysctl"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Sysctl"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x TCPSocketAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TCPSocketAction"}) {
-            return
-        }
+func (x TCPSocketAction) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TCPSocketAction"}) {
+        return
+    }
         // Field 0: Port
         {
             nested := x.Port()
@@ -6454,11 +5704,7 @@ func (x TCPSocketAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: Host
@@ -6469,19 +5715,17 @@ func (x TCPSocketAction) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TCPSocketAction"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TCPSocketAction"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Time) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Time"}) {
-            return
-        }
+func (x Time) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Time"}) {
+        return
+    }
         // Field 0: Seconds
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Seconds", Type: field.FTInt64}
@@ -6499,19 +5743,17 @@ func (x Time) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Time"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Time"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Toleration) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Toleration"}) {
-            return
-        }
+func (x Toleration) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Toleration"}) {
+        return
+    }
         // Field 0: Key
         {
             s := x.Key()
@@ -6559,19 +5801,17 @@ func (x Toleration) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Toleration"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Toleration"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x TopologySpreadConstraint) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TopologySpreadConstraint"}) {
-            return
-        }
+func (x TopologySpreadConstraint) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TopologySpreadConstraint"}) {
+        return
+    }
         // Field 0: MaxSkew
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "MaxSkew", Type: field.FTInt32}
@@ -6607,11 +5847,7 @@ func (x TopologySpreadConstraint) Walk(ctx context.Context) iter.Seq[clawiter.To
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: MinDomains
@@ -6671,19 +5907,17 @@ func (x TopologySpreadConstraint) Walk(ctx context.Context) iter.Seq[clawiter.To
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TopologySpreadConstraint"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TopologySpreadConstraint"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x TypeMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TypeMeta"}) {
-            return
-        }
+func (x TypeMeta) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TypeMeta"}) {
+        return
+    }
         // Field 0: Kind
         {
             s := x.Kind()
@@ -6699,19 +5933,17 @@ func (x TypeMeta) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TypeMeta"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TypeMeta"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x TypedLocalObjectReference) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TypedLocalObjectReference"}) {
-            return
-        }
+func (x TypedLocalObjectReference) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TypedLocalObjectReference"}) {
+        return
+    }
         // Field 0: ApiGroup
         {
             s := x.ApiGroup()
@@ -6734,19 +5966,17 @@ func (x TypedLocalObjectReference) Walk(ctx context.Context) iter.Seq[clawiter.T
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TypedLocalObjectReference"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TypedLocalObjectReference"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x TypedObjectReference) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TypedObjectReference"}) {
-            return
-        }
+func (x TypedObjectReference) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "TypedObjectReference"}) {
+        return
+    }
         // Field 0: ApiGroup
         {
             s := x.ApiGroup()
@@ -6776,19 +6006,17 @@ func (x TypedObjectReference) Walk(ctx context.Context) iter.Seq[clawiter.Token]
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TypedObjectReference"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "TypedObjectReference"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Volume) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Volume"}) {
-            return
-        }
+func (x Volume) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Volume"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6804,27 +6032,21 @@ func (x Volume) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Volume"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Volume"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x VolumeDevice) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeDevice"}) {
-            return
-        }
+func (x VolumeDevice) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeDevice"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6840,19 +6062,17 @@ func (x VolumeDevice) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeDevice"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeDevice"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x VolumeMount) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeMount"}) {
-            return
-        }
+func (x VolumeMount) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeMount"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6914,19 +6134,17 @@ func (x VolumeMount) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeMount"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeMount"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x VolumeMountStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeMountStatus"}) {
-            return
-        }
+func (x VolumeMountStatus) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeMountStatus"}) {
+        return
+    }
         // Field 0: Name
         {
             s := x.Name()
@@ -6962,19 +6180,17 @@ func (x VolumeMountStatus) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeMountStatus"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeMountStatus"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x VolumeProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeProjection"}) {
-            return
-        }
+func (x VolumeProjection) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeProjection"}) {
+        return
+    }
         // Field 0: Secret
         {
             nested := x.Secret()
@@ -6983,11 +6199,7 @@ func (x VolumeProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: DownwardApi
@@ -6998,11 +6210,7 @@ func (x VolumeProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: ConfigMap
@@ -7013,11 +6221,7 @@ func (x VolumeProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: ServiceAccountToken
@@ -7028,11 +6232,7 @@ func (x VolumeProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: ClusterTrustBundle
@@ -7043,27 +6243,21 @@ func (x VolumeProjection) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeProjection"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeProjection"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeSource"}) {
-            return
-        }
+func (x VolumeSource) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "VolumeSource"}) {
+        return
+    }
         // Field 0: HostPath
         {
             nested := x.HostPath()
@@ -7072,11 +6266,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 1: EmptyDir
@@ -7087,11 +6277,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: GcePersistentDisk
@@ -7102,11 +6288,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: AwsElasticBlockStore
@@ -7117,11 +6299,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: Secret
@@ -7132,11 +6310,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 5: Nfs
@@ -7147,11 +6321,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 6: PersistentVolumeClaim
@@ -7162,11 +6332,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 7: DownwardApi
@@ -7177,11 +6343,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 8: ConfigMap
@@ -7192,11 +6354,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 9: Projected
@@ -7207,11 +6365,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 10: Csi
@@ -7222,11 +6376,7 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 11: Ephemeral
@@ -7237,27 +6387,21 @@ func (x VolumeSource) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeSource"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "VolumeSource"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x WeightedPodAffinityTerm) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "WeightedPodAffinityTerm"}) {
-            return
-        }
+func (x WeightedPodAffinityTerm) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "WeightedPodAffinityTerm"}) {
+        return
+    }
         // Field 0: Weight
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Weight", Type: field.FTInt32}
@@ -7274,27 +6418,21 @@ func (x WeightedPodAffinityTerm) Walk(ctx context.Context) iter.Seq[clawiter.Tok
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "WeightedPodAffinityTerm"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "WeightedPodAffinityTerm"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x WindowsSecurityContextOptions) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "WindowsSecurityContextOptions"}) {
-            return
-        }
+func (x WindowsSecurityContextOptions) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "WindowsSecurityContextOptions"}) {
+        return
+    }
         // Field 0: GmsaCredentialSpecName
         {
             s := x.GmsaCredentialSpecName()
@@ -7325,9 +6463,8 @@ func (x WindowsSecurityContextOptions) Walk(ctx context.Context) iter.Seq[clawit
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "WindowsSecurityContextOptions"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "WindowsSecurityContextOptions"}) {
+        return
     }
 }
 

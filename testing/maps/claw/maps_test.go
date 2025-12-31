@@ -1,12 +1,25 @@
 package maps
 
 import (
+	"context"
 	"testing"
 
 	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/kylelemons/godebug/pretty"
 )
+
+// walkable is an interface for types that have a Walk method.
+type walkable interface {
+	Walk(context.Context, clawiter.YieldToken, ...clawiter.WalkOption)
+}
+
+// toWalker converts a walkable into a clawiter.Walker for use with Ingest.
+func toWalker(ctx context.Context, w walkable) clawiter.Walker {
+	return func(yield clawiter.YieldToken) {
+		w.Walk(ctx, yield)
+	}
+}
 
 func TestConfigMapsRoundtrip(t *testing.T) {
 	ctx := t.Context()
@@ -250,13 +263,10 @@ func TestWalkIngestConfig(t *testing.T) {
 	c.CountsSet(2, 200)
 	c.RatiosSet(3.14, "pi")
 
-	// Walk the struct
-	tokens := c.Walk(ctx)
-
-	// Create new struct and ingest from tokens
+	// Create new struct and ingest from Walk
 	c2 := NewConfig(ctx)
-	if err := c2.IngestWithOptions(ctx, tokens, clawiter.IngestOptions{}); err != nil {
-		t.Fatalf("TestWalkIngestConfig: IngestWithOptions() error: %v", err)
+	if err := c2.Ingest(ctx, toWalker(ctx, c)); err != nil {
+		t.Fatalf("TestWalkIngestConfig: Ingest() error: %v", err)
 	}
 
 	// Verify Labels
@@ -306,13 +316,10 @@ func TestWalkIngestComplexMaps(t *testing.T) {
 	c.SettingsSet("config1", s1)
 	c.SettingsSet("config2", s2)
 
-	// Walk the struct
-	tokens := c.Walk(ctx)
-
-	// Create new struct and ingest from tokens
+	// Create new struct and ingest from Walk
 	c2 := NewComplexMaps(ctx)
-	if err := c2.IngestWithOptions(ctx, tokens, clawiter.IngestOptions{}); err != nil {
-		t.Fatalf("TestWalkIngestComplexMaps: IngestWithOptions() error: %v", err)
+	if err := c2.Ingest(ctx, toWalker(ctx, c)); err != nil {
+		t.Fatalf("TestWalkIngestComplexMaps: Ingest() error: %v", err)
 	}
 
 	// Verify Settings
@@ -345,13 +352,10 @@ func TestWalkIngestEmptyMaps(t *testing.T) {
 	// Create struct with empty maps
 	c := NewConfig(ctx)
 
-	// Walk the struct
-	tokens := c.Walk(ctx)
-
-	// Create new struct and ingest from tokens
+	// Create new struct and ingest from Walk
 	c2 := NewConfig(ctx)
-	if err := c2.IngestWithOptions(ctx, tokens, clawiter.IngestOptions{}); err != nil {
-		t.Fatalf("TestWalkIngestEmptyMaps: IngestWithOptions() error: %v", err)
+	if err := c2.Ingest(ctx, toWalker(ctx, c)); err != nil {
+		t.Fatalf("TestWalkIngestEmptyMaps: Ingest() error: %v", err)
 	}
 
 	// Verify maps are empty

@@ -12,6 +12,18 @@ import (
 	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 )
 
+// walkable is an interface for types that have a Walk method.
+type walkable interface {
+	Walk(context.Context, clawiter.YieldToken, ...clawiter.WalkOption)
+}
+
+// toWalker converts a walkable into a clawiter.Walker for use with Ingest.
+func toWalker(ctx context.Context, w walkable) clawiter.Walker {
+	return func(yield clawiter.YieldToken) {
+		w.Walk(ctx, yield)
+	}
+}
+
 func TestIngestRoundTripCar(t *testing.T) {
 	ctx := t.Context()
 	tests := []struct {
@@ -49,7 +61,7 @@ func TestIngestRoundTripCar(t *testing.T) {
 
 		// Round-trip: Walk -> Ingest
 		ingested := cars.NewCar(ctx)
-		if err := ingested.IngestWithOptions(ctx, original.Walk(ctx), clawiter.IngestOptions{}); err != nil {
+		if err := ingested.Ingest(ctx, toWalker(ctx, original)); err != nil {
 			t.Errorf("TestIngestRoundTripCar(%s): Ingest error: %s", test.name, err)
 			continue
 		}
@@ -130,7 +142,7 @@ func TestIngestRoundTripVehicle(t *testing.T) {
 
 		// Round-trip: Walk -> Ingest
 		ingested := vehicles.NewVehicle(ctx)
-		if err := ingested.IngestWithOptions(ctx, original.Walk(ctx), clawiter.IngestOptions{}); err != nil {
+		if err := ingested.Ingest(ctx, toWalker(ctx, original)); err != nil {
 			t.Errorf("TestIngestRoundTripVehicle(%s): Ingest error: %s", test.name, err)
 			continue
 		}
