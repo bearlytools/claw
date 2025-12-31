@@ -53,7 +53,7 @@ func TestMarshalSimpleCar(t *testing.T) {
 
 	for _, test := range tests {
 		c := test.setup()
-		got, err := Marshal(c, test.options...)
+		got, err := Marshal(ctx, c, test.options...)
 		switch {
 		case err != nil:
 			t.Errorf("TestMarshalSimpleCar(%s): got err == %s, want err == nil", test.name, err)
@@ -98,7 +98,7 @@ func TestMarshalNestedStruct(t *testing.T) {
 
 	for _, test := range tests {
 		v := test.setup()
-		got, err := Marshal(v, test.options...)
+		got, err := Marshal(ctx, v, test.options...)
 		switch {
 		case err != nil:
 			t.Errorf("TestMarshalNestedStruct(%s): got err == %s, want err == nil", test.name, err)
@@ -147,7 +147,7 @@ func TestMarshalLists(t *testing.T) {
 
 	for _, test := range tests {
 		v := test.setup()
-		got, err := Marshal(v, test.options...)
+		got, err := Marshal(ctx, v, test.options...)
 		switch {
 		case err != nil:
 			t.Errorf("TestMarshalLists(%s): got err == %s, want err == nil", test.name, err)
@@ -167,7 +167,7 @@ func TestMarshalWriter(t *testing.T) {
 		SetYear(2020)
 
 	var buf bytes.Buffer
-	err := MarshalWriter(car, &buf)
+	err := MarshalWriter(ctx, car, &buf)
 	switch {
 	case err != nil:
 		t.Errorf("TestMarshalWriter: got err == %s, want err == nil", err)
@@ -201,7 +201,7 @@ func TestArray(t *testing.T) {
 				car := cars.NewCar(ctx).
 					SetManufacturer(manufacturers.Toyota).
 					SetYear(2010)
-				return a.Write(car)
+				return a.Write(ctx, car)
 			},
 			want: `[{"Manufacturer":"Toyota","Model":"ModelUnknown","Year":2010}]`,
 		},
@@ -210,10 +210,10 @@ func TestArray(t *testing.T) {
 			setup: func(a *Array) error {
 				car1 := cars.NewCar(ctx).SetManufacturer(manufacturers.Toyota).SetYear(2010)
 				car2 := cars.NewCar(ctx).SetManufacturer(manufacturers.Tesla).SetYear(2023)
-				if err := a.Write(car1); err != nil {
+				if err := a.Write(ctx, car1); err != nil {
 					return err
 				}
-				return a.Write(car2)
+				return a.Write(ctx, car2)
 			},
 			want: `[{"Manufacturer":"Toyota","Model":"ModelUnknown","Year":2010},{"Manufacturer":"Tesla","Model":"ModelUnknown","Year":2023}]`,
 		},
@@ -221,7 +221,7 @@ func TestArray(t *testing.T) {
 			name: "Success: with enum numbers option",
 			setup: func(a *Array) error {
 				car := cars.NewCar(ctx).SetManufacturer(manufacturers.Ford).SetYear(2015)
-				return a.Write(car)
+				return a.Write(ctx, car)
 			},
 			options: []MarshalOption{WithUseEnumNumbers(true)},
 			want:    `[{"Manufacturer":2,"Model":0,"Year":2015}]`,
@@ -262,7 +262,7 @@ func TestMarshalProducesValidJSON(t *testing.T) {
 		SetBools(true, false).
 		SetTypes(vehicles.Car, vehicles.Truck)
 
-	got, err := Marshal(vehicle)
+	got, err := Marshal(ctx, vehicle)
 	switch {
 	case err != nil:
 		t.Errorf("TestMarshalProducesValidJSON: Marshal error: %s", err)
@@ -330,7 +330,7 @@ func TestUnmarshalRoundTripCar(t *testing.T) {
 		original := test.setup()
 
 		// Marshal to JSON
-		jsonData, err := Marshal(original, test.options...)
+		jsonData, err := Marshal(ctx, original, test.options...)
 		if err != nil {
 			t.Errorf("TestUnmarshalRoundTripCar(%s): Marshal error: %s", test.name, err)
 			continue
@@ -420,7 +420,7 @@ func TestUnmarshalRoundTripVehicle(t *testing.T) {
 		original := test.setup()
 
 		// Marshal to JSON
-		jsonData, err := Marshal(original, test.options...)
+		jsonData, err := Marshal(ctx, original, test.options...)
 		if err != nil {
 			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Marshal error: %s", test.name, err)
 			continue

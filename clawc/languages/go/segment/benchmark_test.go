@@ -30,11 +30,12 @@ func benchMapping() *mapping.Map {
 
 // BenchmarkSegmentMarshal benchmarks the segment-based marshal.
 func BenchmarkSegmentMarshal(b *testing.B) {
+	ctx := b.Context()
 	m := benchMapping()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s := New(m)
+		s := New(ctx, m)
 
 		// Set scalar fields
 		SetString(s, 0, "my-pod-name")
@@ -56,12 +57,13 @@ func BenchmarkSegmentMarshal(b *testing.B) {
 
 		// Marshal
 		var buf bytes.Buffer
-		s.Marshal(&buf)
+		s.MarshalWriter(&buf)
 	}
 }
 
 // BenchmarkSegmentMarshalComplex benchmarks with more complex nested data.
 func BenchmarkSegmentMarshalComplex(b *testing.B) {
+	ctx := b.Context()
 	m := benchMapping()
 	innerMapping := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
@@ -76,7 +78,7 @@ func BenchmarkSegmentMarshalComplex(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s := New(m)
+		s := New(ctx, m)
 
 		// Set scalar fields
 		SetString(s, 0, "my-pod-name-with-longer-identifier-12345")
@@ -109,7 +111,7 @@ func BenchmarkSegmentMarshalComplex(b *testing.B) {
 		)
 
 		// Nested structs
-		ownerRefs := NewStructs(s, 8, innerMapping)
+		ownerRefs := NewStructs(ctx, s, 8, innerMapping)
 		for j := 0; j < 3; j++ {
 			ref := ownerRefs.NewItem()
 			SetString(ref, 0, "my-deployment")
@@ -129,12 +131,13 @@ func BenchmarkSegmentMarshalComplex(b *testing.B) {
 
 		// Marshal
 		var buf bytes.Buffer
-		s.Marshal(&buf)
+		s.MarshalWriter(&buf)
 	}
 }
 
 // BenchmarkSegmentScalarsOnly benchmarks just scalar field operations.
 func BenchmarkSegmentScalarsOnly(b *testing.B) {
+	ctx := b.Context()
 	m := &mapping.Map{
 		Fields: []*mapping.FieldDescr{
 			{Name: "Field0", Type: field.FTInt32},
@@ -152,7 +155,7 @@ func BenchmarkSegmentScalarsOnly(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s := New(m)
+		s := New(ctx, m)
 
 		SetInt32(s, 0, 100)
 		SetInt32(s, 1, 200)
@@ -166,7 +169,7 @@ func BenchmarkSegmentScalarsOnly(b *testing.B) {
 		SetFloat64(s, 9, 3.14159265359)
 
 		var buf bytes.Buffer
-		s.Marshal(&buf)
+		s.MarshalWriter(&buf)
 	}
 }
 
@@ -177,7 +180,7 @@ func BenchmarkSegmentPooledMarshal(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s := NewPooled(ctx, m)
+		s := New(ctx, m)
 
 		// Set scalar fields
 		SetString(s, 0, "my-pod-name")
@@ -199,10 +202,10 @@ func BenchmarkSegmentPooledMarshal(b *testing.B) {
 
 		// Marshal
 		var buf bytes.Buffer
-		s.Marshal(&buf)
+		s.MarshalWriter(&buf)
 
 		// Release back to pool
-		Release(ctx, s)
+		s.Release(ctx)
 	}
 }
 
@@ -226,7 +229,7 @@ func BenchmarkSegmentPooledScalarsOnly(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s := NewPooled(ctx, m)
+		s := New(ctx, m)
 
 		SetInt32(s, 0, 100)
 		SetInt32(s, 1, 200)
@@ -240,8 +243,8 @@ func BenchmarkSegmentPooledScalarsOnly(b *testing.B) {
 		SetFloat64(s, 9, 3.14159265359)
 
 		var buf bytes.Buffer
-		s.Marshal(&buf)
+		s.MarshalWriter(&buf)
 
-		Release(ctx, s)
+		s.Release(ctx)
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
+	"github.com/gostdlib/base/context"
 )
 
 // GetListBools returns a Bools list for the given field, parsing existing data if present.
@@ -232,7 +233,7 @@ func GetListBytes(s *Struct, fieldNum uint16) *Bytes {
 // GetListStructs returns a Structs list for the given field, parsing existing data if present.
 // Returns nil if the field is not set.
 // Note: NewStructs already handles parsing, so this is just an alias for consistency.
-func GetListStructs(s *Struct, fieldNum uint16, m *mapping.Map) *Structs {
+func GetListStructs(ctx context.Context, s *Struct, fieldNum uint16, m *mapping.Map) *Structs {
 	// Check if we already have this list cached first (list may be set but not yet marshaled)
 	if existing := s.GetList(fieldNum); existing != nil {
 		return existing.(*Structs)
@@ -244,7 +245,7 @@ func GetListStructs(s *Struct, fieldNum uint16, m *mapping.Map) *Structs {
 	}
 
 	// NewStructs already parses existing data
-	return NewStructs(s, fieldNum, m)
+	return NewStructs(ctx, s, fieldNum, m)
 }
 
 // ClearField removes a field from the struct (sets to zero value).

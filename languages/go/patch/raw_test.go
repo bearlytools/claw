@@ -56,7 +56,7 @@ func TestNewFromRawScalars(t *testing.T) {
 	for _, test := range tests {
 		c := cars.NewCarFromRaw(ctx, test.raw)
 
-		got := c.ToRaw()
+		got := c.ToRaw(ctx)
 		if diff := pretty.Compare(test.wantRaw, got); diff != "" {
 			t.Errorf("TestNewFromRawScalars(%s): (-want +got)\n%s", test.name, diff)
 		}
@@ -104,7 +104,7 @@ func TestNewFromRawNestedStruct(t *testing.T) {
 	for _, test := range tests {
 		v := vehicles.NewVehicleFromRaw(ctx, test.raw)
 
-		got := v.ToRaw()
+		got := v.ToRaw(ctx)
 		if diff := pretty.Compare(test.wantRaw, got); diff != "" {
 			t.Errorf("TestNewFromRawNestedStruct(%s): (-want +got)\n%s", test.name, diff)
 		}
@@ -161,7 +161,7 @@ func TestNewFromRawLists(t *testing.T) {
 	for _, test := range tests {
 		v := vehicles.NewVehicleFromRaw(ctx, test.raw)
 
-		got := v.ToRaw()
+		got := v.ToRaw(ctx)
 		if diff := pretty.Compare(test.wantRaw, got); diff != "" {
 			t.Errorf("TestNewFromRawLists(%s): (-want +got)\n%s", test.name, diff)
 		}
@@ -181,20 +181,20 @@ func TestToRawRoundtrip(t *testing.T) {
 	c.SetYear(2024)
 	v.SetCar(c)
 
-	v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023))
-	v.TruckAppend(trucks.NewTruck(ctx).SetYear(2024))
+	v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023))
+	v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2024))
 
 	v.SetTypes(vehicles.Car, vehicles.Truck)
 	v.SetBools(true, false, true)
 
 	// Convert to Raw
-	raw := v.ToRaw()
+	raw := v.ToRaw(ctx)
 
 	// Create a new vehicle from Raw
 	v2 := vehicles.NewVehicleFromRaw(ctx, raw)
 
 	// Convert back to Raw and compare
-	got := v2.ToRaw()
+	got := v2.ToRaw(ctx)
 
 	if diff := pretty.Compare(raw, got); diff != "" {
 		t.Errorf("TestToRawRoundtrip: (-want +got)\n%s", diff)
@@ -223,7 +223,7 @@ func TestAppendRaw(t *testing.T) {
 		{
 			name: "Success: append to existing list",
 			setup: func(v vehicles.Vehicle) {
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2020))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2020))
 			},
 			appendRaw: []*trucks.TruckRaw{
 				{Year: 2023},
@@ -249,13 +249,13 @@ func TestAppendRaw(t *testing.T) {
 		test.setup(v)
 		v.TruckAppendRaw(ctx, test.appendRaw...)
 
-		if v.TruckLen() != test.wantLen {
-			t.Errorf("TestAppendRaw(%s): got len %d, want %d", test.name, v.TruckLen(), test.wantLen)
+		if v.TruckLen(ctx) != test.wantLen {
+			t.Errorf("TestAppendRaw(%s): got len %d, want %d", test.name, v.TruckLen(ctx), test.wantLen)
 			continue
 		}
 
 		for i, wantYear := range test.wantYears {
-			gotYear := v.TruckGet(i).Year()
+			gotYear := v.TruckGet(ctx, i).Year()
 			if gotYear != wantYear {
 				t.Errorf("TestAppendRaw(%s): index %d got year %d, want %d", test.name, i, gotYear, wantYear)
 			}
@@ -328,14 +328,14 @@ func TestNewFromRawVerifyFields(t *testing.T) {
 		t.Errorf("TestNewFromRawVerifyFields: Types got %v, want [Car Truck]", types)
 	}
 
-	if v2.TruckLen() != 2 {
-		t.Errorf("TestNewFromRawVerifyFields: TruckLen got %d, want 2", v2.TruckLen())
+	if v2.TruckLen(ctx) != 2 {
+		t.Errorf("TestNewFromRawVerifyFields: TruckLen got %d, want 2", v2.TruckLen(ctx))
 	}
-	if v2.TruckGet(0).Year() != 2020 {
-		t.Errorf("TestNewFromRawVerifyFields: Truck[0].Year got %d, want 2020", v2.TruckGet(0).Year())
+	if v2.TruckGet(ctx, 0).Year() != 2020 {
+		t.Errorf("TestNewFromRawVerifyFields: Truck[0].Year got %d, want 2020", v2.TruckGet(ctx, 0).Year())
 	}
-	if v2.TruckGet(1).Year() != 2021 {
-		t.Errorf("TestNewFromRawVerifyFields: Truck[1].Year got %d, want 2021", v2.TruckGet(1).Year())
+	if v2.TruckGet(ctx, 1).Year() != 2021 {
+		t.Errorf("TestNewFromRawVerifyFields: Truck[1].Year got %d, want 2021", v2.TruckGet(ctx, 1).Year())
 	}
 }
 
@@ -373,8 +373,8 @@ func TestNewFromRawMarshalRoundtrip(t *testing.T) {
 	}
 
 	// Compare using ToRaw
-	originalRaw := original.ToRaw()
-	restoredRaw := restored.ToRaw()
+	originalRaw := original.ToRaw(ctx)
+	restoredRaw := restored.ToRaw(ctx)
 
 	if diff := pretty.Compare(originalRaw, restoredRaw); diff != "" {
 		t.Errorf("TestNewFromRawMarshalRoundtrip: (-want +got)\n%s", diff)
@@ -393,19 +393,19 @@ func TestMixRawAndRegularAPI(t *testing.T) {
 	v.TruckAppendRaw(ctx, &trucks.TruckRaw{Year: 2020})
 
 	// Add items using regular API
-	v.TruckAppend(trucks.NewTruck(ctx).SetYear(2021))
+	v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2021))
 
 	// Add more using AppendRaw
 	v.TruckAppendRaw(ctx, &trucks.TruckRaw{Year: 2022})
 
 	// Verify
-	if v.TruckLen() != 3 {
-		t.Errorf("TestMixRawAndRegularAPI: TruckLen got %d, want 3", v.TruckLen())
+	if v.TruckLen(ctx) != 3 {
+		t.Errorf("TestMixRawAndRegularAPI: TruckLen got %d, want 3", v.TruckLen(ctx))
 	}
 
 	years := []uint16{2020, 2021, 2022}
 	for i, want := range years {
-		got := v.TruckGet(i).Year()
+		got := v.TruckGet(ctx, i).Year()
 		if got != want {
 			t.Errorf("TestMixRawAndRegularAPI: Truck[%d].Year got %d, want %d", i, got, want)
 		}
@@ -441,13 +441,13 @@ func TestNewFromRawWithNilsInStructList(t *testing.T) {
 	})
 
 	// Should only have 3 trucks (nils skipped)
-	if v.TruckLen() != 3 {
-		t.Errorf("TestNewFromRawWithNilsInStructList: TruckLen got %d, want 3", v.TruckLen())
+	if v.TruckLen(ctx) != 3 {
+		t.Errorf("TestNewFromRawWithNilsInStructList: TruckLen got %d, want 3", v.TruckLen(ctx))
 	}
 
 	expectedYears := []uint16{2020, 2022, 2024}
 	for i, want := range expectedYears {
-		got := v.TruckGet(i).Year()
+		got := v.TruckGet(ctx, i).Year()
 		if got != want {
 			t.Errorf("TestNewFromRawWithNilsInStructList: Truck[%d].Year got %d, want %d", i, got, want)
 		}
@@ -463,7 +463,7 @@ func TestToRawPreservesZeroValues(t *testing.T) {
 	c.SetYear(2024)
 	// Manufacturer and Model are not set (zero value)
 
-	raw := c.ToRaw()
+	raw := c.ToRaw(ctx)
 
 	if raw.Year != 2024 {
 		t.Errorf("TestToRawPreservesZeroValues: Year got %d, want 2024", raw.Year)
@@ -485,12 +485,12 @@ func TestNewFromRawEmptyStruct(t *testing.T) {
 	if v.Type() != 0 {
 		t.Errorf("TestNewFromRawEmptyStruct: Type got %v, want 0", v.Type())
 	}
-	if v.TruckLen() != 0 {
-		t.Errorf("TestNewFromRawEmptyStruct: TruckLen got %d, want 0", v.TruckLen())
+	if v.TruckLen(ctx) != 0 {
+		t.Errorf("TestNewFromRawEmptyStruct: TruckLen got %d, want 0", v.TruckLen(ctx))
 	}
 
 	// ToRaw should return empty struct
-	raw := v.ToRaw()
+	raw := v.ToRaw(ctx)
 	if raw.Type != 0 || raw.Car != nil || raw.Truck != nil || raw.Types != nil || raw.Bools != nil {
 		t.Errorf("TestNewFromRawEmptyStruct: ToRaw should return empty struct, got %+v", raw)
 	}

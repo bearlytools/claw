@@ -1468,7 +1468,7 @@ type AWSElasticBlockStoreVolumeSource struct {
 // NewAWSElasticBlockStoreVolumeSource creates a new pooled instance of AWSElasticBlockStoreVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewAWSElasticBlockStoreVolumeSource(ctx context.Context) AWSElasticBlockStoreVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingAWSElasticBlockStoreVolumeSource)
+    s := segment.New(ctx, XXXMappingAWSElasticBlockStoreVolumeSource)
     s.SetIsSetEnabled(true)
     return AWSElasticBlockStoreVolumeSource{
         s: s,
@@ -1478,7 +1478,7 @@ func NewAWSElasticBlockStoreVolumeSource(ctx context.Context) AWSElasticBlockSto
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x AWSElasticBlockStoreVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewAWSElasticBlockStoreVolumeSourceFrom creates a new AWSElasticBlockStoreVolumeSource from our internal Struct representation.
@@ -1491,14 +1491,22 @@ func XXXNewAWSElasticBlockStoreVolumeSourceFrom(s *segment.Struct) AWSElasticBlo
     return AWSElasticBlockStoreVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x AWSElasticBlockStoreVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x AWSElasticBlockStoreVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x AWSElasticBlockStoreVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -1627,7 +1635,7 @@ func NewAWSElasticBlockStoreVolumeSourceFromRaw(ctx context.Context, raw AWSElas
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x AWSElasticBlockStoreVolumeSource) ToRaw() AWSElasticBlockStoreVolumeSourceRaw {
+func (x AWSElasticBlockStoreVolumeSource) ToRaw(ctx context.Context) AWSElasticBlockStoreVolumeSourceRaw {
     raw := AWSElasticBlockStoreVolumeSourceRaw{}
     raw.VolumeId = x.VolumeId()
     raw.FsType = x.FsType()
@@ -1635,7 +1643,6 @@ func (x AWSElasticBlockStoreVolumeSource) ToRaw() AWSElasticBlockStoreVolumeSour
     raw.ReadOnly = x.ReadOnly()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -1654,7 +1661,7 @@ type Affinity struct {
 // NewAffinity creates a new pooled instance of Affinity.
 // Call Release() when done to return it to the pool for reuse.
 func NewAffinity(ctx context.Context) Affinity {
-    s := segment.NewPooled(ctx, XXXMappingAffinity)
+    s := segment.New(ctx, XXXMappingAffinity)
     s.SetIsSetEnabled(true)
     return Affinity{
         s: s,
@@ -1664,7 +1671,7 @@ func NewAffinity(ctx context.Context) Affinity {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Affinity) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewAffinityFrom creates a new Affinity from our internal Struct representation.
@@ -1677,14 +1684,22 @@ func XXXNewAffinityFrom(s *segment.Struct) Affinity {
     return Affinity{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Affinity) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Affinity) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Affinity) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -1800,23 +1815,22 @@ func NewAffinityFromRaw(ctx context.Context, raw AffinityRaw) Affinity {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Affinity) ToRaw() AffinityRaw {
+func (x Affinity) ToRaw(ctx context.Context) AffinityRaw {
     raw := AffinityRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.NodeAffinity().ToRaw()
+        nestedRaw := x.NodeAffinity().ToRaw(ctx)
         raw.NodeAffinity = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.PodAffinity().ToRaw()
+        nestedRaw := x.PodAffinity().ToRaw(ctx)
         raw.PodAffinity = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.PodAntiAffinity().ToRaw()
+        nestedRaw := x.PodAntiAffinity().ToRaw(ctx)
         raw.PodAntiAffinity = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -1835,7 +1849,7 @@ type AppArmorProfile struct {
 // NewAppArmorProfile creates a new pooled instance of AppArmorProfile.
 // Call Release() when done to return it to the pool for reuse.
 func NewAppArmorProfile(ctx context.Context) AppArmorProfile {
-    s := segment.NewPooled(ctx, XXXMappingAppArmorProfile)
+    s := segment.New(ctx, XXXMappingAppArmorProfile)
     s.SetIsSetEnabled(true)
     return AppArmorProfile{
         s: s,
@@ -1845,7 +1859,7 @@ func NewAppArmorProfile(ctx context.Context) AppArmorProfile {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x AppArmorProfile) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewAppArmorProfileFrom creates a new AppArmorProfile from our internal Struct representation.
@@ -1858,14 +1872,22 @@ func XXXNewAppArmorProfileFrom(s *segment.Struct) AppArmorProfile {
     return AppArmorProfile{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x AppArmorProfile) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x AppArmorProfile) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x AppArmorProfile) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -1962,13 +1984,12 @@ func NewAppArmorProfileFromRaw(ctx context.Context, raw AppArmorProfileRaw) AppA
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x AppArmorProfile) ToRaw() AppArmorProfileRaw {
+func (x AppArmorProfile) ToRaw(ctx context.Context) AppArmorProfileRaw {
     raw := AppArmorProfileRaw{}
     raw.Type = x.Type()
     raw.LocalhostProfile = x.LocalhostProfile()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -1987,7 +2008,7 @@ type CSIVolumeSource struct {
 // NewCSIVolumeSource creates a new pooled instance of CSIVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewCSIVolumeSource(ctx context.Context) CSIVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingCSIVolumeSource)
+    s := segment.New(ctx, XXXMappingCSIVolumeSource)
     s.SetIsSetEnabled(true)
     return CSIVolumeSource{
         s: s,
@@ -1997,7 +2018,7 @@ func NewCSIVolumeSource(ctx context.Context) CSIVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x CSIVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewCSIVolumeSourceFrom creates a new CSIVolumeSource from our internal Struct representation.
@@ -2010,14 +2031,22 @@ func XXXNewCSIVolumeSourceFrom(s *segment.Struct) CSIVolumeSource {
     return CSIVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x CSIVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x CSIVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x CSIVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -2068,43 +2097,43 @@ func (x CSIVolumeSource) IsSetFsType() bool{
 
 // VolumeAttributesList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x CSIVolumeSource) VolumeAttributesList() *segment.Structs {
+func (x CSIVolumeSource) VolumeAttributesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 3, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 3, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 3, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 3, XXXMappingKeyValue)
     return structs
 }
 
 // VolumeAttributesLen returns the number of items in the list.
-func (x CSIVolumeSource) VolumeAttributesLen() int {
-    return x.VolumeAttributesList().Len()
+func (x CSIVolumeSource) VolumeAttributesLen(ctx context.Context) int {
+    return x.VolumeAttributesList(ctx).Len()
 }
 
 // VolumeAttributesGet returns the item at the given index.
-func (x CSIVolumeSource) VolumeAttributesGet(index int) KeyValue {
-    s := x.VolumeAttributesList().Get(index)
+func (x CSIVolumeSource) VolumeAttributesGet(ctx context.Context, index int) KeyValue {
+    s := x.VolumeAttributesList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // VolumeAttributesAppend appends items to the list.
-func (x CSIVolumeSource) VolumeAttributesAppend(values ...KeyValue) {
-    list := x.VolumeAttributesList()
+func (x CSIVolumeSource) VolumeAttributesAppend(ctx context.Context, values ...KeyValue) {
+    list := x.VolumeAttributesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendVolumeAttributes is an alias for VolumeAttributesAppend for backwards compatibility.
-func (x CSIVolumeSource) AppendVolumeAttributes(values ...KeyValue) {
-    x.VolumeAttributesAppend(values...)
+func (x CSIVolumeSource) AppendVolumeAttributes(ctx context.Context, values ...KeyValue) {
+    x.VolumeAttributesAppend(ctx, values...)
 }
 
 // VolumeAttributesAppendRaw appends items to the list using Raw struct representations.
 func (x CSIVolumeSource) VolumeAttributesAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.VolumeAttributesList()
+    list := x.VolumeAttributesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -2191,7 +2220,7 @@ func NewCSIVolumeSourceFromRaw(ctx context.Context, raw CSIVolumeSourceRaw) CSIV
         x.SetFsType(raw.FsType)
     }
     if raw.VolumeAttributes != nil {
-        list := x.VolumeAttributesList()
+        list := x.VolumeAttributesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.VolumeAttributes))
         for _, r := range raw.VolumeAttributes {
             if r != nil {
@@ -2207,7 +2236,7 @@ func NewCSIVolumeSourceFromRaw(ctx context.Context, raw CSIVolumeSourceRaw) CSIV
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x CSIVolumeSource) ToRaw() CSIVolumeSourceRaw {
+func (x CSIVolumeSource) ToRaw(ctx context.Context) CSIVolumeSourceRaw {
     raw := CSIVolumeSourceRaw{}
     raw.Driver = x.Driver()
     raw.ReadOnly = x.ReadOnly()
@@ -2217,25 +2246,24 @@ func (x CSIVolumeSource) ToRaw() CSIVolumeSourceRaw {
         raw.VolumeAttributes = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeAttributes[i] = &itemRaw
         }
     } else if x.s.HasField(3) {
-        list := x.VolumeAttributesList()
+        list := x.VolumeAttributesList(ctx)
         raw.VolumeAttributes = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeAttributes[i] = &itemRaw
         }
     }
     if x.s.HasField(4) {
-        nestedRaw := x.NodePublishSecretRef().ToRaw()
+        nestedRaw := x.NodePublishSecretRef().ToRaw(ctx)
         raw.NodePublishSecretRef = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -2254,7 +2282,7 @@ type Capabilities struct {
 // NewCapabilities creates a new pooled instance of Capabilities.
 // Call Release() when done to return it to the pool for reuse.
 func NewCapabilities(ctx context.Context) Capabilities {
-    s := segment.NewPooled(ctx, XXXMappingCapabilities)
+    s := segment.New(ctx, XXXMappingCapabilities)
     s.SetIsSetEnabled(true)
     return Capabilities{
         s: s,
@@ -2264,7 +2292,7 @@ func NewCapabilities(ctx context.Context) Capabilities {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Capabilities) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewCapabilitiesFrom creates a new Capabilities from our internal Struct representation.
@@ -2277,14 +2305,22 @@ func XXXNewCapabilitiesFrom(s *segment.Struct) Capabilities {
     return Capabilities{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Capabilities) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Capabilities) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Capabilities) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -2397,7 +2433,7 @@ func NewCapabilitiesFromRaw(ctx context.Context, raw CapabilitiesRaw) Capabiliti
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Capabilities) ToRaw() CapabilitiesRaw {
+func (x Capabilities) ToRaw(ctx context.Context) CapabilitiesRaw {
     raw := CapabilitiesRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Strings).Len() > 0 {
         raw.Add = l.(*segment.Strings).Slice()
@@ -2411,7 +2447,6 @@ func (x Capabilities) ToRaw() CapabilitiesRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -2430,7 +2465,7 @@ type ClusterTrustBundleProjection struct {
 // NewClusterTrustBundleProjection creates a new pooled instance of ClusterTrustBundleProjection.
 // Call Release() when done to return it to the pool for reuse.
 func NewClusterTrustBundleProjection(ctx context.Context) ClusterTrustBundleProjection {
-    s := segment.NewPooled(ctx, XXXMappingClusterTrustBundleProjection)
+    s := segment.New(ctx, XXXMappingClusterTrustBundleProjection)
     s.SetIsSetEnabled(true)
     return ClusterTrustBundleProjection{
         s: s,
@@ -2440,7 +2475,7 @@ func NewClusterTrustBundleProjection(ctx context.Context) ClusterTrustBundleProj
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ClusterTrustBundleProjection) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewClusterTrustBundleProjectionFrom creates a new ClusterTrustBundleProjection from our internal Struct representation.
@@ -2453,14 +2488,22 @@ func XXXNewClusterTrustBundleProjectionFrom(s *segment.Struct) ClusterTrustBundl
     return ClusterTrustBundleProjection{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ClusterTrustBundleProjection) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ClusterTrustBundleProjection) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ClusterTrustBundleProjection) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -2606,19 +2649,18 @@ func NewClusterTrustBundleProjectionFromRaw(ctx context.Context, raw ClusterTrus
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ClusterTrustBundleProjection) ToRaw() ClusterTrustBundleProjectionRaw {
+func (x ClusterTrustBundleProjection) ToRaw(ctx context.Context) ClusterTrustBundleProjectionRaw {
     raw := ClusterTrustBundleProjectionRaw{}
     raw.Name = x.Name()
     raw.SignerName = x.SignerName()
     if x.s.HasField(2) {
-        nestedRaw := x.LabelSelector().ToRaw()
+        nestedRaw := x.LabelSelector().ToRaw(ctx)
         raw.LabelSelector = &nestedRaw
     }
     raw.Optional = x.Optional()
     raw.Path = x.Path()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -2637,7 +2679,7 @@ type ConfigMapEnvSource struct {
 // NewConfigMapEnvSource creates a new pooled instance of ConfigMapEnvSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewConfigMapEnvSource(ctx context.Context) ConfigMapEnvSource {
-    s := segment.NewPooled(ctx, XXXMappingConfigMapEnvSource)
+    s := segment.New(ctx, XXXMappingConfigMapEnvSource)
     s.SetIsSetEnabled(true)
     return ConfigMapEnvSource{
         s: s,
@@ -2647,7 +2689,7 @@ func NewConfigMapEnvSource(ctx context.Context) ConfigMapEnvSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ConfigMapEnvSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewConfigMapEnvSourceFrom creates a new ConfigMapEnvSource from our internal Struct representation.
@@ -2660,14 +2702,22 @@ func XXXNewConfigMapEnvSourceFrom(s *segment.Struct) ConfigMapEnvSource {
     return ConfigMapEnvSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ConfigMapEnvSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ConfigMapEnvSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ConfigMapEnvSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -2764,13 +2814,12 @@ func NewConfigMapEnvSourceFromRaw(ctx context.Context, raw ConfigMapEnvSourceRaw
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ConfigMapEnvSource) ToRaw() ConfigMapEnvSourceRaw {
+func (x ConfigMapEnvSource) ToRaw(ctx context.Context) ConfigMapEnvSourceRaw {
     raw := ConfigMapEnvSourceRaw{}
     raw.Name = x.Name()
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -2789,7 +2838,7 @@ type ConfigMapKeySelector struct {
 // NewConfigMapKeySelector creates a new pooled instance of ConfigMapKeySelector.
 // Call Release() when done to return it to the pool for reuse.
 func NewConfigMapKeySelector(ctx context.Context) ConfigMapKeySelector {
-    s := segment.NewPooled(ctx, XXXMappingConfigMapKeySelector)
+    s := segment.New(ctx, XXXMappingConfigMapKeySelector)
     s.SetIsSetEnabled(true)
     return ConfigMapKeySelector{
         s: s,
@@ -2799,7 +2848,7 @@ func NewConfigMapKeySelector(ctx context.Context) ConfigMapKeySelector {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ConfigMapKeySelector) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewConfigMapKeySelectorFrom creates a new ConfigMapKeySelector from our internal Struct representation.
@@ -2812,14 +2861,22 @@ func XXXNewConfigMapKeySelectorFrom(s *segment.Struct) ConfigMapKeySelector {
     return ConfigMapKeySelector{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ConfigMapKeySelector) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ConfigMapKeySelector) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ConfigMapKeySelector) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -2932,14 +2989,13 @@ func NewConfigMapKeySelectorFromRaw(ctx context.Context, raw ConfigMapKeySelecto
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ConfigMapKeySelector) ToRaw() ConfigMapKeySelectorRaw {
+func (x ConfigMapKeySelector) ToRaw(ctx context.Context) ConfigMapKeySelectorRaw {
     raw := ConfigMapKeySelectorRaw{}
     raw.Name = x.Name()
     raw.Key = x.Key()
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -2958,7 +3014,7 @@ type ConfigMapProjection struct {
 // NewConfigMapProjection creates a new pooled instance of ConfigMapProjection.
 // Call Release() when done to return it to the pool for reuse.
 func NewConfigMapProjection(ctx context.Context) ConfigMapProjection {
-    s := segment.NewPooled(ctx, XXXMappingConfigMapProjection)
+    s := segment.New(ctx, XXXMappingConfigMapProjection)
     s.SetIsSetEnabled(true)
     return ConfigMapProjection{
         s: s,
@@ -2968,7 +3024,7 @@ func NewConfigMapProjection(ctx context.Context) ConfigMapProjection {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ConfigMapProjection) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewConfigMapProjectionFrom creates a new ConfigMapProjection from our internal Struct representation.
@@ -2981,14 +3037,22 @@ func XXXNewConfigMapProjectionFrom(s *segment.Struct) ConfigMapProjection {
     return ConfigMapProjection{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ConfigMapProjection) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ConfigMapProjection) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ConfigMapProjection) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -3015,43 +3079,43 @@ func (x ConfigMapProjection) IsSetName() bool{
 
 // ItemsList returns the underlying Structs list for iteration.
 // Use NewKeyToPath() to create items and Append to add them.
-func (x ConfigMapProjection) ItemsList() *segment.Structs {
+func (x ConfigMapProjection) ItemsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingKeyToPath); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingKeyToPath); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingKeyToPath)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingKeyToPath)
     return structs
 }
 
 // ItemsLen returns the number of items in the list.
-func (x ConfigMapProjection) ItemsLen() int {
-    return x.ItemsList().Len()
+func (x ConfigMapProjection) ItemsLen(ctx context.Context) int {
+    return x.ItemsList(ctx).Len()
 }
 
 // ItemsGet returns the item at the given index.
-func (x ConfigMapProjection) ItemsGet(index int) KeyToPath {
-    s := x.ItemsList().Get(index)
+func (x ConfigMapProjection) ItemsGet(ctx context.Context, index int) KeyToPath {
+    s := x.ItemsList(ctx).Get(index)
     return KeyToPath{s: s}
 }
 
 // ItemsAppend appends items to the list.
-func (x ConfigMapProjection) ItemsAppend(values ...KeyToPath) {
-    list := x.ItemsList()
+func (x ConfigMapProjection) ItemsAppend(ctx context.Context, values ...KeyToPath) {
+    list := x.ItemsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x ConfigMapProjection) AppendItems(values ...KeyToPath) {
-    x.ItemsAppend(values...)
+func (x ConfigMapProjection) AppendItems(ctx context.Context, values ...KeyToPath) {
+    x.ItemsAppend(ctx, values...)
 }
 
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x ConfigMapProjection) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
-    list := x.ItemsList()
+    list := x.ItemsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyToPathFromRaw(ctx, *raw).XXXGetStruct())
@@ -3129,7 +3193,7 @@ func NewConfigMapProjectionFromRaw(ctx context.Context, raw ConfigMapProjectionR
         x.SetName(raw.Name)
     }
     if raw.Items != nil {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Items))
         for _, r := range raw.Items {
             if r != nil {
@@ -3145,7 +3209,7 @@ func NewConfigMapProjectionFromRaw(ctx context.Context, raw ConfigMapProjectionR
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ConfigMapProjection) ToRaw() ConfigMapProjectionRaw {
+func (x ConfigMapProjection) ToRaw(ctx context.Context) ConfigMapProjectionRaw {
     raw := ConfigMapProjectionRaw{}
     raw.Name = x.Name()
     if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -3153,22 +3217,21 @@ func (x ConfigMapProjection) ToRaw() ConfigMapProjectionRaw {
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     }
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -3187,7 +3250,7 @@ type ConfigMapVolumeSource struct {
 // NewConfigMapVolumeSource creates a new pooled instance of ConfigMapVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewConfigMapVolumeSource(ctx context.Context) ConfigMapVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingConfigMapVolumeSource)
+    s := segment.New(ctx, XXXMappingConfigMapVolumeSource)
     s.SetIsSetEnabled(true)
     return ConfigMapVolumeSource{
         s: s,
@@ -3197,7 +3260,7 @@ func NewConfigMapVolumeSource(ctx context.Context) ConfigMapVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ConfigMapVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewConfigMapVolumeSourceFrom creates a new ConfigMapVolumeSource from our internal Struct representation.
@@ -3210,14 +3273,22 @@ func XXXNewConfigMapVolumeSourceFrom(s *segment.Struct) ConfigMapVolumeSource {
     return ConfigMapVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ConfigMapVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ConfigMapVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ConfigMapVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -3244,43 +3315,43 @@ func (x ConfigMapVolumeSource) IsSetName() bool{
 
 // ItemsList returns the underlying Structs list for iteration.
 // Use NewKeyToPath() to create items and Append to add them.
-func (x ConfigMapVolumeSource) ItemsList() *segment.Structs {
+func (x ConfigMapVolumeSource) ItemsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingKeyToPath); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingKeyToPath); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingKeyToPath)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingKeyToPath)
     return structs
 }
 
 // ItemsLen returns the number of items in the list.
-func (x ConfigMapVolumeSource) ItemsLen() int {
-    return x.ItemsList().Len()
+func (x ConfigMapVolumeSource) ItemsLen(ctx context.Context) int {
+    return x.ItemsList(ctx).Len()
 }
 
 // ItemsGet returns the item at the given index.
-func (x ConfigMapVolumeSource) ItemsGet(index int) KeyToPath {
-    s := x.ItemsList().Get(index)
+func (x ConfigMapVolumeSource) ItemsGet(ctx context.Context, index int) KeyToPath {
+    s := x.ItemsList(ctx).Get(index)
     return KeyToPath{s: s}
 }
 
 // ItemsAppend appends items to the list.
-func (x ConfigMapVolumeSource) ItemsAppend(values ...KeyToPath) {
-    list := x.ItemsList()
+func (x ConfigMapVolumeSource) ItemsAppend(ctx context.Context, values ...KeyToPath) {
+    list := x.ItemsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x ConfigMapVolumeSource) AppendItems(values ...KeyToPath) {
-    x.ItemsAppend(values...)
+func (x ConfigMapVolumeSource) AppendItems(ctx context.Context, values ...KeyToPath) {
+    x.ItemsAppend(ctx, values...)
 }
 
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x ConfigMapVolumeSource) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
-    list := x.ItemsList()
+    list := x.ItemsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyToPathFromRaw(ctx, *raw).XXXGetStruct())
@@ -3371,7 +3442,7 @@ func NewConfigMapVolumeSourceFromRaw(ctx context.Context, raw ConfigMapVolumeSou
         x.SetName(raw.Name)
     }
     if raw.Items != nil {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Items))
         for _, r := range raw.Items {
             if r != nil {
@@ -3390,7 +3461,7 @@ func NewConfigMapVolumeSourceFromRaw(ctx context.Context, raw ConfigMapVolumeSou
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ConfigMapVolumeSource) ToRaw() ConfigMapVolumeSourceRaw {
+func (x ConfigMapVolumeSource) ToRaw(ctx context.Context) ConfigMapVolumeSourceRaw {
     raw := ConfigMapVolumeSourceRaw{}
     raw.Name = x.Name()
     if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -3398,15 +3469,15 @@ func (x ConfigMapVolumeSource) ToRaw() ConfigMapVolumeSourceRaw {
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     }
@@ -3414,7 +3485,6 @@ func (x ConfigMapVolumeSource) ToRaw() ConfigMapVolumeSourceRaw {
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -3433,7 +3503,7 @@ type Container struct {
 // NewContainer creates a new pooled instance of Container.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainer(ctx context.Context) Container {
-    s := segment.NewPooled(ctx, XXXMappingContainer)
+    s := segment.New(ctx, XXXMappingContainer)
     s.SetIsSetEnabled(true)
     return Container{
         s: s,
@@ -3443,7 +3513,7 @@ func NewContainer(ctx context.Context) Container {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Container) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerFrom creates a new Container from our internal Struct representation.
@@ -3456,14 +3526,22 @@ func XXXNewContainerFrom(s *segment.Struct) Container {
     return Container{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Container) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Container) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Container) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -3554,43 +3632,43 @@ func (x Container) IsSetWorkingDir() bool{
 
 // PortsList returns the underlying Structs list for iteration.
 // Use NewContainerPort() to create items and Append to add them.
-func (x Container) PortsList() *segment.Structs {
+func (x Container) PortsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 5, XXXMappingContainerPort); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 5, XXXMappingContainerPort); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 5, XXXMappingContainerPort)
+    structs := segment.NewStructs(ctx, x.s, 5, XXXMappingContainerPort)
     return structs
 }
 
 // PortsLen returns the number of items in the list.
-func (x Container) PortsLen() int {
-    return x.PortsList().Len()
+func (x Container) PortsLen(ctx context.Context) int {
+    return x.PortsList(ctx).Len()
 }
 
 // PortsGet returns the item at the given index.
-func (x Container) PortsGet(index int) ContainerPort {
-    s := x.PortsList().Get(index)
+func (x Container) PortsGet(ctx context.Context, index int) ContainerPort {
+    s := x.PortsList(ctx).Get(index)
     return ContainerPort{s: s}
 }
 
 // PortsAppend appends items to the list.
-func (x Container) PortsAppend(values ...ContainerPort) {
-    list := x.PortsList()
+func (x Container) PortsAppend(ctx context.Context, values ...ContainerPort) {
+    list := x.PortsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendPorts is an alias for PortsAppend for backwards compatibility.
-func (x Container) AppendPorts(values ...ContainerPort) {
-    x.PortsAppend(values...)
+func (x Container) AppendPorts(ctx context.Context, values ...ContainerPort) {
+    x.PortsAppend(ctx, values...)
 }
 
 // PortsAppendRaw appends items to the list using Raw struct representations.
 func (x Container) PortsAppendRaw(ctx context.Context, values ...*ContainerPortRaw) {
-    list := x.PortsList()
+    list := x.PortsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerPortFromRaw(ctx, *raw).XXXGetStruct())
@@ -3603,43 +3681,43 @@ func (x Container) IsSetPorts() bool{
 
 // EnvFromList returns the underlying Structs list for iteration.
 // Use NewEnvFromSource() to create items and Append to add them.
-func (x Container) EnvFromList() *segment.Structs {
+func (x Container) EnvFromList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 6, XXXMappingEnvFromSource); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 6, XXXMappingEnvFromSource); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 6, XXXMappingEnvFromSource)
+    structs := segment.NewStructs(ctx, x.s, 6, XXXMappingEnvFromSource)
     return structs
 }
 
 // EnvFromLen returns the number of items in the list.
-func (x Container) EnvFromLen() int {
-    return x.EnvFromList().Len()
+func (x Container) EnvFromLen(ctx context.Context) int {
+    return x.EnvFromList(ctx).Len()
 }
 
 // EnvFromGet returns the item at the given index.
-func (x Container) EnvFromGet(index int) EnvFromSource {
-    s := x.EnvFromList().Get(index)
+func (x Container) EnvFromGet(ctx context.Context, index int) EnvFromSource {
+    s := x.EnvFromList(ctx).Get(index)
     return EnvFromSource{s: s}
 }
 
 // EnvFromAppend appends items to the list.
-func (x Container) EnvFromAppend(values ...EnvFromSource) {
-    list := x.EnvFromList()
+func (x Container) EnvFromAppend(ctx context.Context, values ...EnvFromSource) {
+    list := x.EnvFromList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendEnvFrom is an alias for EnvFromAppend for backwards compatibility.
-func (x Container) AppendEnvFrom(values ...EnvFromSource) {
-    x.EnvFromAppend(values...)
+func (x Container) AppendEnvFrom(ctx context.Context, values ...EnvFromSource) {
+    x.EnvFromAppend(ctx, values...)
 }
 
 // EnvFromAppendRaw appends items to the list using Raw struct representations.
 func (x Container) EnvFromAppendRaw(ctx context.Context, values ...*EnvFromSourceRaw) {
-    list := x.EnvFromList()
+    list := x.EnvFromList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewEnvFromSourceFromRaw(ctx, *raw).XXXGetStruct())
@@ -3652,43 +3730,43 @@ func (x Container) IsSetEnvFrom() bool{
 
 // EnvList returns the underlying Structs list for iteration.
 // Use NewEnvVar() to create items and Append to add them.
-func (x Container) EnvList() *segment.Structs {
+func (x Container) EnvList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 7, XXXMappingEnvVar); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 7, XXXMappingEnvVar); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 7, XXXMappingEnvVar)
+    structs := segment.NewStructs(ctx, x.s, 7, XXXMappingEnvVar)
     return structs
 }
 
 // EnvLen returns the number of items in the list.
-func (x Container) EnvLen() int {
-    return x.EnvList().Len()
+func (x Container) EnvLen(ctx context.Context) int {
+    return x.EnvList(ctx).Len()
 }
 
 // EnvGet returns the item at the given index.
-func (x Container) EnvGet(index int) EnvVar {
-    s := x.EnvList().Get(index)
+func (x Container) EnvGet(ctx context.Context, index int) EnvVar {
+    s := x.EnvList(ctx).Get(index)
     return EnvVar{s: s}
 }
 
 // EnvAppend appends items to the list.
-func (x Container) EnvAppend(values ...EnvVar) {
-    list := x.EnvList()
+func (x Container) EnvAppend(ctx context.Context, values ...EnvVar) {
+    list := x.EnvList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendEnv is an alias for EnvAppend for backwards compatibility.
-func (x Container) AppendEnv(values ...EnvVar) {
-    x.EnvAppend(values...)
+func (x Container) AppendEnv(ctx context.Context, values ...EnvVar) {
+    x.EnvAppend(ctx, values...)
 }
 
 // EnvAppendRaw appends items to the list using Raw struct representations.
 func (x Container) EnvAppendRaw(ctx context.Context, values ...*EnvVarRaw) {
-    list := x.EnvList()
+    list := x.EnvList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewEnvVarFromRaw(ctx, *raw).XXXGetStruct())
@@ -3714,43 +3792,43 @@ func (x Container) IsSetResources() bool{
 
 // ResizePolicyList returns the underlying Structs list for iteration.
 // Use NewContainerResizePolicy() to create items and Append to add them.
-func (x Container) ResizePolicyList() *segment.Structs {
+func (x Container) ResizePolicyList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 9, XXXMappingContainerResizePolicy); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 9, XXXMappingContainerResizePolicy); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 9, XXXMappingContainerResizePolicy)
+    structs := segment.NewStructs(ctx, x.s, 9, XXXMappingContainerResizePolicy)
     return structs
 }
 
 // ResizePolicyLen returns the number of items in the list.
-func (x Container) ResizePolicyLen() int {
-    return x.ResizePolicyList().Len()
+func (x Container) ResizePolicyLen(ctx context.Context) int {
+    return x.ResizePolicyList(ctx).Len()
 }
 
 // ResizePolicyGet returns the item at the given index.
-func (x Container) ResizePolicyGet(index int) ContainerResizePolicy {
-    s := x.ResizePolicyList().Get(index)
+func (x Container) ResizePolicyGet(ctx context.Context, index int) ContainerResizePolicy {
+    s := x.ResizePolicyList(ctx).Get(index)
     return ContainerResizePolicy{s: s}
 }
 
 // ResizePolicyAppend appends items to the list.
-func (x Container) ResizePolicyAppend(values ...ContainerResizePolicy) {
-    list := x.ResizePolicyList()
+func (x Container) ResizePolicyAppend(ctx context.Context, values ...ContainerResizePolicy) {
+    list := x.ResizePolicyList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendResizePolicy is an alias for ResizePolicyAppend for backwards compatibility.
-func (x Container) AppendResizePolicy(values ...ContainerResizePolicy) {
-    x.ResizePolicyAppend(values...)
+func (x Container) AppendResizePolicy(ctx context.Context, values ...ContainerResizePolicy) {
+    x.ResizePolicyAppend(ctx, values...)
 }
 
 // ResizePolicyAppendRaw appends items to the list using Raw struct representations.
 func (x Container) ResizePolicyAppendRaw(ctx context.Context, values ...*ContainerResizePolicyRaw) {
-    list := x.ResizePolicyList()
+    list := x.ResizePolicyList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerResizePolicyFromRaw(ctx, *raw).XXXGetStruct())
@@ -3775,43 +3853,43 @@ func (x Container) IsSetRestartPolicy() bool{
 
 // VolumeMountsList returns the underlying Structs list for iteration.
 // Use NewVolumeMount() to create items and Append to add them.
-func (x Container) VolumeMountsList() *segment.Structs {
+func (x Container) VolumeMountsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 11, XXXMappingVolumeMount); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 11, XXXMappingVolumeMount); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 11, XXXMappingVolumeMount)
+    structs := segment.NewStructs(ctx, x.s, 11, XXXMappingVolumeMount)
     return structs
 }
 
 // VolumeMountsLen returns the number of items in the list.
-func (x Container) VolumeMountsLen() int {
-    return x.VolumeMountsList().Len()
+func (x Container) VolumeMountsLen(ctx context.Context) int {
+    return x.VolumeMountsList(ctx).Len()
 }
 
 // VolumeMountsGet returns the item at the given index.
-func (x Container) VolumeMountsGet(index int) VolumeMount {
-    s := x.VolumeMountsList().Get(index)
+func (x Container) VolumeMountsGet(ctx context.Context, index int) VolumeMount {
+    s := x.VolumeMountsList(ctx).Get(index)
     return VolumeMount{s: s}
 }
 
 // VolumeMountsAppend appends items to the list.
-func (x Container) VolumeMountsAppend(values ...VolumeMount) {
-    list := x.VolumeMountsList()
+func (x Container) VolumeMountsAppend(ctx context.Context, values ...VolumeMount) {
+    list := x.VolumeMountsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendVolumeMounts is an alias for VolumeMountsAppend for backwards compatibility.
-func (x Container) AppendVolumeMounts(values ...VolumeMount) {
-    x.VolumeMountsAppend(values...)
+func (x Container) AppendVolumeMounts(ctx context.Context, values ...VolumeMount) {
+    x.VolumeMountsAppend(ctx, values...)
 }
 
 // VolumeMountsAppendRaw appends items to the list using Raw struct representations.
 func (x Container) VolumeMountsAppendRaw(ctx context.Context, values ...*VolumeMountRaw) {
-    list := x.VolumeMountsList()
+    list := x.VolumeMountsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewVolumeMountFromRaw(ctx, *raw).XXXGetStruct())
@@ -3824,43 +3902,43 @@ func (x Container) IsSetVolumeMounts() bool{
 
 // VolumeDevicesList returns the underlying Structs list for iteration.
 // Use NewVolumeDevice() to create items and Append to add them.
-func (x Container) VolumeDevicesList() *segment.Structs {
+func (x Container) VolumeDevicesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 12, XXXMappingVolumeDevice); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 12, XXXMappingVolumeDevice); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 12, XXXMappingVolumeDevice)
+    structs := segment.NewStructs(ctx, x.s, 12, XXXMappingVolumeDevice)
     return structs
 }
 
 // VolumeDevicesLen returns the number of items in the list.
-func (x Container) VolumeDevicesLen() int {
-    return x.VolumeDevicesList().Len()
+func (x Container) VolumeDevicesLen(ctx context.Context) int {
+    return x.VolumeDevicesList(ctx).Len()
 }
 
 // VolumeDevicesGet returns the item at the given index.
-func (x Container) VolumeDevicesGet(index int) VolumeDevice {
-    s := x.VolumeDevicesList().Get(index)
+func (x Container) VolumeDevicesGet(ctx context.Context, index int) VolumeDevice {
+    s := x.VolumeDevicesList(ctx).Get(index)
     return VolumeDevice{s: s}
 }
 
 // VolumeDevicesAppend appends items to the list.
-func (x Container) VolumeDevicesAppend(values ...VolumeDevice) {
-    list := x.VolumeDevicesList()
+func (x Container) VolumeDevicesAppend(ctx context.Context, values ...VolumeDevice) {
+    list := x.VolumeDevicesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendVolumeDevices is an alias for VolumeDevicesAppend for backwards compatibility.
-func (x Container) AppendVolumeDevices(values ...VolumeDevice) {
-    x.VolumeDevicesAppend(values...)
+func (x Container) AppendVolumeDevices(ctx context.Context, values ...VolumeDevice) {
+    x.VolumeDevicesAppend(ctx, values...)
 }
 
 // VolumeDevicesAppendRaw appends items to the list using Raw struct representations.
 func (x Container) VolumeDevicesAppendRaw(ctx context.Context, values ...*VolumeDeviceRaw) {
-    list := x.VolumeDevicesList()
+    list := x.VolumeDevicesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewVolumeDeviceFromRaw(ctx, *raw).XXXGetStruct())
@@ -4096,7 +4174,7 @@ func NewContainerFromRaw(ctx context.Context, raw ContainerRaw) Container {
         x.SetWorkingDir(raw.WorkingDir)
     }
     if raw.Ports != nil {
-        list := x.PortsList()
+        list := x.PortsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Ports))
         for _, r := range raw.Ports {
             if r != nil {
@@ -4106,7 +4184,7 @@ func NewContainerFromRaw(ctx context.Context, raw ContainerRaw) Container {
         list.SetAll(items)
     }
     if raw.EnvFrom != nil {
-        list := x.EnvFromList()
+        list := x.EnvFromList(ctx)
         items := make([]*segment.Struct, 0, len(raw.EnvFrom))
         for _, r := range raw.EnvFrom {
             if r != nil {
@@ -4116,7 +4194,7 @@ func NewContainerFromRaw(ctx context.Context, raw ContainerRaw) Container {
         list.SetAll(items)
     }
     if raw.Env != nil {
-        list := x.EnvList()
+        list := x.EnvList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Env))
         for _, r := range raw.Env {
             if r != nil {
@@ -4129,7 +4207,7 @@ func NewContainerFromRaw(ctx context.Context, raw ContainerRaw) Container {
         x.SetResources(NewResourceRequirementsFromRaw(ctx, *raw.Resources))
     }
     if raw.ResizePolicy != nil {
-        list := x.ResizePolicyList()
+        list := x.ResizePolicyList(ctx)
         items := make([]*segment.Struct, 0, len(raw.ResizePolicy))
         for _, r := range raw.ResizePolicy {
             if r != nil {
@@ -4142,7 +4220,7 @@ func NewContainerFromRaw(ctx context.Context, raw ContainerRaw) Container {
         x.SetRestartPolicy(raw.RestartPolicy)
     }
     if raw.VolumeMounts != nil {
-        list := x.VolumeMountsList()
+        list := x.VolumeMountsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.VolumeMounts))
         for _, r := range raw.VolumeMounts {
             if r != nil {
@@ -4152,7 +4230,7 @@ func NewContainerFromRaw(ctx context.Context, raw ContainerRaw) Container {
         list.SetAll(items)
     }
     if raw.VolumeDevices != nil {
-        list := x.VolumeDevicesList()
+        list := x.VolumeDevicesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.VolumeDevices))
         for _, r := range raw.VolumeDevices {
             if r != nil {
@@ -4198,7 +4276,7 @@ func NewContainerFromRaw(ctx context.Context, raw ContainerRaw) Container {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Container) ToRaw() ContainerRaw {
+func (x Container) ToRaw(ctx context.Context) ContainerRaw {
     raw := ContainerRaw{}
     raw.Name = x.Name()
     raw.Image = x.Image()
@@ -4218,15 +4296,15 @@ func (x Container) ToRaw() ContainerRaw {
         raw.Ports = make([]*ContainerPortRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerPort{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Ports[i] = &itemRaw
         }
     } else if x.s.HasField(5) {
-        list := x.PortsList()
+        list := x.PortsList(ctx)
         raw.Ports = make([]*ContainerPortRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerPort{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Ports[i] = &itemRaw
         }
     }
@@ -4235,15 +4313,15 @@ func (x Container) ToRaw() ContainerRaw {
         raw.EnvFrom = make([]*EnvFromSourceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvFromSource{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EnvFrom[i] = &itemRaw
         }
     } else if x.s.HasField(6) {
-        list := x.EnvFromList()
+        list := x.EnvFromList(ctx)
         raw.EnvFrom = make([]*EnvFromSourceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvFromSource{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EnvFrom[i] = &itemRaw
         }
     }
@@ -4252,20 +4330,20 @@ func (x Container) ToRaw() ContainerRaw {
         raw.Env = make([]*EnvVarRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvVar{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Env[i] = &itemRaw
         }
     } else if x.s.HasField(7) {
-        list := x.EnvList()
+        list := x.EnvList(ctx)
         raw.Env = make([]*EnvVarRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvVar{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Env[i] = &itemRaw
         }
     }
     if x.s.HasField(8) {
-        nestedRaw := x.Resources().ToRaw()
+        nestedRaw := x.Resources().ToRaw(ctx)
         raw.Resources = &nestedRaw
     }
     if l := x.s.GetList(9); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -4273,15 +4351,15 @@ func (x Container) ToRaw() ContainerRaw {
         raw.ResizePolicy = make([]*ContainerResizePolicyRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerResizePolicy{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ResizePolicy[i] = &itemRaw
         }
     } else if x.s.HasField(9) {
-        list := x.ResizePolicyList()
+        list := x.ResizePolicyList(ctx)
         raw.ResizePolicy = make([]*ContainerResizePolicyRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerResizePolicy{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ResizePolicy[i] = &itemRaw
         }
     }
@@ -4291,15 +4369,15 @@ func (x Container) ToRaw() ContainerRaw {
         raw.VolumeMounts = make([]*VolumeMountRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeMount{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeMounts[i] = &itemRaw
         }
     } else if x.s.HasField(11) {
-        list := x.VolumeMountsList()
+        list := x.VolumeMountsList(ctx)
         raw.VolumeMounts = make([]*VolumeMountRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeMount{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeMounts[i] = &itemRaw
         }
     }
@@ -4308,39 +4386,39 @@ func (x Container) ToRaw() ContainerRaw {
         raw.VolumeDevices = make([]*VolumeDeviceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeDevice{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeDevices[i] = &itemRaw
         }
     } else if x.s.HasField(12) {
-        list := x.VolumeDevicesList()
+        list := x.VolumeDevicesList(ctx)
         raw.VolumeDevices = make([]*VolumeDeviceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeDevice{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeDevices[i] = &itemRaw
         }
     }
     if x.s.HasField(13) {
-        nestedRaw := x.LivenessProbe().ToRaw()
+        nestedRaw := x.LivenessProbe().ToRaw(ctx)
         raw.LivenessProbe = &nestedRaw
     }
     if x.s.HasField(14) {
-        nestedRaw := x.ReadinessProbe().ToRaw()
+        nestedRaw := x.ReadinessProbe().ToRaw(ctx)
         raw.ReadinessProbe = &nestedRaw
     }
     if x.s.HasField(15) {
-        nestedRaw := x.StartupProbe().ToRaw()
+        nestedRaw := x.StartupProbe().ToRaw(ctx)
         raw.StartupProbe = &nestedRaw
     }
     if x.s.HasField(16) {
-        nestedRaw := x.Lifecycle().ToRaw()
+        nestedRaw := x.Lifecycle().ToRaw(ctx)
         raw.Lifecycle = &nestedRaw
     }
     raw.TerminationMessagePath = x.TerminationMessagePath()
     raw.TerminationMessagePolicy = x.TerminationMessagePolicy()
     raw.ImagePullPolicy = x.ImagePullPolicy()
     if x.s.HasField(20) {
-        nestedRaw := x.SecurityContext().ToRaw()
+        nestedRaw := x.SecurityContext().ToRaw(ctx)
         raw.SecurityContext = &nestedRaw
     }
     raw.Stdin = x.Stdin()
@@ -4348,7 +4426,6 @@ func (x Container) ToRaw() ContainerRaw {
     raw.Tty = x.Tty()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -4367,7 +4444,7 @@ type ContainerPort struct {
 // NewContainerPort creates a new pooled instance of ContainerPort.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainerPort(ctx context.Context) ContainerPort {
-    s := segment.NewPooled(ctx, XXXMappingContainerPort)
+    s := segment.New(ctx, XXXMappingContainerPort)
     s.SetIsSetEnabled(true)
     return ContainerPort{
         s: s,
@@ -4377,7 +4454,7 @@ func NewContainerPort(ctx context.Context) ContainerPort {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ContainerPort) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerPortFrom creates a new ContainerPort from our internal Struct representation.
@@ -4390,14 +4467,22 @@ func XXXNewContainerPortFrom(s *segment.Struct) ContainerPort {
     return ContainerPort{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ContainerPort) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ContainerPort) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ContainerPort) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -4542,7 +4627,7 @@ func NewContainerPortFromRaw(ctx context.Context, raw ContainerPortRaw) Containe
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ContainerPort) ToRaw() ContainerPortRaw {
+func (x ContainerPort) ToRaw(ctx context.Context) ContainerPortRaw {
     raw := ContainerPortRaw{}
     raw.Name = x.Name()
     raw.HostPort = x.HostPort()
@@ -4551,7 +4636,6 @@ func (x ContainerPort) ToRaw() ContainerPortRaw {
     raw.HostIp = x.HostIp()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -4570,7 +4654,7 @@ type ContainerResizePolicy struct {
 // NewContainerResizePolicy creates a new pooled instance of ContainerResizePolicy.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainerResizePolicy(ctx context.Context) ContainerResizePolicy {
-    s := segment.NewPooled(ctx, XXXMappingContainerResizePolicy)
+    s := segment.New(ctx, XXXMappingContainerResizePolicy)
     s.SetIsSetEnabled(true)
     return ContainerResizePolicy{
         s: s,
@@ -4580,7 +4664,7 @@ func NewContainerResizePolicy(ctx context.Context) ContainerResizePolicy {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ContainerResizePolicy) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerResizePolicyFrom creates a new ContainerResizePolicy from our internal Struct representation.
@@ -4593,14 +4677,22 @@ func XXXNewContainerResizePolicyFrom(s *segment.Struct) ContainerResizePolicy {
     return ContainerResizePolicy{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ContainerResizePolicy) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ContainerResizePolicy) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ContainerResizePolicy) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -4697,13 +4789,12 @@ func NewContainerResizePolicyFromRaw(ctx context.Context, raw ContainerResizePol
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ContainerResizePolicy) ToRaw() ContainerResizePolicyRaw {
+func (x ContainerResizePolicy) ToRaw(ctx context.Context) ContainerResizePolicyRaw {
     raw := ContainerResizePolicyRaw{}
     raw.ResourceName = x.ResourceName()
     raw.RestartPolicy = x.RestartPolicy()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -4722,7 +4813,7 @@ type ContainerState struct {
 // NewContainerState creates a new pooled instance of ContainerState.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainerState(ctx context.Context) ContainerState {
-    s := segment.NewPooled(ctx, XXXMappingContainerState)
+    s := segment.New(ctx, XXXMappingContainerState)
     s.SetIsSetEnabled(true)
     return ContainerState{
         s: s,
@@ -4732,7 +4823,7 @@ func NewContainerState(ctx context.Context) ContainerState {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ContainerState) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerStateFrom creates a new ContainerState from our internal Struct representation.
@@ -4745,14 +4836,22 @@ func XXXNewContainerStateFrom(s *segment.Struct) ContainerState {
     return ContainerState{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ContainerState) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ContainerState) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ContainerState) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -4868,23 +4967,22 @@ func NewContainerStateFromRaw(ctx context.Context, raw ContainerStateRaw) Contai
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ContainerState) ToRaw() ContainerStateRaw {
+func (x ContainerState) ToRaw(ctx context.Context) ContainerStateRaw {
     raw := ContainerStateRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Waiting().ToRaw()
+        nestedRaw := x.Waiting().ToRaw(ctx)
         raw.Waiting = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.Running().ToRaw()
+        nestedRaw := x.Running().ToRaw(ctx)
         raw.Running = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.Terminated().ToRaw()
+        nestedRaw := x.Terminated().ToRaw(ctx)
         raw.Terminated = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -4903,7 +5001,7 @@ type ContainerStateRunning struct {
 // NewContainerStateRunning creates a new pooled instance of ContainerStateRunning.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainerStateRunning(ctx context.Context) ContainerStateRunning {
-    s := segment.NewPooled(ctx, XXXMappingContainerStateRunning)
+    s := segment.New(ctx, XXXMappingContainerStateRunning)
     s.SetIsSetEnabled(true)
     return ContainerStateRunning{
         s: s,
@@ -4913,7 +5011,7 @@ func NewContainerStateRunning(ctx context.Context) ContainerStateRunning {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ContainerStateRunning) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerStateRunningFrom creates a new ContainerStateRunning from our internal Struct representation.
@@ -4926,14 +5024,22 @@ func XXXNewContainerStateRunningFrom(s *segment.Struct) ContainerStateRunning {
     return ContainerStateRunning{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ContainerStateRunning) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ContainerStateRunning) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ContainerStateRunning) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -5015,15 +5121,14 @@ func NewContainerStateRunningFromRaw(ctx context.Context, raw ContainerStateRunn
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ContainerStateRunning) ToRaw() ContainerStateRunningRaw {
+func (x ContainerStateRunning) ToRaw(ctx context.Context) ContainerStateRunningRaw {
     raw := ContainerStateRunningRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.StartedAt().ToRaw()
+        nestedRaw := x.StartedAt().ToRaw(ctx)
         raw.StartedAt = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -5042,7 +5147,7 @@ type ContainerStateTerminated struct {
 // NewContainerStateTerminated creates a new pooled instance of ContainerStateTerminated.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainerStateTerminated(ctx context.Context) ContainerStateTerminated {
-    s := segment.NewPooled(ctx, XXXMappingContainerStateTerminated)
+    s := segment.New(ctx, XXXMappingContainerStateTerminated)
     s.SetIsSetEnabled(true)
     return ContainerStateTerminated{
         s: s,
@@ -5052,7 +5157,7 @@ func NewContainerStateTerminated(ctx context.Context) ContainerStateTerminated {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ContainerStateTerminated) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerStateTerminatedFrom creates a new ContainerStateTerminated from our internal Struct representation.
@@ -5065,14 +5170,22 @@ func XXXNewContainerStateTerminatedFrom(s *segment.Struct) ContainerStateTermina
     return ContainerStateTerminated{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ContainerStateTerminated) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ContainerStateTerminated) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ContainerStateTerminated) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -5251,24 +5364,23 @@ func NewContainerStateTerminatedFromRaw(ctx context.Context, raw ContainerStateT
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ContainerStateTerminated) ToRaw() ContainerStateTerminatedRaw {
+func (x ContainerStateTerminated) ToRaw(ctx context.Context) ContainerStateTerminatedRaw {
     raw := ContainerStateTerminatedRaw{}
     raw.ExitCode = x.ExitCode()
     raw.Signal = x.Signal()
     raw.Reason = x.Reason()
     raw.Message = x.Message()
     if x.s.HasField(4) {
-        nestedRaw := x.StartedAt().ToRaw()
+        nestedRaw := x.StartedAt().ToRaw(ctx)
         raw.StartedAt = &nestedRaw
     }
     if x.s.HasField(5) {
-        nestedRaw := x.FinishedAt().ToRaw()
+        nestedRaw := x.FinishedAt().ToRaw(ctx)
         raw.FinishedAt = &nestedRaw
     }
     raw.ContainerId = x.ContainerId()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -5287,7 +5399,7 @@ type ContainerStateWaiting struct {
 // NewContainerStateWaiting creates a new pooled instance of ContainerStateWaiting.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainerStateWaiting(ctx context.Context) ContainerStateWaiting {
-    s := segment.NewPooled(ctx, XXXMappingContainerStateWaiting)
+    s := segment.New(ctx, XXXMappingContainerStateWaiting)
     s.SetIsSetEnabled(true)
     return ContainerStateWaiting{
         s: s,
@@ -5297,7 +5409,7 @@ func NewContainerStateWaiting(ctx context.Context) ContainerStateWaiting {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ContainerStateWaiting) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerStateWaitingFrom creates a new ContainerStateWaiting from our internal Struct representation.
@@ -5310,14 +5422,22 @@ func XXXNewContainerStateWaitingFrom(s *segment.Struct) ContainerStateWaiting {
     return ContainerStateWaiting{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ContainerStateWaiting) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ContainerStateWaiting) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ContainerStateWaiting) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -5414,13 +5534,12 @@ func NewContainerStateWaitingFromRaw(ctx context.Context, raw ContainerStateWait
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ContainerStateWaiting) ToRaw() ContainerStateWaitingRaw {
+func (x ContainerStateWaiting) ToRaw(ctx context.Context) ContainerStateWaitingRaw {
     raw := ContainerStateWaitingRaw{}
     raw.Reason = x.Reason()
     raw.Message = x.Message()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -5439,7 +5558,7 @@ type ContainerStatus struct {
 // NewContainerStatus creates a new pooled instance of ContainerStatus.
 // Call Release() when done to return it to the pool for reuse.
 func NewContainerStatus(ctx context.Context) ContainerStatus {
-    s := segment.NewPooled(ctx, XXXMappingContainerStatus)
+    s := segment.New(ctx, XXXMappingContainerStatus)
     s.SetIsSetEnabled(true)
     return ContainerStatus{
         s: s,
@@ -5449,7 +5568,7 @@ func NewContainerStatus(ctx context.Context) ContainerStatus {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ContainerStatus) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewContainerStatusFrom creates a new ContainerStatus from our internal Struct representation.
@@ -5462,14 +5581,22 @@ func XXXNewContainerStatusFrom(s *segment.Struct) ContainerStatus {
     return ContainerStatus{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ContainerStatus) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ContainerStatus) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ContainerStatus) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -5594,43 +5721,43 @@ func (x ContainerStatus) IsSetStarted() bool{
 
 // AllocatedResourcesList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x ContainerStatus) AllocatedResourcesList() *segment.Structs {
+func (x ContainerStatus) AllocatedResourcesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 9, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 9, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 9, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 9, XXXMappingKeyValue)
     return structs
 }
 
 // AllocatedResourcesLen returns the number of items in the list.
-func (x ContainerStatus) AllocatedResourcesLen() int {
-    return x.AllocatedResourcesList().Len()
+func (x ContainerStatus) AllocatedResourcesLen(ctx context.Context) int {
+    return x.AllocatedResourcesList(ctx).Len()
 }
 
 // AllocatedResourcesGet returns the item at the given index.
-func (x ContainerStatus) AllocatedResourcesGet(index int) KeyValue {
-    s := x.AllocatedResourcesList().Get(index)
+func (x ContainerStatus) AllocatedResourcesGet(ctx context.Context, index int) KeyValue {
+    s := x.AllocatedResourcesList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // AllocatedResourcesAppend appends items to the list.
-func (x ContainerStatus) AllocatedResourcesAppend(values ...KeyValue) {
-    list := x.AllocatedResourcesList()
+func (x ContainerStatus) AllocatedResourcesAppend(ctx context.Context, values ...KeyValue) {
+    list := x.AllocatedResourcesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendAllocatedResources is an alias for AllocatedResourcesAppend for backwards compatibility.
-func (x ContainerStatus) AppendAllocatedResources(values ...KeyValue) {
-    x.AllocatedResourcesAppend(values...)
+func (x ContainerStatus) AppendAllocatedResources(ctx context.Context, values ...KeyValue) {
+    x.AllocatedResourcesAppend(ctx, values...)
 }
 
 // AllocatedResourcesAppendRaw appends items to the list using Raw struct representations.
 func (x ContainerStatus) AllocatedResourcesAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.AllocatedResourcesList()
+    list := x.AllocatedResourcesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -5656,43 +5783,43 @@ func (x ContainerStatus) IsSetResources() bool{
 
 // VolumeMountsList returns the underlying Structs list for iteration.
 // Use NewVolumeMountStatus() to create items and Append to add them.
-func (x ContainerStatus) VolumeMountsList() *segment.Structs {
+func (x ContainerStatus) VolumeMountsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 11, XXXMappingVolumeMountStatus); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 11, XXXMappingVolumeMountStatus); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 11, XXXMappingVolumeMountStatus)
+    structs := segment.NewStructs(ctx, x.s, 11, XXXMappingVolumeMountStatus)
     return structs
 }
 
 // VolumeMountsLen returns the number of items in the list.
-func (x ContainerStatus) VolumeMountsLen() int {
-    return x.VolumeMountsList().Len()
+func (x ContainerStatus) VolumeMountsLen(ctx context.Context) int {
+    return x.VolumeMountsList(ctx).Len()
 }
 
 // VolumeMountsGet returns the item at the given index.
-func (x ContainerStatus) VolumeMountsGet(index int) VolumeMountStatus {
-    s := x.VolumeMountsList().Get(index)
+func (x ContainerStatus) VolumeMountsGet(ctx context.Context, index int) VolumeMountStatus {
+    s := x.VolumeMountsList(ctx).Get(index)
     return VolumeMountStatus{s: s}
 }
 
 // VolumeMountsAppend appends items to the list.
-func (x ContainerStatus) VolumeMountsAppend(values ...VolumeMountStatus) {
-    list := x.VolumeMountsList()
+func (x ContainerStatus) VolumeMountsAppend(ctx context.Context, values ...VolumeMountStatus) {
+    list := x.VolumeMountsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendVolumeMounts is an alias for VolumeMountsAppend for backwards compatibility.
-func (x ContainerStatus) AppendVolumeMounts(values ...VolumeMountStatus) {
-    x.VolumeMountsAppend(values...)
+func (x ContainerStatus) AppendVolumeMounts(ctx context.Context, values ...VolumeMountStatus) {
+    x.VolumeMountsAppend(ctx, values...)
 }
 
 // VolumeMountsAppendRaw appends items to the list using Raw struct representations.
 func (x ContainerStatus) VolumeMountsAppendRaw(ctx context.Context, values ...*VolumeMountStatusRaw) {
-    list := x.VolumeMountsList()
+    list := x.VolumeMountsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewVolumeMountStatusFromRaw(ctx, *raw).XXXGetStruct())
@@ -5791,7 +5918,7 @@ func NewContainerStatusFromRaw(ctx context.Context, raw ContainerStatusRaw) Cont
         x.SetStarted(raw.Started)
     }
     if raw.AllocatedResources != nil {
-        list := x.AllocatedResourcesList()
+        list := x.AllocatedResourcesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.AllocatedResources))
         for _, r := range raw.AllocatedResources {
             if r != nil {
@@ -5804,7 +5931,7 @@ func NewContainerStatusFromRaw(ctx context.Context, raw ContainerStatusRaw) Cont
         x.SetResources(NewResourceRequirementsFromRaw(ctx, *raw.Resources))
     }
     if raw.VolumeMounts != nil {
-        list := x.VolumeMountsList()
+        list := x.VolumeMountsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.VolumeMounts))
         for _, r := range raw.VolumeMounts {
             if r != nil {
@@ -5817,15 +5944,15 @@ func NewContainerStatusFromRaw(ctx context.Context, raw ContainerStatusRaw) Cont
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ContainerStatus) ToRaw() ContainerStatusRaw {
+func (x ContainerStatus) ToRaw(ctx context.Context) ContainerStatusRaw {
     raw := ContainerStatusRaw{}
     raw.Name = x.Name()
     if x.s.HasField(1) {
-        nestedRaw := x.State().ToRaw()
+        nestedRaw := x.State().ToRaw(ctx)
         raw.State = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.LastTerminationState().ToRaw()
+        nestedRaw := x.LastTerminationState().ToRaw(ctx)
         raw.LastTerminationState = &nestedRaw
     }
     raw.Ready = x.Ready()
@@ -5839,20 +5966,20 @@ func (x ContainerStatus) ToRaw() ContainerStatusRaw {
         raw.AllocatedResources = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.AllocatedResources[i] = &itemRaw
         }
     } else if x.s.HasField(9) {
-        list := x.AllocatedResourcesList()
+        list := x.AllocatedResourcesList(ctx)
         raw.AllocatedResources = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.AllocatedResources[i] = &itemRaw
         }
     }
     if x.s.HasField(10) {
-        nestedRaw := x.Resources().ToRaw()
+        nestedRaw := x.Resources().ToRaw(ctx)
         raw.Resources = &nestedRaw
     }
     if l := x.s.GetList(11); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -5860,21 +5987,20 @@ func (x ContainerStatus) ToRaw() ContainerStatusRaw {
         raw.VolumeMounts = make([]*VolumeMountStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeMountStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeMounts[i] = &itemRaw
         }
     } else if x.s.HasField(11) {
-        list := x.VolumeMountsList()
+        list := x.VolumeMountsList(ctx)
         raw.VolumeMounts = make([]*VolumeMountStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeMountStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeMounts[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -5893,7 +6019,7 @@ type DownwardAPIProjection struct {
 // NewDownwardAPIProjection creates a new pooled instance of DownwardAPIProjection.
 // Call Release() when done to return it to the pool for reuse.
 func NewDownwardAPIProjection(ctx context.Context) DownwardAPIProjection {
-    s := segment.NewPooled(ctx, XXXMappingDownwardAPIProjection)
+    s := segment.New(ctx, XXXMappingDownwardAPIProjection)
     s.SetIsSetEnabled(true)
     return DownwardAPIProjection{
         s: s,
@@ -5903,7 +6029,7 @@ func NewDownwardAPIProjection(ctx context.Context) DownwardAPIProjection {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x DownwardAPIProjection) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewDownwardAPIProjectionFrom creates a new DownwardAPIProjection from our internal Struct representation.
@@ -5916,14 +6042,22 @@ func XXXNewDownwardAPIProjectionFrom(s *segment.Struct) DownwardAPIProjection {
     return DownwardAPIProjection{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x DownwardAPIProjection) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x DownwardAPIProjection) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x DownwardAPIProjection) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -5938,43 +6072,43 @@ func (x DownwardAPIProjection) UnmarshalReader (r io.Reader) (int, error) {
 
 // ItemsList returns the underlying Structs list for iteration.
 // Use NewDownwardAPIVolumeFile() to create items and Append to add them.
-func (x DownwardAPIProjection) ItemsList() *segment.Structs {
+func (x DownwardAPIProjection) ItemsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingDownwardAPIVolumeFile); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingDownwardAPIVolumeFile); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingDownwardAPIVolumeFile)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingDownwardAPIVolumeFile)
     return structs
 }
 
 // ItemsLen returns the number of items in the list.
-func (x DownwardAPIProjection) ItemsLen() int {
-    return x.ItemsList().Len()
+func (x DownwardAPIProjection) ItemsLen(ctx context.Context) int {
+    return x.ItemsList(ctx).Len()
 }
 
 // ItemsGet returns the item at the given index.
-func (x DownwardAPIProjection) ItemsGet(index int) DownwardAPIVolumeFile {
-    s := x.ItemsList().Get(index)
+func (x DownwardAPIProjection) ItemsGet(ctx context.Context, index int) DownwardAPIVolumeFile {
+    s := x.ItemsList(ctx).Get(index)
     return DownwardAPIVolumeFile{s: s}
 }
 
 // ItemsAppend appends items to the list.
-func (x DownwardAPIProjection) ItemsAppend(values ...DownwardAPIVolumeFile) {
-    list := x.ItemsList()
+func (x DownwardAPIProjection) ItemsAppend(ctx context.Context, values ...DownwardAPIVolumeFile) {
+    list := x.ItemsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x DownwardAPIProjection) AppendItems(values ...DownwardAPIVolumeFile) {
-    x.ItemsAppend(values...)
+func (x DownwardAPIProjection) AppendItems(ctx context.Context, values ...DownwardAPIVolumeFile) {
+    x.ItemsAppend(ctx, values...)
 }
 
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x DownwardAPIProjection) ItemsAppendRaw(ctx context.Context, values ...*DownwardAPIVolumeFileRaw) {
-    list := x.ItemsList()
+    list := x.ItemsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewDownwardAPIVolumeFileFromRaw(ctx, *raw).XXXGetStruct())
@@ -6035,7 +6169,7 @@ type DownwardAPIProjectionRaw struct {
 func NewDownwardAPIProjectionFromRaw(ctx context.Context, raw DownwardAPIProjectionRaw) DownwardAPIProjection {
     x := NewDownwardAPIProjection(ctx)
     if raw.Items != nil {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Items))
         for _, r := range raw.Items {
             if r != nil {
@@ -6048,28 +6182,27 @@ func NewDownwardAPIProjectionFromRaw(ctx context.Context, raw DownwardAPIProject
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x DownwardAPIProjection) ToRaw() DownwardAPIProjectionRaw {
+func (x DownwardAPIProjection) ToRaw(ctx context.Context) DownwardAPIProjectionRaw {
     raw := DownwardAPIProjectionRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.Items = make([]*DownwardAPIVolumeFileRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := DownwardAPIVolumeFile{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         raw.Items = make([]*DownwardAPIVolumeFileRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := DownwardAPIVolumeFile{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -6088,7 +6221,7 @@ type DownwardAPIVolumeFile struct {
 // NewDownwardAPIVolumeFile creates a new pooled instance of DownwardAPIVolumeFile.
 // Call Release() when done to return it to the pool for reuse.
 func NewDownwardAPIVolumeFile(ctx context.Context) DownwardAPIVolumeFile {
-    s := segment.NewPooled(ctx, XXXMappingDownwardAPIVolumeFile)
+    s := segment.New(ctx, XXXMappingDownwardAPIVolumeFile)
     s.SetIsSetEnabled(true)
     return DownwardAPIVolumeFile{
         s: s,
@@ -6098,7 +6231,7 @@ func NewDownwardAPIVolumeFile(ctx context.Context) DownwardAPIVolumeFile {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x DownwardAPIVolumeFile) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewDownwardAPIVolumeFileFrom creates a new DownwardAPIVolumeFile from our internal Struct representation.
@@ -6111,14 +6244,22 @@ func XXXNewDownwardAPIVolumeFileFrom(s *segment.Struct) DownwardAPIVolumeFile {
     return DownwardAPIVolumeFile{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x DownwardAPIVolumeFile) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x DownwardAPIVolumeFile) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x DownwardAPIVolumeFile) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -6249,21 +6390,20 @@ func NewDownwardAPIVolumeFileFromRaw(ctx context.Context, raw DownwardAPIVolumeF
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x DownwardAPIVolumeFile) ToRaw() DownwardAPIVolumeFileRaw {
+func (x DownwardAPIVolumeFile) ToRaw(ctx context.Context) DownwardAPIVolumeFileRaw {
     raw := DownwardAPIVolumeFileRaw{}
     raw.Path = x.Path()
     if x.s.HasField(1) {
-        nestedRaw := x.FieldRef().ToRaw()
+        nestedRaw := x.FieldRef().ToRaw(ctx)
         raw.FieldRef = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.ResourceFieldRef().ToRaw()
+        nestedRaw := x.ResourceFieldRef().ToRaw(ctx)
         raw.ResourceFieldRef = &nestedRaw
     }
     raw.Mode = x.Mode()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -6282,7 +6422,7 @@ type DownwardAPIVolumeSource struct {
 // NewDownwardAPIVolumeSource creates a new pooled instance of DownwardAPIVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewDownwardAPIVolumeSource(ctx context.Context) DownwardAPIVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingDownwardAPIVolumeSource)
+    s := segment.New(ctx, XXXMappingDownwardAPIVolumeSource)
     s.SetIsSetEnabled(true)
     return DownwardAPIVolumeSource{
         s: s,
@@ -6292,7 +6432,7 @@ func NewDownwardAPIVolumeSource(ctx context.Context) DownwardAPIVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x DownwardAPIVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewDownwardAPIVolumeSourceFrom creates a new DownwardAPIVolumeSource from our internal Struct representation.
@@ -6305,14 +6445,22 @@ func XXXNewDownwardAPIVolumeSourceFrom(s *segment.Struct) DownwardAPIVolumeSourc
     return DownwardAPIVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x DownwardAPIVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x DownwardAPIVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x DownwardAPIVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -6327,43 +6475,43 @@ func (x DownwardAPIVolumeSource) UnmarshalReader (r io.Reader) (int, error) {
 
 // ItemsList returns the underlying Structs list for iteration.
 // Use NewDownwardAPIVolumeFile() to create items and Append to add them.
-func (x DownwardAPIVolumeSource) ItemsList() *segment.Structs {
+func (x DownwardAPIVolumeSource) ItemsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingDownwardAPIVolumeFile); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingDownwardAPIVolumeFile); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingDownwardAPIVolumeFile)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingDownwardAPIVolumeFile)
     return structs
 }
 
 // ItemsLen returns the number of items in the list.
-func (x DownwardAPIVolumeSource) ItemsLen() int {
-    return x.ItemsList().Len()
+func (x DownwardAPIVolumeSource) ItemsLen(ctx context.Context) int {
+    return x.ItemsList(ctx).Len()
 }
 
 // ItemsGet returns the item at the given index.
-func (x DownwardAPIVolumeSource) ItemsGet(index int) DownwardAPIVolumeFile {
-    s := x.ItemsList().Get(index)
+func (x DownwardAPIVolumeSource) ItemsGet(ctx context.Context, index int) DownwardAPIVolumeFile {
+    s := x.ItemsList(ctx).Get(index)
     return DownwardAPIVolumeFile{s: s}
 }
 
 // ItemsAppend appends items to the list.
-func (x DownwardAPIVolumeSource) ItemsAppend(values ...DownwardAPIVolumeFile) {
-    list := x.ItemsList()
+func (x DownwardAPIVolumeSource) ItemsAppend(ctx context.Context, values ...DownwardAPIVolumeFile) {
+    list := x.ItemsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x DownwardAPIVolumeSource) AppendItems(values ...DownwardAPIVolumeFile) {
-    x.ItemsAppend(values...)
+func (x DownwardAPIVolumeSource) AppendItems(ctx context.Context, values ...DownwardAPIVolumeFile) {
+    x.ItemsAppend(ctx, values...)
 }
 
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x DownwardAPIVolumeSource) ItemsAppendRaw(ctx context.Context, values ...*DownwardAPIVolumeFileRaw) {
-    list := x.ItemsList()
+    list := x.ItemsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewDownwardAPIVolumeFileFromRaw(ctx, *raw).XXXGetStruct())
@@ -6437,7 +6585,7 @@ type DownwardAPIVolumeSourceRaw struct {
 func NewDownwardAPIVolumeSourceFromRaw(ctx context.Context, raw DownwardAPIVolumeSourceRaw) DownwardAPIVolumeSource {
     x := NewDownwardAPIVolumeSource(ctx)
     if raw.Items != nil {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Items))
         for _, r := range raw.Items {
             if r != nil {
@@ -6453,29 +6601,28 @@ func NewDownwardAPIVolumeSourceFromRaw(ctx context.Context, raw DownwardAPIVolum
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x DownwardAPIVolumeSource) ToRaw() DownwardAPIVolumeSourceRaw {
+func (x DownwardAPIVolumeSource) ToRaw(ctx context.Context) DownwardAPIVolumeSourceRaw {
     raw := DownwardAPIVolumeSourceRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.Items = make([]*DownwardAPIVolumeFileRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := DownwardAPIVolumeFile{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         raw.Items = make([]*DownwardAPIVolumeFileRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := DownwardAPIVolumeFile{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     }
     raw.DefaultMode = x.DefaultMode()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -6494,7 +6641,7 @@ type EmptyDirVolumeSource struct {
 // NewEmptyDirVolumeSource creates a new pooled instance of EmptyDirVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewEmptyDirVolumeSource(ctx context.Context) EmptyDirVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingEmptyDirVolumeSource)
+    s := segment.New(ctx, XXXMappingEmptyDirVolumeSource)
     s.SetIsSetEnabled(true)
     return EmptyDirVolumeSource{
         s: s,
@@ -6504,7 +6651,7 @@ func NewEmptyDirVolumeSource(ctx context.Context) EmptyDirVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x EmptyDirVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewEmptyDirVolumeSourceFrom creates a new EmptyDirVolumeSource from our internal Struct representation.
@@ -6517,14 +6664,22 @@ func XXXNewEmptyDirVolumeSourceFrom(s *segment.Struct) EmptyDirVolumeSource {
     return EmptyDirVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x EmptyDirVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x EmptyDirVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x EmptyDirVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -6621,13 +6776,12 @@ func NewEmptyDirVolumeSourceFromRaw(ctx context.Context, raw EmptyDirVolumeSourc
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x EmptyDirVolumeSource) ToRaw() EmptyDirVolumeSourceRaw {
+func (x EmptyDirVolumeSource) ToRaw(ctx context.Context) EmptyDirVolumeSourceRaw {
     raw := EmptyDirVolumeSourceRaw{}
     raw.Medium = x.Medium()
     raw.SizeLimit = x.SizeLimit()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -6646,7 +6800,7 @@ type EnvFromSource struct {
 // NewEnvFromSource creates a new pooled instance of EnvFromSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewEnvFromSource(ctx context.Context) EnvFromSource {
-    s := segment.NewPooled(ctx, XXXMappingEnvFromSource)
+    s := segment.New(ctx, XXXMappingEnvFromSource)
     s.SetIsSetEnabled(true)
     return EnvFromSource{
         s: s,
@@ -6656,7 +6810,7 @@ func NewEnvFromSource(ctx context.Context) EnvFromSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x EnvFromSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewEnvFromSourceFrom creates a new EnvFromSource from our internal Struct representation.
@@ -6669,14 +6823,22 @@ func XXXNewEnvFromSourceFrom(s *segment.Struct) EnvFromSource {
     return EnvFromSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x EnvFromSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x EnvFromSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x EnvFromSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -6791,20 +6953,19 @@ func NewEnvFromSourceFromRaw(ctx context.Context, raw EnvFromSourceRaw) EnvFromS
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x EnvFromSource) ToRaw() EnvFromSourceRaw {
+func (x EnvFromSource) ToRaw(ctx context.Context) EnvFromSourceRaw {
     raw := EnvFromSourceRaw{}
     raw.Prefix = x.Prefix()
     if x.s.HasField(1) {
-        nestedRaw := x.ConfigMapRef().ToRaw()
+        nestedRaw := x.ConfigMapRef().ToRaw(ctx)
         raw.ConfigMapRef = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.SecretRef().ToRaw()
+        nestedRaw := x.SecretRef().ToRaw(ctx)
         raw.SecretRef = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -6823,7 +6984,7 @@ type EnvVar struct {
 // NewEnvVar creates a new pooled instance of EnvVar.
 // Call Release() when done to return it to the pool for reuse.
 func NewEnvVar(ctx context.Context) EnvVar {
-    s := segment.NewPooled(ctx, XXXMappingEnvVar)
+    s := segment.New(ctx, XXXMappingEnvVar)
     s.SetIsSetEnabled(true)
     return EnvVar{
         s: s,
@@ -6833,7 +6994,7 @@ func NewEnvVar(ctx context.Context) EnvVar {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x EnvVar) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewEnvVarFrom creates a new EnvVar from our internal Struct representation.
@@ -6846,14 +7007,22 @@ func XXXNewEnvVarFrom(s *segment.Struct) EnvVar {
     return EnvVar{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x EnvVar) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x EnvVar) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x EnvVar) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -6967,17 +7136,16 @@ func NewEnvVarFromRaw(ctx context.Context, raw EnvVarRaw) EnvVar {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x EnvVar) ToRaw() EnvVarRaw {
+func (x EnvVar) ToRaw(ctx context.Context) EnvVarRaw {
     raw := EnvVarRaw{}
     raw.Name = x.Name()
     raw.Value = x.Value()
     if x.s.HasField(2) {
-        nestedRaw := x.ValueFrom().ToRaw()
+        nestedRaw := x.ValueFrom().ToRaw(ctx)
         raw.ValueFrom = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -6996,7 +7164,7 @@ type EnvVarSource struct {
 // NewEnvVarSource creates a new pooled instance of EnvVarSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewEnvVarSource(ctx context.Context) EnvVarSource {
-    s := segment.NewPooled(ctx, XXXMappingEnvVarSource)
+    s := segment.New(ctx, XXXMappingEnvVarSource)
     s.SetIsSetEnabled(true)
     return EnvVarSource{
         s: s,
@@ -7006,7 +7174,7 @@ func NewEnvVarSource(ctx context.Context) EnvVarSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x EnvVarSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewEnvVarSourceFrom creates a new EnvVarSource from our internal Struct representation.
@@ -7019,14 +7187,22 @@ func XXXNewEnvVarSourceFrom(s *segment.Struct) EnvVarSource {
     return EnvVarSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x EnvVarSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x EnvVarSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x EnvVarSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -7159,27 +7335,26 @@ func NewEnvVarSourceFromRaw(ctx context.Context, raw EnvVarSourceRaw) EnvVarSour
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x EnvVarSource) ToRaw() EnvVarSourceRaw {
+func (x EnvVarSource) ToRaw(ctx context.Context) EnvVarSourceRaw {
     raw := EnvVarSourceRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.FieldRef().ToRaw()
+        nestedRaw := x.FieldRef().ToRaw(ctx)
         raw.FieldRef = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.ResourceFieldRef().ToRaw()
+        nestedRaw := x.ResourceFieldRef().ToRaw(ctx)
         raw.ResourceFieldRef = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.ConfigMapKeyRef().ToRaw()
+        nestedRaw := x.ConfigMapKeyRef().ToRaw(ctx)
         raw.ConfigMapKeyRef = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.SecretKeyRef().ToRaw()
+        nestedRaw := x.SecretKeyRef().ToRaw(ctx)
         raw.SecretKeyRef = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -7198,7 +7373,7 @@ type EphemeralContainer struct {
 // NewEphemeralContainer creates a new pooled instance of EphemeralContainer.
 // Call Release() when done to return it to the pool for reuse.
 func NewEphemeralContainer(ctx context.Context) EphemeralContainer {
-    s := segment.NewPooled(ctx, XXXMappingEphemeralContainer)
+    s := segment.New(ctx, XXXMappingEphemeralContainer)
     s.SetIsSetEnabled(true)
     return EphemeralContainer{
         s: s,
@@ -7208,7 +7383,7 @@ func NewEphemeralContainer(ctx context.Context) EphemeralContainer {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x EphemeralContainer) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewEphemeralContainerFrom creates a new EphemeralContainer from our internal Struct representation.
@@ -7221,14 +7396,22 @@ func XXXNewEphemeralContainerFrom(s *segment.Struct) EphemeralContainer {
     return EphemeralContainer{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x EphemeralContainer) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x EphemeralContainer) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x EphemeralContainer) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -7319,43 +7502,43 @@ func (x EphemeralContainer) IsSetWorkingDir() bool{
 
 // PortsList returns the underlying Structs list for iteration.
 // Use NewContainerPort() to create items and Append to add them.
-func (x EphemeralContainer) PortsList() *segment.Structs {
+func (x EphemeralContainer) PortsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 5, XXXMappingContainerPort); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 5, XXXMappingContainerPort); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 5, XXXMappingContainerPort)
+    structs := segment.NewStructs(ctx, x.s, 5, XXXMappingContainerPort)
     return structs
 }
 
 // PortsLen returns the number of items in the list.
-func (x EphemeralContainer) PortsLen() int {
-    return x.PortsList().Len()
+func (x EphemeralContainer) PortsLen(ctx context.Context) int {
+    return x.PortsList(ctx).Len()
 }
 
 // PortsGet returns the item at the given index.
-func (x EphemeralContainer) PortsGet(index int) ContainerPort {
-    s := x.PortsList().Get(index)
+func (x EphemeralContainer) PortsGet(ctx context.Context, index int) ContainerPort {
+    s := x.PortsList(ctx).Get(index)
     return ContainerPort{s: s}
 }
 
 // PortsAppend appends items to the list.
-func (x EphemeralContainer) PortsAppend(values ...ContainerPort) {
-    list := x.PortsList()
+func (x EphemeralContainer) PortsAppend(ctx context.Context, values ...ContainerPort) {
+    list := x.PortsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendPorts is an alias for PortsAppend for backwards compatibility.
-func (x EphemeralContainer) AppendPorts(values ...ContainerPort) {
-    x.PortsAppend(values...)
+func (x EphemeralContainer) AppendPorts(ctx context.Context, values ...ContainerPort) {
+    x.PortsAppend(ctx, values...)
 }
 
 // PortsAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) PortsAppendRaw(ctx context.Context, values ...*ContainerPortRaw) {
-    list := x.PortsList()
+    list := x.PortsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerPortFromRaw(ctx, *raw).XXXGetStruct())
@@ -7368,43 +7551,43 @@ func (x EphemeralContainer) IsSetPorts() bool{
 
 // EnvFromList returns the underlying Structs list for iteration.
 // Use NewEnvFromSource() to create items and Append to add them.
-func (x EphemeralContainer) EnvFromList() *segment.Structs {
+func (x EphemeralContainer) EnvFromList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 6, XXXMappingEnvFromSource); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 6, XXXMappingEnvFromSource); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 6, XXXMappingEnvFromSource)
+    structs := segment.NewStructs(ctx, x.s, 6, XXXMappingEnvFromSource)
     return structs
 }
 
 // EnvFromLen returns the number of items in the list.
-func (x EphemeralContainer) EnvFromLen() int {
-    return x.EnvFromList().Len()
+func (x EphemeralContainer) EnvFromLen(ctx context.Context) int {
+    return x.EnvFromList(ctx).Len()
 }
 
 // EnvFromGet returns the item at the given index.
-func (x EphemeralContainer) EnvFromGet(index int) EnvFromSource {
-    s := x.EnvFromList().Get(index)
+func (x EphemeralContainer) EnvFromGet(ctx context.Context, index int) EnvFromSource {
+    s := x.EnvFromList(ctx).Get(index)
     return EnvFromSource{s: s}
 }
 
 // EnvFromAppend appends items to the list.
-func (x EphemeralContainer) EnvFromAppend(values ...EnvFromSource) {
-    list := x.EnvFromList()
+func (x EphemeralContainer) EnvFromAppend(ctx context.Context, values ...EnvFromSource) {
+    list := x.EnvFromList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendEnvFrom is an alias for EnvFromAppend for backwards compatibility.
-func (x EphemeralContainer) AppendEnvFrom(values ...EnvFromSource) {
-    x.EnvFromAppend(values...)
+func (x EphemeralContainer) AppendEnvFrom(ctx context.Context, values ...EnvFromSource) {
+    x.EnvFromAppend(ctx, values...)
 }
 
 // EnvFromAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) EnvFromAppendRaw(ctx context.Context, values ...*EnvFromSourceRaw) {
-    list := x.EnvFromList()
+    list := x.EnvFromList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewEnvFromSourceFromRaw(ctx, *raw).XXXGetStruct())
@@ -7417,43 +7600,43 @@ func (x EphemeralContainer) IsSetEnvFrom() bool{
 
 // EnvList returns the underlying Structs list for iteration.
 // Use NewEnvVar() to create items and Append to add them.
-func (x EphemeralContainer) EnvList() *segment.Structs {
+func (x EphemeralContainer) EnvList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 7, XXXMappingEnvVar); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 7, XXXMappingEnvVar); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 7, XXXMappingEnvVar)
+    structs := segment.NewStructs(ctx, x.s, 7, XXXMappingEnvVar)
     return structs
 }
 
 // EnvLen returns the number of items in the list.
-func (x EphemeralContainer) EnvLen() int {
-    return x.EnvList().Len()
+func (x EphemeralContainer) EnvLen(ctx context.Context) int {
+    return x.EnvList(ctx).Len()
 }
 
 // EnvGet returns the item at the given index.
-func (x EphemeralContainer) EnvGet(index int) EnvVar {
-    s := x.EnvList().Get(index)
+func (x EphemeralContainer) EnvGet(ctx context.Context, index int) EnvVar {
+    s := x.EnvList(ctx).Get(index)
     return EnvVar{s: s}
 }
 
 // EnvAppend appends items to the list.
-func (x EphemeralContainer) EnvAppend(values ...EnvVar) {
-    list := x.EnvList()
+func (x EphemeralContainer) EnvAppend(ctx context.Context, values ...EnvVar) {
+    list := x.EnvList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendEnv is an alias for EnvAppend for backwards compatibility.
-func (x EphemeralContainer) AppendEnv(values ...EnvVar) {
-    x.EnvAppend(values...)
+func (x EphemeralContainer) AppendEnv(ctx context.Context, values ...EnvVar) {
+    x.EnvAppend(ctx, values...)
 }
 
 // EnvAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) EnvAppendRaw(ctx context.Context, values ...*EnvVarRaw) {
-    list := x.EnvList()
+    list := x.EnvList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewEnvVarFromRaw(ctx, *raw).XXXGetStruct())
@@ -7479,43 +7662,43 @@ func (x EphemeralContainer) IsSetResources() bool{
 
 // VolumeMountsList returns the underlying Structs list for iteration.
 // Use NewVolumeMount() to create items and Append to add them.
-func (x EphemeralContainer) VolumeMountsList() *segment.Structs {
+func (x EphemeralContainer) VolumeMountsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 9, XXXMappingVolumeMount); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 9, XXXMappingVolumeMount); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 9, XXXMappingVolumeMount)
+    structs := segment.NewStructs(ctx, x.s, 9, XXXMappingVolumeMount)
     return structs
 }
 
 // VolumeMountsLen returns the number of items in the list.
-func (x EphemeralContainer) VolumeMountsLen() int {
-    return x.VolumeMountsList().Len()
+func (x EphemeralContainer) VolumeMountsLen(ctx context.Context) int {
+    return x.VolumeMountsList(ctx).Len()
 }
 
 // VolumeMountsGet returns the item at the given index.
-func (x EphemeralContainer) VolumeMountsGet(index int) VolumeMount {
-    s := x.VolumeMountsList().Get(index)
+func (x EphemeralContainer) VolumeMountsGet(ctx context.Context, index int) VolumeMount {
+    s := x.VolumeMountsList(ctx).Get(index)
     return VolumeMount{s: s}
 }
 
 // VolumeMountsAppend appends items to the list.
-func (x EphemeralContainer) VolumeMountsAppend(values ...VolumeMount) {
-    list := x.VolumeMountsList()
+func (x EphemeralContainer) VolumeMountsAppend(ctx context.Context, values ...VolumeMount) {
+    list := x.VolumeMountsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendVolumeMounts is an alias for VolumeMountsAppend for backwards compatibility.
-func (x EphemeralContainer) AppendVolumeMounts(values ...VolumeMount) {
-    x.VolumeMountsAppend(values...)
+func (x EphemeralContainer) AppendVolumeMounts(ctx context.Context, values ...VolumeMount) {
+    x.VolumeMountsAppend(ctx, values...)
 }
 
 // VolumeMountsAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) VolumeMountsAppendRaw(ctx context.Context, values ...*VolumeMountRaw) {
-    list := x.VolumeMountsList()
+    list := x.VolumeMountsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewVolumeMountFromRaw(ctx, *raw).XXXGetStruct())
@@ -7528,43 +7711,43 @@ func (x EphemeralContainer) IsSetVolumeMounts() bool{
 
 // VolumeDevicesList returns the underlying Structs list for iteration.
 // Use NewVolumeDevice() to create items and Append to add them.
-func (x EphemeralContainer) VolumeDevicesList() *segment.Structs {
+func (x EphemeralContainer) VolumeDevicesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 10, XXXMappingVolumeDevice); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 10, XXXMappingVolumeDevice); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 10, XXXMappingVolumeDevice)
+    structs := segment.NewStructs(ctx, x.s, 10, XXXMappingVolumeDevice)
     return structs
 }
 
 // VolumeDevicesLen returns the number of items in the list.
-func (x EphemeralContainer) VolumeDevicesLen() int {
-    return x.VolumeDevicesList().Len()
+func (x EphemeralContainer) VolumeDevicesLen(ctx context.Context) int {
+    return x.VolumeDevicesList(ctx).Len()
 }
 
 // VolumeDevicesGet returns the item at the given index.
-func (x EphemeralContainer) VolumeDevicesGet(index int) VolumeDevice {
-    s := x.VolumeDevicesList().Get(index)
+func (x EphemeralContainer) VolumeDevicesGet(ctx context.Context, index int) VolumeDevice {
+    s := x.VolumeDevicesList(ctx).Get(index)
     return VolumeDevice{s: s}
 }
 
 // VolumeDevicesAppend appends items to the list.
-func (x EphemeralContainer) VolumeDevicesAppend(values ...VolumeDevice) {
-    list := x.VolumeDevicesList()
+func (x EphemeralContainer) VolumeDevicesAppend(ctx context.Context, values ...VolumeDevice) {
+    list := x.VolumeDevicesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendVolumeDevices is an alias for VolumeDevicesAppend for backwards compatibility.
-func (x EphemeralContainer) AppendVolumeDevices(values ...VolumeDevice) {
-    x.VolumeDevicesAppend(values...)
+func (x EphemeralContainer) AppendVolumeDevices(ctx context.Context, values ...VolumeDevice) {
+    x.VolumeDevicesAppend(ctx, values...)
 }
 
 // VolumeDevicesAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) VolumeDevicesAppendRaw(ctx context.Context, values ...*VolumeDeviceRaw) {
-    list := x.VolumeDevicesList()
+    list := x.VolumeDevicesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewVolumeDeviceFromRaw(ctx, *raw).XXXGetStruct())
@@ -7811,7 +7994,7 @@ func NewEphemeralContainerFromRaw(ctx context.Context, raw EphemeralContainerRaw
         x.SetWorkingDir(raw.WorkingDir)
     }
     if raw.Ports != nil {
-        list := x.PortsList()
+        list := x.PortsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Ports))
         for _, r := range raw.Ports {
             if r != nil {
@@ -7821,7 +8004,7 @@ func NewEphemeralContainerFromRaw(ctx context.Context, raw EphemeralContainerRaw
         list.SetAll(items)
     }
     if raw.EnvFrom != nil {
-        list := x.EnvFromList()
+        list := x.EnvFromList(ctx)
         items := make([]*segment.Struct, 0, len(raw.EnvFrom))
         for _, r := range raw.EnvFrom {
             if r != nil {
@@ -7831,7 +8014,7 @@ func NewEphemeralContainerFromRaw(ctx context.Context, raw EphemeralContainerRaw
         list.SetAll(items)
     }
     if raw.Env != nil {
-        list := x.EnvList()
+        list := x.EnvList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Env))
         for _, r := range raw.Env {
             if r != nil {
@@ -7844,7 +8027,7 @@ func NewEphemeralContainerFromRaw(ctx context.Context, raw EphemeralContainerRaw
         x.SetResources(NewResourceRequirementsFromRaw(ctx, *raw.Resources))
     }
     if raw.VolumeMounts != nil {
-        list := x.VolumeMountsList()
+        list := x.VolumeMountsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.VolumeMounts))
         for _, r := range raw.VolumeMounts {
             if r != nil {
@@ -7854,7 +8037,7 @@ func NewEphemeralContainerFromRaw(ctx context.Context, raw EphemeralContainerRaw
         list.SetAll(items)
     }
     if raw.VolumeDevices != nil {
-        list := x.VolumeDevicesList()
+        list := x.VolumeDevicesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.VolumeDevices))
         for _, r := range raw.VolumeDevices {
             if r != nil {
@@ -7903,7 +8086,7 @@ func NewEphemeralContainerFromRaw(ctx context.Context, raw EphemeralContainerRaw
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x EphemeralContainer) ToRaw() EphemeralContainerRaw {
+func (x EphemeralContainer) ToRaw(ctx context.Context) EphemeralContainerRaw {
     raw := EphemeralContainerRaw{}
     raw.Name = x.Name()
     raw.Image = x.Image()
@@ -7923,15 +8106,15 @@ func (x EphemeralContainer) ToRaw() EphemeralContainerRaw {
         raw.Ports = make([]*ContainerPortRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerPort{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Ports[i] = &itemRaw
         }
     } else if x.s.HasField(5) {
-        list := x.PortsList()
+        list := x.PortsList(ctx)
         raw.Ports = make([]*ContainerPortRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerPort{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Ports[i] = &itemRaw
         }
     }
@@ -7940,15 +8123,15 @@ func (x EphemeralContainer) ToRaw() EphemeralContainerRaw {
         raw.EnvFrom = make([]*EnvFromSourceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvFromSource{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EnvFrom[i] = &itemRaw
         }
     } else if x.s.HasField(6) {
-        list := x.EnvFromList()
+        list := x.EnvFromList(ctx)
         raw.EnvFrom = make([]*EnvFromSourceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvFromSource{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EnvFrom[i] = &itemRaw
         }
     }
@@ -7957,20 +8140,20 @@ func (x EphemeralContainer) ToRaw() EphemeralContainerRaw {
         raw.Env = make([]*EnvVarRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvVar{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Env[i] = &itemRaw
         }
     } else if x.s.HasField(7) {
-        list := x.EnvList()
+        list := x.EnvList(ctx)
         raw.Env = make([]*EnvVarRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EnvVar{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Env[i] = &itemRaw
         }
     }
     if x.s.HasField(8) {
-        nestedRaw := x.Resources().ToRaw()
+        nestedRaw := x.Resources().ToRaw(ctx)
         raw.Resources = &nestedRaw
     }
     if l := x.s.GetList(9); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -7978,15 +8161,15 @@ func (x EphemeralContainer) ToRaw() EphemeralContainerRaw {
         raw.VolumeMounts = make([]*VolumeMountRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeMount{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeMounts[i] = &itemRaw
         }
     } else if x.s.HasField(9) {
-        list := x.VolumeMountsList()
+        list := x.VolumeMountsList(ctx)
         raw.VolumeMounts = make([]*VolumeMountRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeMount{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeMounts[i] = &itemRaw
         }
     }
@@ -7995,39 +8178,39 @@ func (x EphemeralContainer) ToRaw() EphemeralContainerRaw {
         raw.VolumeDevices = make([]*VolumeDeviceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeDevice{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeDevices[i] = &itemRaw
         }
     } else if x.s.HasField(10) {
-        list := x.VolumeDevicesList()
+        list := x.VolumeDevicesList(ctx)
         raw.VolumeDevices = make([]*VolumeDeviceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeDevice{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.VolumeDevices[i] = &itemRaw
         }
     }
     if x.s.HasField(11) {
-        nestedRaw := x.LivenessProbe().ToRaw()
+        nestedRaw := x.LivenessProbe().ToRaw(ctx)
         raw.LivenessProbe = &nestedRaw
     }
     if x.s.HasField(12) {
-        nestedRaw := x.ReadinessProbe().ToRaw()
+        nestedRaw := x.ReadinessProbe().ToRaw(ctx)
         raw.ReadinessProbe = &nestedRaw
     }
     if x.s.HasField(13) {
-        nestedRaw := x.StartupProbe().ToRaw()
+        nestedRaw := x.StartupProbe().ToRaw(ctx)
         raw.StartupProbe = &nestedRaw
     }
     if x.s.HasField(14) {
-        nestedRaw := x.Lifecycle().ToRaw()
+        nestedRaw := x.Lifecycle().ToRaw(ctx)
         raw.Lifecycle = &nestedRaw
     }
     raw.TerminationMessagePath = x.TerminationMessagePath()
     raw.TerminationMessagePolicy = x.TerminationMessagePolicy()
     raw.ImagePullPolicy = x.ImagePullPolicy()
     if x.s.HasField(18) {
-        nestedRaw := x.SecurityContext().ToRaw()
+        nestedRaw := x.SecurityContext().ToRaw(ctx)
         raw.SecurityContext = &nestedRaw
     }
     raw.Stdin = x.Stdin()
@@ -8036,7 +8219,6 @@ func (x EphemeralContainer) ToRaw() EphemeralContainerRaw {
     raw.TargetContainerName = x.TargetContainerName()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -8055,7 +8237,7 @@ type EphemeralVolumeSource struct {
 // NewEphemeralVolumeSource creates a new pooled instance of EphemeralVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewEphemeralVolumeSource(ctx context.Context) EphemeralVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingEphemeralVolumeSource)
+    s := segment.New(ctx, XXXMappingEphemeralVolumeSource)
     s.SetIsSetEnabled(true)
     return EphemeralVolumeSource{
         s: s,
@@ -8065,7 +8247,7 @@ func NewEphemeralVolumeSource(ctx context.Context) EphemeralVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x EphemeralVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewEphemeralVolumeSourceFrom creates a new EphemeralVolumeSource from our internal Struct representation.
@@ -8078,14 +8260,22 @@ func XXXNewEphemeralVolumeSourceFrom(s *segment.Struct) EphemeralVolumeSource {
     return EphemeralVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x EphemeralVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x EphemeralVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x EphemeralVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -8167,15 +8357,14 @@ func NewEphemeralVolumeSourceFromRaw(ctx context.Context, raw EphemeralVolumeSou
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x EphemeralVolumeSource) ToRaw() EphemeralVolumeSourceRaw {
+func (x EphemeralVolumeSource) ToRaw(ctx context.Context) EphemeralVolumeSourceRaw {
     raw := EphemeralVolumeSourceRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.VolumeClaimTemplate().ToRaw()
+        nestedRaw := x.VolumeClaimTemplate().ToRaw(ctx)
         raw.VolumeClaimTemplate = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -8194,7 +8383,7 @@ type ExecAction struct {
 // NewExecAction creates a new pooled instance of ExecAction.
 // Call Release() when done to return it to the pool for reuse.
 func NewExecAction(ctx context.Context) ExecAction {
-    s := segment.NewPooled(ctx, XXXMappingExecAction)
+    s := segment.New(ctx, XXXMappingExecAction)
     s.SetIsSetEnabled(true)
     return ExecAction{
         s: s,
@@ -8204,7 +8393,7 @@ func NewExecAction(ctx context.Context) ExecAction {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ExecAction) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewExecActionFrom creates a new ExecAction from our internal Struct representation.
@@ -8217,14 +8406,22 @@ func XXXNewExecActionFrom(s *segment.Struct) ExecAction {
     return ExecAction{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ExecAction) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ExecAction) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ExecAction) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -8313,7 +8510,7 @@ func NewExecActionFromRaw(ctx context.Context, raw ExecActionRaw) ExecAction {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ExecAction) ToRaw() ExecActionRaw {
+func (x ExecAction) ToRaw(ctx context.Context) ExecActionRaw {
     raw := ExecActionRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Strings).Len() > 0 {
         raw.Command = l.(*segment.Strings).Slice()
@@ -8322,7 +8519,6 @@ func (x ExecAction) ToRaw() ExecActionRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -8341,7 +8537,7 @@ type GCEPersistentDiskVolumeSource struct {
 // NewGCEPersistentDiskVolumeSource creates a new pooled instance of GCEPersistentDiskVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewGCEPersistentDiskVolumeSource(ctx context.Context) GCEPersistentDiskVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingGCEPersistentDiskVolumeSource)
+    s := segment.New(ctx, XXXMappingGCEPersistentDiskVolumeSource)
     s.SetIsSetEnabled(true)
     return GCEPersistentDiskVolumeSource{
         s: s,
@@ -8351,7 +8547,7 @@ func NewGCEPersistentDiskVolumeSource(ctx context.Context) GCEPersistentDiskVolu
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x GCEPersistentDiskVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewGCEPersistentDiskVolumeSourceFrom creates a new GCEPersistentDiskVolumeSource from our internal Struct representation.
@@ -8364,14 +8560,22 @@ func XXXNewGCEPersistentDiskVolumeSourceFrom(s *segment.Struct) GCEPersistentDis
     return GCEPersistentDiskVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x GCEPersistentDiskVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x GCEPersistentDiskVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x GCEPersistentDiskVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -8500,7 +8704,7 @@ func NewGCEPersistentDiskVolumeSourceFromRaw(ctx context.Context, raw GCEPersist
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x GCEPersistentDiskVolumeSource) ToRaw() GCEPersistentDiskVolumeSourceRaw {
+func (x GCEPersistentDiskVolumeSource) ToRaw(ctx context.Context) GCEPersistentDiskVolumeSourceRaw {
     raw := GCEPersistentDiskVolumeSourceRaw{}
     raw.PdName = x.PdName()
     raw.FsType = x.FsType()
@@ -8508,7 +8712,6 @@ func (x GCEPersistentDiskVolumeSource) ToRaw() GCEPersistentDiskVolumeSourceRaw 
     raw.ReadOnly = x.ReadOnly()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -8527,7 +8730,7 @@ type GRPCAction struct {
 // NewGRPCAction creates a new pooled instance of GRPCAction.
 // Call Release() when done to return it to the pool for reuse.
 func NewGRPCAction(ctx context.Context) GRPCAction {
-    s := segment.NewPooled(ctx, XXXMappingGRPCAction)
+    s := segment.New(ctx, XXXMappingGRPCAction)
     s.SetIsSetEnabled(true)
     return GRPCAction{
         s: s,
@@ -8537,7 +8740,7 @@ func NewGRPCAction(ctx context.Context) GRPCAction {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x GRPCAction) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewGRPCActionFrom creates a new GRPCAction from our internal Struct representation.
@@ -8550,14 +8753,22 @@ func XXXNewGRPCActionFrom(s *segment.Struct) GRPCAction {
     return GRPCAction{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x GRPCAction) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x GRPCAction) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x GRPCAction) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -8654,13 +8865,12 @@ func NewGRPCActionFromRaw(ctx context.Context, raw GRPCActionRaw) GRPCAction {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x GRPCAction) ToRaw() GRPCActionRaw {
+func (x GRPCAction) ToRaw(ctx context.Context) GRPCActionRaw {
     raw := GRPCActionRaw{}
     raw.Port = x.Port()
     raw.Service = x.Service()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -8679,7 +8889,7 @@ type HTTPGetAction struct {
 // NewHTTPGetAction creates a new pooled instance of HTTPGetAction.
 // Call Release() when done to return it to the pool for reuse.
 func NewHTTPGetAction(ctx context.Context) HTTPGetAction {
-    s := segment.NewPooled(ctx, XXXMappingHTTPGetAction)
+    s := segment.New(ctx, XXXMappingHTTPGetAction)
     s.SetIsSetEnabled(true)
     return HTTPGetAction{
         s: s,
@@ -8689,7 +8899,7 @@ func NewHTTPGetAction(ctx context.Context) HTTPGetAction {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x HTTPGetAction) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewHTTPGetActionFrom creates a new HTTPGetAction from our internal Struct representation.
@@ -8702,14 +8912,22 @@ func XXXNewHTTPGetActionFrom(s *segment.Struct) HTTPGetAction {
     return HTTPGetAction{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x HTTPGetAction) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x HTTPGetAction) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x HTTPGetAction) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -8773,43 +8991,43 @@ func (x HTTPGetAction) IsSetScheme() bool{
 
 // HttpHeadersList returns the underlying Structs list for iteration.
 // Use NewHTTPHeader() to create items and Append to add them.
-func (x HTTPGetAction) HttpHeadersList() *segment.Structs {
+func (x HTTPGetAction) HttpHeadersList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 4, XXXMappingHTTPHeader); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 4, XXXMappingHTTPHeader); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 4, XXXMappingHTTPHeader)
+    structs := segment.NewStructs(ctx, x.s, 4, XXXMappingHTTPHeader)
     return structs
 }
 
 // HttpHeadersLen returns the number of items in the list.
-func (x HTTPGetAction) HttpHeadersLen() int {
-    return x.HttpHeadersList().Len()
+func (x HTTPGetAction) HttpHeadersLen(ctx context.Context) int {
+    return x.HttpHeadersList(ctx).Len()
 }
 
 // HttpHeadersGet returns the item at the given index.
-func (x HTTPGetAction) HttpHeadersGet(index int) HTTPHeader {
-    s := x.HttpHeadersList().Get(index)
+func (x HTTPGetAction) HttpHeadersGet(ctx context.Context, index int) HTTPHeader {
+    s := x.HttpHeadersList(ctx).Get(index)
     return HTTPHeader{s: s}
 }
 
 // HttpHeadersAppend appends items to the list.
-func (x HTTPGetAction) HttpHeadersAppend(values ...HTTPHeader) {
-    list := x.HttpHeadersList()
+func (x HTTPGetAction) HttpHeadersAppend(ctx context.Context, values ...HTTPHeader) {
+    list := x.HttpHeadersList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendHttpHeaders is an alias for HttpHeadersAppend for backwards compatibility.
-func (x HTTPGetAction) AppendHttpHeaders(values ...HTTPHeader) {
-    x.HttpHeadersAppend(values...)
+func (x HTTPGetAction) AppendHttpHeaders(ctx context.Context, values ...HTTPHeader) {
+    x.HttpHeadersAppend(ctx, values...)
 }
 
 // HttpHeadersAppendRaw appends items to the list using Raw struct representations.
 func (x HTTPGetAction) HttpHeadersAppendRaw(ctx context.Context, values ...*HTTPHeaderRaw) {
-    list := x.HttpHeadersList()
+    list := x.HttpHeadersList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewHTTPHeaderFromRaw(ctx, *raw).XXXGetStruct())
@@ -8886,7 +9104,7 @@ func NewHTTPGetActionFromRaw(ctx context.Context, raw HTTPGetActionRaw) HTTPGetA
         x.SetScheme(raw.Scheme)
     }
     if raw.HttpHeaders != nil {
-        list := x.HttpHeadersList()
+        list := x.HttpHeadersList(ctx)
         items := make([]*segment.Struct, 0, len(raw.HttpHeaders))
         for _, r := range raw.HttpHeaders {
             if r != nil {
@@ -8899,11 +9117,11 @@ func NewHTTPGetActionFromRaw(ctx context.Context, raw HTTPGetActionRaw) HTTPGetA
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x HTTPGetAction) ToRaw() HTTPGetActionRaw {
+func (x HTTPGetAction) ToRaw(ctx context.Context) HTTPGetActionRaw {
     raw := HTTPGetActionRaw{}
     raw.Path = x.Path()
     if x.s.HasField(1) {
-        nestedRaw := x.Port().ToRaw()
+        nestedRaw := x.Port().ToRaw(ctx)
         raw.Port = &nestedRaw
     }
     raw.Host = x.Host()
@@ -8913,21 +9131,20 @@ func (x HTTPGetAction) ToRaw() HTTPGetActionRaw {
         raw.HttpHeaders = make([]*HTTPHeaderRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := HTTPHeader{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.HttpHeaders[i] = &itemRaw
         }
     } else if x.s.HasField(4) {
-        list := x.HttpHeadersList()
+        list := x.HttpHeadersList(ctx)
         raw.HttpHeaders = make([]*HTTPHeaderRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := HTTPHeader{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.HttpHeaders[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -8946,7 +9163,7 @@ type HTTPHeader struct {
 // NewHTTPHeader creates a new pooled instance of HTTPHeader.
 // Call Release() when done to return it to the pool for reuse.
 func NewHTTPHeader(ctx context.Context) HTTPHeader {
-    s := segment.NewPooled(ctx, XXXMappingHTTPHeader)
+    s := segment.New(ctx, XXXMappingHTTPHeader)
     s.SetIsSetEnabled(true)
     return HTTPHeader{
         s: s,
@@ -8956,7 +9173,7 @@ func NewHTTPHeader(ctx context.Context) HTTPHeader {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x HTTPHeader) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewHTTPHeaderFrom creates a new HTTPHeader from our internal Struct representation.
@@ -8969,14 +9186,22 @@ func XXXNewHTTPHeaderFrom(s *segment.Struct) HTTPHeader {
     return HTTPHeader{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x HTTPHeader) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x HTTPHeader) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x HTTPHeader) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -9073,13 +9298,12 @@ func NewHTTPHeaderFromRaw(ctx context.Context, raw HTTPHeaderRaw) HTTPHeader {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x HTTPHeader) ToRaw() HTTPHeaderRaw {
+func (x HTTPHeader) ToRaw(ctx context.Context) HTTPHeaderRaw {
     raw := HTTPHeaderRaw{}
     raw.Name = x.Name()
     raw.Value = x.Value()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -9098,7 +9322,7 @@ type HostAlias struct {
 // NewHostAlias creates a new pooled instance of HostAlias.
 // Call Release() when done to return it to the pool for reuse.
 func NewHostAlias(ctx context.Context) HostAlias {
-    s := segment.NewPooled(ctx, XXXMappingHostAlias)
+    s := segment.New(ctx, XXXMappingHostAlias)
     s.SetIsSetEnabled(true)
     return HostAlias{
         s: s,
@@ -9108,7 +9332,7 @@ func NewHostAlias(ctx context.Context) HostAlias {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x HostAlias) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewHostAliasFrom creates a new HostAlias from our internal Struct representation.
@@ -9121,14 +9345,22 @@ func XXXNewHostAliasFrom(s *segment.Struct) HostAlias {
     return HostAlias{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x HostAlias) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x HostAlias) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x HostAlias) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -9233,7 +9465,7 @@ func NewHostAliasFromRaw(ctx context.Context, raw HostAliasRaw) HostAlias {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x HostAlias) ToRaw() HostAliasRaw {
+func (x HostAlias) ToRaw(ctx context.Context) HostAliasRaw {
     raw := HostAliasRaw{}
     raw.Ip = x.Ip()
     if l := x.s.GetList(1); l != nil && l.(*segment.Strings).Len() > 0 {
@@ -9243,7 +9475,6 @@ func (x HostAlias) ToRaw() HostAliasRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -9262,7 +9493,7 @@ type HostIP struct {
 // NewHostIP creates a new pooled instance of HostIP.
 // Call Release() when done to return it to the pool for reuse.
 func NewHostIP(ctx context.Context) HostIP {
-    s := segment.NewPooled(ctx, XXXMappingHostIP)
+    s := segment.New(ctx, XXXMappingHostIP)
     s.SetIsSetEnabled(true)
     return HostIP{
         s: s,
@@ -9272,7 +9503,7 @@ func NewHostIP(ctx context.Context) HostIP {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x HostIP) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewHostIPFrom creates a new HostIP from our internal Struct representation.
@@ -9285,14 +9516,22 @@ func XXXNewHostIPFrom(s *segment.Struct) HostIP {
     return HostIP{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x HostIP) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x HostIP) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x HostIP) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -9373,12 +9612,11 @@ func NewHostIPFromRaw(ctx context.Context, raw HostIPRaw) HostIP {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x HostIP) ToRaw() HostIPRaw {
+func (x HostIP) ToRaw(ctx context.Context) HostIPRaw {
     raw := HostIPRaw{}
     raw.Ip = x.Ip()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -9397,7 +9635,7 @@ type HostPathVolumeSource struct {
 // NewHostPathVolumeSource creates a new pooled instance of HostPathVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewHostPathVolumeSource(ctx context.Context) HostPathVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingHostPathVolumeSource)
+    s := segment.New(ctx, XXXMappingHostPathVolumeSource)
     s.SetIsSetEnabled(true)
     return HostPathVolumeSource{
         s: s,
@@ -9407,7 +9645,7 @@ func NewHostPathVolumeSource(ctx context.Context) HostPathVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x HostPathVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewHostPathVolumeSourceFrom creates a new HostPathVolumeSource from our internal Struct representation.
@@ -9420,14 +9658,22 @@ func XXXNewHostPathVolumeSourceFrom(s *segment.Struct) HostPathVolumeSource {
     return HostPathVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x HostPathVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x HostPathVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x HostPathVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -9524,13 +9770,12 @@ func NewHostPathVolumeSourceFromRaw(ctx context.Context, raw HostPathVolumeSourc
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x HostPathVolumeSource) ToRaw() HostPathVolumeSourceRaw {
+func (x HostPathVolumeSource) ToRaw(ctx context.Context) HostPathVolumeSourceRaw {
     raw := HostPathVolumeSourceRaw{}
     raw.Path = x.Path()
     raw.Type = x.Type()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -9549,7 +9794,7 @@ type IntOrString struct {
 // NewIntOrString creates a new pooled instance of IntOrString.
 // Call Release() when done to return it to the pool for reuse.
 func NewIntOrString(ctx context.Context) IntOrString {
-    s := segment.NewPooled(ctx, XXXMappingIntOrString)
+    s := segment.New(ctx, XXXMappingIntOrString)
     s.SetIsSetEnabled(true)
     return IntOrString{
         s: s,
@@ -9559,7 +9804,7 @@ func NewIntOrString(ctx context.Context) IntOrString {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x IntOrString) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewIntOrStringFrom creates a new IntOrString from our internal Struct representation.
@@ -9572,14 +9817,22 @@ func XXXNewIntOrStringFrom(s *segment.Struct) IntOrString {
     return IntOrString{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x IntOrString) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x IntOrString) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x IntOrString) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -9692,14 +9945,13 @@ func NewIntOrStringFromRaw(ctx context.Context, raw IntOrStringRaw) IntOrString 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x IntOrString) ToRaw() IntOrStringRaw {
+func (x IntOrString) ToRaw(ctx context.Context) IntOrStringRaw {
     raw := IntOrStringRaw{}
     raw.IntVal = x.IntVal()
     raw.StrVal = x.StrVal()
     raw.IsString = x.IsString()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -9718,7 +9970,7 @@ type KeyToPath struct {
 // NewKeyToPath creates a new pooled instance of KeyToPath.
 // Call Release() when done to return it to the pool for reuse.
 func NewKeyToPath(ctx context.Context) KeyToPath {
-    s := segment.NewPooled(ctx, XXXMappingKeyToPath)
+    s := segment.New(ctx, XXXMappingKeyToPath)
     s.SetIsSetEnabled(true)
     return KeyToPath{
         s: s,
@@ -9728,7 +9980,7 @@ func NewKeyToPath(ctx context.Context) KeyToPath {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x KeyToPath) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewKeyToPathFrom creates a new KeyToPath from our internal Struct representation.
@@ -9741,14 +9993,22 @@ func XXXNewKeyToPathFrom(s *segment.Struct) KeyToPath {
     return KeyToPath{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x KeyToPath) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x KeyToPath) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x KeyToPath) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -9861,14 +10121,13 @@ func NewKeyToPathFromRaw(ctx context.Context, raw KeyToPathRaw) KeyToPath {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x KeyToPath) ToRaw() KeyToPathRaw {
+func (x KeyToPath) ToRaw(ctx context.Context) KeyToPathRaw {
     raw := KeyToPathRaw{}
     raw.Key = x.Key()
     raw.Path = x.Path()
     raw.Mode = x.Mode()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -9887,7 +10146,7 @@ type KeyValue struct {
 // NewKeyValue creates a new pooled instance of KeyValue.
 // Call Release() when done to return it to the pool for reuse.
 func NewKeyValue(ctx context.Context) KeyValue {
-    s := segment.NewPooled(ctx, XXXMappingKeyValue)
+    s := segment.New(ctx, XXXMappingKeyValue)
     s.SetIsSetEnabled(true)
     return KeyValue{
         s: s,
@@ -9897,7 +10156,7 @@ func NewKeyValue(ctx context.Context) KeyValue {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x KeyValue) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewKeyValueFrom creates a new KeyValue from our internal Struct representation.
@@ -9910,14 +10169,22 @@ func XXXNewKeyValueFrom(s *segment.Struct) KeyValue {
     return KeyValue{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x KeyValue) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x KeyValue) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x KeyValue) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -10014,13 +10281,12 @@ func NewKeyValueFromRaw(ctx context.Context, raw KeyValueRaw) KeyValue {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x KeyValue) ToRaw() KeyValueRaw {
+func (x KeyValue) ToRaw(ctx context.Context) KeyValueRaw {
     raw := KeyValueRaw{}
     raw.Key = x.Key()
     raw.Value = x.Value()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -10039,7 +10305,7 @@ type LabelSelector struct {
 // NewLabelSelector creates a new pooled instance of LabelSelector.
 // Call Release() when done to return it to the pool for reuse.
 func NewLabelSelector(ctx context.Context) LabelSelector {
-    s := segment.NewPooled(ctx, XXXMappingLabelSelector)
+    s := segment.New(ctx, XXXMappingLabelSelector)
     s.SetIsSetEnabled(true)
     return LabelSelector{
         s: s,
@@ -10049,7 +10315,7 @@ func NewLabelSelector(ctx context.Context) LabelSelector {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x LabelSelector) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewLabelSelectorFrom creates a new LabelSelector from our internal Struct representation.
@@ -10062,14 +10328,22 @@ func XXXNewLabelSelectorFrom(s *segment.Struct) LabelSelector {
     return LabelSelector{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x LabelSelector) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x LabelSelector) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x LabelSelector) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -10084,43 +10358,43 @@ func (x LabelSelector) UnmarshalReader (r io.Reader) (int, error) {
 
 // MatchLabelsList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x LabelSelector) MatchLabelsList() *segment.Structs {
+func (x LabelSelector) MatchLabelsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingKeyValue)
     return structs
 }
 
 // MatchLabelsLen returns the number of items in the list.
-func (x LabelSelector) MatchLabelsLen() int {
-    return x.MatchLabelsList().Len()
+func (x LabelSelector) MatchLabelsLen(ctx context.Context) int {
+    return x.MatchLabelsList(ctx).Len()
 }
 
 // MatchLabelsGet returns the item at the given index.
-func (x LabelSelector) MatchLabelsGet(index int) KeyValue {
-    s := x.MatchLabelsList().Get(index)
+func (x LabelSelector) MatchLabelsGet(ctx context.Context, index int) KeyValue {
+    s := x.MatchLabelsList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // MatchLabelsAppend appends items to the list.
-func (x LabelSelector) MatchLabelsAppend(values ...KeyValue) {
-    list := x.MatchLabelsList()
+func (x LabelSelector) MatchLabelsAppend(ctx context.Context, values ...KeyValue) {
+    list := x.MatchLabelsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendMatchLabels is an alias for MatchLabelsAppend for backwards compatibility.
-func (x LabelSelector) AppendMatchLabels(values ...KeyValue) {
-    x.MatchLabelsAppend(values...)
+func (x LabelSelector) AppendMatchLabels(ctx context.Context, values ...KeyValue) {
+    x.MatchLabelsAppend(ctx, values...)
 }
 
 // MatchLabelsAppendRaw appends items to the list using Raw struct representations.
 func (x LabelSelector) MatchLabelsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.MatchLabelsList()
+    list := x.MatchLabelsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -10133,43 +10407,43 @@ func (x LabelSelector) IsSetMatchLabels() bool{
 
 // MatchExpressionsList returns the underlying Structs list for iteration.
 // Use NewLabelSelectorRequirement() to create items and Append to add them.
-func (x LabelSelector) MatchExpressionsList() *segment.Structs {
+func (x LabelSelector) MatchExpressionsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingLabelSelectorRequirement); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingLabelSelectorRequirement); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingLabelSelectorRequirement)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingLabelSelectorRequirement)
     return structs
 }
 
 // MatchExpressionsLen returns the number of items in the list.
-func (x LabelSelector) MatchExpressionsLen() int {
-    return x.MatchExpressionsList().Len()
+func (x LabelSelector) MatchExpressionsLen(ctx context.Context) int {
+    return x.MatchExpressionsList(ctx).Len()
 }
 
 // MatchExpressionsGet returns the item at the given index.
-func (x LabelSelector) MatchExpressionsGet(index int) LabelSelectorRequirement {
-    s := x.MatchExpressionsList().Get(index)
+func (x LabelSelector) MatchExpressionsGet(ctx context.Context, index int) LabelSelectorRequirement {
+    s := x.MatchExpressionsList(ctx).Get(index)
     return LabelSelectorRequirement{s: s}
 }
 
 // MatchExpressionsAppend appends items to the list.
-func (x LabelSelector) MatchExpressionsAppend(values ...LabelSelectorRequirement) {
-    list := x.MatchExpressionsList()
+func (x LabelSelector) MatchExpressionsAppend(ctx context.Context, values ...LabelSelectorRequirement) {
+    list := x.MatchExpressionsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendMatchExpressions is an alias for MatchExpressionsAppend for backwards compatibility.
-func (x LabelSelector) AppendMatchExpressions(values ...LabelSelectorRequirement) {
-    x.MatchExpressionsAppend(values...)
+func (x LabelSelector) AppendMatchExpressions(ctx context.Context, values ...LabelSelectorRequirement) {
+    x.MatchExpressionsAppend(ctx, values...)
 }
 
 // MatchExpressionsAppendRaw appends items to the list using Raw struct representations.
 func (x LabelSelector) MatchExpressionsAppendRaw(ctx context.Context, values ...*LabelSelectorRequirementRaw) {
-    list := x.MatchExpressionsList()
+    list := x.MatchExpressionsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewLabelSelectorRequirementFromRaw(ctx, *raw).XXXGetStruct())
@@ -10231,7 +10505,7 @@ type LabelSelectorRaw struct {
 func NewLabelSelectorFromRaw(ctx context.Context, raw LabelSelectorRaw) LabelSelector {
     x := NewLabelSelector(ctx)
     if raw.MatchLabels != nil {
-        list := x.MatchLabelsList()
+        list := x.MatchLabelsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.MatchLabels))
         for _, r := range raw.MatchLabels {
             if r != nil {
@@ -10241,7 +10515,7 @@ func NewLabelSelectorFromRaw(ctx context.Context, raw LabelSelectorRaw) LabelSel
         list.SetAll(items)
     }
     if raw.MatchExpressions != nil {
-        list := x.MatchExpressionsList()
+        list := x.MatchExpressionsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.MatchExpressions))
         for _, r := range raw.MatchExpressions {
             if r != nil {
@@ -10254,22 +10528,22 @@ func NewLabelSelectorFromRaw(ctx context.Context, raw LabelSelectorRaw) LabelSel
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x LabelSelector) ToRaw() LabelSelectorRaw {
+func (x LabelSelector) ToRaw(ctx context.Context) LabelSelectorRaw {
     raw := LabelSelectorRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.MatchLabels = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchLabels[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.MatchLabelsList()
+        list := x.MatchLabelsList(ctx)
         raw.MatchLabels = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchLabels[i] = &itemRaw
         }
     }
@@ -10278,21 +10552,20 @@ func (x LabelSelector) ToRaw() LabelSelectorRaw {
         raw.MatchExpressions = make([]*LabelSelectorRequirementRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := LabelSelectorRequirement{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchExpressions[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.MatchExpressionsList()
+        list := x.MatchExpressionsList(ctx)
         raw.MatchExpressions = make([]*LabelSelectorRequirementRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := LabelSelectorRequirement{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchExpressions[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -10311,7 +10584,7 @@ type LabelSelectorRequirement struct {
 // NewLabelSelectorRequirement creates a new pooled instance of LabelSelectorRequirement.
 // Call Release() when done to return it to the pool for reuse.
 func NewLabelSelectorRequirement(ctx context.Context) LabelSelectorRequirement {
-    s := segment.NewPooled(ctx, XXXMappingLabelSelectorRequirement)
+    s := segment.New(ctx, XXXMappingLabelSelectorRequirement)
     s.SetIsSetEnabled(true)
     return LabelSelectorRequirement{
         s: s,
@@ -10321,7 +10594,7 @@ func NewLabelSelectorRequirement(ctx context.Context) LabelSelectorRequirement {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x LabelSelectorRequirement) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewLabelSelectorRequirementFrom creates a new LabelSelectorRequirement from our internal Struct representation.
@@ -10334,14 +10607,22 @@ func XXXNewLabelSelectorRequirementFrom(s *segment.Struct) LabelSelectorRequirem
     return LabelSelectorRequirement{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x LabelSelectorRequirement) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x LabelSelectorRequirement) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x LabelSelectorRequirement) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -10462,7 +10743,7 @@ func NewLabelSelectorRequirementFromRaw(ctx context.Context, raw LabelSelectorRe
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x LabelSelectorRequirement) ToRaw() LabelSelectorRequirementRaw {
+func (x LabelSelectorRequirement) ToRaw(ctx context.Context) LabelSelectorRequirementRaw {
     raw := LabelSelectorRequirementRaw{}
     raw.Key = x.Key()
     raw.Operator = x.Operator()
@@ -10473,7 +10754,6 @@ func (x LabelSelectorRequirement) ToRaw() LabelSelectorRequirementRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -10492,7 +10772,7 @@ type Lifecycle struct {
 // NewLifecycle creates a new pooled instance of Lifecycle.
 // Call Release() when done to return it to the pool for reuse.
 func NewLifecycle(ctx context.Context) Lifecycle {
-    s := segment.NewPooled(ctx, XXXMappingLifecycle)
+    s := segment.New(ctx, XXXMappingLifecycle)
     s.SetIsSetEnabled(true)
     return Lifecycle{
         s: s,
@@ -10502,7 +10782,7 @@ func NewLifecycle(ctx context.Context) Lifecycle {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Lifecycle) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewLifecycleFrom creates a new Lifecycle from our internal Struct representation.
@@ -10515,14 +10795,22 @@ func XXXNewLifecycleFrom(s *segment.Struct) Lifecycle {
     return Lifecycle{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Lifecycle) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Lifecycle) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Lifecycle) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -10621,19 +10909,18 @@ func NewLifecycleFromRaw(ctx context.Context, raw LifecycleRaw) Lifecycle {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Lifecycle) ToRaw() LifecycleRaw {
+func (x Lifecycle) ToRaw(ctx context.Context) LifecycleRaw {
     raw := LifecycleRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.PostStart().ToRaw()
+        nestedRaw := x.PostStart().ToRaw(ctx)
         raw.PostStart = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.PreStop().ToRaw()
+        nestedRaw := x.PreStop().ToRaw(ctx)
         raw.PreStop = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -10652,7 +10939,7 @@ type LifecycleHandler struct {
 // NewLifecycleHandler creates a new pooled instance of LifecycleHandler.
 // Call Release() when done to return it to the pool for reuse.
 func NewLifecycleHandler(ctx context.Context) LifecycleHandler {
-    s := segment.NewPooled(ctx, XXXMappingLifecycleHandler)
+    s := segment.New(ctx, XXXMappingLifecycleHandler)
     s.SetIsSetEnabled(true)
     return LifecycleHandler{
         s: s,
@@ -10662,7 +10949,7 @@ func NewLifecycleHandler(ctx context.Context) LifecycleHandler {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x LifecycleHandler) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewLifecycleHandlerFrom creates a new LifecycleHandler from our internal Struct representation.
@@ -10675,14 +10962,22 @@ func XXXNewLifecycleHandlerFrom(s *segment.Struct) LifecycleHandler {
     return LifecycleHandler{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x LifecycleHandler) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x LifecycleHandler) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x LifecycleHandler) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -10815,27 +11110,26 @@ func NewLifecycleHandlerFromRaw(ctx context.Context, raw LifecycleHandlerRaw) Li
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x LifecycleHandler) ToRaw() LifecycleHandlerRaw {
+func (x LifecycleHandler) ToRaw(ctx context.Context) LifecycleHandlerRaw {
     raw := LifecycleHandlerRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Exec().ToRaw()
+        nestedRaw := x.Exec().ToRaw(ctx)
         raw.Exec = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.HttpGet().ToRaw()
+        nestedRaw := x.HttpGet().ToRaw(ctx)
         raw.HttpGet = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.TcpSocket().ToRaw()
+        nestedRaw := x.TcpSocket().ToRaw(ctx)
         raw.TcpSocket = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.Sleep().ToRaw()
+        nestedRaw := x.Sleep().ToRaw(ctx)
         raw.Sleep = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -10854,7 +11148,7 @@ type LocalObjectReference struct {
 // NewLocalObjectReference creates a new pooled instance of LocalObjectReference.
 // Call Release() when done to return it to the pool for reuse.
 func NewLocalObjectReference(ctx context.Context) LocalObjectReference {
-    s := segment.NewPooled(ctx, XXXMappingLocalObjectReference)
+    s := segment.New(ctx, XXXMappingLocalObjectReference)
     s.SetIsSetEnabled(true)
     return LocalObjectReference{
         s: s,
@@ -10864,7 +11158,7 @@ func NewLocalObjectReference(ctx context.Context) LocalObjectReference {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x LocalObjectReference) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewLocalObjectReferenceFrom creates a new LocalObjectReference from our internal Struct representation.
@@ -10877,14 +11171,22 @@ func XXXNewLocalObjectReferenceFrom(s *segment.Struct) LocalObjectReference {
     return LocalObjectReference{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x LocalObjectReference) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x LocalObjectReference) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x LocalObjectReference) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -10965,12 +11267,11 @@ func NewLocalObjectReferenceFromRaw(ctx context.Context, raw LocalObjectReferenc
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x LocalObjectReference) ToRaw() LocalObjectReferenceRaw {
+func (x LocalObjectReference) ToRaw(ctx context.Context) LocalObjectReferenceRaw {
     raw := LocalObjectReferenceRaw{}
     raw.Name = x.Name()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -10989,7 +11290,7 @@ type ManagedFieldsEntry struct {
 // NewManagedFieldsEntry creates a new pooled instance of ManagedFieldsEntry.
 // Call Release() when done to return it to the pool for reuse.
 func NewManagedFieldsEntry(ctx context.Context) ManagedFieldsEntry {
-    s := segment.NewPooled(ctx, XXXMappingManagedFieldsEntry)
+    s := segment.New(ctx, XXXMappingManagedFieldsEntry)
     s.SetIsSetEnabled(true)
     return ManagedFieldsEntry{
         s: s,
@@ -10999,7 +11300,7 @@ func NewManagedFieldsEntry(ctx context.Context) ManagedFieldsEntry {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ManagedFieldsEntry) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewManagedFieldsEntryFrom creates a new ManagedFieldsEntry from our internal Struct representation.
@@ -11012,14 +11313,22 @@ func XXXNewManagedFieldsEntryFrom(s *segment.Struct) ManagedFieldsEntry {
     return ManagedFieldsEntry{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ManagedFieldsEntry) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ManagedFieldsEntry) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ManagedFieldsEntry) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -11197,13 +11506,13 @@ func NewManagedFieldsEntryFromRaw(ctx context.Context, raw ManagedFieldsEntryRaw
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ManagedFieldsEntry) ToRaw() ManagedFieldsEntryRaw {
+func (x ManagedFieldsEntry) ToRaw(ctx context.Context) ManagedFieldsEntryRaw {
     raw := ManagedFieldsEntryRaw{}
     raw.Manager = x.Manager()
     raw.Operation = x.Operation()
     raw.ApiVersion = x.ApiVersion()
     if x.s.HasField(3) {
-        nestedRaw := x.Time().ToRaw()
+        nestedRaw := x.Time().ToRaw(ctx)
         raw.Time = &nestedRaw
     }
     raw.FieldsType = x.FieldsType()
@@ -11211,7 +11520,6 @@ func (x ManagedFieldsEntry) ToRaw() ManagedFieldsEntryRaw {
     raw.Subresource = x.Subresource()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -11230,7 +11538,7 @@ type NFSVolumeSource struct {
 // NewNFSVolumeSource creates a new pooled instance of NFSVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewNFSVolumeSource(ctx context.Context) NFSVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingNFSVolumeSource)
+    s := segment.New(ctx, XXXMappingNFSVolumeSource)
     s.SetIsSetEnabled(true)
     return NFSVolumeSource{
         s: s,
@@ -11240,7 +11548,7 @@ func NewNFSVolumeSource(ctx context.Context) NFSVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x NFSVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewNFSVolumeSourceFrom creates a new NFSVolumeSource from our internal Struct representation.
@@ -11253,14 +11561,22 @@ func XXXNewNFSVolumeSourceFrom(s *segment.Struct) NFSVolumeSource {
     return NFSVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x NFSVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x NFSVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x NFSVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -11373,14 +11689,13 @@ func NewNFSVolumeSourceFromRaw(ctx context.Context, raw NFSVolumeSourceRaw) NFSV
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x NFSVolumeSource) ToRaw() NFSVolumeSourceRaw {
+func (x NFSVolumeSource) ToRaw(ctx context.Context) NFSVolumeSourceRaw {
     raw := NFSVolumeSourceRaw{}
     raw.Server = x.Server()
     raw.Path = x.Path()
     raw.ReadOnly = x.ReadOnly()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -11399,7 +11714,7 @@ type NodeAffinity struct {
 // NewNodeAffinity creates a new pooled instance of NodeAffinity.
 // Call Release() when done to return it to the pool for reuse.
 func NewNodeAffinity(ctx context.Context) NodeAffinity {
-    s := segment.NewPooled(ctx, XXXMappingNodeAffinity)
+    s := segment.New(ctx, XXXMappingNodeAffinity)
     s.SetIsSetEnabled(true)
     return NodeAffinity{
         s: s,
@@ -11409,7 +11724,7 @@ func NewNodeAffinity(ctx context.Context) NodeAffinity {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x NodeAffinity) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewNodeAffinityFrom creates a new NodeAffinity from our internal Struct representation.
@@ -11422,14 +11737,22 @@ func XXXNewNodeAffinityFrom(s *segment.Struct) NodeAffinity {
     return NodeAffinity{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x NodeAffinity) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x NodeAffinity) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x NodeAffinity) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -11457,43 +11780,43 @@ func (x NodeAffinity) IsSetRequiredDuringSchedulingIgnoredDuringExecution() bool
 
 // PreferredDuringSchedulingIgnoredDuringExecutionList returns the underlying Structs list for iteration.
 // Use NewPreferredSchedulingTerm() to create items and Append to add them.
-func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionList() *segment.Structs {
+func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingPreferredSchedulingTerm); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingPreferredSchedulingTerm); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingPreferredSchedulingTerm)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingPreferredSchedulingTerm)
     return structs
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionLen returns the number of items in the list.
-func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionLen() int {
-    return x.PreferredDuringSchedulingIgnoredDuringExecutionList().Len()
+func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionLen(ctx context.Context) int {
+    return x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx).Len()
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionGet returns the item at the given index.
-func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionGet(index int) PreferredSchedulingTerm {
-    s := x.PreferredDuringSchedulingIgnoredDuringExecutionList().Get(index)
+func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionGet(ctx context.Context, index int) PreferredSchedulingTerm {
+    s := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx).Get(index)
     return PreferredSchedulingTerm{s: s}
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionAppend appends items to the list.
-func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(values ...PreferredSchedulingTerm) {
-    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx context.Context, values ...PreferredSchedulingTerm) {
+    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendPreferredDuringSchedulingIgnoredDuringExecution is an alias for PreferredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x NodeAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(values ...PreferredSchedulingTerm) {
-    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(values...)
+func (x NodeAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...PreferredSchedulingTerm) {
+    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*PreferredSchedulingTermRaw) {
-    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPreferredSchedulingTermFromRaw(ctx, *raw).XXXGetStruct())
@@ -11558,7 +11881,7 @@ func NewNodeAffinityFromRaw(ctx context.Context, raw NodeAffinityRaw) NodeAffini
         x.SetRequiredDuringSchedulingIgnoredDuringExecution(NewNodeSelectorFromRaw(ctx, *raw.RequiredDuringSchedulingIgnoredDuringExecution))
     }
     if raw.PreferredDuringSchedulingIgnoredDuringExecution != nil {
-        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
         items := make([]*segment.Struct, 0, len(raw.PreferredDuringSchedulingIgnoredDuringExecution))
         for _, r := range raw.PreferredDuringSchedulingIgnoredDuringExecution {
             if r != nil {
@@ -11571,10 +11894,10 @@ func NewNodeAffinityFromRaw(ctx context.Context, raw NodeAffinityRaw) NodeAffini
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x NodeAffinity) ToRaw() NodeAffinityRaw {
+func (x NodeAffinity) ToRaw(ctx context.Context) NodeAffinityRaw {
     raw := NodeAffinityRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.RequiredDuringSchedulingIgnoredDuringExecution().ToRaw()
+        nestedRaw := x.RequiredDuringSchedulingIgnoredDuringExecution().ToRaw(ctx)
         raw.RequiredDuringSchedulingIgnoredDuringExecution = &nestedRaw
     }
     if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -11582,21 +11905,20 @@ func (x NodeAffinity) ToRaw() NodeAffinityRaw {
         raw.PreferredDuringSchedulingIgnoredDuringExecution = make([]*PreferredSchedulingTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PreferredSchedulingTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PreferredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
         raw.PreferredDuringSchedulingIgnoredDuringExecution = make([]*PreferredSchedulingTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PreferredSchedulingTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PreferredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -11615,7 +11937,7 @@ type NodeSelector struct {
 // NewNodeSelector creates a new pooled instance of NodeSelector.
 // Call Release() when done to return it to the pool for reuse.
 func NewNodeSelector(ctx context.Context) NodeSelector {
-    s := segment.NewPooled(ctx, XXXMappingNodeSelector)
+    s := segment.New(ctx, XXXMappingNodeSelector)
     s.SetIsSetEnabled(true)
     return NodeSelector{
         s: s,
@@ -11625,7 +11947,7 @@ func NewNodeSelector(ctx context.Context) NodeSelector {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x NodeSelector) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewNodeSelectorFrom creates a new NodeSelector from our internal Struct representation.
@@ -11638,14 +11960,22 @@ func XXXNewNodeSelectorFrom(s *segment.Struct) NodeSelector {
     return NodeSelector{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x NodeSelector) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x NodeSelector) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x NodeSelector) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -11660,43 +11990,43 @@ func (x NodeSelector) UnmarshalReader (r io.Reader) (int, error) {
 
 // NodeSelectorTermsList returns the underlying Structs list for iteration.
 // Use NewNodeSelectorTerm() to create items and Append to add them.
-func (x NodeSelector) NodeSelectorTermsList() *segment.Structs {
+func (x NodeSelector) NodeSelectorTermsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingNodeSelectorTerm); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingNodeSelectorTerm); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingNodeSelectorTerm)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingNodeSelectorTerm)
     return structs
 }
 
 // NodeSelectorTermsLen returns the number of items in the list.
-func (x NodeSelector) NodeSelectorTermsLen() int {
-    return x.NodeSelectorTermsList().Len()
+func (x NodeSelector) NodeSelectorTermsLen(ctx context.Context) int {
+    return x.NodeSelectorTermsList(ctx).Len()
 }
 
 // NodeSelectorTermsGet returns the item at the given index.
-func (x NodeSelector) NodeSelectorTermsGet(index int) NodeSelectorTerm {
-    s := x.NodeSelectorTermsList().Get(index)
+func (x NodeSelector) NodeSelectorTermsGet(ctx context.Context, index int) NodeSelectorTerm {
+    s := x.NodeSelectorTermsList(ctx).Get(index)
     return NodeSelectorTerm{s: s}
 }
 
 // NodeSelectorTermsAppend appends items to the list.
-func (x NodeSelector) NodeSelectorTermsAppend(values ...NodeSelectorTerm) {
-    list := x.NodeSelectorTermsList()
+func (x NodeSelector) NodeSelectorTermsAppend(ctx context.Context, values ...NodeSelectorTerm) {
+    list := x.NodeSelectorTermsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendNodeSelectorTerms is an alias for NodeSelectorTermsAppend for backwards compatibility.
-func (x NodeSelector) AppendNodeSelectorTerms(values ...NodeSelectorTerm) {
-    x.NodeSelectorTermsAppend(values...)
+func (x NodeSelector) AppendNodeSelectorTerms(ctx context.Context, values ...NodeSelectorTerm) {
+    x.NodeSelectorTermsAppend(ctx, values...)
 }
 
 // NodeSelectorTermsAppendRaw appends items to the list using Raw struct representations.
 func (x NodeSelector) NodeSelectorTermsAppendRaw(ctx context.Context, values ...*NodeSelectorTermRaw) {
-    list := x.NodeSelectorTermsList()
+    list := x.NodeSelectorTermsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewNodeSelectorTermFromRaw(ctx, *raw).XXXGetStruct())
@@ -11757,7 +12087,7 @@ type NodeSelectorRaw struct {
 func NewNodeSelectorFromRaw(ctx context.Context, raw NodeSelectorRaw) NodeSelector {
     x := NewNodeSelector(ctx)
     if raw.NodeSelectorTerms != nil {
-        list := x.NodeSelectorTermsList()
+        list := x.NodeSelectorTermsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.NodeSelectorTerms))
         for _, r := range raw.NodeSelectorTerms {
             if r != nil {
@@ -11770,28 +12100,27 @@ func NewNodeSelectorFromRaw(ctx context.Context, raw NodeSelectorRaw) NodeSelect
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x NodeSelector) ToRaw() NodeSelectorRaw {
+func (x NodeSelector) ToRaw(ctx context.Context) NodeSelectorRaw {
     raw := NodeSelectorRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.NodeSelectorTerms = make([]*NodeSelectorTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := NodeSelectorTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.NodeSelectorTerms[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.NodeSelectorTermsList()
+        list := x.NodeSelectorTermsList(ctx)
         raw.NodeSelectorTerms = make([]*NodeSelectorTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := NodeSelectorTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.NodeSelectorTerms[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -11810,7 +12139,7 @@ type NodeSelectorRequirement struct {
 // NewNodeSelectorRequirement creates a new pooled instance of NodeSelectorRequirement.
 // Call Release() when done to return it to the pool for reuse.
 func NewNodeSelectorRequirement(ctx context.Context) NodeSelectorRequirement {
-    s := segment.NewPooled(ctx, XXXMappingNodeSelectorRequirement)
+    s := segment.New(ctx, XXXMappingNodeSelectorRequirement)
     s.SetIsSetEnabled(true)
     return NodeSelectorRequirement{
         s: s,
@@ -11820,7 +12149,7 @@ func NewNodeSelectorRequirement(ctx context.Context) NodeSelectorRequirement {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x NodeSelectorRequirement) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewNodeSelectorRequirementFrom creates a new NodeSelectorRequirement from our internal Struct representation.
@@ -11833,14 +12162,22 @@ func XXXNewNodeSelectorRequirementFrom(s *segment.Struct) NodeSelectorRequiremen
     return NodeSelectorRequirement{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x NodeSelectorRequirement) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x NodeSelectorRequirement) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x NodeSelectorRequirement) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -11961,7 +12298,7 @@ func NewNodeSelectorRequirementFromRaw(ctx context.Context, raw NodeSelectorRequ
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x NodeSelectorRequirement) ToRaw() NodeSelectorRequirementRaw {
+func (x NodeSelectorRequirement) ToRaw(ctx context.Context) NodeSelectorRequirementRaw {
     raw := NodeSelectorRequirementRaw{}
     raw.Key = x.Key()
     raw.Operator = x.Operator()
@@ -11972,7 +12309,6 @@ func (x NodeSelectorRequirement) ToRaw() NodeSelectorRequirementRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -11991,7 +12327,7 @@ type NodeSelectorTerm struct {
 // NewNodeSelectorTerm creates a new pooled instance of NodeSelectorTerm.
 // Call Release() when done to return it to the pool for reuse.
 func NewNodeSelectorTerm(ctx context.Context) NodeSelectorTerm {
-    s := segment.NewPooled(ctx, XXXMappingNodeSelectorTerm)
+    s := segment.New(ctx, XXXMappingNodeSelectorTerm)
     s.SetIsSetEnabled(true)
     return NodeSelectorTerm{
         s: s,
@@ -12001,7 +12337,7 @@ func NewNodeSelectorTerm(ctx context.Context) NodeSelectorTerm {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x NodeSelectorTerm) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewNodeSelectorTermFrom creates a new NodeSelectorTerm from our internal Struct representation.
@@ -12014,14 +12350,22 @@ func XXXNewNodeSelectorTermFrom(s *segment.Struct) NodeSelectorTerm {
     return NodeSelectorTerm{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x NodeSelectorTerm) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x NodeSelectorTerm) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x NodeSelectorTerm) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -12036,43 +12380,43 @@ func (x NodeSelectorTerm) UnmarshalReader (r io.Reader) (int, error) {
 
 // MatchExpressionsList returns the underlying Structs list for iteration.
 // Use NewNodeSelectorRequirement() to create items and Append to add them.
-func (x NodeSelectorTerm) MatchExpressionsList() *segment.Structs {
+func (x NodeSelectorTerm) MatchExpressionsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingNodeSelectorRequirement); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingNodeSelectorRequirement); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingNodeSelectorRequirement)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingNodeSelectorRequirement)
     return structs
 }
 
 // MatchExpressionsLen returns the number of items in the list.
-func (x NodeSelectorTerm) MatchExpressionsLen() int {
-    return x.MatchExpressionsList().Len()
+func (x NodeSelectorTerm) MatchExpressionsLen(ctx context.Context) int {
+    return x.MatchExpressionsList(ctx).Len()
 }
 
 // MatchExpressionsGet returns the item at the given index.
-func (x NodeSelectorTerm) MatchExpressionsGet(index int) NodeSelectorRequirement {
-    s := x.MatchExpressionsList().Get(index)
+func (x NodeSelectorTerm) MatchExpressionsGet(ctx context.Context, index int) NodeSelectorRequirement {
+    s := x.MatchExpressionsList(ctx).Get(index)
     return NodeSelectorRequirement{s: s}
 }
 
 // MatchExpressionsAppend appends items to the list.
-func (x NodeSelectorTerm) MatchExpressionsAppend(values ...NodeSelectorRequirement) {
-    list := x.MatchExpressionsList()
+func (x NodeSelectorTerm) MatchExpressionsAppend(ctx context.Context, values ...NodeSelectorRequirement) {
+    list := x.MatchExpressionsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendMatchExpressions is an alias for MatchExpressionsAppend for backwards compatibility.
-func (x NodeSelectorTerm) AppendMatchExpressions(values ...NodeSelectorRequirement) {
-    x.MatchExpressionsAppend(values...)
+func (x NodeSelectorTerm) AppendMatchExpressions(ctx context.Context, values ...NodeSelectorRequirement) {
+    x.MatchExpressionsAppend(ctx, values...)
 }
 
 // MatchExpressionsAppendRaw appends items to the list using Raw struct representations.
 func (x NodeSelectorTerm) MatchExpressionsAppendRaw(ctx context.Context, values ...*NodeSelectorRequirementRaw) {
-    list := x.MatchExpressionsList()
+    list := x.MatchExpressionsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewNodeSelectorRequirementFromRaw(ctx, *raw).XXXGetStruct())
@@ -12085,43 +12429,43 @@ func (x NodeSelectorTerm) IsSetMatchExpressions() bool{
 
 // MatchFieldsList returns the underlying Structs list for iteration.
 // Use NewNodeSelectorRequirement() to create items and Append to add them.
-func (x NodeSelectorTerm) MatchFieldsList() *segment.Structs {
+func (x NodeSelectorTerm) MatchFieldsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingNodeSelectorRequirement); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingNodeSelectorRequirement); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingNodeSelectorRequirement)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingNodeSelectorRequirement)
     return structs
 }
 
 // MatchFieldsLen returns the number of items in the list.
-func (x NodeSelectorTerm) MatchFieldsLen() int {
-    return x.MatchFieldsList().Len()
+func (x NodeSelectorTerm) MatchFieldsLen(ctx context.Context) int {
+    return x.MatchFieldsList(ctx).Len()
 }
 
 // MatchFieldsGet returns the item at the given index.
-func (x NodeSelectorTerm) MatchFieldsGet(index int) NodeSelectorRequirement {
-    s := x.MatchFieldsList().Get(index)
+func (x NodeSelectorTerm) MatchFieldsGet(ctx context.Context, index int) NodeSelectorRequirement {
+    s := x.MatchFieldsList(ctx).Get(index)
     return NodeSelectorRequirement{s: s}
 }
 
 // MatchFieldsAppend appends items to the list.
-func (x NodeSelectorTerm) MatchFieldsAppend(values ...NodeSelectorRequirement) {
-    list := x.MatchFieldsList()
+func (x NodeSelectorTerm) MatchFieldsAppend(ctx context.Context, values ...NodeSelectorRequirement) {
+    list := x.MatchFieldsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendMatchFields is an alias for MatchFieldsAppend for backwards compatibility.
-func (x NodeSelectorTerm) AppendMatchFields(values ...NodeSelectorRequirement) {
-    x.MatchFieldsAppend(values...)
+func (x NodeSelectorTerm) AppendMatchFields(ctx context.Context, values ...NodeSelectorRequirement) {
+    x.MatchFieldsAppend(ctx, values...)
 }
 
 // MatchFieldsAppendRaw appends items to the list using Raw struct representations.
 func (x NodeSelectorTerm) MatchFieldsAppendRaw(ctx context.Context, values ...*NodeSelectorRequirementRaw) {
-    list := x.MatchFieldsList()
+    list := x.MatchFieldsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewNodeSelectorRequirementFromRaw(ctx, *raw).XXXGetStruct())
@@ -12183,7 +12527,7 @@ type NodeSelectorTermRaw struct {
 func NewNodeSelectorTermFromRaw(ctx context.Context, raw NodeSelectorTermRaw) NodeSelectorTerm {
     x := NewNodeSelectorTerm(ctx)
     if raw.MatchExpressions != nil {
-        list := x.MatchExpressionsList()
+        list := x.MatchExpressionsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.MatchExpressions))
         for _, r := range raw.MatchExpressions {
             if r != nil {
@@ -12193,7 +12537,7 @@ func NewNodeSelectorTermFromRaw(ctx context.Context, raw NodeSelectorTermRaw) No
         list.SetAll(items)
     }
     if raw.MatchFields != nil {
-        list := x.MatchFieldsList()
+        list := x.MatchFieldsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.MatchFields))
         for _, r := range raw.MatchFields {
             if r != nil {
@@ -12206,22 +12550,22 @@ func NewNodeSelectorTermFromRaw(ctx context.Context, raw NodeSelectorTermRaw) No
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x NodeSelectorTerm) ToRaw() NodeSelectorTermRaw {
+func (x NodeSelectorTerm) ToRaw(ctx context.Context) NodeSelectorTermRaw {
     raw := NodeSelectorTermRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.MatchExpressions = make([]*NodeSelectorRequirementRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := NodeSelectorRequirement{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchExpressions[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.MatchExpressionsList()
+        list := x.MatchExpressionsList(ctx)
         raw.MatchExpressions = make([]*NodeSelectorRequirementRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := NodeSelectorRequirement{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchExpressions[i] = &itemRaw
         }
     }
@@ -12230,21 +12574,20 @@ func (x NodeSelectorTerm) ToRaw() NodeSelectorTermRaw {
         raw.MatchFields = make([]*NodeSelectorRequirementRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := NodeSelectorRequirement{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchFields[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.MatchFieldsList()
+        list := x.MatchFieldsList(ctx)
         raw.MatchFields = make([]*NodeSelectorRequirementRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := NodeSelectorRequirement{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.MatchFields[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -12263,7 +12606,7 @@ type ObjectFieldSelector struct {
 // NewObjectFieldSelector creates a new pooled instance of ObjectFieldSelector.
 // Call Release() when done to return it to the pool for reuse.
 func NewObjectFieldSelector(ctx context.Context) ObjectFieldSelector {
-    s := segment.NewPooled(ctx, XXXMappingObjectFieldSelector)
+    s := segment.New(ctx, XXXMappingObjectFieldSelector)
     s.SetIsSetEnabled(true)
     return ObjectFieldSelector{
         s: s,
@@ -12273,7 +12616,7 @@ func NewObjectFieldSelector(ctx context.Context) ObjectFieldSelector {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ObjectFieldSelector) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewObjectFieldSelectorFrom creates a new ObjectFieldSelector from our internal Struct representation.
@@ -12286,14 +12629,22 @@ func XXXNewObjectFieldSelectorFrom(s *segment.Struct) ObjectFieldSelector {
     return ObjectFieldSelector{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ObjectFieldSelector) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ObjectFieldSelector) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ObjectFieldSelector) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -12390,13 +12741,12 @@ func NewObjectFieldSelectorFromRaw(ctx context.Context, raw ObjectFieldSelectorR
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ObjectFieldSelector) ToRaw() ObjectFieldSelectorRaw {
+func (x ObjectFieldSelector) ToRaw(ctx context.Context) ObjectFieldSelectorRaw {
     raw := ObjectFieldSelectorRaw{}
     raw.ApiVersion = x.ApiVersion()
     raw.FieldPath = x.FieldPath()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -12415,7 +12765,7 @@ type ObjectMeta struct {
 // NewObjectMeta creates a new pooled instance of ObjectMeta.
 // Call Release() when done to return it to the pool for reuse.
 func NewObjectMeta(ctx context.Context) ObjectMeta {
-    s := segment.NewPooled(ctx, XXXMappingObjectMeta)
+    s := segment.New(ctx, XXXMappingObjectMeta)
     s.SetIsSetEnabled(true)
     return ObjectMeta{
         s: s,
@@ -12425,7 +12775,7 @@ func NewObjectMeta(ctx context.Context) ObjectMeta {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ObjectMeta) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewObjectMetaFrom creates a new ObjectMeta from our internal Struct representation.
@@ -12438,14 +12788,22 @@ func XXXNewObjectMetaFrom(s *segment.Struct) ObjectMeta {
     return ObjectMeta{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ObjectMeta) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ObjectMeta) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ObjectMeta) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -12582,43 +12940,43 @@ func (x ObjectMeta) IsSetDeletionGracePeriodSeconds() bool{
 
 // LabelsList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x ObjectMeta) LabelsList() *segment.Structs {
+func (x ObjectMeta) LabelsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 10, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 10, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 10, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 10, XXXMappingKeyValue)
     return structs
 }
 
 // LabelsLen returns the number of items in the list.
-func (x ObjectMeta) LabelsLen() int {
-    return x.LabelsList().Len()
+func (x ObjectMeta) LabelsLen(ctx context.Context) int {
+    return x.LabelsList(ctx).Len()
 }
 
 // LabelsGet returns the item at the given index.
-func (x ObjectMeta) LabelsGet(index int) KeyValue {
-    s := x.LabelsList().Get(index)
+func (x ObjectMeta) LabelsGet(ctx context.Context, index int) KeyValue {
+    s := x.LabelsList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // LabelsAppend appends items to the list.
-func (x ObjectMeta) LabelsAppend(values ...KeyValue) {
-    list := x.LabelsList()
+func (x ObjectMeta) LabelsAppend(ctx context.Context, values ...KeyValue) {
+    list := x.LabelsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendLabels is an alias for LabelsAppend for backwards compatibility.
-func (x ObjectMeta) AppendLabels(values ...KeyValue) {
-    x.LabelsAppend(values...)
+func (x ObjectMeta) AppendLabels(ctx context.Context, values ...KeyValue) {
+    x.LabelsAppend(ctx, values...)
 }
 
 // LabelsAppendRaw appends items to the list using Raw struct representations.
 func (x ObjectMeta) LabelsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.LabelsList()
+    list := x.LabelsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -12631,43 +12989,43 @@ func (x ObjectMeta) IsSetLabels() bool{
 
 // AnnotationsList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x ObjectMeta) AnnotationsList() *segment.Structs {
+func (x ObjectMeta) AnnotationsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 11, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 11, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 11, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 11, XXXMappingKeyValue)
     return structs
 }
 
 // AnnotationsLen returns the number of items in the list.
-func (x ObjectMeta) AnnotationsLen() int {
-    return x.AnnotationsList().Len()
+func (x ObjectMeta) AnnotationsLen(ctx context.Context) int {
+    return x.AnnotationsList(ctx).Len()
 }
 
 // AnnotationsGet returns the item at the given index.
-func (x ObjectMeta) AnnotationsGet(index int) KeyValue {
-    s := x.AnnotationsList().Get(index)
+func (x ObjectMeta) AnnotationsGet(ctx context.Context, index int) KeyValue {
+    s := x.AnnotationsList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // AnnotationsAppend appends items to the list.
-func (x ObjectMeta) AnnotationsAppend(values ...KeyValue) {
-    list := x.AnnotationsList()
+func (x ObjectMeta) AnnotationsAppend(ctx context.Context, values ...KeyValue) {
+    list := x.AnnotationsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendAnnotations is an alias for AnnotationsAppend for backwards compatibility.
-func (x ObjectMeta) AppendAnnotations(values ...KeyValue) {
-    x.AnnotationsAppend(values...)
+func (x ObjectMeta) AppendAnnotations(ctx context.Context, values ...KeyValue) {
+    x.AnnotationsAppend(ctx, values...)
 }
 
 // AnnotationsAppendRaw appends items to the list using Raw struct representations.
 func (x ObjectMeta) AnnotationsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.AnnotationsList()
+    list := x.AnnotationsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -12680,43 +13038,43 @@ func (x ObjectMeta) IsSetAnnotations() bool{
 
 // OwnerReferencesList returns the underlying Structs list for iteration.
 // Use NewOwnerReference() to create items and Append to add them.
-func (x ObjectMeta) OwnerReferencesList() *segment.Structs {
+func (x ObjectMeta) OwnerReferencesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 12, XXXMappingOwnerReference); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 12, XXXMappingOwnerReference); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 12, XXXMappingOwnerReference)
+    structs := segment.NewStructs(ctx, x.s, 12, XXXMappingOwnerReference)
     return structs
 }
 
 // OwnerReferencesLen returns the number of items in the list.
-func (x ObjectMeta) OwnerReferencesLen() int {
-    return x.OwnerReferencesList().Len()
+func (x ObjectMeta) OwnerReferencesLen(ctx context.Context) int {
+    return x.OwnerReferencesList(ctx).Len()
 }
 
 // OwnerReferencesGet returns the item at the given index.
-func (x ObjectMeta) OwnerReferencesGet(index int) OwnerReference {
-    s := x.OwnerReferencesList().Get(index)
+func (x ObjectMeta) OwnerReferencesGet(ctx context.Context, index int) OwnerReference {
+    s := x.OwnerReferencesList(ctx).Get(index)
     return OwnerReference{s: s}
 }
 
 // OwnerReferencesAppend appends items to the list.
-func (x ObjectMeta) OwnerReferencesAppend(values ...OwnerReference) {
-    list := x.OwnerReferencesList()
+func (x ObjectMeta) OwnerReferencesAppend(ctx context.Context, values ...OwnerReference) {
+    list := x.OwnerReferencesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendOwnerReferences is an alias for OwnerReferencesAppend for backwards compatibility.
-func (x ObjectMeta) AppendOwnerReferences(values ...OwnerReference) {
-    x.OwnerReferencesAppend(values...)
+func (x ObjectMeta) AppendOwnerReferences(ctx context.Context, values ...OwnerReference) {
+    x.OwnerReferencesAppend(ctx, values...)
 }
 
 // OwnerReferencesAppendRaw appends items to the list using Raw struct representations.
 func (x ObjectMeta) OwnerReferencesAppendRaw(ctx context.Context, values ...*OwnerReferenceRaw) {
-    list := x.OwnerReferencesList()
+    list := x.OwnerReferencesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewOwnerReferenceFromRaw(ctx, *raw).XXXGetStruct())
@@ -12749,43 +13107,43 @@ func (x ObjectMeta) IsSetFinalizers() bool{
 
 // ManagedFieldsList returns the underlying Structs list for iteration.
 // Use NewManagedFieldsEntry() to create items and Append to add them.
-func (x ObjectMeta) ManagedFieldsList() *segment.Structs {
+func (x ObjectMeta) ManagedFieldsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 14, XXXMappingManagedFieldsEntry); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 14, XXXMappingManagedFieldsEntry); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 14, XXXMappingManagedFieldsEntry)
+    structs := segment.NewStructs(ctx, x.s, 14, XXXMappingManagedFieldsEntry)
     return structs
 }
 
 // ManagedFieldsLen returns the number of items in the list.
-func (x ObjectMeta) ManagedFieldsLen() int {
-    return x.ManagedFieldsList().Len()
+func (x ObjectMeta) ManagedFieldsLen(ctx context.Context) int {
+    return x.ManagedFieldsList(ctx).Len()
 }
 
 // ManagedFieldsGet returns the item at the given index.
-func (x ObjectMeta) ManagedFieldsGet(index int) ManagedFieldsEntry {
-    s := x.ManagedFieldsList().Get(index)
+func (x ObjectMeta) ManagedFieldsGet(ctx context.Context, index int) ManagedFieldsEntry {
+    s := x.ManagedFieldsList(ctx).Get(index)
     return ManagedFieldsEntry{s: s}
 }
 
 // ManagedFieldsAppend appends items to the list.
-func (x ObjectMeta) ManagedFieldsAppend(values ...ManagedFieldsEntry) {
-    list := x.ManagedFieldsList()
+func (x ObjectMeta) ManagedFieldsAppend(ctx context.Context, values ...ManagedFieldsEntry) {
+    list := x.ManagedFieldsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendManagedFields is an alias for ManagedFieldsAppend for backwards compatibility.
-func (x ObjectMeta) AppendManagedFields(values ...ManagedFieldsEntry) {
-    x.ManagedFieldsAppend(values...)
+func (x ObjectMeta) AppendManagedFields(ctx context.Context, values ...ManagedFieldsEntry) {
+    x.ManagedFieldsAppend(ctx, values...)
 }
 
 // ManagedFieldsAppendRaw appends items to the list using Raw struct representations.
 func (x ObjectMeta) ManagedFieldsAppendRaw(ctx context.Context, values ...*ManagedFieldsEntryRaw) {
-    list := x.ManagedFieldsList()
+    list := x.ManagedFieldsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewManagedFieldsEntryFromRaw(ctx, *raw).XXXGetStruct())
@@ -12890,7 +13248,7 @@ func NewObjectMetaFromRaw(ctx context.Context, raw ObjectMetaRaw) ObjectMeta {
         x.SetDeletionGracePeriodSeconds(raw.DeletionGracePeriodSeconds)
     }
     if raw.Labels != nil {
-        list := x.LabelsList()
+        list := x.LabelsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Labels))
         for _, r := range raw.Labels {
             if r != nil {
@@ -12900,7 +13258,7 @@ func NewObjectMetaFromRaw(ctx context.Context, raw ObjectMetaRaw) ObjectMeta {
         list.SetAll(items)
     }
     if raw.Annotations != nil {
-        list := x.AnnotationsList()
+        list := x.AnnotationsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Annotations))
         for _, r := range raw.Annotations {
             if r != nil {
@@ -12910,7 +13268,7 @@ func NewObjectMetaFromRaw(ctx context.Context, raw ObjectMetaRaw) ObjectMeta {
         list.SetAll(items)
     }
     if raw.OwnerReferences != nil {
-        list := x.OwnerReferencesList()
+        list := x.OwnerReferencesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.OwnerReferences))
         for _, r := range raw.OwnerReferences {
             if r != nil {
@@ -12923,7 +13281,7 @@ func NewObjectMetaFromRaw(ctx context.Context, raw ObjectMetaRaw) ObjectMeta {
         x.SetFinalizers(raw.Finalizers...)
     }
     if raw.ManagedFields != nil {
-        list := x.ManagedFieldsList()
+        list := x.ManagedFieldsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.ManagedFields))
         for _, r := range raw.ManagedFields {
             if r != nil {
@@ -12936,7 +13294,7 @@ func NewObjectMetaFromRaw(ctx context.Context, raw ObjectMetaRaw) ObjectMeta {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ObjectMeta) ToRaw() ObjectMetaRaw {
+func (x ObjectMeta) ToRaw(ctx context.Context) ObjectMetaRaw {
     raw := ObjectMetaRaw{}
     raw.Name = x.Name()
     raw.GenerateName = x.GenerateName()
@@ -12946,11 +13304,11 @@ func (x ObjectMeta) ToRaw() ObjectMetaRaw {
     raw.ResourceVersion = x.ResourceVersion()
     raw.Generation = x.Generation()
     if x.s.HasField(7) {
-        nestedRaw := x.CreationTimestamp().ToRaw()
+        nestedRaw := x.CreationTimestamp().ToRaw(ctx)
         raw.CreationTimestamp = &nestedRaw
     }
     if x.s.HasField(8) {
-        nestedRaw := x.DeletionTimestamp().ToRaw()
+        nestedRaw := x.DeletionTimestamp().ToRaw(ctx)
         raw.DeletionTimestamp = &nestedRaw
     }
     raw.DeletionGracePeriodSeconds = x.DeletionGracePeriodSeconds()
@@ -12959,15 +13317,15 @@ func (x ObjectMeta) ToRaw() ObjectMetaRaw {
         raw.Labels = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Labels[i] = &itemRaw
         }
     } else if x.s.HasField(10) {
-        list := x.LabelsList()
+        list := x.LabelsList(ctx)
         raw.Labels = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Labels[i] = &itemRaw
         }
     }
@@ -12976,15 +13334,15 @@ func (x ObjectMeta) ToRaw() ObjectMetaRaw {
         raw.Annotations = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Annotations[i] = &itemRaw
         }
     } else if x.s.HasField(11) {
-        list := x.AnnotationsList()
+        list := x.AnnotationsList(ctx)
         raw.Annotations = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Annotations[i] = &itemRaw
         }
     }
@@ -12993,15 +13351,15 @@ func (x ObjectMeta) ToRaw() ObjectMetaRaw {
         raw.OwnerReferences = make([]*OwnerReferenceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := OwnerReference{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.OwnerReferences[i] = &itemRaw
         }
     } else if x.s.HasField(12) {
-        list := x.OwnerReferencesList()
+        list := x.OwnerReferencesList(ctx)
         raw.OwnerReferences = make([]*OwnerReferenceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := OwnerReference{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.OwnerReferences[i] = &itemRaw
         }
     }
@@ -13015,21 +13373,20 @@ func (x ObjectMeta) ToRaw() ObjectMetaRaw {
         raw.ManagedFields = make([]*ManagedFieldsEntryRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ManagedFieldsEntry{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ManagedFields[i] = &itemRaw
         }
     } else if x.s.HasField(14) {
-        list := x.ManagedFieldsList()
+        list := x.ManagedFieldsList(ctx)
         raw.ManagedFields = make([]*ManagedFieldsEntryRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ManagedFieldsEntry{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ManagedFields[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -13048,7 +13405,7 @@ type OwnerReference struct {
 // NewOwnerReference creates a new pooled instance of OwnerReference.
 // Call Release() when done to return it to the pool for reuse.
 func NewOwnerReference(ctx context.Context) OwnerReference {
-    s := segment.NewPooled(ctx, XXXMappingOwnerReference)
+    s := segment.New(ctx, XXXMappingOwnerReference)
     s.SetIsSetEnabled(true)
     return OwnerReference{
         s: s,
@@ -13058,7 +13415,7 @@ func NewOwnerReference(ctx context.Context) OwnerReference {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x OwnerReference) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewOwnerReferenceFrom creates a new OwnerReference from our internal Struct representation.
@@ -13071,14 +13428,22 @@ func XXXNewOwnerReferenceFrom(s *segment.Struct) OwnerReference {
     return OwnerReference{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x OwnerReference) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x OwnerReference) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x OwnerReference) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -13239,7 +13604,7 @@ func NewOwnerReferenceFromRaw(ctx context.Context, raw OwnerReferenceRaw) OwnerR
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x OwnerReference) ToRaw() OwnerReferenceRaw {
+func (x OwnerReference) ToRaw(ctx context.Context) OwnerReferenceRaw {
     raw := OwnerReferenceRaw{}
     raw.ApiVersion = x.ApiVersion()
     raw.Kind = x.Kind()
@@ -13249,7 +13614,6 @@ func (x OwnerReference) ToRaw() OwnerReferenceRaw {
     raw.BlockOwnerDeletion = x.BlockOwnerDeletion()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -13268,7 +13632,7 @@ type PersistentVolumeClaimSpec struct {
 // NewPersistentVolumeClaimSpec creates a new pooled instance of PersistentVolumeClaimSpec.
 // Call Release() when done to return it to the pool for reuse.
 func NewPersistentVolumeClaimSpec(ctx context.Context) PersistentVolumeClaimSpec {
-    s := segment.NewPooled(ctx, XXXMappingPersistentVolumeClaimSpec)
+    s := segment.New(ctx, XXXMappingPersistentVolumeClaimSpec)
     s.SetIsSetEnabled(true)
     return PersistentVolumeClaimSpec{
         s: s,
@@ -13278,7 +13642,7 @@ func NewPersistentVolumeClaimSpec(ctx context.Context) PersistentVolumeClaimSpec
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PersistentVolumeClaimSpec) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPersistentVolumeClaimSpecFrom creates a new PersistentVolumeClaimSpec from our internal Struct representation.
@@ -13291,14 +13655,22 @@ func XXXNewPersistentVolumeClaimSpecFrom(s *segment.Struct) PersistentVolumeClai
     return PersistentVolumeClaimSpec{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PersistentVolumeClaimSpec) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PersistentVolumeClaimSpec) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PersistentVolumeClaimSpec) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -13528,7 +13900,7 @@ func NewPersistentVolumeClaimSpecFromRaw(ctx context.Context, raw PersistentVolu
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PersistentVolumeClaimSpec) ToRaw() PersistentVolumeClaimSpecRaw {
+func (x PersistentVolumeClaimSpec) ToRaw(ctx context.Context) PersistentVolumeClaimSpecRaw {
     raw := PersistentVolumeClaimSpecRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Numbers[PersistentVolumeAccessMode]).Len() > 0 {
         raw.AccessModes = l.(*segment.Numbers[PersistentVolumeAccessMode]).Slice()
@@ -13536,22 +13908,22 @@ func (x PersistentVolumeClaimSpec) ToRaw() PersistentVolumeClaimSpecRaw {
         raw.AccessModes = x.AccessModes().Slice()
     }
     if x.s.HasField(1) {
-        nestedRaw := x.Selector().ToRaw()
+        nestedRaw := x.Selector().ToRaw(ctx)
         raw.Selector = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.Resources().ToRaw()
+        nestedRaw := x.Resources().ToRaw(ctx)
         raw.Resources = &nestedRaw
     }
     raw.VolumeName = x.VolumeName()
     raw.StorageClassName = x.StorageClassName()
     raw.VolumeMode = x.VolumeMode()
     if x.s.HasField(6) {
-        nestedRaw := x.DataSource().ToRaw()
+        nestedRaw := x.DataSource().ToRaw(ctx)
         raw.DataSource = &nestedRaw
     }
     if x.s.HasField(7) {
-        nestedRaw := x.DataSourceRef().ToRaw()
+        nestedRaw := x.DataSourceRef().ToRaw(ctx)
         raw.DataSourceRef = &nestedRaw
     }
     if l := x.s.GetList(8); l != nil && l.(*segment.Strings).Len() > 0 {
@@ -13561,7 +13933,6 @@ func (x PersistentVolumeClaimSpec) ToRaw() PersistentVolumeClaimSpecRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -13580,7 +13951,7 @@ type PersistentVolumeClaimTemplate struct {
 // NewPersistentVolumeClaimTemplate creates a new pooled instance of PersistentVolumeClaimTemplate.
 // Call Release() when done to return it to the pool for reuse.
 func NewPersistentVolumeClaimTemplate(ctx context.Context) PersistentVolumeClaimTemplate {
-    s := segment.NewPooled(ctx, XXXMappingPersistentVolumeClaimTemplate)
+    s := segment.New(ctx, XXXMappingPersistentVolumeClaimTemplate)
     s.SetIsSetEnabled(true)
     return PersistentVolumeClaimTemplate{
         s: s,
@@ -13590,7 +13961,7 @@ func NewPersistentVolumeClaimTemplate(ctx context.Context) PersistentVolumeClaim
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PersistentVolumeClaimTemplate) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPersistentVolumeClaimTemplateFrom creates a new PersistentVolumeClaimTemplate from our internal Struct representation.
@@ -13603,14 +13974,22 @@ func XXXNewPersistentVolumeClaimTemplateFrom(s *segment.Struct) PersistentVolume
     return PersistentVolumeClaimTemplate{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PersistentVolumeClaimTemplate) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PersistentVolumeClaimTemplate) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PersistentVolumeClaimTemplate) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -13709,19 +14088,18 @@ func NewPersistentVolumeClaimTemplateFromRaw(ctx context.Context, raw Persistent
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PersistentVolumeClaimTemplate) ToRaw() PersistentVolumeClaimTemplateRaw {
+func (x PersistentVolumeClaimTemplate) ToRaw(ctx context.Context) PersistentVolumeClaimTemplateRaw {
     raw := PersistentVolumeClaimTemplateRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Metadata().ToRaw()
+        nestedRaw := x.Metadata().ToRaw(ctx)
         raw.Metadata = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.Spec().ToRaw()
+        nestedRaw := x.Spec().ToRaw(ctx)
         raw.Spec = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -13740,7 +14118,7 @@ type PersistentVolumeClaimVolumeSource struct {
 // NewPersistentVolumeClaimVolumeSource creates a new pooled instance of PersistentVolumeClaimVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewPersistentVolumeClaimVolumeSource(ctx context.Context) PersistentVolumeClaimVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingPersistentVolumeClaimVolumeSource)
+    s := segment.New(ctx, XXXMappingPersistentVolumeClaimVolumeSource)
     s.SetIsSetEnabled(true)
     return PersistentVolumeClaimVolumeSource{
         s: s,
@@ -13750,7 +14128,7 @@ func NewPersistentVolumeClaimVolumeSource(ctx context.Context) PersistentVolumeC
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PersistentVolumeClaimVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPersistentVolumeClaimVolumeSourceFrom creates a new PersistentVolumeClaimVolumeSource from our internal Struct representation.
@@ -13763,14 +14141,22 @@ func XXXNewPersistentVolumeClaimVolumeSourceFrom(s *segment.Struct) PersistentVo
     return PersistentVolumeClaimVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PersistentVolumeClaimVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PersistentVolumeClaimVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PersistentVolumeClaimVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -13867,13 +14253,12 @@ func NewPersistentVolumeClaimVolumeSourceFromRaw(ctx context.Context, raw Persis
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PersistentVolumeClaimVolumeSource) ToRaw() PersistentVolumeClaimVolumeSourceRaw {
+func (x PersistentVolumeClaimVolumeSource) ToRaw(ctx context.Context) PersistentVolumeClaimVolumeSourceRaw {
     raw := PersistentVolumeClaimVolumeSourceRaw{}
     raw.ClaimName = x.ClaimName()
     raw.ReadOnly = x.ReadOnly()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -13892,7 +14277,7 @@ type Pod struct {
 // NewPod creates a new pooled instance of Pod.
 // Call Release() when done to return it to the pool for reuse.
 func NewPod(ctx context.Context) Pod {
-    s := segment.NewPooled(ctx, XXXMappingPod)
+    s := segment.New(ctx, XXXMappingPod)
     s.SetIsSetEnabled(true)
     return Pod{
         s: s,
@@ -13902,7 +14287,7 @@ func NewPod(ctx context.Context) Pod {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Pod) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodFrom creates a new Pod from our internal Struct representation.
@@ -13915,14 +14300,22 @@ func XXXNewPodFrom(s *segment.Struct) Pod {
     return Pod{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Pod) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Pod) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Pod) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -14055,27 +14448,26 @@ func NewPodFromRaw(ctx context.Context, raw PodRaw) Pod {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Pod) ToRaw() PodRaw {
+func (x Pod) ToRaw(ctx context.Context) PodRaw {
     raw := PodRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.TypeMeta().ToRaw()
+        nestedRaw := x.TypeMeta().ToRaw(ctx)
         raw.TypeMeta = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.Metadata().ToRaw()
+        nestedRaw := x.Metadata().ToRaw(ctx)
         raw.Metadata = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.Spec().ToRaw()
+        nestedRaw := x.Spec().ToRaw(ctx)
         raw.Spec = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.Status().ToRaw()
+        nestedRaw := x.Status().ToRaw(ctx)
         raw.Status = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -14094,7 +14486,7 @@ type PodAffinity struct {
 // NewPodAffinity creates a new pooled instance of PodAffinity.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodAffinity(ctx context.Context) PodAffinity {
-    s := segment.NewPooled(ctx, XXXMappingPodAffinity)
+    s := segment.New(ctx, XXXMappingPodAffinity)
     s.SetIsSetEnabled(true)
     return PodAffinity{
         s: s,
@@ -14104,7 +14496,7 @@ func NewPodAffinity(ctx context.Context) PodAffinity {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodAffinity) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodAffinityFrom creates a new PodAffinity from our internal Struct representation.
@@ -14117,14 +14509,22 @@ func XXXNewPodAffinityFrom(s *segment.Struct) PodAffinity {
     return PodAffinity{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodAffinity) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodAffinity) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodAffinity) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -14139,43 +14539,43 @@ func (x PodAffinity) UnmarshalReader (r io.Reader) (int, error) {
 
 // RequiredDuringSchedulingIgnoredDuringExecutionList returns the underlying Structs list for iteration.
 // Use NewPodAffinityTerm() to create items and Append to add them.
-func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionList() *segment.Structs {
+func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingPodAffinityTerm); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingPodAffinityTerm); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingPodAffinityTerm)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingPodAffinityTerm)
     return structs
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionLen returns the number of items in the list.
-func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionLen() int {
-    return x.RequiredDuringSchedulingIgnoredDuringExecutionList().Len()
+func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionLen(ctx context.Context) int {
+    return x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx).Len()
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionGet returns the item at the given index.
-func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionGet(index int) PodAffinityTerm {
-    s := x.RequiredDuringSchedulingIgnoredDuringExecutionList().Get(index)
+func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionGet(ctx context.Context, index int) PodAffinityTerm {
+    s := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx).Get(index)
     return PodAffinityTerm{s: s}
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionAppend appends items to the list.
-func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppend(values ...PodAffinityTerm) {
-    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx context.Context, values ...PodAffinityTerm) {
+    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendRequiredDuringSchedulingIgnoredDuringExecution is an alias for RequiredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAffinity) AppendRequiredDuringSchedulingIgnoredDuringExecution(values ...PodAffinityTerm) {
-    x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(values...)
+func (x PodAffinity) AppendRequiredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...PodAffinityTerm) {
+    x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*PodAffinityTermRaw) {
-    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodAffinityTermFromRaw(ctx, *raw).XXXGetStruct())
@@ -14188,43 +14588,43 @@ func (x PodAffinity) IsSetRequiredDuringSchedulingIgnoredDuringExecution() bool{
 
 // PreferredDuringSchedulingIgnoredDuringExecutionList returns the underlying Structs list for iteration.
 // Use NewWeightedPodAffinityTerm() to create items and Append to add them.
-func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionList() *segment.Structs {
+func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingWeightedPodAffinityTerm); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingWeightedPodAffinityTerm); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingWeightedPodAffinityTerm)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingWeightedPodAffinityTerm)
     return structs
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionLen returns the number of items in the list.
-func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionLen() int {
-    return x.PreferredDuringSchedulingIgnoredDuringExecutionList().Len()
+func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionLen(ctx context.Context) int {
+    return x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx).Len()
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionGet returns the item at the given index.
-func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionGet(index int) WeightedPodAffinityTerm {
-    s := x.PreferredDuringSchedulingIgnoredDuringExecutionList().Get(index)
+func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionGet(ctx context.Context, index int) WeightedPodAffinityTerm {
+    s := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx).Get(index)
     return WeightedPodAffinityTerm{s: s}
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionAppend appends items to the list.
-func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(values ...WeightedPodAffinityTerm) {
-    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx context.Context, values ...WeightedPodAffinityTerm) {
+    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendPreferredDuringSchedulingIgnoredDuringExecution is an alias for PreferredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(values ...WeightedPodAffinityTerm) {
-    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(values...)
+func (x PodAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...WeightedPodAffinityTerm) {
+    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*WeightedPodAffinityTermRaw) {
-    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewWeightedPodAffinityTermFromRaw(ctx, *raw).XXXGetStruct())
@@ -14286,7 +14686,7 @@ type PodAffinityRaw struct {
 func NewPodAffinityFromRaw(ctx context.Context, raw PodAffinityRaw) PodAffinity {
     x := NewPodAffinity(ctx)
     if raw.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
         items := make([]*segment.Struct, 0, len(raw.RequiredDuringSchedulingIgnoredDuringExecution))
         for _, r := range raw.RequiredDuringSchedulingIgnoredDuringExecution {
             if r != nil {
@@ -14296,7 +14696,7 @@ func NewPodAffinityFromRaw(ctx context.Context, raw PodAffinityRaw) PodAffinity 
         list.SetAll(items)
     }
     if raw.PreferredDuringSchedulingIgnoredDuringExecution != nil {
-        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
         items := make([]*segment.Struct, 0, len(raw.PreferredDuringSchedulingIgnoredDuringExecution))
         for _, r := range raw.PreferredDuringSchedulingIgnoredDuringExecution {
             if r != nil {
@@ -14309,22 +14709,22 @@ func NewPodAffinityFromRaw(ctx context.Context, raw PodAffinityRaw) PodAffinity 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodAffinity) ToRaw() PodAffinityRaw {
+func (x PodAffinity) ToRaw(ctx context.Context) PodAffinityRaw {
     raw := PodAffinityRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.RequiredDuringSchedulingIgnoredDuringExecution = make([]*PodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.RequiredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
         raw.RequiredDuringSchedulingIgnoredDuringExecution = make([]*PodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.RequiredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     }
@@ -14333,21 +14733,20 @@ func (x PodAffinity) ToRaw() PodAffinityRaw {
         raw.PreferredDuringSchedulingIgnoredDuringExecution = make([]*WeightedPodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := WeightedPodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PreferredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
         raw.PreferredDuringSchedulingIgnoredDuringExecution = make([]*WeightedPodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := WeightedPodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PreferredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -14366,7 +14765,7 @@ type PodAffinityTerm struct {
 // NewPodAffinityTerm creates a new pooled instance of PodAffinityTerm.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodAffinityTerm(ctx context.Context) PodAffinityTerm {
-    s := segment.NewPooled(ctx, XXXMappingPodAffinityTerm)
+    s := segment.New(ctx, XXXMappingPodAffinityTerm)
     s.SetIsSetEnabled(true)
     return PodAffinityTerm{
         s: s,
@@ -14376,7 +14775,7 @@ func NewPodAffinityTerm(ctx context.Context) PodAffinityTerm {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodAffinityTerm) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodAffinityTermFrom creates a new PodAffinityTerm from our internal Struct representation.
@@ -14389,14 +14788,22 @@ func XXXNewPodAffinityTermFrom(s *segment.Struct) PodAffinityTerm {
     return PodAffinityTerm{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodAffinityTerm) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodAffinityTerm) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodAffinityTerm) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -14583,10 +14990,10 @@ func NewPodAffinityTermFromRaw(ctx context.Context, raw PodAffinityTermRaw) PodA
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodAffinityTerm) ToRaw() PodAffinityTermRaw {
+func (x PodAffinityTerm) ToRaw(ctx context.Context) PodAffinityTermRaw {
     raw := PodAffinityTermRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.LabelSelector().ToRaw()
+        nestedRaw := x.LabelSelector().ToRaw(ctx)
         raw.LabelSelector = &nestedRaw
     }
     if l := x.s.GetList(1); l != nil && l.(*segment.Strings).Len() > 0 {
@@ -14596,7 +15003,7 @@ func (x PodAffinityTerm) ToRaw() PodAffinityTermRaw {
     }
     raw.TopologyKey = x.TopologyKey()
     if x.s.HasField(3) {
-        nestedRaw := x.NamespaceSelector().ToRaw()
+        nestedRaw := x.NamespaceSelector().ToRaw(ctx)
         raw.NamespaceSelector = &nestedRaw
     }
     if l := x.s.GetList(4); l != nil && l.(*segment.Strings).Len() > 0 {
@@ -14611,7 +15018,6 @@ func (x PodAffinityTerm) ToRaw() PodAffinityTermRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -14630,7 +15036,7 @@ type PodAntiAffinity struct {
 // NewPodAntiAffinity creates a new pooled instance of PodAntiAffinity.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodAntiAffinity(ctx context.Context) PodAntiAffinity {
-    s := segment.NewPooled(ctx, XXXMappingPodAntiAffinity)
+    s := segment.New(ctx, XXXMappingPodAntiAffinity)
     s.SetIsSetEnabled(true)
     return PodAntiAffinity{
         s: s,
@@ -14640,7 +15046,7 @@ func NewPodAntiAffinity(ctx context.Context) PodAntiAffinity {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodAntiAffinity) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodAntiAffinityFrom creates a new PodAntiAffinity from our internal Struct representation.
@@ -14653,14 +15059,22 @@ func XXXNewPodAntiAffinityFrom(s *segment.Struct) PodAntiAffinity {
     return PodAntiAffinity{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodAntiAffinity) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodAntiAffinity) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodAntiAffinity) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -14675,43 +15089,43 @@ func (x PodAntiAffinity) UnmarshalReader (r io.Reader) (int, error) {
 
 // RequiredDuringSchedulingIgnoredDuringExecutionList returns the underlying Structs list for iteration.
 // Use NewPodAffinityTerm() to create items and Append to add them.
-func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionList() *segment.Structs {
+func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingPodAffinityTerm); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingPodAffinityTerm); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingPodAffinityTerm)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingPodAffinityTerm)
     return structs
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionLen returns the number of items in the list.
-func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionLen() int {
-    return x.RequiredDuringSchedulingIgnoredDuringExecutionList().Len()
+func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionLen(ctx context.Context) int {
+    return x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx).Len()
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionGet returns the item at the given index.
-func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionGet(index int) PodAffinityTerm {
-    s := x.RequiredDuringSchedulingIgnoredDuringExecutionList().Get(index)
+func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionGet(ctx context.Context, index int) PodAffinityTerm {
+    s := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx).Get(index)
     return PodAffinityTerm{s: s}
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionAppend appends items to the list.
-func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppend(values ...PodAffinityTerm) {
-    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx context.Context, values ...PodAffinityTerm) {
+    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendRequiredDuringSchedulingIgnoredDuringExecution is an alias for RequiredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAntiAffinity) AppendRequiredDuringSchedulingIgnoredDuringExecution(values ...PodAffinityTerm) {
-    x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(values...)
+func (x PodAntiAffinity) AppendRequiredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...PodAffinityTerm) {
+    x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
 }
 
 // RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*PodAffinityTermRaw) {
-    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+    list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodAffinityTermFromRaw(ctx, *raw).XXXGetStruct())
@@ -14724,43 +15138,43 @@ func (x PodAntiAffinity) IsSetRequiredDuringSchedulingIgnoredDuringExecution() b
 
 // PreferredDuringSchedulingIgnoredDuringExecutionList returns the underlying Structs list for iteration.
 // Use NewWeightedPodAffinityTerm() to create items and Append to add them.
-func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionList() *segment.Structs {
+func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingWeightedPodAffinityTerm); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingWeightedPodAffinityTerm); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingWeightedPodAffinityTerm)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingWeightedPodAffinityTerm)
     return structs
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionLen returns the number of items in the list.
-func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionLen() int {
-    return x.PreferredDuringSchedulingIgnoredDuringExecutionList().Len()
+func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionLen(ctx context.Context) int {
+    return x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx).Len()
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionGet returns the item at the given index.
-func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionGet(index int) WeightedPodAffinityTerm {
-    s := x.PreferredDuringSchedulingIgnoredDuringExecutionList().Get(index)
+func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionGet(ctx context.Context, index int) WeightedPodAffinityTerm {
+    s := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx).Get(index)
     return WeightedPodAffinityTerm{s: s}
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionAppend appends items to the list.
-func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(values ...WeightedPodAffinityTerm) {
-    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx context.Context, values ...WeightedPodAffinityTerm) {
+    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendPreferredDuringSchedulingIgnoredDuringExecution is an alias for PreferredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAntiAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(values ...WeightedPodAffinityTerm) {
-    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(values...)
+func (x PodAntiAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...WeightedPodAffinityTerm) {
+    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
 }
 
 // PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*WeightedPodAffinityTermRaw) {
-    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+    list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewWeightedPodAffinityTermFromRaw(ctx, *raw).XXXGetStruct())
@@ -14822,7 +15236,7 @@ type PodAntiAffinityRaw struct {
 func NewPodAntiAffinityFromRaw(ctx context.Context, raw PodAntiAffinityRaw) PodAntiAffinity {
     x := NewPodAntiAffinity(ctx)
     if raw.RequiredDuringSchedulingIgnoredDuringExecution != nil {
-        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
         items := make([]*segment.Struct, 0, len(raw.RequiredDuringSchedulingIgnoredDuringExecution))
         for _, r := range raw.RequiredDuringSchedulingIgnoredDuringExecution {
             if r != nil {
@@ -14832,7 +15246,7 @@ func NewPodAntiAffinityFromRaw(ctx context.Context, raw PodAntiAffinityRaw) PodA
         list.SetAll(items)
     }
     if raw.PreferredDuringSchedulingIgnoredDuringExecution != nil {
-        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
         items := make([]*segment.Struct, 0, len(raw.PreferredDuringSchedulingIgnoredDuringExecution))
         for _, r := range raw.PreferredDuringSchedulingIgnoredDuringExecution {
             if r != nil {
@@ -14845,22 +15259,22 @@ func NewPodAntiAffinityFromRaw(ctx context.Context, raw PodAntiAffinityRaw) PodA
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodAntiAffinity) ToRaw() PodAntiAffinityRaw {
+func (x PodAntiAffinity) ToRaw(ctx context.Context) PodAntiAffinityRaw {
     raw := PodAntiAffinityRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.RequiredDuringSchedulingIgnoredDuringExecution = make([]*PodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.RequiredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
         raw.RequiredDuringSchedulingIgnoredDuringExecution = make([]*PodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.RequiredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     }
@@ -14869,21 +15283,20 @@ func (x PodAntiAffinity) ToRaw() PodAntiAffinityRaw {
         raw.PreferredDuringSchedulingIgnoredDuringExecution = make([]*WeightedPodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := WeightedPodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PreferredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList()
+        list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
         raw.PreferredDuringSchedulingIgnoredDuringExecution = make([]*WeightedPodAffinityTermRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := WeightedPodAffinityTerm{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PreferredDuringSchedulingIgnoredDuringExecution[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -14902,7 +15315,7 @@ type PodCondition struct {
 // NewPodCondition creates a new pooled instance of PodCondition.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodCondition(ctx context.Context) PodCondition {
-    s := segment.NewPooled(ctx, XXXMappingPodCondition)
+    s := segment.New(ctx, XXXMappingPodCondition)
     s.SetIsSetEnabled(true)
     return PodCondition{
         s: s,
@@ -14912,7 +15325,7 @@ func NewPodCondition(ctx context.Context) PodCondition {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodCondition) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodConditionFrom creates a new PodCondition from our internal Struct representation.
@@ -14925,14 +15338,22 @@ func XXXNewPodConditionFrom(s *segment.Struct) PodCondition {
     return PodCondition{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodCondition) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodCondition) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodCondition) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -15095,23 +15516,22 @@ func NewPodConditionFromRaw(ctx context.Context, raw PodConditionRaw) PodConditi
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodCondition) ToRaw() PodConditionRaw {
+func (x PodCondition) ToRaw(ctx context.Context) PodConditionRaw {
     raw := PodConditionRaw{}
     raw.Type = x.Type()
     raw.Status = x.Status()
     if x.s.HasField(2) {
-        nestedRaw := x.LastProbeTime().ToRaw()
+        nestedRaw := x.LastProbeTime().ToRaw(ctx)
         raw.LastProbeTime = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.LastTransitionTime().ToRaw()
+        nestedRaw := x.LastTransitionTime().ToRaw(ctx)
         raw.LastTransitionTime = &nestedRaw
     }
     raw.Reason = x.Reason()
     raw.Message = x.Message()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -15130,7 +15550,7 @@ type PodDNSConfig struct {
 // NewPodDNSConfig creates a new pooled instance of PodDNSConfig.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodDNSConfig(ctx context.Context) PodDNSConfig {
-    s := segment.NewPooled(ctx, XXXMappingPodDNSConfig)
+    s := segment.New(ctx, XXXMappingPodDNSConfig)
     s.SetIsSetEnabled(true)
     return PodDNSConfig{
         s: s,
@@ -15140,7 +15560,7 @@ func NewPodDNSConfig(ctx context.Context) PodDNSConfig {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodDNSConfig) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodDNSConfigFrom creates a new PodDNSConfig from our internal Struct representation.
@@ -15153,14 +15573,22 @@ func XXXNewPodDNSConfigFrom(s *segment.Struct) PodDNSConfig {
     return PodDNSConfig{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodDNSConfig) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodDNSConfig) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodDNSConfig) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -15215,43 +15643,43 @@ func (x PodDNSConfig) IsSetSearches() bool{
 
 // OptionsList returns the underlying Structs list for iteration.
 // Use NewPodDNSConfigOption() to create items and Append to add them.
-func (x PodDNSConfig) OptionsList() *segment.Structs {
+func (x PodDNSConfig) OptionsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 2, XXXMappingPodDNSConfigOption); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 2, XXXMappingPodDNSConfigOption); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 2, XXXMappingPodDNSConfigOption)
+    structs := segment.NewStructs(ctx, x.s, 2, XXXMappingPodDNSConfigOption)
     return structs
 }
 
 // OptionsLen returns the number of items in the list.
-func (x PodDNSConfig) OptionsLen() int {
-    return x.OptionsList().Len()
+func (x PodDNSConfig) OptionsLen(ctx context.Context) int {
+    return x.OptionsList(ctx).Len()
 }
 
 // OptionsGet returns the item at the given index.
-func (x PodDNSConfig) OptionsGet(index int) PodDNSConfigOption {
-    s := x.OptionsList().Get(index)
+func (x PodDNSConfig) OptionsGet(ctx context.Context, index int) PodDNSConfigOption {
+    s := x.OptionsList(ctx).Get(index)
     return PodDNSConfigOption{s: s}
 }
 
 // OptionsAppend appends items to the list.
-func (x PodDNSConfig) OptionsAppend(values ...PodDNSConfigOption) {
-    list := x.OptionsList()
+func (x PodDNSConfig) OptionsAppend(ctx context.Context, values ...PodDNSConfigOption) {
+    list := x.OptionsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendOptions is an alias for OptionsAppend for backwards compatibility.
-func (x PodDNSConfig) AppendOptions(values ...PodDNSConfigOption) {
-    x.OptionsAppend(values...)
+func (x PodDNSConfig) AppendOptions(ctx context.Context, values ...PodDNSConfigOption) {
+    x.OptionsAppend(ctx, values...)
 }
 
 // OptionsAppendRaw appends items to the list using Raw struct representations.
 func (x PodDNSConfig) OptionsAppendRaw(ctx context.Context, values ...*PodDNSConfigOptionRaw) {
-    list := x.OptionsList()
+    list := x.OptionsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodDNSConfigOptionFromRaw(ctx, *raw).XXXGetStruct())
@@ -15320,7 +15748,7 @@ func NewPodDNSConfigFromRaw(ctx context.Context, raw PodDNSConfigRaw) PodDNSConf
         x.SetSearches(raw.Searches...)
     }
     if raw.Options != nil {
-        list := x.OptionsList()
+        list := x.OptionsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Options))
         for _, r := range raw.Options {
             if r != nil {
@@ -15333,7 +15761,7 @@ func NewPodDNSConfigFromRaw(ctx context.Context, raw PodDNSConfigRaw) PodDNSConf
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodDNSConfig) ToRaw() PodDNSConfigRaw {
+func (x PodDNSConfig) ToRaw(ctx context.Context) PodDNSConfigRaw {
     raw := PodDNSConfigRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Strings).Len() > 0 {
         raw.Nameservers = l.(*segment.Strings).Slice()
@@ -15350,21 +15778,20 @@ func (x PodDNSConfig) ToRaw() PodDNSConfigRaw {
         raw.Options = make([]*PodDNSConfigOptionRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodDNSConfigOption{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Options[i] = &itemRaw
         }
     } else if x.s.HasField(2) {
-        list := x.OptionsList()
+        list := x.OptionsList(ctx)
         raw.Options = make([]*PodDNSConfigOptionRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodDNSConfigOption{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Options[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -15383,7 +15810,7 @@ type PodDNSConfigOption struct {
 // NewPodDNSConfigOption creates a new pooled instance of PodDNSConfigOption.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodDNSConfigOption(ctx context.Context) PodDNSConfigOption {
-    s := segment.NewPooled(ctx, XXXMappingPodDNSConfigOption)
+    s := segment.New(ctx, XXXMappingPodDNSConfigOption)
     s.SetIsSetEnabled(true)
     return PodDNSConfigOption{
         s: s,
@@ -15393,7 +15820,7 @@ func NewPodDNSConfigOption(ctx context.Context) PodDNSConfigOption {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodDNSConfigOption) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodDNSConfigOptionFrom creates a new PodDNSConfigOption from our internal Struct representation.
@@ -15406,14 +15833,22 @@ func XXXNewPodDNSConfigOptionFrom(s *segment.Struct) PodDNSConfigOption {
     return PodDNSConfigOption{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodDNSConfigOption) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodDNSConfigOption) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodDNSConfigOption) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -15510,13 +15945,12 @@ func NewPodDNSConfigOptionFromRaw(ctx context.Context, raw PodDNSConfigOptionRaw
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodDNSConfigOption) ToRaw() PodDNSConfigOptionRaw {
+func (x PodDNSConfigOption) ToRaw(ctx context.Context) PodDNSConfigOptionRaw {
     raw := PodDNSConfigOptionRaw{}
     raw.Name = x.Name()
     raw.Value = x.Value()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -15535,7 +15969,7 @@ type PodIP struct {
 // NewPodIP creates a new pooled instance of PodIP.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodIP(ctx context.Context) PodIP {
-    s := segment.NewPooled(ctx, XXXMappingPodIP)
+    s := segment.New(ctx, XXXMappingPodIP)
     s.SetIsSetEnabled(true)
     return PodIP{
         s: s,
@@ -15545,7 +15979,7 @@ func NewPodIP(ctx context.Context) PodIP {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodIP) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodIPFrom creates a new PodIP from our internal Struct representation.
@@ -15558,14 +15992,22 @@ func XXXNewPodIPFrom(s *segment.Struct) PodIP {
     return PodIP{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodIP) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodIP) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodIP) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -15646,12 +16088,11 @@ func NewPodIPFromRaw(ctx context.Context, raw PodIPRaw) PodIP {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodIP) ToRaw() PodIPRaw {
+func (x PodIP) ToRaw(ctx context.Context) PodIPRaw {
     raw := PodIPRaw{}
     raw.Ip = x.Ip()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -15670,7 +16111,7 @@ type PodOS struct {
 // NewPodOS creates a new pooled instance of PodOS.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodOS(ctx context.Context) PodOS {
-    s := segment.NewPooled(ctx, XXXMappingPodOS)
+    s := segment.New(ctx, XXXMappingPodOS)
     s.SetIsSetEnabled(true)
     return PodOS{
         s: s,
@@ -15680,7 +16121,7 @@ func NewPodOS(ctx context.Context) PodOS {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodOS) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodOSFrom creates a new PodOS from our internal Struct representation.
@@ -15693,14 +16134,22 @@ func XXXNewPodOSFrom(s *segment.Struct) PodOS {
     return PodOS{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodOS) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodOS) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodOS) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -15781,12 +16230,11 @@ func NewPodOSFromRaw(ctx context.Context, raw PodOSRaw) PodOS {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodOS) ToRaw() PodOSRaw {
+func (x PodOS) ToRaw(ctx context.Context) PodOSRaw {
     raw := PodOSRaw{}
     raw.Name = x.Name()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -15805,7 +16253,7 @@ type PodReadinessGate struct {
 // NewPodReadinessGate creates a new pooled instance of PodReadinessGate.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodReadinessGate(ctx context.Context) PodReadinessGate {
-    s := segment.NewPooled(ctx, XXXMappingPodReadinessGate)
+    s := segment.New(ctx, XXXMappingPodReadinessGate)
     s.SetIsSetEnabled(true)
     return PodReadinessGate{
         s: s,
@@ -15815,7 +16263,7 @@ func NewPodReadinessGate(ctx context.Context) PodReadinessGate {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodReadinessGate) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodReadinessGateFrom creates a new PodReadinessGate from our internal Struct representation.
@@ -15828,14 +16276,22 @@ func XXXNewPodReadinessGateFrom(s *segment.Struct) PodReadinessGate {
     return PodReadinessGate{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodReadinessGate) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodReadinessGate) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodReadinessGate) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -15916,12 +16372,11 @@ func NewPodReadinessGateFromRaw(ctx context.Context, raw PodReadinessGateRaw) Po
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodReadinessGate) ToRaw() PodReadinessGateRaw {
+func (x PodReadinessGate) ToRaw(ctx context.Context) PodReadinessGateRaw {
     raw := PodReadinessGateRaw{}
     raw.ConditionType = x.ConditionType()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -15940,7 +16395,7 @@ type PodResourceClaim struct {
 // NewPodResourceClaim creates a new pooled instance of PodResourceClaim.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodResourceClaim(ctx context.Context) PodResourceClaim {
-    s := segment.NewPooled(ctx, XXXMappingPodResourceClaim)
+    s := segment.New(ctx, XXXMappingPodResourceClaim)
     s.SetIsSetEnabled(true)
     return PodResourceClaim{
         s: s,
@@ -15950,7 +16405,7 @@ func NewPodResourceClaim(ctx context.Context) PodResourceClaim {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodResourceClaim) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodResourceClaimFrom creates a new PodResourceClaim from our internal Struct representation.
@@ -15963,14 +16418,22 @@ func XXXNewPodResourceClaimFrom(s *segment.Struct) PodResourceClaim {
     return PodResourceClaim{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodResourceClaim) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodResourceClaim) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodResourceClaim) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -16083,14 +16546,13 @@ func NewPodResourceClaimFromRaw(ctx context.Context, raw PodResourceClaimRaw) Po
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodResourceClaim) ToRaw() PodResourceClaimRaw {
+func (x PodResourceClaim) ToRaw(ctx context.Context) PodResourceClaimRaw {
     raw := PodResourceClaimRaw{}
     raw.Name = x.Name()
     raw.ResourceClaimName = x.ResourceClaimName()
     raw.ResourceClaimTemplateName = x.ResourceClaimTemplateName()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -16109,7 +16571,7 @@ type PodResourceClaimStatus struct {
 // NewPodResourceClaimStatus creates a new pooled instance of PodResourceClaimStatus.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodResourceClaimStatus(ctx context.Context) PodResourceClaimStatus {
-    s := segment.NewPooled(ctx, XXXMappingPodResourceClaimStatus)
+    s := segment.New(ctx, XXXMappingPodResourceClaimStatus)
     s.SetIsSetEnabled(true)
     return PodResourceClaimStatus{
         s: s,
@@ -16119,7 +16581,7 @@ func NewPodResourceClaimStatus(ctx context.Context) PodResourceClaimStatus {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodResourceClaimStatus) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodResourceClaimStatusFrom creates a new PodResourceClaimStatus from our internal Struct representation.
@@ -16132,14 +16594,22 @@ func XXXNewPodResourceClaimStatusFrom(s *segment.Struct) PodResourceClaimStatus 
     return PodResourceClaimStatus{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodResourceClaimStatus) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodResourceClaimStatus) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodResourceClaimStatus) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -16236,13 +16706,12 @@ func NewPodResourceClaimStatusFromRaw(ctx context.Context, raw PodResourceClaimS
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodResourceClaimStatus) ToRaw() PodResourceClaimStatusRaw {
+func (x PodResourceClaimStatus) ToRaw(ctx context.Context) PodResourceClaimStatusRaw {
     raw := PodResourceClaimStatusRaw{}
     raw.Name = x.Name()
     raw.ResourceClaimName = x.ResourceClaimName()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -16261,7 +16730,7 @@ type PodSchedulingGate struct {
 // NewPodSchedulingGate creates a new pooled instance of PodSchedulingGate.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodSchedulingGate(ctx context.Context) PodSchedulingGate {
-    s := segment.NewPooled(ctx, XXXMappingPodSchedulingGate)
+    s := segment.New(ctx, XXXMappingPodSchedulingGate)
     s.SetIsSetEnabled(true)
     return PodSchedulingGate{
         s: s,
@@ -16271,7 +16740,7 @@ func NewPodSchedulingGate(ctx context.Context) PodSchedulingGate {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodSchedulingGate) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodSchedulingGateFrom creates a new PodSchedulingGate from our internal Struct representation.
@@ -16284,14 +16753,22 @@ func XXXNewPodSchedulingGateFrom(s *segment.Struct) PodSchedulingGate {
     return PodSchedulingGate{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodSchedulingGate) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodSchedulingGate) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodSchedulingGate) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -16372,12 +16849,11 @@ func NewPodSchedulingGateFromRaw(ctx context.Context, raw PodSchedulingGateRaw) 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodSchedulingGate) ToRaw() PodSchedulingGateRaw {
+func (x PodSchedulingGate) ToRaw(ctx context.Context) PodSchedulingGateRaw {
     raw := PodSchedulingGateRaw{}
     raw.Name = x.Name()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -16396,7 +16872,7 @@ type PodSecurityContext struct {
 // NewPodSecurityContext creates a new pooled instance of PodSecurityContext.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodSecurityContext(ctx context.Context) PodSecurityContext {
-    s := segment.NewPooled(ctx, XXXMappingPodSecurityContext)
+    s := segment.New(ctx, XXXMappingPodSecurityContext)
     s.SetIsSetEnabled(true)
     return PodSecurityContext{
         s: s,
@@ -16406,7 +16882,7 @@ func NewPodSecurityContext(ctx context.Context) PodSecurityContext {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodSecurityContext) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodSecurityContextFrom creates a new PodSecurityContext from our internal Struct representation.
@@ -16419,14 +16895,22 @@ func XXXNewPodSecurityContextFrom(s *segment.Struct) PodSecurityContext {
     return PodSecurityContext{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodSecurityContext) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodSecurityContext) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodSecurityContext) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -16548,43 +17032,43 @@ func (x PodSecurityContext) IsSetFsGroup() bool{
 
 // SysctlsList returns the underlying Structs list for iteration.
 // Use NewSysctl() to create items and Append to add them.
-func (x PodSecurityContext) SysctlsList() *segment.Structs {
+func (x PodSecurityContext) SysctlsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 8, XXXMappingSysctl); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 8, XXXMappingSysctl); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 8, XXXMappingSysctl)
+    structs := segment.NewStructs(ctx, x.s, 8, XXXMappingSysctl)
     return structs
 }
 
 // SysctlsLen returns the number of items in the list.
-func (x PodSecurityContext) SysctlsLen() int {
-    return x.SysctlsList().Len()
+func (x PodSecurityContext) SysctlsLen(ctx context.Context) int {
+    return x.SysctlsList(ctx).Len()
 }
 
 // SysctlsGet returns the item at the given index.
-func (x PodSecurityContext) SysctlsGet(index int) Sysctl {
-    s := x.SysctlsList().Get(index)
+func (x PodSecurityContext) SysctlsGet(ctx context.Context, index int) Sysctl {
+    s := x.SysctlsList(ctx).Get(index)
     return Sysctl{s: s}
 }
 
 // SysctlsAppend appends items to the list.
-func (x PodSecurityContext) SysctlsAppend(values ...Sysctl) {
-    list := x.SysctlsList()
+func (x PodSecurityContext) SysctlsAppend(ctx context.Context, values ...Sysctl) {
+    list := x.SysctlsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendSysctls is an alias for SysctlsAppend for backwards compatibility.
-func (x PodSecurityContext) AppendSysctls(values ...Sysctl) {
-    x.SysctlsAppend(values...)
+func (x PodSecurityContext) AppendSysctls(ctx context.Context, values ...Sysctl) {
+    x.SysctlsAppend(ctx, values...)
 }
 
 // SysctlsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSecurityContext) SysctlsAppendRaw(ctx context.Context, values ...*SysctlRaw) {
-    list := x.SysctlsList()
+    list := x.SysctlsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewSysctlFromRaw(ctx, *raw).XXXGetStruct())
@@ -16731,7 +17215,7 @@ func NewPodSecurityContextFromRaw(ctx context.Context, raw PodSecurityContextRaw
         x.SetFsGroup(raw.FsGroup)
     }
     if raw.Sysctls != nil {
-        list := x.SysctlsList()
+        list := x.SysctlsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Sysctls))
         for _, r := range raw.Sysctls {
             if r != nil {
@@ -16756,14 +17240,14 @@ func NewPodSecurityContextFromRaw(ctx context.Context, raw PodSecurityContextRaw
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodSecurityContext) ToRaw() PodSecurityContextRaw {
+func (x PodSecurityContext) ToRaw(ctx context.Context) PodSecurityContextRaw {
     raw := PodSecurityContextRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.SeLinuxOptions().ToRaw()
+        nestedRaw := x.SeLinuxOptions().ToRaw(ctx)
         raw.SeLinuxOptions = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.WindowsOptions().ToRaw()
+        nestedRaw := x.WindowsOptions().ToRaw(ctx)
         raw.WindowsOptions = &nestedRaw
     }
     raw.RunAsUser = x.RunAsUser()
@@ -16781,31 +17265,30 @@ func (x PodSecurityContext) ToRaw() PodSecurityContextRaw {
         raw.Sysctls = make([]*SysctlRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Sysctl{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Sysctls[i] = &itemRaw
         }
     } else if x.s.HasField(8) {
-        list := x.SysctlsList()
+        list := x.SysctlsList(ctx)
         raw.Sysctls = make([]*SysctlRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Sysctl{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Sysctls[i] = &itemRaw
         }
     }
     raw.FsGroupChangePolicy = x.FsGroupChangePolicy()
     if x.s.HasField(10) {
-        nestedRaw := x.SeccompProfile().ToRaw()
+        nestedRaw := x.SeccompProfile().ToRaw(ctx)
         raw.SeccompProfile = &nestedRaw
     }
     if x.s.HasField(11) {
-        nestedRaw := x.AppArmorProfile().ToRaw()
+        nestedRaw := x.AppArmorProfile().ToRaw(ctx)
         raw.AppArmorProfile = &nestedRaw
     }
     raw.SeLinuxChangePolicy = x.SeLinuxChangePolicy()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -16824,7 +17307,7 @@ type PodSpec struct {
 // NewPodSpec creates a new pooled instance of PodSpec.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodSpec(ctx context.Context) PodSpec {
-    s := segment.NewPooled(ctx, XXXMappingPodSpec)
+    s := segment.New(ctx, XXXMappingPodSpec)
     s.SetIsSetEnabled(true)
     return PodSpec{
         s: s,
@@ -16834,7 +17317,7 @@ func NewPodSpec(ctx context.Context) PodSpec {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodSpec) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodSpecFrom creates a new PodSpec from our internal Struct representation.
@@ -16847,14 +17330,22 @@ func XXXNewPodSpecFrom(s *segment.Struct) PodSpec {
     return PodSpec{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodSpec) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodSpec) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodSpec) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -16869,43 +17360,43 @@ func (x PodSpec) UnmarshalReader (r io.Reader) (int, error) {
 
 // VolumesList returns the underlying Structs list for iteration.
 // Use NewVolume() to create items and Append to add them.
-func (x PodSpec) VolumesList() *segment.Structs {
+func (x PodSpec) VolumesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingVolume); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingVolume); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingVolume)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingVolume)
     return structs
 }
 
 // VolumesLen returns the number of items in the list.
-func (x PodSpec) VolumesLen() int {
-    return x.VolumesList().Len()
+func (x PodSpec) VolumesLen(ctx context.Context) int {
+    return x.VolumesList(ctx).Len()
 }
 
 // VolumesGet returns the item at the given index.
-func (x PodSpec) VolumesGet(index int) Volume {
-    s := x.VolumesList().Get(index)
+func (x PodSpec) VolumesGet(ctx context.Context, index int) Volume {
+    s := x.VolumesList(ctx).Get(index)
     return Volume{s: s}
 }
 
 // VolumesAppend appends items to the list.
-func (x PodSpec) VolumesAppend(values ...Volume) {
-    list := x.VolumesList()
+func (x PodSpec) VolumesAppend(ctx context.Context, values ...Volume) {
+    list := x.VolumesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendVolumes is an alias for VolumesAppend for backwards compatibility.
-func (x PodSpec) AppendVolumes(values ...Volume) {
-    x.VolumesAppend(values...)
+func (x PodSpec) AppendVolumes(ctx context.Context, values ...Volume) {
+    x.VolumesAppend(ctx, values...)
 }
 
 // VolumesAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) VolumesAppendRaw(ctx context.Context, values ...*VolumeRaw) {
-    list := x.VolumesList()
+    list := x.VolumesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewVolumeFromRaw(ctx, *raw).XXXGetStruct())
@@ -16918,43 +17409,43 @@ func (x PodSpec) IsSetVolumes() bool{
 
 // InitContainersList returns the underlying Structs list for iteration.
 // Use NewContainer() to create items and Append to add them.
-func (x PodSpec) InitContainersList() *segment.Structs {
+func (x PodSpec) InitContainersList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingContainer); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingContainer); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingContainer)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingContainer)
     return structs
 }
 
 // InitContainersLen returns the number of items in the list.
-func (x PodSpec) InitContainersLen() int {
-    return x.InitContainersList().Len()
+func (x PodSpec) InitContainersLen(ctx context.Context) int {
+    return x.InitContainersList(ctx).Len()
 }
 
 // InitContainersGet returns the item at the given index.
-func (x PodSpec) InitContainersGet(index int) Container {
-    s := x.InitContainersList().Get(index)
+func (x PodSpec) InitContainersGet(ctx context.Context, index int) Container {
+    s := x.InitContainersList(ctx).Get(index)
     return Container{s: s}
 }
 
 // InitContainersAppend appends items to the list.
-func (x PodSpec) InitContainersAppend(values ...Container) {
-    list := x.InitContainersList()
+func (x PodSpec) InitContainersAppend(ctx context.Context, values ...Container) {
+    list := x.InitContainersList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendInitContainers is an alias for InitContainersAppend for backwards compatibility.
-func (x PodSpec) AppendInitContainers(values ...Container) {
-    x.InitContainersAppend(values...)
+func (x PodSpec) AppendInitContainers(ctx context.Context, values ...Container) {
+    x.InitContainersAppend(ctx, values...)
 }
 
 // InitContainersAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) InitContainersAppendRaw(ctx context.Context, values ...*ContainerRaw) {
-    list := x.InitContainersList()
+    list := x.InitContainersList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerFromRaw(ctx, *raw).XXXGetStruct())
@@ -16967,43 +17458,43 @@ func (x PodSpec) IsSetInitContainers() bool{
 
 // ContainersList returns the underlying Structs list for iteration.
 // Use NewContainer() to create items and Append to add them.
-func (x PodSpec) ContainersList() *segment.Structs {
+func (x PodSpec) ContainersList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 2, XXXMappingContainer); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 2, XXXMappingContainer); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 2, XXXMappingContainer)
+    structs := segment.NewStructs(ctx, x.s, 2, XXXMappingContainer)
     return structs
 }
 
 // ContainersLen returns the number of items in the list.
-func (x PodSpec) ContainersLen() int {
-    return x.ContainersList().Len()
+func (x PodSpec) ContainersLen(ctx context.Context) int {
+    return x.ContainersList(ctx).Len()
 }
 
 // ContainersGet returns the item at the given index.
-func (x PodSpec) ContainersGet(index int) Container {
-    s := x.ContainersList().Get(index)
+func (x PodSpec) ContainersGet(ctx context.Context, index int) Container {
+    s := x.ContainersList(ctx).Get(index)
     return Container{s: s}
 }
 
 // ContainersAppend appends items to the list.
-func (x PodSpec) ContainersAppend(values ...Container) {
-    list := x.ContainersList()
+func (x PodSpec) ContainersAppend(ctx context.Context, values ...Container) {
+    list := x.ContainersList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendContainers is an alias for ContainersAppend for backwards compatibility.
-func (x PodSpec) AppendContainers(values ...Container) {
-    x.ContainersAppend(values...)
+func (x PodSpec) AppendContainers(ctx context.Context, values ...Container) {
+    x.ContainersAppend(ctx, values...)
 }
 
 // ContainersAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ContainersAppendRaw(ctx context.Context, values ...*ContainerRaw) {
-    list := x.ContainersList()
+    list := x.ContainersList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerFromRaw(ctx, *raw).XXXGetStruct())
@@ -17016,43 +17507,43 @@ func (x PodSpec) IsSetContainers() bool{
 
 // EphemeralContainersList returns the underlying Structs list for iteration.
 // Use NewEphemeralContainer() to create items and Append to add them.
-func (x PodSpec) EphemeralContainersList() *segment.Structs {
+func (x PodSpec) EphemeralContainersList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 3, XXXMappingEphemeralContainer); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 3, XXXMappingEphemeralContainer); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 3, XXXMappingEphemeralContainer)
+    structs := segment.NewStructs(ctx, x.s, 3, XXXMappingEphemeralContainer)
     return structs
 }
 
 // EphemeralContainersLen returns the number of items in the list.
-func (x PodSpec) EphemeralContainersLen() int {
-    return x.EphemeralContainersList().Len()
+func (x PodSpec) EphemeralContainersLen(ctx context.Context) int {
+    return x.EphemeralContainersList(ctx).Len()
 }
 
 // EphemeralContainersGet returns the item at the given index.
-func (x PodSpec) EphemeralContainersGet(index int) EphemeralContainer {
-    s := x.EphemeralContainersList().Get(index)
+func (x PodSpec) EphemeralContainersGet(ctx context.Context, index int) EphemeralContainer {
+    s := x.EphemeralContainersList(ctx).Get(index)
     return EphemeralContainer{s: s}
 }
 
 // EphemeralContainersAppend appends items to the list.
-func (x PodSpec) EphemeralContainersAppend(values ...EphemeralContainer) {
-    list := x.EphemeralContainersList()
+func (x PodSpec) EphemeralContainersAppend(ctx context.Context, values ...EphemeralContainer) {
+    list := x.EphemeralContainersList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendEphemeralContainers is an alias for EphemeralContainersAppend for backwards compatibility.
-func (x PodSpec) AppendEphemeralContainers(values ...EphemeralContainer) {
-    x.EphemeralContainersAppend(values...)
+func (x PodSpec) AppendEphemeralContainers(ctx context.Context, values ...EphemeralContainer) {
+    x.EphemeralContainersAppend(ctx, values...)
 }
 
 // EphemeralContainersAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) EphemeralContainersAppendRaw(ctx context.Context, values ...*EphemeralContainerRaw) {
-    list := x.EphemeralContainersList()
+    list := x.EphemeralContainersList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewEphemeralContainerFromRaw(ctx, *raw).XXXGetStruct())
@@ -17113,43 +17604,43 @@ func (x PodSpec) IsSetDnsPolicy() bool{
 
 // NodeSelectorList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x PodSpec) NodeSelectorList() *segment.Structs {
+func (x PodSpec) NodeSelectorList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 8, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 8, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 8, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 8, XXXMappingKeyValue)
     return structs
 }
 
 // NodeSelectorLen returns the number of items in the list.
-func (x PodSpec) NodeSelectorLen() int {
-    return x.NodeSelectorList().Len()
+func (x PodSpec) NodeSelectorLen(ctx context.Context) int {
+    return x.NodeSelectorList(ctx).Len()
 }
 
 // NodeSelectorGet returns the item at the given index.
-func (x PodSpec) NodeSelectorGet(index int) KeyValue {
-    s := x.NodeSelectorList().Get(index)
+func (x PodSpec) NodeSelectorGet(ctx context.Context, index int) KeyValue {
+    s := x.NodeSelectorList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // NodeSelectorAppend appends items to the list.
-func (x PodSpec) NodeSelectorAppend(values ...KeyValue) {
-    list := x.NodeSelectorList()
+func (x PodSpec) NodeSelectorAppend(ctx context.Context, values ...KeyValue) {
+    list := x.NodeSelectorList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendNodeSelector is an alias for NodeSelectorAppend for backwards compatibility.
-func (x PodSpec) AppendNodeSelector(values ...KeyValue) {
-    x.NodeSelectorAppend(values...)
+func (x PodSpec) AppendNodeSelector(ctx context.Context, values ...KeyValue) {
+    x.NodeSelectorAppend(ctx, values...)
 }
 
 // NodeSelectorAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) NodeSelectorAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.NodeSelectorList()
+    list := x.NodeSelectorList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -17259,43 +17750,43 @@ func (x PodSpec) IsSetSecurityContext() bool{
 
 // ImagePullSecretsList returns the underlying Structs list for iteration.
 // Use NewLocalObjectReference() to create items and Append to add them.
-func (x PodSpec) ImagePullSecretsList() *segment.Structs {
+func (x PodSpec) ImagePullSecretsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 17, XXXMappingLocalObjectReference); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 17, XXXMappingLocalObjectReference); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 17, XXXMappingLocalObjectReference)
+    structs := segment.NewStructs(ctx, x.s, 17, XXXMappingLocalObjectReference)
     return structs
 }
 
 // ImagePullSecretsLen returns the number of items in the list.
-func (x PodSpec) ImagePullSecretsLen() int {
-    return x.ImagePullSecretsList().Len()
+func (x PodSpec) ImagePullSecretsLen(ctx context.Context) int {
+    return x.ImagePullSecretsList(ctx).Len()
 }
 
 // ImagePullSecretsGet returns the item at the given index.
-func (x PodSpec) ImagePullSecretsGet(index int) LocalObjectReference {
-    s := x.ImagePullSecretsList().Get(index)
+func (x PodSpec) ImagePullSecretsGet(ctx context.Context, index int) LocalObjectReference {
+    s := x.ImagePullSecretsList(ctx).Get(index)
     return LocalObjectReference{s: s}
 }
 
 // ImagePullSecretsAppend appends items to the list.
-func (x PodSpec) ImagePullSecretsAppend(values ...LocalObjectReference) {
-    list := x.ImagePullSecretsList()
+func (x PodSpec) ImagePullSecretsAppend(ctx context.Context, values ...LocalObjectReference) {
+    list := x.ImagePullSecretsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendImagePullSecrets is an alias for ImagePullSecretsAppend for backwards compatibility.
-func (x PodSpec) AppendImagePullSecrets(values ...LocalObjectReference) {
-    x.ImagePullSecretsAppend(values...)
+func (x PodSpec) AppendImagePullSecrets(ctx context.Context, values ...LocalObjectReference) {
+    x.ImagePullSecretsAppend(ctx, values...)
 }
 
 // ImagePullSecretsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ImagePullSecretsAppendRaw(ctx context.Context, values ...*LocalObjectReferenceRaw) {
-    list := x.ImagePullSecretsList()
+    list := x.ImagePullSecretsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewLocalObjectReferenceFromRaw(ctx, *raw).XXXGetStruct())
@@ -17357,43 +17848,43 @@ func (x PodSpec) IsSetSchedulerName() bool{
 
 // TolerationsList returns the underlying Structs list for iteration.
 // Use NewToleration() to create items and Append to add them.
-func (x PodSpec) TolerationsList() *segment.Structs {
+func (x PodSpec) TolerationsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 22, XXXMappingToleration); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 22, XXXMappingToleration); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 22, XXXMappingToleration)
+    structs := segment.NewStructs(ctx, x.s, 22, XXXMappingToleration)
     return structs
 }
 
 // TolerationsLen returns the number of items in the list.
-func (x PodSpec) TolerationsLen() int {
-    return x.TolerationsList().Len()
+func (x PodSpec) TolerationsLen(ctx context.Context) int {
+    return x.TolerationsList(ctx).Len()
 }
 
 // TolerationsGet returns the item at the given index.
-func (x PodSpec) TolerationsGet(index int) Toleration {
-    s := x.TolerationsList().Get(index)
+func (x PodSpec) TolerationsGet(ctx context.Context, index int) Toleration {
+    s := x.TolerationsList(ctx).Get(index)
     return Toleration{s: s}
 }
 
 // TolerationsAppend appends items to the list.
-func (x PodSpec) TolerationsAppend(values ...Toleration) {
-    list := x.TolerationsList()
+func (x PodSpec) TolerationsAppend(ctx context.Context, values ...Toleration) {
+    list := x.TolerationsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendTolerations is an alias for TolerationsAppend for backwards compatibility.
-func (x PodSpec) AppendTolerations(values ...Toleration) {
-    x.TolerationsAppend(values...)
+func (x PodSpec) AppendTolerations(ctx context.Context, values ...Toleration) {
+    x.TolerationsAppend(ctx, values...)
 }
 
 // TolerationsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) TolerationsAppendRaw(ctx context.Context, values ...*TolerationRaw) {
-    list := x.TolerationsList()
+    list := x.TolerationsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewTolerationFromRaw(ctx, *raw).XXXGetStruct())
@@ -17406,43 +17897,43 @@ func (x PodSpec) IsSetTolerations() bool{
 
 // HostAliasesList returns the underlying Structs list for iteration.
 // Use NewHostAlias() to create items and Append to add them.
-func (x PodSpec) HostAliasesList() *segment.Structs {
+func (x PodSpec) HostAliasesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 23, XXXMappingHostAlias); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 23, XXXMappingHostAlias); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 23, XXXMappingHostAlias)
+    structs := segment.NewStructs(ctx, x.s, 23, XXXMappingHostAlias)
     return structs
 }
 
 // HostAliasesLen returns the number of items in the list.
-func (x PodSpec) HostAliasesLen() int {
-    return x.HostAliasesList().Len()
+func (x PodSpec) HostAliasesLen(ctx context.Context) int {
+    return x.HostAliasesList(ctx).Len()
 }
 
 // HostAliasesGet returns the item at the given index.
-func (x PodSpec) HostAliasesGet(index int) HostAlias {
-    s := x.HostAliasesList().Get(index)
+func (x PodSpec) HostAliasesGet(ctx context.Context, index int) HostAlias {
+    s := x.HostAliasesList(ctx).Get(index)
     return HostAlias{s: s}
 }
 
 // HostAliasesAppend appends items to the list.
-func (x PodSpec) HostAliasesAppend(values ...HostAlias) {
-    list := x.HostAliasesList()
+func (x PodSpec) HostAliasesAppend(ctx context.Context, values ...HostAlias) {
+    list := x.HostAliasesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendHostAliases is an alias for HostAliasesAppend for backwards compatibility.
-func (x PodSpec) AppendHostAliases(values ...HostAlias) {
-    x.HostAliasesAppend(values...)
+func (x PodSpec) AppendHostAliases(ctx context.Context, values ...HostAlias) {
+    x.HostAliasesAppend(ctx, values...)
 }
 
 // HostAliasesAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) HostAliasesAppendRaw(ctx context.Context, values ...*HostAliasRaw) {
-    list := x.HostAliasesList()
+    list := x.HostAliasesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewHostAliasFromRaw(ctx, *raw).XXXGetStruct())
@@ -17492,43 +17983,43 @@ func (x PodSpec) IsSetDnsConfig() bool{
 
 // ReadinessGatesList returns the underlying Structs list for iteration.
 // Use NewPodReadinessGate() to create items and Append to add them.
-func (x PodSpec) ReadinessGatesList() *segment.Structs {
+func (x PodSpec) ReadinessGatesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 27, XXXMappingPodReadinessGate); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 27, XXXMappingPodReadinessGate); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 27, XXXMappingPodReadinessGate)
+    structs := segment.NewStructs(ctx, x.s, 27, XXXMappingPodReadinessGate)
     return structs
 }
 
 // ReadinessGatesLen returns the number of items in the list.
-func (x PodSpec) ReadinessGatesLen() int {
-    return x.ReadinessGatesList().Len()
+func (x PodSpec) ReadinessGatesLen(ctx context.Context) int {
+    return x.ReadinessGatesList(ctx).Len()
 }
 
 // ReadinessGatesGet returns the item at the given index.
-func (x PodSpec) ReadinessGatesGet(index int) PodReadinessGate {
-    s := x.ReadinessGatesList().Get(index)
+func (x PodSpec) ReadinessGatesGet(ctx context.Context, index int) PodReadinessGate {
+    s := x.ReadinessGatesList(ctx).Get(index)
     return PodReadinessGate{s: s}
 }
 
 // ReadinessGatesAppend appends items to the list.
-func (x PodSpec) ReadinessGatesAppend(values ...PodReadinessGate) {
-    list := x.ReadinessGatesList()
+func (x PodSpec) ReadinessGatesAppend(ctx context.Context, values ...PodReadinessGate) {
+    list := x.ReadinessGatesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendReadinessGates is an alias for ReadinessGatesAppend for backwards compatibility.
-func (x PodSpec) AppendReadinessGates(values ...PodReadinessGate) {
-    x.ReadinessGatesAppend(values...)
+func (x PodSpec) AppendReadinessGates(ctx context.Context, values ...PodReadinessGate) {
+    x.ReadinessGatesAppend(ctx, values...)
 }
 
 // ReadinessGatesAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ReadinessGatesAppendRaw(ctx context.Context, values ...*PodReadinessGateRaw) {
-    list := x.ReadinessGatesList()
+    list := x.ReadinessGatesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodReadinessGateFromRaw(ctx, *raw).XXXGetStruct())
@@ -17577,43 +18068,43 @@ func (x PodSpec) IsSetPreemptionPolicy() bool{
 
 // OverheadList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x PodSpec) OverheadList() *segment.Structs {
+func (x PodSpec) OverheadList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 31, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 31, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 31, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 31, XXXMappingKeyValue)
     return structs
 }
 
 // OverheadLen returns the number of items in the list.
-func (x PodSpec) OverheadLen() int {
-    return x.OverheadList().Len()
+func (x PodSpec) OverheadLen(ctx context.Context) int {
+    return x.OverheadList(ctx).Len()
 }
 
 // OverheadGet returns the item at the given index.
-func (x PodSpec) OverheadGet(index int) KeyValue {
-    s := x.OverheadList().Get(index)
+func (x PodSpec) OverheadGet(ctx context.Context, index int) KeyValue {
+    s := x.OverheadList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // OverheadAppend appends items to the list.
-func (x PodSpec) OverheadAppend(values ...KeyValue) {
-    list := x.OverheadList()
+func (x PodSpec) OverheadAppend(ctx context.Context, values ...KeyValue) {
+    list := x.OverheadList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendOverhead is an alias for OverheadAppend for backwards compatibility.
-func (x PodSpec) AppendOverhead(values ...KeyValue) {
-    x.OverheadAppend(values...)
+func (x PodSpec) AppendOverhead(ctx context.Context, values ...KeyValue) {
+    x.OverheadAppend(ctx, values...)
 }
 
 // OverheadAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) OverheadAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.OverheadList()
+    list := x.OverheadList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -17626,43 +18117,43 @@ func (x PodSpec) IsSetOverhead() bool{
 
 // TopologySpreadConstraintsList returns the underlying Structs list for iteration.
 // Use NewTopologySpreadConstraint() to create items and Append to add them.
-func (x PodSpec) TopologySpreadConstraintsList() *segment.Structs {
+func (x PodSpec) TopologySpreadConstraintsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 32, XXXMappingTopologySpreadConstraint); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 32, XXXMappingTopologySpreadConstraint); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 32, XXXMappingTopologySpreadConstraint)
+    structs := segment.NewStructs(ctx, x.s, 32, XXXMappingTopologySpreadConstraint)
     return structs
 }
 
 // TopologySpreadConstraintsLen returns the number of items in the list.
-func (x PodSpec) TopologySpreadConstraintsLen() int {
-    return x.TopologySpreadConstraintsList().Len()
+func (x PodSpec) TopologySpreadConstraintsLen(ctx context.Context) int {
+    return x.TopologySpreadConstraintsList(ctx).Len()
 }
 
 // TopologySpreadConstraintsGet returns the item at the given index.
-func (x PodSpec) TopologySpreadConstraintsGet(index int) TopologySpreadConstraint {
-    s := x.TopologySpreadConstraintsList().Get(index)
+func (x PodSpec) TopologySpreadConstraintsGet(ctx context.Context, index int) TopologySpreadConstraint {
+    s := x.TopologySpreadConstraintsList(ctx).Get(index)
     return TopologySpreadConstraint{s: s}
 }
 
 // TopologySpreadConstraintsAppend appends items to the list.
-func (x PodSpec) TopologySpreadConstraintsAppend(values ...TopologySpreadConstraint) {
-    list := x.TopologySpreadConstraintsList()
+func (x PodSpec) TopologySpreadConstraintsAppend(ctx context.Context, values ...TopologySpreadConstraint) {
+    list := x.TopologySpreadConstraintsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendTopologySpreadConstraints is an alias for TopologySpreadConstraintsAppend for backwards compatibility.
-func (x PodSpec) AppendTopologySpreadConstraints(values ...TopologySpreadConstraint) {
-    x.TopologySpreadConstraintsAppend(values...)
+func (x PodSpec) AppendTopologySpreadConstraints(ctx context.Context, values ...TopologySpreadConstraint) {
+    x.TopologySpreadConstraintsAppend(ctx, values...)
 }
 
 // TopologySpreadConstraintsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) TopologySpreadConstraintsAppendRaw(ctx context.Context, values ...*TopologySpreadConstraintRaw) {
-    list := x.TopologySpreadConstraintsList()
+    list := x.TopologySpreadConstraintsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewTopologySpreadConstraintFromRaw(ctx, *raw).XXXGetStruct())
@@ -17712,43 +18203,43 @@ func (x PodSpec) IsSetHostUsers() bool{
 
 // SchedulingGatesList returns the underlying Structs list for iteration.
 // Use NewPodSchedulingGate() to create items and Append to add them.
-func (x PodSpec) SchedulingGatesList() *segment.Structs {
+func (x PodSpec) SchedulingGatesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 36, XXXMappingPodSchedulingGate); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 36, XXXMappingPodSchedulingGate); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 36, XXXMappingPodSchedulingGate)
+    structs := segment.NewStructs(ctx, x.s, 36, XXXMappingPodSchedulingGate)
     return structs
 }
 
 // SchedulingGatesLen returns the number of items in the list.
-func (x PodSpec) SchedulingGatesLen() int {
-    return x.SchedulingGatesList().Len()
+func (x PodSpec) SchedulingGatesLen(ctx context.Context) int {
+    return x.SchedulingGatesList(ctx).Len()
 }
 
 // SchedulingGatesGet returns the item at the given index.
-func (x PodSpec) SchedulingGatesGet(index int) PodSchedulingGate {
-    s := x.SchedulingGatesList().Get(index)
+func (x PodSpec) SchedulingGatesGet(ctx context.Context, index int) PodSchedulingGate {
+    s := x.SchedulingGatesList(ctx).Get(index)
     return PodSchedulingGate{s: s}
 }
 
 // SchedulingGatesAppend appends items to the list.
-func (x PodSpec) SchedulingGatesAppend(values ...PodSchedulingGate) {
-    list := x.SchedulingGatesList()
+func (x PodSpec) SchedulingGatesAppend(ctx context.Context, values ...PodSchedulingGate) {
+    list := x.SchedulingGatesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendSchedulingGates is an alias for SchedulingGatesAppend for backwards compatibility.
-func (x PodSpec) AppendSchedulingGates(values ...PodSchedulingGate) {
-    x.SchedulingGatesAppend(values...)
+func (x PodSpec) AppendSchedulingGates(ctx context.Context, values ...PodSchedulingGate) {
+    x.SchedulingGatesAppend(ctx, values...)
 }
 
 // SchedulingGatesAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) SchedulingGatesAppendRaw(ctx context.Context, values ...*PodSchedulingGateRaw) {
-    list := x.SchedulingGatesList()
+    list := x.SchedulingGatesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodSchedulingGateFromRaw(ctx, *raw).XXXGetStruct())
@@ -17761,43 +18252,43 @@ func (x PodSpec) IsSetSchedulingGates() bool{
 
 // ResourceClaimsList returns the underlying Structs list for iteration.
 // Use NewPodResourceClaim() to create items and Append to add them.
-func (x PodSpec) ResourceClaimsList() *segment.Structs {
+func (x PodSpec) ResourceClaimsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 37, XXXMappingPodResourceClaim); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 37, XXXMappingPodResourceClaim); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 37, XXXMappingPodResourceClaim)
+    structs := segment.NewStructs(ctx, x.s, 37, XXXMappingPodResourceClaim)
     return structs
 }
 
 // ResourceClaimsLen returns the number of items in the list.
-func (x PodSpec) ResourceClaimsLen() int {
-    return x.ResourceClaimsList().Len()
+func (x PodSpec) ResourceClaimsLen(ctx context.Context) int {
+    return x.ResourceClaimsList(ctx).Len()
 }
 
 // ResourceClaimsGet returns the item at the given index.
-func (x PodSpec) ResourceClaimsGet(index int) PodResourceClaim {
-    s := x.ResourceClaimsList().Get(index)
+func (x PodSpec) ResourceClaimsGet(ctx context.Context, index int) PodResourceClaim {
+    s := x.ResourceClaimsList(ctx).Get(index)
     return PodResourceClaim{s: s}
 }
 
 // ResourceClaimsAppend appends items to the list.
-func (x PodSpec) ResourceClaimsAppend(values ...PodResourceClaim) {
-    list := x.ResourceClaimsList()
+func (x PodSpec) ResourceClaimsAppend(ctx context.Context, values ...PodResourceClaim) {
+    list := x.ResourceClaimsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendResourceClaims is an alias for ResourceClaimsAppend for backwards compatibility.
-func (x PodSpec) AppendResourceClaims(values ...PodResourceClaim) {
-    x.ResourceClaimsAppend(values...)
+func (x PodSpec) AppendResourceClaims(ctx context.Context, values ...PodResourceClaim) {
+    x.ResourceClaimsAppend(ctx, values...)
 }
 
 // ResourceClaimsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ResourceClaimsAppendRaw(ctx context.Context, values ...*PodResourceClaimRaw) {
-    list := x.ResourceClaimsList()
+    list := x.ResourceClaimsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodResourceClaimFromRaw(ctx, *raw).XXXGetStruct())
@@ -17909,7 +18400,7 @@ type PodSpecRaw struct {
 func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
     x := NewPodSpec(ctx)
     if raw.Volumes != nil {
-        list := x.VolumesList()
+        list := x.VolumesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Volumes))
         for _, r := range raw.Volumes {
             if r != nil {
@@ -17919,7 +18410,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         list.SetAll(items)
     }
     if raw.InitContainers != nil {
-        list := x.InitContainersList()
+        list := x.InitContainersList(ctx)
         items := make([]*segment.Struct, 0, len(raw.InitContainers))
         for _, r := range raw.InitContainers {
             if r != nil {
@@ -17929,7 +18420,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         list.SetAll(items)
     }
     if raw.Containers != nil {
-        list := x.ContainersList()
+        list := x.ContainersList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Containers))
         for _, r := range raw.Containers {
             if r != nil {
@@ -17939,7 +18430,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         list.SetAll(items)
     }
     if raw.EphemeralContainers != nil {
-        list := x.EphemeralContainersList()
+        list := x.EphemeralContainersList(ctx)
         items := make([]*segment.Struct, 0, len(raw.EphemeralContainers))
         for _, r := range raw.EphemeralContainers {
             if r != nil {
@@ -17961,7 +18452,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         x.SetDnsPolicy(raw.DnsPolicy)
     }
     if raw.NodeSelector != nil {
-        list := x.NodeSelectorList()
+        list := x.NodeSelectorList(ctx)
         items := make([]*segment.Struct, 0, len(raw.NodeSelector))
         for _, r := range raw.NodeSelector {
             if r != nil {
@@ -17995,7 +18486,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         x.SetSecurityContext(NewPodSecurityContextFromRaw(ctx, *raw.SecurityContext))
     }
     if raw.ImagePullSecrets != nil {
-        list := x.ImagePullSecretsList()
+        list := x.ImagePullSecretsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.ImagePullSecrets))
         for _, r := range raw.ImagePullSecrets {
             if r != nil {
@@ -18017,7 +18508,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         x.SetSchedulerName(raw.SchedulerName)
     }
     if raw.Tolerations != nil {
-        list := x.TolerationsList()
+        list := x.TolerationsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Tolerations))
         for _, r := range raw.Tolerations {
             if r != nil {
@@ -18027,7 +18518,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         list.SetAll(items)
     }
     if raw.HostAliases != nil {
-        list := x.HostAliasesList()
+        list := x.HostAliasesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.HostAliases))
         for _, r := range raw.HostAliases {
             if r != nil {
@@ -18046,7 +18537,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         x.SetDnsConfig(NewPodDNSConfigFromRaw(ctx, *raw.DnsConfig))
     }
     if raw.ReadinessGates != nil {
-        list := x.ReadinessGatesList()
+        list := x.ReadinessGatesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.ReadinessGates))
         for _, r := range raw.ReadinessGates {
             if r != nil {
@@ -18065,7 +18556,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         x.SetPreemptionPolicy(raw.PreemptionPolicy)
     }
     if raw.Overhead != nil {
-        list := x.OverheadList()
+        list := x.OverheadList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Overhead))
         for _, r := range raw.Overhead {
             if r != nil {
@@ -18075,7 +18566,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         list.SetAll(items)
     }
     if raw.TopologySpreadConstraints != nil {
-        list := x.TopologySpreadConstraintsList()
+        list := x.TopologySpreadConstraintsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.TopologySpreadConstraints))
         for _, r := range raw.TopologySpreadConstraints {
             if r != nil {
@@ -18094,7 +18585,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         x.SetHostUsers(raw.HostUsers)
     }
     if raw.SchedulingGates != nil {
-        list := x.SchedulingGatesList()
+        list := x.SchedulingGatesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.SchedulingGates))
         for _, r := range raw.SchedulingGates {
             if r != nil {
@@ -18104,7 +18595,7 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
         list.SetAll(items)
     }
     if raw.ResourceClaims != nil {
-        list := x.ResourceClaimsList()
+        list := x.ResourceClaimsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.ResourceClaims))
         for _, r := range raw.ResourceClaims {
             if r != nil {
@@ -18120,22 +18611,22 @@ func NewPodSpecFromRaw(ctx context.Context, raw PodSpecRaw) PodSpec {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodSpec) ToRaw() PodSpecRaw {
+func (x PodSpec) ToRaw(ctx context.Context) PodSpecRaw {
     raw := PodSpecRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.Volumes = make([]*VolumeRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Volume{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Volumes[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.VolumesList()
+        list := x.VolumesList(ctx)
         raw.Volumes = make([]*VolumeRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Volume{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Volumes[i] = &itemRaw
         }
     }
@@ -18144,15 +18635,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.InitContainers = make([]*ContainerRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Container{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.InitContainers[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.InitContainersList()
+        list := x.InitContainersList(ctx)
         raw.InitContainers = make([]*ContainerRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Container{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.InitContainers[i] = &itemRaw
         }
     }
@@ -18161,15 +18652,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.Containers = make([]*ContainerRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Container{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Containers[i] = &itemRaw
         }
     } else if x.s.HasField(2) {
-        list := x.ContainersList()
+        list := x.ContainersList(ctx)
         raw.Containers = make([]*ContainerRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Container{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Containers[i] = &itemRaw
         }
     }
@@ -18178,15 +18669,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.EphemeralContainers = make([]*EphemeralContainerRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EphemeralContainer{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EphemeralContainers[i] = &itemRaw
         }
     } else if x.s.HasField(3) {
-        list := x.EphemeralContainersList()
+        list := x.EphemeralContainersList(ctx)
         raw.EphemeralContainers = make([]*EphemeralContainerRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := EphemeralContainer{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EphemeralContainers[i] = &itemRaw
         }
     }
@@ -18199,15 +18690,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.NodeSelector = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.NodeSelector[i] = &itemRaw
         }
     } else if x.s.HasField(8) {
-        list := x.NodeSelectorList()
+        list := x.NodeSelectorList(ctx)
         raw.NodeSelector = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.NodeSelector[i] = &itemRaw
         }
     }
@@ -18219,7 +18710,7 @@ func (x PodSpec) ToRaw() PodSpecRaw {
     raw.HostIpc = x.HostIpc()
     raw.ShareProcessNamespace = x.ShareProcessNamespace()
     if x.s.HasField(16) {
-        nestedRaw := x.SecurityContext().ToRaw()
+        nestedRaw := x.SecurityContext().ToRaw(ctx)
         raw.SecurityContext = &nestedRaw
     }
     if l := x.s.GetList(17); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -18227,22 +18718,22 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.ImagePullSecrets = make([]*LocalObjectReferenceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := LocalObjectReference{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ImagePullSecrets[i] = &itemRaw
         }
     } else if x.s.HasField(17) {
-        list := x.ImagePullSecretsList()
+        list := x.ImagePullSecretsList(ctx)
         raw.ImagePullSecrets = make([]*LocalObjectReferenceRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := LocalObjectReference{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ImagePullSecrets[i] = &itemRaw
         }
     }
     raw.Hostname = x.Hostname()
     raw.Subdomain = x.Subdomain()
     if x.s.HasField(20) {
-        nestedRaw := x.Affinity().ToRaw()
+        nestedRaw := x.Affinity().ToRaw(ctx)
         raw.Affinity = &nestedRaw
     }
     raw.SchedulerName = x.SchedulerName()
@@ -18251,15 +18742,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.Tolerations = make([]*TolerationRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Toleration{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Tolerations[i] = &itemRaw
         }
     } else if x.s.HasField(22) {
-        list := x.TolerationsList()
+        list := x.TolerationsList(ctx)
         raw.Tolerations = make([]*TolerationRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Toleration{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Tolerations[i] = &itemRaw
         }
     }
@@ -18268,22 +18759,22 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.HostAliases = make([]*HostAliasRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := HostAlias{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.HostAliases[i] = &itemRaw
         }
     } else if x.s.HasField(23) {
-        list := x.HostAliasesList()
+        list := x.HostAliasesList(ctx)
         raw.HostAliases = make([]*HostAliasRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := HostAlias{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.HostAliases[i] = &itemRaw
         }
     }
     raw.PriorityClassName = x.PriorityClassName()
     raw.Priority = x.Priority()
     if x.s.HasField(26) {
-        nestedRaw := x.DnsConfig().ToRaw()
+        nestedRaw := x.DnsConfig().ToRaw(ctx)
         raw.DnsConfig = &nestedRaw
     }
     if l := x.s.GetList(27); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -18291,15 +18782,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.ReadinessGates = make([]*PodReadinessGateRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodReadinessGate{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ReadinessGates[i] = &itemRaw
         }
     } else if x.s.HasField(27) {
-        list := x.ReadinessGatesList()
+        list := x.ReadinessGatesList(ctx)
         raw.ReadinessGates = make([]*PodReadinessGateRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodReadinessGate{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ReadinessGates[i] = &itemRaw
         }
     }
@@ -18311,15 +18802,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.Overhead = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Overhead[i] = &itemRaw
         }
     } else if x.s.HasField(31) {
-        list := x.OverheadList()
+        list := x.OverheadList(ctx)
         raw.Overhead = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Overhead[i] = &itemRaw
         }
     }
@@ -18328,21 +18819,21 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.TopologySpreadConstraints = make([]*TopologySpreadConstraintRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := TopologySpreadConstraint{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.TopologySpreadConstraints[i] = &itemRaw
         }
     } else if x.s.HasField(32) {
-        list := x.TopologySpreadConstraintsList()
+        list := x.TopologySpreadConstraintsList(ctx)
         raw.TopologySpreadConstraints = make([]*TopologySpreadConstraintRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := TopologySpreadConstraint{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.TopologySpreadConstraints[i] = &itemRaw
         }
     }
     raw.SetHostnameAsFqdn = x.SetHostnameAsFqdn()
     if x.s.HasField(34) {
-        nestedRaw := x.Os().ToRaw()
+        nestedRaw := x.Os().ToRaw(ctx)
         raw.Os = &nestedRaw
     }
     raw.HostUsers = x.HostUsers()
@@ -18351,15 +18842,15 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.SchedulingGates = make([]*PodSchedulingGateRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodSchedulingGate{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.SchedulingGates[i] = &itemRaw
         }
     } else if x.s.HasField(36) {
-        list := x.SchedulingGatesList()
+        list := x.SchedulingGatesList(ctx)
         raw.SchedulingGates = make([]*PodSchedulingGateRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodSchedulingGate{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.SchedulingGates[i] = &itemRaw
         }
     }
@@ -18368,25 +18859,24 @@ func (x PodSpec) ToRaw() PodSpecRaw {
         raw.ResourceClaims = make([]*PodResourceClaimRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodResourceClaim{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ResourceClaims[i] = &itemRaw
         }
     } else if x.s.HasField(37) {
-        list := x.ResourceClaimsList()
+        list := x.ResourceClaimsList(ctx)
         raw.ResourceClaims = make([]*PodResourceClaimRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodResourceClaim{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ResourceClaims[i] = &itemRaw
         }
     }
     if x.s.HasField(38) {
-        nestedRaw := x.Resources().ToRaw()
+        nestedRaw := x.Resources().ToRaw(ctx)
         raw.Resources = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -18405,7 +18895,7 @@ type PodStatus struct {
 // NewPodStatus creates a new pooled instance of PodStatus.
 // Call Release() when done to return it to the pool for reuse.
 func NewPodStatus(ctx context.Context) PodStatus {
-    s := segment.NewPooled(ctx, XXXMappingPodStatus)
+    s := segment.New(ctx, XXXMappingPodStatus)
     s.SetIsSetEnabled(true)
     return PodStatus{
         s: s,
@@ -18415,7 +18905,7 @@ func NewPodStatus(ctx context.Context) PodStatus {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PodStatus) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPodStatusFrom creates a new PodStatus from our internal Struct representation.
@@ -18428,14 +18918,22 @@ func XXXNewPodStatusFrom(s *segment.Struct) PodStatus {
     return PodStatus{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PodStatus) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PodStatus) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PodStatus) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -18462,43 +18960,43 @@ func (x PodStatus) IsSetPhase() bool{
 
 // ConditionsList returns the underlying Structs list for iteration.
 // Use NewPodCondition() to create items and Append to add them.
-func (x PodStatus) ConditionsList() *segment.Structs {
+func (x PodStatus) ConditionsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingPodCondition); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingPodCondition); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingPodCondition)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingPodCondition)
     return structs
 }
 
 // ConditionsLen returns the number of items in the list.
-func (x PodStatus) ConditionsLen() int {
-    return x.ConditionsList().Len()
+func (x PodStatus) ConditionsLen(ctx context.Context) int {
+    return x.ConditionsList(ctx).Len()
 }
 
 // ConditionsGet returns the item at the given index.
-func (x PodStatus) ConditionsGet(index int) PodCondition {
-    s := x.ConditionsList().Get(index)
+func (x PodStatus) ConditionsGet(ctx context.Context, index int) PodCondition {
+    s := x.ConditionsList(ctx).Get(index)
     return PodCondition{s: s}
 }
 
 // ConditionsAppend appends items to the list.
-func (x PodStatus) ConditionsAppend(values ...PodCondition) {
-    list := x.ConditionsList()
+func (x PodStatus) ConditionsAppend(ctx context.Context, values ...PodCondition) {
+    list := x.ConditionsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendConditions is an alias for ConditionsAppend for backwards compatibility.
-func (x PodStatus) AppendConditions(values ...PodCondition) {
-    x.ConditionsAppend(values...)
+func (x PodStatus) AppendConditions(ctx context.Context, values ...PodCondition) {
+    x.ConditionsAppend(ctx, values...)
 }
 
 // ConditionsAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) ConditionsAppendRaw(ctx context.Context, values ...*PodConditionRaw) {
-    list := x.ConditionsList()
+    list := x.ConditionsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodConditionFromRaw(ctx, *raw).XXXGetStruct())
@@ -18559,43 +19057,43 @@ func (x PodStatus) IsSetHostIp() bool{
 
 // HostIpsList returns the underlying Structs list for iteration.
 // Use NewHostIP() to create items and Append to add them.
-func (x PodStatus) HostIpsList() *segment.Structs {
+func (x PodStatus) HostIpsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 6, XXXMappingHostIP); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 6, XXXMappingHostIP); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 6, XXXMappingHostIP)
+    structs := segment.NewStructs(ctx, x.s, 6, XXXMappingHostIP)
     return structs
 }
 
 // HostIpsLen returns the number of items in the list.
-func (x PodStatus) HostIpsLen() int {
-    return x.HostIpsList().Len()
+func (x PodStatus) HostIpsLen(ctx context.Context) int {
+    return x.HostIpsList(ctx).Len()
 }
 
 // HostIpsGet returns the item at the given index.
-func (x PodStatus) HostIpsGet(index int) HostIP {
-    s := x.HostIpsList().Get(index)
+func (x PodStatus) HostIpsGet(ctx context.Context, index int) HostIP {
+    s := x.HostIpsList(ctx).Get(index)
     return HostIP{s: s}
 }
 
 // HostIpsAppend appends items to the list.
-func (x PodStatus) HostIpsAppend(values ...HostIP) {
-    list := x.HostIpsList()
+func (x PodStatus) HostIpsAppend(ctx context.Context, values ...HostIP) {
+    list := x.HostIpsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendHostIps is an alias for HostIpsAppend for backwards compatibility.
-func (x PodStatus) AppendHostIps(values ...HostIP) {
-    x.HostIpsAppend(values...)
+func (x PodStatus) AppendHostIps(ctx context.Context, values ...HostIP) {
+    x.HostIpsAppend(ctx, values...)
 }
 
 // HostIpsAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) HostIpsAppendRaw(ctx context.Context, values ...*HostIPRaw) {
-    list := x.HostIpsList()
+    list := x.HostIpsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewHostIPFromRaw(ctx, *raw).XXXGetStruct())
@@ -18620,43 +19118,43 @@ func (x PodStatus) IsSetPodIp() bool{
 
 // PodIpsList returns the underlying Structs list for iteration.
 // Use NewPodIP() to create items and Append to add them.
-func (x PodStatus) PodIpsList() *segment.Structs {
+func (x PodStatus) PodIpsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 8, XXXMappingPodIP); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 8, XXXMappingPodIP); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 8, XXXMappingPodIP)
+    structs := segment.NewStructs(ctx, x.s, 8, XXXMappingPodIP)
     return structs
 }
 
 // PodIpsLen returns the number of items in the list.
-func (x PodStatus) PodIpsLen() int {
-    return x.PodIpsList().Len()
+func (x PodStatus) PodIpsLen(ctx context.Context) int {
+    return x.PodIpsList(ctx).Len()
 }
 
 // PodIpsGet returns the item at the given index.
-func (x PodStatus) PodIpsGet(index int) PodIP {
-    s := x.PodIpsList().Get(index)
+func (x PodStatus) PodIpsGet(ctx context.Context, index int) PodIP {
+    s := x.PodIpsList(ctx).Get(index)
     return PodIP{s: s}
 }
 
 // PodIpsAppend appends items to the list.
-func (x PodStatus) PodIpsAppend(values ...PodIP) {
-    list := x.PodIpsList()
+func (x PodStatus) PodIpsAppend(ctx context.Context, values ...PodIP) {
+    list := x.PodIpsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendPodIps is an alias for PodIpsAppend for backwards compatibility.
-func (x PodStatus) AppendPodIps(values ...PodIP) {
-    x.PodIpsAppend(values...)
+func (x PodStatus) AppendPodIps(ctx context.Context, values ...PodIP) {
+    x.PodIpsAppend(ctx, values...)
 }
 
 // PodIpsAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) PodIpsAppendRaw(ctx context.Context, values ...*PodIPRaw) {
-    list := x.PodIpsList()
+    list := x.PodIpsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodIPFromRaw(ctx, *raw).XXXGetStruct())
@@ -18682,43 +19180,43 @@ func (x PodStatus) IsSetStartTime() bool{
 
 // InitContainerStatusesList returns the underlying Structs list for iteration.
 // Use NewContainerStatus() to create items and Append to add them.
-func (x PodStatus) InitContainerStatusesList() *segment.Structs {
+func (x PodStatus) InitContainerStatusesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 10, XXXMappingContainerStatus); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 10, XXXMappingContainerStatus); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 10, XXXMappingContainerStatus)
+    structs := segment.NewStructs(ctx, x.s, 10, XXXMappingContainerStatus)
     return structs
 }
 
 // InitContainerStatusesLen returns the number of items in the list.
-func (x PodStatus) InitContainerStatusesLen() int {
-    return x.InitContainerStatusesList().Len()
+func (x PodStatus) InitContainerStatusesLen(ctx context.Context) int {
+    return x.InitContainerStatusesList(ctx).Len()
 }
 
 // InitContainerStatusesGet returns the item at the given index.
-func (x PodStatus) InitContainerStatusesGet(index int) ContainerStatus {
-    s := x.InitContainerStatusesList().Get(index)
+func (x PodStatus) InitContainerStatusesGet(ctx context.Context, index int) ContainerStatus {
+    s := x.InitContainerStatusesList(ctx).Get(index)
     return ContainerStatus{s: s}
 }
 
 // InitContainerStatusesAppend appends items to the list.
-func (x PodStatus) InitContainerStatusesAppend(values ...ContainerStatus) {
-    list := x.InitContainerStatusesList()
+func (x PodStatus) InitContainerStatusesAppend(ctx context.Context, values ...ContainerStatus) {
+    list := x.InitContainerStatusesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendInitContainerStatuses is an alias for InitContainerStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendInitContainerStatuses(values ...ContainerStatus) {
-    x.InitContainerStatusesAppend(values...)
+func (x PodStatus) AppendInitContainerStatuses(ctx context.Context, values ...ContainerStatus) {
+    x.InitContainerStatusesAppend(ctx, values...)
 }
 
 // InitContainerStatusesAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) InitContainerStatusesAppendRaw(ctx context.Context, values ...*ContainerStatusRaw) {
-    list := x.InitContainerStatusesList()
+    list := x.InitContainerStatusesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerStatusFromRaw(ctx, *raw).XXXGetStruct())
@@ -18731,43 +19229,43 @@ func (x PodStatus) IsSetInitContainerStatuses() bool{
 
 // ContainerStatusesList returns the underlying Structs list for iteration.
 // Use NewContainerStatus() to create items and Append to add them.
-func (x PodStatus) ContainerStatusesList() *segment.Structs {
+func (x PodStatus) ContainerStatusesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 11, XXXMappingContainerStatus); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 11, XXXMappingContainerStatus); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 11, XXXMappingContainerStatus)
+    structs := segment.NewStructs(ctx, x.s, 11, XXXMappingContainerStatus)
     return structs
 }
 
 // ContainerStatusesLen returns the number of items in the list.
-func (x PodStatus) ContainerStatusesLen() int {
-    return x.ContainerStatusesList().Len()
+func (x PodStatus) ContainerStatusesLen(ctx context.Context) int {
+    return x.ContainerStatusesList(ctx).Len()
 }
 
 // ContainerStatusesGet returns the item at the given index.
-func (x PodStatus) ContainerStatusesGet(index int) ContainerStatus {
-    s := x.ContainerStatusesList().Get(index)
+func (x PodStatus) ContainerStatusesGet(ctx context.Context, index int) ContainerStatus {
+    s := x.ContainerStatusesList(ctx).Get(index)
     return ContainerStatus{s: s}
 }
 
 // ContainerStatusesAppend appends items to the list.
-func (x PodStatus) ContainerStatusesAppend(values ...ContainerStatus) {
-    list := x.ContainerStatusesList()
+func (x PodStatus) ContainerStatusesAppend(ctx context.Context, values ...ContainerStatus) {
+    list := x.ContainerStatusesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendContainerStatuses is an alias for ContainerStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendContainerStatuses(values ...ContainerStatus) {
-    x.ContainerStatusesAppend(values...)
+func (x PodStatus) AppendContainerStatuses(ctx context.Context, values ...ContainerStatus) {
+    x.ContainerStatusesAppend(ctx, values...)
 }
 
 // ContainerStatusesAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) ContainerStatusesAppendRaw(ctx context.Context, values ...*ContainerStatusRaw) {
-    list := x.ContainerStatusesList()
+    list := x.ContainerStatusesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerStatusFromRaw(ctx, *raw).XXXGetStruct())
@@ -18792,43 +19290,43 @@ func (x PodStatus) IsSetQosClass() bool{
 
 // EphemeralContainerStatusesList returns the underlying Structs list for iteration.
 // Use NewContainerStatus() to create items and Append to add them.
-func (x PodStatus) EphemeralContainerStatusesList() *segment.Structs {
+func (x PodStatus) EphemeralContainerStatusesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 13, XXXMappingContainerStatus); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 13, XXXMappingContainerStatus); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 13, XXXMappingContainerStatus)
+    structs := segment.NewStructs(ctx, x.s, 13, XXXMappingContainerStatus)
     return structs
 }
 
 // EphemeralContainerStatusesLen returns the number of items in the list.
-func (x PodStatus) EphemeralContainerStatusesLen() int {
-    return x.EphemeralContainerStatusesList().Len()
+func (x PodStatus) EphemeralContainerStatusesLen(ctx context.Context) int {
+    return x.EphemeralContainerStatusesList(ctx).Len()
 }
 
 // EphemeralContainerStatusesGet returns the item at the given index.
-func (x PodStatus) EphemeralContainerStatusesGet(index int) ContainerStatus {
-    s := x.EphemeralContainerStatusesList().Get(index)
+func (x PodStatus) EphemeralContainerStatusesGet(ctx context.Context, index int) ContainerStatus {
+    s := x.EphemeralContainerStatusesList(ctx).Get(index)
     return ContainerStatus{s: s}
 }
 
 // EphemeralContainerStatusesAppend appends items to the list.
-func (x PodStatus) EphemeralContainerStatusesAppend(values ...ContainerStatus) {
-    list := x.EphemeralContainerStatusesList()
+func (x PodStatus) EphemeralContainerStatusesAppend(ctx context.Context, values ...ContainerStatus) {
+    list := x.EphemeralContainerStatusesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendEphemeralContainerStatuses is an alias for EphemeralContainerStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendEphemeralContainerStatuses(values ...ContainerStatus) {
-    x.EphemeralContainerStatusesAppend(values...)
+func (x PodStatus) AppendEphemeralContainerStatuses(ctx context.Context, values ...ContainerStatus) {
+    x.EphemeralContainerStatusesAppend(ctx, values...)
 }
 
 // EphemeralContainerStatusesAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) EphemeralContainerStatusesAppendRaw(ctx context.Context, values ...*ContainerStatusRaw) {
-    list := x.EphemeralContainerStatusesList()
+    list := x.EphemeralContainerStatusesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewContainerStatusFromRaw(ctx, *raw).XXXGetStruct())
@@ -18853,43 +19351,43 @@ func (x PodStatus) IsSetResize() bool{
 
 // ResourceClaimStatusesList returns the underlying Structs list for iteration.
 // Use NewPodResourceClaimStatus() to create items and Append to add them.
-func (x PodStatus) ResourceClaimStatusesList() *segment.Structs {
+func (x PodStatus) ResourceClaimStatusesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 15, XXXMappingPodResourceClaimStatus); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 15, XXXMappingPodResourceClaimStatus); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 15, XXXMappingPodResourceClaimStatus)
+    structs := segment.NewStructs(ctx, x.s, 15, XXXMappingPodResourceClaimStatus)
     return structs
 }
 
 // ResourceClaimStatusesLen returns the number of items in the list.
-func (x PodStatus) ResourceClaimStatusesLen() int {
-    return x.ResourceClaimStatusesList().Len()
+func (x PodStatus) ResourceClaimStatusesLen(ctx context.Context) int {
+    return x.ResourceClaimStatusesList(ctx).Len()
 }
 
 // ResourceClaimStatusesGet returns the item at the given index.
-func (x PodStatus) ResourceClaimStatusesGet(index int) PodResourceClaimStatus {
-    s := x.ResourceClaimStatusesList().Get(index)
+func (x PodStatus) ResourceClaimStatusesGet(ctx context.Context, index int) PodResourceClaimStatus {
+    s := x.ResourceClaimStatusesList(ctx).Get(index)
     return PodResourceClaimStatus{s: s}
 }
 
 // ResourceClaimStatusesAppend appends items to the list.
-func (x PodStatus) ResourceClaimStatusesAppend(values ...PodResourceClaimStatus) {
-    list := x.ResourceClaimStatusesList()
+func (x PodStatus) ResourceClaimStatusesAppend(ctx context.Context, values ...PodResourceClaimStatus) {
+    list := x.ResourceClaimStatusesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendResourceClaimStatuses is an alias for ResourceClaimStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendResourceClaimStatuses(values ...PodResourceClaimStatus) {
-    x.ResourceClaimStatusesAppend(values...)
+func (x PodStatus) AppendResourceClaimStatuses(ctx context.Context, values ...PodResourceClaimStatus) {
+    x.ResourceClaimStatusesAppend(ctx, values...)
 }
 
 // ResourceClaimStatusesAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) ResourceClaimStatusesAppendRaw(ctx context.Context, values ...*PodResourceClaimStatusRaw) {
-    list := x.ResourceClaimStatusesList()
+    list := x.ResourceClaimStatusesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewPodResourceClaimStatusFromRaw(ctx, *raw).XXXGetStruct())
@@ -18981,7 +19479,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
         x.SetPhase(raw.Phase)
     }
     if raw.Conditions != nil {
-        list := x.ConditionsList()
+        list := x.ConditionsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Conditions))
         for _, r := range raw.Conditions {
             if r != nil {
@@ -19003,7 +19501,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
         x.SetHostIp(raw.HostIp)
     }
     if raw.HostIps != nil {
-        list := x.HostIpsList()
+        list := x.HostIpsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.HostIps))
         for _, r := range raw.HostIps {
             if r != nil {
@@ -19016,7 +19514,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
         x.SetPodIp(raw.PodIp)
     }
     if raw.PodIps != nil {
-        list := x.PodIpsList()
+        list := x.PodIpsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.PodIps))
         for _, r := range raw.PodIps {
             if r != nil {
@@ -19029,7 +19527,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
         x.SetStartTime(NewTimeFromRaw(ctx, *raw.StartTime))
     }
     if raw.InitContainerStatuses != nil {
-        list := x.InitContainerStatusesList()
+        list := x.InitContainerStatusesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.InitContainerStatuses))
         for _, r := range raw.InitContainerStatuses {
             if r != nil {
@@ -19039,7 +19537,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
         list.SetAll(items)
     }
     if raw.ContainerStatuses != nil {
-        list := x.ContainerStatusesList()
+        list := x.ContainerStatusesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.ContainerStatuses))
         for _, r := range raw.ContainerStatuses {
             if r != nil {
@@ -19052,7 +19550,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
         x.SetQosClass(raw.QosClass)
     }
     if raw.EphemeralContainerStatuses != nil {
-        list := x.EphemeralContainerStatusesList()
+        list := x.EphemeralContainerStatusesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.EphemeralContainerStatuses))
         for _, r := range raw.EphemeralContainerStatuses {
             if r != nil {
@@ -19065,7 +19563,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
         x.SetResize(raw.Resize)
     }
     if raw.ResourceClaimStatuses != nil {
-        list := x.ResourceClaimStatusesList()
+        list := x.ResourceClaimStatusesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.ResourceClaimStatuses))
         for _, r := range raw.ResourceClaimStatuses {
             if r != nil {
@@ -19081,7 +19579,7 @@ func NewPodStatusFromRaw(ctx context.Context, raw PodStatusRaw) PodStatus {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PodStatus) ToRaw() PodStatusRaw {
+func (x PodStatus) ToRaw(ctx context.Context) PodStatusRaw {
     raw := PodStatusRaw{}
     raw.Phase = x.Phase()
     if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -19089,15 +19587,15 @@ func (x PodStatus) ToRaw() PodStatusRaw {
         raw.Conditions = make([]*PodConditionRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodCondition{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Conditions[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.ConditionsList()
+        list := x.ConditionsList(ctx)
         raw.Conditions = make([]*PodConditionRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodCondition{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Conditions[i] = &itemRaw
         }
     }
@@ -19110,15 +19608,15 @@ func (x PodStatus) ToRaw() PodStatusRaw {
         raw.HostIps = make([]*HostIPRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := HostIP{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.HostIps[i] = &itemRaw
         }
     } else if x.s.HasField(6) {
-        list := x.HostIpsList()
+        list := x.HostIpsList(ctx)
         raw.HostIps = make([]*HostIPRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := HostIP{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.HostIps[i] = &itemRaw
         }
     }
@@ -19128,20 +19626,20 @@ func (x PodStatus) ToRaw() PodStatusRaw {
         raw.PodIps = make([]*PodIPRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodIP{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PodIps[i] = &itemRaw
         }
     } else if x.s.HasField(8) {
-        list := x.PodIpsList()
+        list := x.PodIpsList(ctx)
         raw.PodIps = make([]*PodIPRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodIP{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.PodIps[i] = &itemRaw
         }
     }
     if x.s.HasField(9) {
-        nestedRaw := x.StartTime().ToRaw()
+        nestedRaw := x.StartTime().ToRaw(ctx)
         raw.StartTime = &nestedRaw
     }
     if l := x.s.GetList(10); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -19149,15 +19647,15 @@ func (x PodStatus) ToRaw() PodStatusRaw {
         raw.InitContainerStatuses = make([]*ContainerStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.InitContainerStatuses[i] = &itemRaw
         }
     } else if x.s.HasField(10) {
-        list := x.InitContainerStatusesList()
+        list := x.InitContainerStatusesList(ctx)
         raw.InitContainerStatuses = make([]*ContainerStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.InitContainerStatuses[i] = &itemRaw
         }
     }
@@ -19166,15 +19664,15 @@ func (x PodStatus) ToRaw() PodStatusRaw {
         raw.ContainerStatuses = make([]*ContainerStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ContainerStatuses[i] = &itemRaw
         }
     } else if x.s.HasField(11) {
-        list := x.ContainerStatusesList()
+        list := x.ContainerStatusesList(ctx)
         raw.ContainerStatuses = make([]*ContainerStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ContainerStatuses[i] = &itemRaw
         }
     }
@@ -19184,15 +19682,15 @@ func (x PodStatus) ToRaw() PodStatusRaw {
         raw.EphemeralContainerStatuses = make([]*ContainerStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EphemeralContainerStatuses[i] = &itemRaw
         }
     } else if x.s.HasField(13) {
-        list := x.EphemeralContainerStatusesList()
+        list := x.EphemeralContainerStatusesList(ctx)
         raw.EphemeralContainerStatuses = make([]*ContainerStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ContainerStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.EphemeralContainerStatuses[i] = &itemRaw
         }
     }
@@ -19202,22 +19700,21 @@ func (x PodStatus) ToRaw() PodStatusRaw {
         raw.ResourceClaimStatuses = make([]*PodResourceClaimStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodResourceClaimStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ResourceClaimStatuses[i] = &itemRaw
         }
     } else if x.s.HasField(15) {
-        list := x.ResourceClaimStatusesList()
+        list := x.ResourceClaimStatusesList(ctx)
         raw.ResourceClaimStatuses = make([]*PodResourceClaimStatusRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := PodResourceClaimStatus{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.ResourceClaimStatuses[i] = &itemRaw
         }
     }
     raw.ObservedGeneration = x.ObservedGeneration()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -19236,7 +19733,7 @@ type PreferredSchedulingTerm struct {
 // NewPreferredSchedulingTerm creates a new pooled instance of PreferredSchedulingTerm.
 // Call Release() when done to return it to the pool for reuse.
 func NewPreferredSchedulingTerm(ctx context.Context) PreferredSchedulingTerm {
-    s := segment.NewPooled(ctx, XXXMappingPreferredSchedulingTerm)
+    s := segment.New(ctx, XXXMappingPreferredSchedulingTerm)
     s.SetIsSetEnabled(true)
     return PreferredSchedulingTerm{
         s: s,
@@ -19246,7 +19743,7 @@ func NewPreferredSchedulingTerm(ctx context.Context) PreferredSchedulingTerm {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x PreferredSchedulingTerm) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPreferredSchedulingTermFrom creates a new PreferredSchedulingTerm from our internal Struct representation.
@@ -19259,14 +19756,22 @@ func XXXNewPreferredSchedulingTermFrom(s *segment.Struct) PreferredSchedulingTer
     return PreferredSchedulingTerm{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x PreferredSchedulingTerm) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x PreferredSchedulingTerm) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x PreferredSchedulingTerm) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -19364,16 +19869,15 @@ func NewPreferredSchedulingTermFromRaw(ctx context.Context, raw PreferredSchedul
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x PreferredSchedulingTerm) ToRaw() PreferredSchedulingTermRaw {
+func (x PreferredSchedulingTerm) ToRaw(ctx context.Context) PreferredSchedulingTermRaw {
     raw := PreferredSchedulingTermRaw{}
     raw.Weight = x.Weight()
     if x.s.HasField(1) {
-        nestedRaw := x.Preference().ToRaw()
+        nestedRaw := x.Preference().ToRaw(ctx)
         raw.Preference = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -19392,7 +19896,7 @@ type Probe struct {
 // NewProbe creates a new pooled instance of Probe.
 // Call Release() when done to return it to the pool for reuse.
 func NewProbe(ctx context.Context) Probe {
-    s := segment.NewPooled(ctx, XXXMappingProbe)
+    s := segment.New(ctx, XXXMappingProbe)
     s.SetIsSetEnabled(true)
     return Probe{
         s: s,
@@ -19402,7 +19906,7 @@ func NewProbe(ctx context.Context) Probe {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Probe) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewProbeFrom creates a new Probe from our internal Struct representation.
@@ -19415,14 +19919,22 @@ func XXXNewProbeFrom(s *segment.Struct) Probe {
     return Probe{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Probe) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Probe) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Probe) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -19600,10 +20112,10 @@ func NewProbeFromRaw(ctx context.Context, raw ProbeRaw) Probe {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Probe) ToRaw() ProbeRaw {
+func (x Probe) ToRaw(ctx context.Context) ProbeRaw {
     raw := ProbeRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Handler().ToRaw()
+        nestedRaw := x.Handler().ToRaw(ctx)
         raw.Handler = &nestedRaw
     }
     raw.InitialDelaySeconds = x.InitialDelaySeconds()
@@ -19614,7 +20126,6 @@ func (x Probe) ToRaw() ProbeRaw {
     raw.TerminationGracePeriodSeconds = x.TerminationGracePeriodSeconds()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -19633,7 +20144,7 @@ type ProbeHandler struct {
 // NewProbeHandler creates a new pooled instance of ProbeHandler.
 // Call Release() when done to return it to the pool for reuse.
 func NewProbeHandler(ctx context.Context) ProbeHandler {
-    s := segment.NewPooled(ctx, XXXMappingProbeHandler)
+    s := segment.New(ctx, XXXMappingProbeHandler)
     s.SetIsSetEnabled(true)
     return ProbeHandler{
         s: s,
@@ -19643,7 +20154,7 @@ func NewProbeHandler(ctx context.Context) ProbeHandler {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ProbeHandler) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewProbeHandlerFrom creates a new ProbeHandler from our internal Struct representation.
@@ -19656,14 +20167,22 @@ func XXXNewProbeHandlerFrom(s *segment.Struct) ProbeHandler {
     return ProbeHandler{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ProbeHandler) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ProbeHandler) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ProbeHandler) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -19796,27 +20315,26 @@ func NewProbeHandlerFromRaw(ctx context.Context, raw ProbeHandlerRaw) ProbeHandl
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ProbeHandler) ToRaw() ProbeHandlerRaw {
+func (x ProbeHandler) ToRaw(ctx context.Context) ProbeHandlerRaw {
     raw := ProbeHandlerRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Exec().ToRaw()
+        nestedRaw := x.Exec().ToRaw(ctx)
         raw.Exec = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.HttpGet().ToRaw()
+        nestedRaw := x.HttpGet().ToRaw(ctx)
         raw.HttpGet = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.TcpSocket().ToRaw()
+        nestedRaw := x.TcpSocket().ToRaw(ctx)
         raw.TcpSocket = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.Grpc().ToRaw()
+        nestedRaw := x.Grpc().ToRaw(ctx)
         raw.Grpc = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -19835,7 +20353,7 @@ type ProjectedVolumeSource struct {
 // NewProjectedVolumeSource creates a new pooled instance of ProjectedVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewProjectedVolumeSource(ctx context.Context) ProjectedVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingProjectedVolumeSource)
+    s := segment.New(ctx, XXXMappingProjectedVolumeSource)
     s.SetIsSetEnabled(true)
     return ProjectedVolumeSource{
         s: s,
@@ -19845,7 +20363,7 @@ func NewProjectedVolumeSource(ctx context.Context) ProjectedVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ProjectedVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewProjectedVolumeSourceFrom creates a new ProjectedVolumeSource from our internal Struct representation.
@@ -19858,14 +20376,22 @@ func XXXNewProjectedVolumeSourceFrom(s *segment.Struct) ProjectedVolumeSource {
     return ProjectedVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ProjectedVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ProjectedVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ProjectedVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -19880,43 +20406,43 @@ func (x ProjectedVolumeSource) UnmarshalReader (r io.Reader) (int, error) {
 
 // SourcesList returns the underlying Structs list for iteration.
 // Use NewVolumeProjection() to create items and Append to add them.
-func (x ProjectedVolumeSource) SourcesList() *segment.Structs {
+func (x ProjectedVolumeSource) SourcesList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingVolumeProjection); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingVolumeProjection); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingVolumeProjection)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingVolumeProjection)
     return structs
 }
 
 // SourcesLen returns the number of items in the list.
-func (x ProjectedVolumeSource) SourcesLen() int {
-    return x.SourcesList().Len()
+func (x ProjectedVolumeSource) SourcesLen(ctx context.Context) int {
+    return x.SourcesList(ctx).Len()
 }
 
 // SourcesGet returns the item at the given index.
-func (x ProjectedVolumeSource) SourcesGet(index int) VolumeProjection {
-    s := x.SourcesList().Get(index)
+func (x ProjectedVolumeSource) SourcesGet(ctx context.Context, index int) VolumeProjection {
+    s := x.SourcesList(ctx).Get(index)
     return VolumeProjection{s: s}
 }
 
 // SourcesAppend appends items to the list.
-func (x ProjectedVolumeSource) SourcesAppend(values ...VolumeProjection) {
-    list := x.SourcesList()
+func (x ProjectedVolumeSource) SourcesAppend(ctx context.Context, values ...VolumeProjection) {
+    list := x.SourcesList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendSources is an alias for SourcesAppend for backwards compatibility.
-func (x ProjectedVolumeSource) AppendSources(values ...VolumeProjection) {
-    x.SourcesAppend(values...)
+func (x ProjectedVolumeSource) AppendSources(ctx context.Context, values ...VolumeProjection) {
+    x.SourcesAppend(ctx, values...)
 }
 
 // SourcesAppendRaw appends items to the list using Raw struct representations.
 func (x ProjectedVolumeSource) SourcesAppendRaw(ctx context.Context, values ...*VolumeProjectionRaw) {
-    list := x.SourcesList()
+    list := x.SourcesList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewVolumeProjectionFromRaw(ctx, *raw).XXXGetStruct())
@@ -19990,7 +20516,7 @@ type ProjectedVolumeSourceRaw struct {
 func NewProjectedVolumeSourceFromRaw(ctx context.Context, raw ProjectedVolumeSourceRaw) ProjectedVolumeSource {
     x := NewProjectedVolumeSource(ctx)
     if raw.Sources != nil {
-        list := x.SourcesList()
+        list := x.SourcesList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Sources))
         for _, r := range raw.Sources {
             if r != nil {
@@ -20006,29 +20532,28 @@ func NewProjectedVolumeSourceFromRaw(ctx context.Context, raw ProjectedVolumeSou
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ProjectedVolumeSource) ToRaw() ProjectedVolumeSourceRaw {
+func (x ProjectedVolumeSource) ToRaw(ctx context.Context) ProjectedVolumeSourceRaw {
     raw := ProjectedVolumeSourceRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.Sources = make([]*VolumeProjectionRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeProjection{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Sources[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.SourcesList()
+        list := x.SourcesList(ctx)
         raw.Sources = make([]*VolumeProjectionRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := VolumeProjection{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Sources[i] = &itemRaw
         }
     }
     raw.DefaultMode = x.DefaultMode()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -20047,7 +20572,7 @@ type ResourceClaim struct {
 // NewResourceClaim creates a new pooled instance of ResourceClaim.
 // Call Release() when done to return it to the pool for reuse.
 func NewResourceClaim(ctx context.Context) ResourceClaim {
-    s := segment.NewPooled(ctx, XXXMappingResourceClaim)
+    s := segment.New(ctx, XXXMappingResourceClaim)
     s.SetIsSetEnabled(true)
     return ResourceClaim{
         s: s,
@@ -20057,7 +20582,7 @@ func NewResourceClaim(ctx context.Context) ResourceClaim {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ResourceClaim) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewResourceClaimFrom creates a new ResourceClaim from our internal Struct representation.
@@ -20070,14 +20595,22 @@ func XXXNewResourceClaimFrom(s *segment.Struct) ResourceClaim {
     return ResourceClaim{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ResourceClaim) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ResourceClaim) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ResourceClaim) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -20174,13 +20707,12 @@ func NewResourceClaimFromRaw(ctx context.Context, raw ResourceClaimRaw) Resource
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ResourceClaim) ToRaw() ResourceClaimRaw {
+func (x ResourceClaim) ToRaw(ctx context.Context) ResourceClaimRaw {
     raw := ResourceClaimRaw{}
     raw.Name = x.Name()
     raw.Request = x.Request()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -20199,7 +20731,7 @@ type ResourceFieldSelector struct {
 // NewResourceFieldSelector creates a new pooled instance of ResourceFieldSelector.
 // Call Release() when done to return it to the pool for reuse.
 func NewResourceFieldSelector(ctx context.Context) ResourceFieldSelector {
-    s := segment.NewPooled(ctx, XXXMappingResourceFieldSelector)
+    s := segment.New(ctx, XXXMappingResourceFieldSelector)
     s.SetIsSetEnabled(true)
     return ResourceFieldSelector{
         s: s,
@@ -20209,7 +20741,7 @@ func NewResourceFieldSelector(ctx context.Context) ResourceFieldSelector {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ResourceFieldSelector) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewResourceFieldSelectorFrom creates a new ResourceFieldSelector from our internal Struct representation.
@@ -20222,14 +20754,22 @@ func XXXNewResourceFieldSelectorFrom(s *segment.Struct) ResourceFieldSelector {
     return ResourceFieldSelector{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ResourceFieldSelector) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ResourceFieldSelector) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ResourceFieldSelector) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -20342,14 +20882,13 @@ func NewResourceFieldSelectorFromRaw(ctx context.Context, raw ResourceFieldSelec
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ResourceFieldSelector) ToRaw() ResourceFieldSelectorRaw {
+func (x ResourceFieldSelector) ToRaw(ctx context.Context) ResourceFieldSelectorRaw {
     raw := ResourceFieldSelectorRaw{}
     raw.ContainerName = x.ContainerName()
     raw.Resource = x.Resource()
     raw.Divisor = x.Divisor()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -20368,7 +20907,7 @@ type ResourceRequirements struct {
 // NewResourceRequirements creates a new pooled instance of ResourceRequirements.
 // Call Release() when done to return it to the pool for reuse.
 func NewResourceRequirements(ctx context.Context) ResourceRequirements {
-    s := segment.NewPooled(ctx, XXXMappingResourceRequirements)
+    s := segment.New(ctx, XXXMappingResourceRequirements)
     s.SetIsSetEnabled(true)
     return ResourceRequirements{
         s: s,
@@ -20378,7 +20917,7 @@ func NewResourceRequirements(ctx context.Context) ResourceRequirements {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ResourceRequirements) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewResourceRequirementsFrom creates a new ResourceRequirements from our internal Struct representation.
@@ -20391,14 +20930,22 @@ func XXXNewResourceRequirementsFrom(s *segment.Struct) ResourceRequirements {
     return ResourceRequirements{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ResourceRequirements) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ResourceRequirements) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ResourceRequirements) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -20413,43 +20960,43 @@ func (x ResourceRequirements) UnmarshalReader (r io.Reader) (int, error) {
 
 // LimitsList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x ResourceRequirements) LimitsList() *segment.Structs {
+func (x ResourceRequirements) LimitsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 0, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 0, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 0, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 0, XXXMappingKeyValue)
     return structs
 }
 
 // LimitsLen returns the number of items in the list.
-func (x ResourceRequirements) LimitsLen() int {
-    return x.LimitsList().Len()
+func (x ResourceRequirements) LimitsLen(ctx context.Context) int {
+    return x.LimitsList(ctx).Len()
 }
 
 // LimitsGet returns the item at the given index.
-func (x ResourceRequirements) LimitsGet(index int) KeyValue {
-    s := x.LimitsList().Get(index)
+func (x ResourceRequirements) LimitsGet(ctx context.Context, index int) KeyValue {
+    s := x.LimitsList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // LimitsAppend appends items to the list.
-func (x ResourceRequirements) LimitsAppend(values ...KeyValue) {
-    list := x.LimitsList()
+func (x ResourceRequirements) LimitsAppend(ctx context.Context, values ...KeyValue) {
+    list := x.LimitsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendLimits is an alias for LimitsAppend for backwards compatibility.
-func (x ResourceRequirements) AppendLimits(values ...KeyValue) {
-    x.LimitsAppend(values...)
+func (x ResourceRequirements) AppendLimits(ctx context.Context, values ...KeyValue) {
+    x.LimitsAppend(ctx, values...)
 }
 
 // LimitsAppendRaw appends items to the list using Raw struct representations.
 func (x ResourceRequirements) LimitsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.LimitsList()
+    list := x.LimitsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -20462,43 +21009,43 @@ func (x ResourceRequirements) IsSetLimits() bool{
 
 // RequestsList returns the underlying Structs list for iteration.
 // Use NewKeyValue() to create items and Append to add them.
-func (x ResourceRequirements) RequestsList() *segment.Structs {
+func (x ResourceRequirements) RequestsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingKeyValue); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingKeyValue); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingKeyValue)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingKeyValue)
     return structs
 }
 
 // RequestsLen returns the number of items in the list.
-func (x ResourceRequirements) RequestsLen() int {
-    return x.RequestsList().Len()
+func (x ResourceRequirements) RequestsLen(ctx context.Context) int {
+    return x.RequestsList(ctx).Len()
 }
 
 // RequestsGet returns the item at the given index.
-func (x ResourceRequirements) RequestsGet(index int) KeyValue {
-    s := x.RequestsList().Get(index)
+func (x ResourceRequirements) RequestsGet(ctx context.Context, index int) KeyValue {
+    s := x.RequestsList(ctx).Get(index)
     return KeyValue{s: s}
 }
 
 // RequestsAppend appends items to the list.
-func (x ResourceRequirements) RequestsAppend(values ...KeyValue) {
-    list := x.RequestsList()
+func (x ResourceRequirements) RequestsAppend(ctx context.Context, values ...KeyValue) {
+    list := x.RequestsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendRequests is an alias for RequestsAppend for backwards compatibility.
-func (x ResourceRequirements) AppendRequests(values ...KeyValue) {
-    x.RequestsAppend(values...)
+func (x ResourceRequirements) AppendRequests(ctx context.Context, values ...KeyValue) {
+    x.RequestsAppend(ctx, values...)
 }
 
 // RequestsAppendRaw appends items to the list using Raw struct representations.
 func (x ResourceRequirements) RequestsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
-    list := x.RequestsList()
+    list := x.RequestsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyValueFromRaw(ctx, *raw).XXXGetStruct())
@@ -20511,43 +21058,43 @@ func (x ResourceRequirements) IsSetRequests() bool{
 
 // ClaimsList returns the underlying Structs list for iteration.
 // Use NewResourceClaim() to create items and Append to add them.
-func (x ResourceRequirements) ClaimsList() *segment.Structs {
+func (x ResourceRequirements) ClaimsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 2, XXXMappingResourceClaim); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 2, XXXMappingResourceClaim); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 2, XXXMappingResourceClaim)
+    structs := segment.NewStructs(ctx, x.s, 2, XXXMappingResourceClaim)
     return structs
 }
 
 // ClaimsLen returns the number of items in the list.
-func (x ResourceRequirements) ClaimsLen() int {
-    return x.ClaimsList().Len()
+func (x ResourceRequirements) ClaimsLen(ctx context.Context) int {
+    return x.ClaimsList(ctx).Len()
 }
 
 // ClaimsGet returns the item at the given index.
-func (x ResourceRequirements) ClaimsGet(index int) ResourceClaim {
-    s := x.ClaimsList().Get(index)
+func (x ResourceRequirements) ClaimsGet(ctx context.Context, index int) ResourceClaim {
+    s := x.ClaimsList(ctx).Get(index)
     return ResourceClaim{s: s}
 }
 
 // ClaimsAppend appends items to the list.
-func (x ResourceRequirements) ClaimsAppend(values ...ResourceClaim) {
-    list := x.ClaimsList()
+func (x ResourceRequirements) ClaimsAppend(ctx context.Context, values ...ResourceClaim) {
+    list := x.ClaimsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendClaims is an alias for ClaimsAppend for backwards compatibility.
-func (x ResourceRequirements) AppendClaims(values ...ResourceClaim) {
-    x.ClaimsAppend(values...)
+func (x ResourceRequirements) AppendClaims(ctx context.Context, values ...ResourceClaim) {
+    x.ClaimsAppend(ctx, values...)
 }
 
 // ClaimsAppendRaw appends items to the list using Raw struct representations.
 func (x ResourceRequirements) ClaimsAppendRaw(ctx context.Context, values ...*ResourceClaimRaw) {
-    list := x.ClaimsList()
+    list := x.ClaimsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewResourceClaimFromRaw(ctx, *raw).XXXGetStruct())
@@ -20610,7 +21157,7 @@ type ResourceRequirementsRaw struct {
 func NewResourceRequirementsFromRaw(ctx context.Context, raw ResourceRequirementsRaw) ResourceRequirements {
     x := NewResourceRequirements(ctx)
     if raw.Limits != nil {
-        list := x.LimitsList()
+        list := x.LimitsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Limits))
         for _, r := range raw.Limits {
             if r != nil {
@@ -20620,7 +21167,7 @@ func NewResourceRequirementsFromRaw(ctx context.Context, raw ResourceRequirement
         list.SetAll(items)
     }
     if raw.Requests != nil {
-        list := x.RequestsList()
+        list := x.RequestsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Requests))
         for _, r := range raw.Requests {
             if r != nil {
@@ -20630,7 +21177,7 @@ func NewResourceRequirementsFromRaw(ctx context.Context, raw ResourceRequirement
         list.SetAll(items)
     }
     if raw.Claims != nil {
-        list := x.ClaimsList()
+        list := x.ClaimsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Claims))
         for _, r := range raw.Claims {
             if r != nil {
@@ -20643,22 +21190,22 @@ func NewResourceRequirementsFromRaw(ctx context.Context, raw ResourceRequirement
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ResourceRequirements) ToRaw() ResourceRequirementsRaw {
+func (x ResourceRequirements) ToRaw(ctx context.Context) ResourceRequirementsRaw {
     raw := ResourceRequirementsRaw{}
     if l := x.s.GetList(0); l != nil && l.(*segment.Structs).Len() > 0 {
         list := l.(*segment.Structs)
         raw.Limits = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Limits[i] = &itemRaw
         }
     } else if x.s.HasField(0) {
-        list := x.LimitsList()
+        list := x.LimitsList(ctx)
         raw.Limits = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Limits[i] = &itemRaw
         }
     }
@@ -20667,15 +21214,15 @@ func (x ResourceRequirements) ToRaw() ResourceRequirementsRaw {
         raw.Requests = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Requests[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.RequestsList()
+        list := x.RequestsList(ctx)
         raw.Requests = make([]*KeyValueRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyValue{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Requests[i] = &itemRaw
         }
     }
@@ -20684,21 +21231,20 @@ func (x ResourceRequirements) ToRaw() ResourceRequirementsRaw {
         raw.Claims = make([]*ResourceClaimRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ResourceClaim{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Claims[i] = &itemRaw
         }
     } else if x.s.HasField(2) {
-        list := x.ClaimsList()
+        list := x.ClaimsList(ctx)
         raw.Claims = make([]*ResourceClaimRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := ResourceClaim{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Claims[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -20717,7 +21263,7 @@ type SELinuxOptions struct {
 // NewSELinuxOptions creates a new pooled instance of SELinuxOptions.
 // Call Release() when done to return it to the pool for reuse.
 func NewSELinuxOptions(ctx context.Context) SELinuxOptions {
-    s := segment.NewPooled(ctx, XXXMappingSELinuxOptions)
+    s := segment.New(ctx, XXXMappingSELinuxOptions)
     s.SetIsSetEnabled(true)
     return SELinuxOptions{
         s: s,
@@ -20727,7 +21273,7 @@ func NewSELinuxOptions(ctx context.Context) SELinuxOptions {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SELinuxOptions) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSELinuxOptionsFrom creates a new SELinuxOptions from our internal Struct representation.
@@ -20740,14 +21286,22 @@ func XXXNewSELinuxOptionsFrom(s *segment.Struct) SELinuxOptions {
     return SELinuxOptions{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SELinuxOptions) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SELinuxOptions) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SELinuxOptions) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -20876,7 +21430,7 @@ func NewSELinuxOptionsFromRaw(ctx context.Context, raw SELinuxOptionsRaw) SELinu
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SELinuxOptions) ToRaw() SELinuxOptionsRaw {
+func (x SELinuxOptions) ToRaw(ctx context.Context) SELinuxOptionsRaw {
     raw := SELinuxOptionsRaw{}
     raw.User = x.User()
     raw.Role = x.Role()
@@ -20884,7 +21438,6 @@ func (x SELinuxOptions) ToRaw() SELinuxOptionsRaw {
     raw.Level = x.Level()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -20903,7 +21456,7 @@ type SeccompProfile struct {
 // NewSeccompProfile creates a new pooled instance of SeccompProfile.
 // Call Release() when done to return it to the pool for reuse.
 func NewSeccompProfile(ctx context.Context) SeccompProfile {
-    s := segment.NewPooled(ctx, XXXMappingSeccompProfile)
+    s := segment.New(ctx, XXXMappingSeccompProfile)
     s.SetIsSetEnabled(true)
     return SeccompProfile{
         s: s,
@@ -20913,7 +21466,7 @@ func NewSeccompProfile(ctx context.Context) SeccompProfile {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SeccompProfile) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSeccompProfileFrom creates a new SeccompProfile from our internal Struct representation.
@@ -20926,14 +21479,22 @@ func XXXNewSeccompProfileFrom(s *segment.Struct) SeccompProfile {
     return SeccompProfile{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SeccompProfile) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SeccompProfile) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SeccompProfile) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -21030,13 +21591,12 @@ func NewSeccompProfileFromRaw(ctx context.Context, raw SeccompProfileRaw) Seccom
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SeccompProfile) ToRaw() SeccompProfileRaw {
+func (x SeccompProfile) ToRaw(ctx context.Context) SeccompProfileRaw {
     raw := SeccompProfileRaw{}
     raw.Type = x.Type()
     raw.LocalhostProfile = x.LocalhostProfile()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -21055,7 +21615,7 @@ type SecretEnvSource struct {
 // NewSecretEnvSource creates a new pooled instance of SecretEnvSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewSecretEnvSource(ctx context.Context) SecretEnvSource {
-    s := segment.NewPooled(ctx, XXXMappingSecretEnvSource)
+    s := segment.New(ctx, XXXMappingSecretEnvSource)
     s.SetIsSetEnabled(true)
     return SecretEnvSource{
         s: s,
@@ -21065,7 +21625,7 @@ func NewSecretEnvSource(ctx context.Context) SecretEnvSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SecretEnvSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSecretEnvSourceFrom creates a new SecretEnvSource from our internal Struct representation.
@@ -21078,14 +21638,22 @@ func XXXNewSecretEnvSourceFrom(s *segment.Struct) SecretEnvSource {
     return SecretEnvSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SecretEnvSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SecretEnvSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SecretEnvSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -21182,13 +21750,12 @@ func NewSecretEnvSourceFromRaw(ctx context.Context, raw SecretEnvSourceRaw) Secr
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SecretEnvSource) ToRaw() SecretEnvSourceRaw {
+func (x SecretEnvSource) ToRaw(ctx context.Context) SecretEnvSourceRaw {
     raw := SecretEnvSourceRaw{}
     raw.Name = x.Name()
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -21207,7 +21774,7 @@ type SecretKeySelector struct {
 // NewSecretKeySelector creates a new pooled instance of SecretKeySelector.
 // Call Release() when done to return it to the pool for reuse.
 func NewSecretKeySelector(ctx context.Context) SecretKeySelector {
-    s := segment.NewPooled(ctx, XXXMappingSecretKeySelector)
+    s := segment.New(ctx, XXXMappingSecretKeySelector)
     s.SetIsSetEnabled(true)
     return SecretKeySelector{
         s: s,
@@ -21217,7 +21784,7 @@ func NewSecretKeySelector(ctx context.Context) SecretKeySelector {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SecretKeySelector) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSecretKeySelectorFrom creates a new SecretKeySelector from our internal Struct representation.
@@ -21230,14 +21797,22 @@ func XXXNewSecretKeySelectorFrom(s *segment.Struct) SecretKeySelector {
     return SecretKeySelector{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SecretKeySelector) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SecretKeySelector) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SecretKeySelector) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -21350,14 +21925,13 @@ func NewSecretKeySelectorFromRaw(ctx context.Context, raw SecretKeySelectorRaw) 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SecretKeySelector) ToRaw() SecretKeySelectorRaw {
+func (x SecretKeySelector) ToRaw(ctx context.Context) SecretKeySelectorRaw {
     raw := SecretKeySelectorRaw{}
     raw.Name = x.Name()
     raw.Key = x.Key()
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -21376,7 +21950,7 @@ type SecretProjection struct {
 // NewSecretProjection creates a new pooled instance of SecretProjection.
 // Call Release() when done to return it to the pool for reuse.
 func NewSecretProjection(ctx context.Context) SecretProjection {
-    s := segment.NewPooled(ctx, XXXMappingSecretProjection)
+    s := segment.New(ctx, XXXMappingSecretProjection)
     s.SetIsSetEnabled(true)
     return SecretProjection{
         s: s,
@@ -21386,7 +21960,7 @@ func NewSecretProjection(ctx context.Context) SecretProjection {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SecretProjection) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSecretProjectionFrom creates a new SecretProjection from our internal Struct representation.
@@ -21399,14 +21973,22 @@ func XXXNewSecretProjectionFrom(s *segment.Struct) SecretProjection {
     return SecretProjection{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SecretProjection) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SecretProjection) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SecretProjection) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -21433,43 +22015,43 @@ func (x SecretProjection) IsSetName() bool{
 
 // ItemsList returns the underlying Structs list for iteration.
 // Use NewKeyToPath() to create items and Append to add them.
-func (x SecretProjection) ItemsList() *segment.Structs {
+func (x SecretProjection) ItemsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingKeyToPath); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingKeyToPath); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingKeyToPath)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingKeyToPath)
     return structs
 }
 
 // ItemsLen returns the number of items in the list.
-func (x SecretProjection) ItemsLen() int {
-    return x.ItemsList().Len()
+func (x SecretProjection) ItemsLen(ctx context.Context) int {
+    return x.ItemsList(ctx).Len()
 }
 
 // ItemsGet returns the item at the given index.
-func (x SecretProjection) ItemsGet(index int) KeyToPath {
-    s := x.ItemsList().Get(index)
+func (x SecretProjection) ItemsGet(ctx context.Context, index int) KeyToPath {
+    s := x.ItemsList(ctx).Get(index)
     return KeyToPath{s: s}
 }
 
 // ItemsAppend appends items to the list.
-func (x SecretProjection) ItemsAppend(values ...KeyToPath) {
-    list := x.ItemsList()
+func (x SecretProjection) ItemsAppend(ctx context.Context, values ...KeyToPath) {
+    list := x.ItemsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x SecretProjection) AppendItems(values ...KeyToPath) {
-    x.ItemsAppend(values...)
+func (x SecretProjection) AppendItems(ctx context.Context, values ...KeyToPath) {
+    x.ItemsAppend(ctx, values...)
 }
 
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x SecretProjection) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
-    list := x.ItemsList()
+    list := x.ItemsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyToPathFromRaw(ctx, *raw).XXXGetStruct())
@@ -21547,7 +22129,7 @@ func NewSecretProjectionFromRaw(ctx context.Context, raw SecretProjectionRaw) Se
         x.SetName(raw.Name)
     }
     if raw.Items != nil {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Items))
         for _, r := range raw.Items {
             if r != nil {
@@ -21563,7 +22145,7 @@ func NewSecretProjectionFromRaw(ctx context.Context, raw SecretProjectionRaw) Se
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SecretProjection) ToRaw() SecretProjectionRaw {
+func (x SecretProjection) ToRaw(ctx context.Context) SecretProjectionRaw {
     raw := SecretProjectionRaw{}
     raw.Name = x.Name()
     if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -21571,22 +22153,21 @@ func (x SecretProjection) ToRaw() SecretProjectionRaw {
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     }
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -21605,7 +22186,7 @@ type SecretVolumeSource struct {
 // NewSecretVolumeSource creates a new pooled instance of SecretVolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewSecretVolumeSource(ctx context.Context) SecretVolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingSecretVolumeSource)
+    s := segment.New(ctx, XXXMappingSecretVolumeSource)
     s.SetIsSetEnabled(true)
     return SecretVolumeSource{
         s: s,
@@ -21615,7 +22196,7 @@ func NewSecretVolumeSource(ctx context.Context) SecretVolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SecretVolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSecretVolumeSourceFrom creates a new SecretVolumeSource from our internal Struct representation.
@@ -21628,14 +22209,22 @@ func XXXNewSecretVolumeSourceFrom(s *segment.Struct) SecretVolumeSource {
     return SecretVolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SecretVolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SecretVolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SecretVolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -21662,43 +22251,43 @@ func (x SecretVolumeSource) IsSetSecretName() bool{
 
 // ItemsList returns the underlying Structs list for iteration.
 // Use NewKeyToPath() to create items and Append to add them.
-func (x SecretVolumeSource) ItemsList() *segment.Structs {
+func (x SecretVolumeSource) ItemsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingKeyToPath); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingKeyToPath); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingKeyToPath)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingKeyToPath)
     return structs
 }
 
 // ItemsLen returns the number of items in the list.
-func (x SecretVolumeSource) ItemsLen() int {
-    return x.ItemsList().Len()
+func (x SecretVolumeSource) ItemsLen(ctx context.Context) int {
+    return x.ItemsList(ctx).Len()
 }
 
 // ItemsGet returns the item at the given index.
-func (x SecretVolumeSource) ItemsGet(index int) KeyToPath {
-    s := x.ItemsList().Get(index)
+func (x SecretVolumeSource) ItemsGet(ctx context.Context, index int) KeyToPath {
+    s := x.ItemsList(ctx).Get(index)
     return KeyToPath{s: s}
 }
 
 // ItemsAppend appends items to the list.
-func (x SecretVolumeSource) ItemsAppend(values ...KeyToPath) {
-    list := x.ItemsList()
+func (x SecretVolumeSource) ItemsAppend(ctx context.Context, values ...KeyToPath) {
+    list := x.ItemsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x SecretVolumeSource) AppendItems(values ...KeyToPath) {
-    x.ItemsAppend(values...)
+func (x SecretVolumeSource) AppendItems(ctx context.Context, values ...KeyToPath) {
+    x.ItemsAppend(ctx, values...)
 }
 
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x SecretVolumeSource) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
-    list := x.ItemsList()
+    list := x.ItemsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewKeyToPathFromRaw(ctx, *raw).XXXGetStruct())
@@ -21789,7 +22378,7 @@ func NewSecretVolumeSourceFromRaw(ctx context.Context, raw SecretVolumeSourceRaw
         x.SetSecretName(raw.SecretName)
     }
     if raw.Items != nil {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Items))
         for _, r := range raw.Items {
             if r != nil {
@@ -21808,7 +22397,7 @@ func NewSecretVolumeSourceFromRaw(ctx context.Context, raw SecretVolumeSourceRaw
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SecretVolumeSource) ToRaw() SecretVolumeSourceRaw {
+func (x SecretVolumeSource) ToRaw(ctx context.Context) SecretVolumeSourceRaw {
     raw := SecretVolumeSourceRaw{}
     raw.SecretName = x.SecretName()
     if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -21816,15 +22405,15 @@ func (x SecretVolumeSource) ToRaw() SecretVolumeSourceRaw {
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.ItemsList()
+        list := x.ItemsList(ctx)
         raw.Items = make([]*KeyToPathRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := KeyToPath{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Items[i] = &itemRaw
         }
     }
@@ -21832,7 +22421,6 @@ func (x SecretVolumeSource) ToRaw() SecretVolumeSourceRaw {
     raw.Optional = x.Optional()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -21851,7 +22439,7 @@ type SecurityContext struct {
 // NewSecurityContext creates a new pooled instance of SecurityContext.
 // Call Release() when done to return it to the pool for reuse.
 func NewSecurityContext(ctx context.Context) SecurityContext {
-    s := segment.NewPooled(ctx, XXXMappingSecurityContext)
+    s := segment.New(ctx, XXXMappingSecurityContext)
     s.SetIsSetEnabled(true)
     return SecurityContext{
         s: s,
@@ -21861,7 +22449,7 @@ func NewSecurityContext(ctx context.Context) SecurityContext {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SecurityContext) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSecurityContextFrom creates a new SecurityContext from our internal Struct representation.
@@ -21874,14 +22462,22 @@ func XXXNewSecurityContextFrom(s *segment.Struct) SecurityContext {
     return SecurityContext{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SecurityContext) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SecurityContext) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SecurityContext) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -22143,19 +22739,19 @@ func NewSecurityContextFromRaw(ctx context.Context, raw SecurityContextRaw) Secu
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SecurityContext) ToRaw() SecurityContextRaw {
+func (x SecurityContext) ToRaw(ctx context.Context) SecurityContextRaw {
     raw := SecurityContextRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Capabilities().ToRaw()
+        nestedRaw := x.Capabilities().ToRaw(ctx)
         raw.Capabilities = &nestedRaw
     }
     raw.Privileged = x.Privileged()
     if x.s.HasField(2) {
-        nestedRaw := x.SeLinuxOptions().ToRaw()
+        nestedRaw := x.SeLinuxOptions().ToRaw(ctx)
         raw.SeLinuxOptions = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.WindowsOptions().ToRaw()
+        nestedRaw := x.WindowsOptions().ToRaw(ctx)
         raw.WindowsOptions = &nestedRaw
     }
     raw.RunAsUser = x.RunAsUser()
@@ -22165,16 +22761,15 @@ func (x SecurityContext) ToRaw() SecurityContextRaw {
     raw.AllowPrivilegeEscalation = x.AllowPrivilegeEscalation()
     raw.ProcMount = x.ProcMount()
     if x.s.HasField(10) {
-        nestedRaw := x.SeccompProfile().ToRaw()
+        nestedRaw := x.SeccompProfile().ToRaw(ctx)
         raw.SeccompProfile = &nestedRaw
     }
     if x.s.HasField(11) {
-        nestedRaw := x.AppArmorProfile().ToRaw()
+        nestedRaw := x.AppArmorProfile().ToRaw(ctx)
         raw.AppArmorProfile = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -22193,7 +22788,7 @@ type ServiceAccountTokenProjection struct {
 // NewServiceAccountTokenProjection creates a new pooled instance of ServiceAccountTokenProjection.
 // Call Release() when done to return it to the pool for reuse.
 func NewServiceAccountTokenProjection(ctx context.Context) ServiceAccountTokenProjection {
-    s := segment.NewPooled(ctx, XXXMappingServiceAccountTokenProjection)
+    s := segment.New(ctx, XXXMappingServiceAccountTokenProjection)
     s.SetIsSetEnabled(true)
     return ServiceAccountTokenProjection{
         s: s,
@@ -22203,7 +22798,7 @@ func NewServiceAccountTokenProjection(ctx context.Context) ServiceAccountTokenPr
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ServiceAccountTokenProjection) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewServiceAccountTokenProjectionFrom creates a new ServiceAccountTokenProjection from our internal Struct representation.
@@ -22216,14 +22811,22 @@ func XXXNewServiceAccountTokenProjectionFrom(s *segment.Struct) ServiceAccountTo
     return ServiceAccountTokenProjection{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ServiceAccountTokenProjection) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ServiceAccountTokenProjection) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ServiceAccountTokenProjection) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -22336,14 +22939,13 @@ func NewServiceAccountTokenProjectionFromRaw(ctx context.Context, raw ServiceAcc
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ServiceAccountTokenProjection) ToRaw() ServiceAccountTokenProjectionRaw {
+func (x ServiceAccountTokenProjection) ToRaw(ctx context.Context) ServiceAccountTokenProjectionRaw {
     raw := ServiceAccountTokenProjectionRaw{}
     raw.Audience = x.Audience()
     raw.ExpirationSeconds = x.ExpirationSeconds()
     raw.Path = x.Path()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -22362,7 +22964,7 @@ type SleepAction struct {
 // NewSleepAction creates a new pooled instance of SleepAction.
 // Call Release() when done to return it to the pool for reuse.
 func NewSleepAction(ctx context.Context) SleepAction {
-    s := segment.NewPooled(ctx, XXXMappingSleepAction)
+    s := segment.New(ctx, XXXMappingSleepAction)
     s.SetIsSetEnabled(true)
     return SleepAction{
         s: s,
@@ -22372,7 +22974,7 @@ func NewSleepAction(ctx context.Context) SleepAction {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x SleepAction) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSleepActionFrom creates a new SleepAction from our internal Struct representation.
@@ -22385,14 +22987,22 @@ func XXXNewSleepActionFrom(s *segment.Struct) SleepAction {
     return SleepAction{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x SleepAction) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x SleepAction) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x SleepAction) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -22473,12 +23083,11 @@ func NewSleepActionFromRaw(ctx context.Context, raw SleepActionRaw) SleepAction 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x SleepAction) ToRaw() SleepActionRaw {
+func (x SleepAction) ToRaw(ctx context.Context) SleepActionRaw {
     raw := SleepActionRaw{}
     raw.Seconds = x.Seconds()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -22497,7 +23106,7 @@ type Sysctl struct {
 // NewSysctl creates a new pooled instance of Sysctl.
 // Call Release() when done to return it to the pool for reuse.
 func NewSysctl(ctx context.Context) Sysctl {
-    s := segment.NewPooled(ctx, XXXMappingSysctl)
+    s := segment.New(ctx, XXXMappingSysctl)
     s.SetIsSetEnabled(true)
     return Sysctl{
         s: s,
@@ -22507,7 +23116,7 @@ func NewSysctl(ctx context.Context) Sysctl {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Sysctl) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSysctlFrom creates a new Sysctl from our internal Struct representation.
@@ -22520,14 +23129,22 @@ func XXXNewSysctlFrom(s *segment.Struct) Sysctl {
     return Sysctl{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Sysctl) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Sysctl) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Sysctl) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -22624,13 +23241,12 @@ func NewSysctlFromRaw(ctx context.Context, raw SysctlRaw) Sysctl {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Sysctl) ToRaw() SysctlRaw {
+func (x Sysctl) ToRaw(ctx context.Context) SysctlRaw {
     raw := SysctlRaw{}
     raw.Name = x.Name()
     raw.Value = x.Value()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -22649,7 +23265,7 @@ type TCPSocketAction struct {
 // NewTCPSocketAction creates a new pooled instance of TCPSocketAction.
 // Call Release() when done to return it to the pool for reuse.
 func NewTCPSocketAction(ctx context.Context) TCPSocketAction {
-    s := segment.NewPooled(ctx, XXXMappingTCPSocketAction)
+    s := segment.New(ctx, XXXMappingTCPSocketAction)
     s.SetIsSetEnabled(true)
     return TCPSocketAction{
         s: s,
@@ -22659,7 +23275,7 @@ func NewTCPSocketAction(ctx context.Context) TCPSocketAction {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x TCPSocketAction) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewTCPSocketActionFrom creates a new TCPSocketAction from our internal Struct representation.
@@ -22672,14 +23288,22 @@ func XXXNewTCPSocketActionFrom(s *segment.Struct) TCPSocketAction {
     return TCPSocketAction{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x TCPSocketAction) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x TCPSocketAction) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x TCPSocketAction) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -22777,16 +23401,15 @@ func NewTCPSocketActionFromRaw(ctx context.Context, raw TCPSocketActionRaw) TCPS
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x TCPSocketAction) ToRaw() TCPSocketActionRaw {
+func (x TCPSocketAction) ToRaw(ctx context.Context) TCPSocketActionRaw {
     raw := TCPSocketActionRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Port().ToRaw()
+        nestedRaw := x.Port().ToRaw(ctx)
         raw.Port = &nestedRaw
     }
     raw.Host = x.Host()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -22805,7 +23428,7 @@ type Time struct {
 // NewTime creates a new pooled instance of Time.
 // Call Release() when done to return it to the pool for reuse.
 func NewTime(ctx context.Context) Time {
-    s := segment.NewPooled(ctx, XXXMappingTime)
+    s := segment.New(ctx, XXXMappingTime)
     s.SetIsSetEnabled(true)
     return Time{
         s: s,
@@ -22815,7 +23438,7 @@ func NewTime(ctx context.Context) Time {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Time) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewTimeFrom creates a new Time from our internal Struct representation.
@@ -22828,14 +23451,22 @@ func XXXNewTimeFrom(s *segment.Struct) Time {
     return Time{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Time) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Time) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Time) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -22932,13 +23563,12 @@ func NewTimeFromRaw(ctx context.Context, raw TimeRaw) Time {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Time) ToRaw() TimeRaw {
+func (x Time) ToRaw(ctx context.Context) TimeRaw {
     raw := TimeRaw{}
     raw.Seconds = x.Seconds()
     raw.Nanos = x.Nanos()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -22957,7 +23587,7 @@ type Toleration struct {
 // NewToleration creates a new pooled instance of Toleration.
 // Call Release() when done to return it to the pool for reuse.
 func NewToleration(ctx context.Context) Toleration {
-    s := segment.NewPooled(ctx, XXXMappingToleration)
+    s := segment.New(ctx, XXXMappingToleration)
     s.SetIsSetEnabled(true)
     return Toleration{
         s: s,
@@ -22967,7 +23597,7 @@ func NewToleration(ctx context.Context) Toleration {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Toleration) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewTolerationFrom creates a new Toleration from our internal Struct representation.
@@ -22980,14 +23610,22 @@ func XXXNewTolerationFrom(s *segment.Struct) Toleration {
     return Toleration{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Toleration) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Toleration) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Toleration) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -23132,7 +23770,7 @@ func NewTolerationFromRaw(ctx context.Context, raw TolerationRaw) Toleration {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Toleration) ToRaw() TolerationRaw {
+func (x Toleration) ToRaw(ctx context.Context) TolerationRaw {
     raw := TolerationRaw{}
     raw.Key = x.Key()
     raw.Operator = x.Operator()
@@ -23141,7 +23779,6 @@ func (x Toleration) ToRaw() TolerationRaw {
     raw.TolerationSeconds = x.TolerationSeconds()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -23160,7 +23797,7 @@ type TopologySpreadConstraint struct {
 // NewTopologySpreadConstraint creates a new pooled instance of TopologySpreadConstraint.
 // Call Release() when done to return it to the pool for reuse.
 func NewTopologySpreadConstraint(ctx context.Context) TopologySpreadConstraint {
-    s := segment.NewPooled(ctx, XXXMappingTopologySpreadConstraint)
+    s := segment.New(ctx, XXXMappingTopologySpreadConstraint)
     s.SetIsSetEnabled(true)
     return TopologySpreadConstraint{
         s: s,
@@ -23170,7 +23807,7 @@ func NewTopologySpreadConstraint(ctx context.Context) TopologySpreadConstraint {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x TopologySpreadConstraint) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewTopologySpreadConstraintFrom creates a new TopologySpreadConstraint from our internal Struct representation.
@@ -23183,14 +23820,22 @@ func XXXNewTopologySpreadConstraintFrom(s *segment.Struct) TopologySpreadConstra
     return TopologySpreadConstraint{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x TopologySpreadConstraint) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x TopologySpreadConstraint) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x TopologySpreadConstraint) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -23392,13 +24037,13 @@ func NewTopologySpreadConstraintFromRaw(ctx context.Context, raw TopologySpreadC
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x TopologySpreadConstraint) ToRaw() TopologySpreadConstraintRaw {
+func (x TopologySpreadConstraint) ToRaw(ctx context.Context) TopologySpreadConstraintRaw {
     raw := TopologySpreadConstraintRaw{}
     raw.MaxSkew = x.MaxSkew()
     raw.TopologyKey = x.TopologyKey()
     raw.WhenUnsatisfiable = x.WhenUnsatisfiable()
     if x.s.HasField(3) {
-        nestedRaw := x.LabelSelector().ToRaw()
+        nestedRaw := x.LabelSelector().ToRaw(ctx)
         raw.LabelSelector = &nestedRaw
     }
     raw.MinDomains = x.MinDomains()
@@ -23411,7 +24056,6 @@ func (x TopologySpreadConstraint) ToRaw() TopologySpreadConstraintRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -23430,7 +24074,7 @@ type TypeMeta struct {
 // NewTypeMeta creates a new pooled instance of TypeMeta.
 // Call Release() when done to return it to the pool for reuse.
 func NewTypeMeta(ctx context.Context) TypeMeta {
-    s := segment.NewPooled(ctx, XXXMappingTypeMeta)
+    s := segment.New(ctx, XXXMappingTypeMeta)
     s.SetIsSetEnabled(true)
     return TypeMeta{
         s: s,
@@ -23440,7 +24084,7 @@ func NewTypeMeta(ctx context.Context) TypeMeta {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x TypeMeta) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewTypeMetaFrom creates a new TypeMeta from our internal Struct representation.
@@ -23453,14 +24097,22 @@ func XXXNewTypeMetaFrom(s *segment.Struct) TypeMeta {
     return TypeMeta{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x TypeMeta) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x TypeMeta) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x TypeMeta) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -23557,13 +24209,12 @@ func NewTypeMetaFromRaw(ctx context.Context, raw TypeMetaRaw) TypeMeta {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x TypeMeta) ToRaw() TypeMetaRaw {
+func (x TypeMeta) ToRaw(ctx context.Context) TypeMetaRaw {
     raw := TypeMetaRaw{}
     raw.Kind = x.Kind()
     raw.ApiVersion = x.ApiVersion()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -23582,7 +24233,7 @@ type TypedLocalObjectReference struct {
 // NewTypedLocalObjectReference creates a new pooled instance of TypedLocalObjectReference.
 // Call Release() when done to return it to the pool for reuse.
 func NewTypedLocalObjectReference(ctx context.Context) TypedLocalObjectReference {
-    s := segment.NewPooled(ctx, XXXMappingTypedLocalObjectReference)
+    s := segment.New(ctx, XXXMappingTypedLocalObjectReference)
     s.SetIsSetEnabled(true)
     return TypedLocalObjectReference{
         s: s,
@@ -23592,7 +24243,7 @@ func NewTypedLocalObjectReference(ctx context.Context) TypedLocalObjectReference
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x TypedLocalObjectReference) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewTypedLocalObjectReferenceFrom creates a new TypedLocalObjectReference from our internal Struct representation.
@@ -23605,14 +24256,22 @@ func XXXNewTypedLocalObjectReferenceFrom(s *segment.Struct) TypedLocalObjectRefe
     return TypedLocalObjectReference{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x TypedLocalObjectReference) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x TypedLocalObjectReference) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x TypedLocalObjectReference) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -23725,14 +24384,13 @@ func NewTypedLocalObjectReferenceFromRaw(ctx context.Context, raw TypedLocalObje
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x TypedLocalObjectReference) ToRaw() TypedLocalObjectReferenceRaw {
+func (x TypedLocalObjectReference) ToRaw(ctx context.Context) TypedLocalObjectReferenceRaw {
     raw := TypedLocalObjectReferenceRaw{}
     raw.ApiGroup = x.ApiGroup()
     raw.Kind = x.Kind()
     raw.Name = x.Name()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -23751,7 +24409,7 @@ type TypedObjectReference struct {
 // NewTypedObjectReference creates a new pooled instance of TypedObjectReference.
 // Call Release() when done to return it to the pool for reuse.
 func NewTypedObjectReference(ctx context.Context) TypedObjectReference {
-    s := segment.NewPooled(ctx, XXXMappingTypedObjectReference)
+    s := segment.New(ctx, XXXMappingTypedObjectReference)
     s.SetIsSetEnabled(true)
     return TypedObjectReference{
         s: s,
@@ -23761,7 +24419,7 @@ func NewTypedObjectReference(ctx context.Context) TypedObjectReference {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x TypedObjectReference) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewTypedObjectReferenceFrom creates a new TypedObjectReference from our internal Struct representation.
@@ -23774,14 +24432,22 @@ func XXXNewTypedObjectReferenceFrom(s *segment.Struct) TypedObjectReference {
     return TypedObjectReference{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x TypedObjectReference) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x TypedObjectReference) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x TypedObjectReference) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -23910,7 +24576,7 @@ func NewTypedObjectReferenceFromRaw(ctx context.Context, raw TypedObjectReferenc
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x TypedObjectReference) ToRaw() TypedObjectReferenceRaw {
+func (x TypedObjectReference) ToRaw(ctx context.Context) TypedObjectReferenceRaw {
     raw := TypedObjectReferenceRaw{}
     raw.ApiGroup = x.ApiGroup()
     raw.Kind = x.Kind()
@@ -23918,7 +24584,6 @@ func (x TypedObjectReference) ToRaw() TypedObjectReferenceRaw {
     raw.Namespace = x.Namespace()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -23937,7 +24602,7 @@ type Volume struct {
 // NewVolume creates a new pooled instance of Volume.
 // Call Release() when done to return it to the pool for reuse.
 func NewVolume(ctx context.Context) Volume {
-    s := segment.NewPooled(ctx, XXXMappingVolume)
+    s := segment.New(ctx, XXXMappingVolume)
     s.SetIsSetEnabled(true)
     return Volume{
         s: s,
@@ -23947,7 +24612,7 @@ func NewVolume(ctx context.Context) Volume {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Volume) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewVolumeFrom creates a new Volume from our internal Struct representation.
@@ -23960,14 +24625,22 @@ func XXXNewVolumeFrom(s *segment.Struct) Volume {
     return Volume{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Volume) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Volume) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Volume) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -24065,16 +24738,15 @@ func NewVolumeFromRaw(ctx context.Context, raw VolumeRaw) Volume {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Volume) ToRaw() VolumeRaw {
+func (x Volume) ToRaw(ctx context.Context) VolumeRaw {
     raw := VolumeRaw{}
     raw.Name = x.Name()
     if x.s.HasField(1) {
-        nestedRaw := x.VolumeSource().ToRaw()
+        nestedRaw := x.VolumeSource().ToRaw(ctx)
         raw.VolumeSource = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -24093,7 +24765,7 @@ type VolumeDevice struct {
 // NewVolumeDevice creates a new pooled instance of VolumeDevice.
 // Call Release() when done to return it to the pool for reuse.
 func NewVolumeDevice(ctx context.Context) VolumeDevice {
-    s := segment.NewPooled(ctx, XXXMappingVolumeDevice)
+    s := segment.New(ctx, XXXMappingVolumeDevice)
     s.SetIsSetEnabled(true)
     return VolumeDevice{
         s: s,
@@ -24103,7 +24775,7 @@ func NewVolumeDevice(ctx context.Context) VolumeDevice {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x VolumeDevice) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewVolumeDeviceFrom creates a new VolumeDevice from our internal Struct representation.
@@ -24116,14 +24788,22 @@ func XXXNewVolumeDeviceFrom(s *segment.Struct) VolumeDevice {
     return VolumeDevice{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x VolumeDevice) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x VolumeDevice) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x VolumeDevice) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -24220,13 +24900,12 @@ func NewVolumeDeviceFromRaw(ctx context.Context, raw VolumeDeviceRaw) VolumeDevi
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x VolumeDevice) ToRaw() VolumeDeviceRaw {
+func (x VolumeDevice) ToRaw(ctx context.Context) VolumeDeviceRaw {
     raw := VolumeDeviceRaw{}
     raw.Name = x.Name()
     raw.DevicePath = x.DevicePath()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -24245,7 +24924,7 @@ type VolumeMount struct {
 // NewVolumeMount creates a new pooled instance of VolumeMount.
 // Call Release() when done to return it to the pool for reuse.
 func NewVolumeMount(ctx context.Context) VolumeMount {
-    s := segment.NewPooled(ctx, XXXMappingVolumeMount)
+    s := segment.New(ctx, XXXMappingVolumeMount)
     s.SetIsSetEnabled(true)
     return VolumeMount{
         s: s,
@@ -24255,7 +24934,7 @@ func NewVolumeMount(ctx context.Context) VolumeMount {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x VolumeMount) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewVolumeMountFrom creates a new VolumeMount from our internal Struct representation.
@@ -24268,14 +24947,22 @@ func XXXNewVolumeMountFrom(s *segment.Struct) VolumeMount {
     return VolumeMount{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x VolumeMount) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x VolumeMount) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x VolumeMount) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -24452,7 +25139,7 @@ func NewVolumeMountFromRaw(ctx context.Context, raw VolumeMountRaw) VolumeMount 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x VolumeMount) ToRaw() VolumeMountRaw {
+func (x VolumeMount) ToRaw(ctx context.Context) VolumeMountRaw {
     raw := VolumeMountRaw{}
     raw.Name = x.Name()
     raw.ReadOnly = x.ReadOnly()
@@ -24463,7 +25150,6 @@ func (x VolumeMount) ToRaw() VolumeMountRaw {
     raw.SubPathExpr = x.SubPathExpr()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -24482,7 +25168,7 @@ type VolumeMountStatus struct {
 // NewVolumeMountStatus creates a new pooled instance of VolumeMountStatus.
 // Call Release() when done to return it to the pool for reuse.
 func NewVolumeMountStatus(ctx context.Context) VolumeMountStatus {
-    s := segment.NewPooled(ctx, XXXMappingVolumeMountStatus)
+    s := segment.New(ctx, XXXMappingVolumeMountStatus)
     s.SetIsSetEnabled(true)
     return VolumeMountStatus{
         s: s,
@@ -24492,7 +25178,7 @@ func NewVolumeMountStatus(ctx context.Context) VolumeMountStatus {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x VolumeMountStatus) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewVolumeMountStatusFrom creates a new VolumeMountStatus from our internal Struct representation.
@@ -24505,14 +25191,22 @@ func XXXNewVolumeMountStatusFrom(s *segment.Struct) VolumeMountStatus {
     return VolumeMountStatus{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x VolumeMountStatus) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x VolumeMountStatus) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x VolumeMountStatus) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -24641,7 +25335,7 @@ func NewVolumeMountStatusFromRaw(ctx context.Context, raw VolumeMountStatusRaw) 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x VolumeMountStatus) ToRaw() VolumeMountStatusRaw {
+func (x VolumeMountStatus) ToRaw(ctx context.Context) VolumeMountStatusRaw {
     raw := VolumeMountStatusRaw{}
     raw.Name = x.Name()
     raw.MountPath = x.MountPath()
@@ -24649,7 +25343,6 @@ func (x VolumeMountStatus) ToRaw() VolumeMountStatusRaw {
     raw.RecursiveReadOnly = x.RecursiveReadOnly()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -24668,7 +25361,7 @@ type VolumeProjection struct {
 // NewVolumeProjection creates a new pooled instance of VolumeProjection.
 // Call Release() when done to return it to the pool for reuse.
 func NewVolumeProjection(ctx context.Context) VolumeProjection {
-    s := segment.NewPooled(ctx, XXXMappingVolumeProjection)
+    s := segment.New(ctx, XXXMappingVolumeProjection)
     s.SetIsSetEnabled(true)
     return VolumeProjection{
         s: s,
@@ -24678,7 +25371,7 @@ func NewVolumeProjection(ctx context.Context) VolumeProjection {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x VolumeProjection) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewVolumeProjectionFrom creates a new VolumeProjection from our internal Struct representation.
@@ -24691,14 +25384,22 @@ func XXXNewVolumeProjectionFrom(s *segment.Struct) VolumeProjection {
     return VolumeProjection{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x VolumeProjection) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x VolumeProjection) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x VolumeProjection) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -24848,31 +25549,30 @@ func NewVolumeProjectionFromRaw(ctx context.Context, raw VolumeProjectionRaw) Vo
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x VolumeProjection) ToRaw() VolumeProjectionRaw {
+func (x VolumeProjection) ToRaw(ctx context.Context) VolumeProjectionRaw {
     raw := VolumeProjectionRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.Secret().ToRaw()
+        nestedRaw := x.Secret().ToRaw(ctx)
         raw.Secret = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.DownwardApi().ToRaw()
+        nestedRaw := x.DownwardApi().ToRaw(ctx)
         raw.DownwardApi = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.ConfigMap().ToRaw()
+        nestedRaw := x.ConfigMap().ToRaw(ctx)
         raw.ConfigMap = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.ServiceAccountToken().ToRaw()
+        nestedRaw := x.ServiceAccountToken().ToRaw(ctx)
         raw.ServiceAccountToken = &nestedRaw
     }
     if x.s.HasField(4) {
-        nestedRaw := x.ClusterTrustBundle().ToRaw()
+        nestedRaw := x.ClusterTrustBundle().ToRaw(ctx)
         raw.ClusterTrustBundle = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -24891,7 +25591,7 @@ type VolumeSource struct {
 // NewVolumeSource creates a new pooled instance of VolumeSource.
 // Call Release() when done to return it to the pool for reuse.
 func NewVolumeSource(ctx context.Context) VolumeSource {
-    s := segment.NewPooled(ctx, XXXMappingVolumeSource)
+    s := segment.New(ctx, XXXMappingVolumeSource)
     s.SetIsSetEnabled(true)
     return VolumeSource{
         s: s,
@@ -24901,7 +25601,7 @@ func NewVolumeSource(ctx context.Context) VolumeSource {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x VolumeSource) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewVolumeSourceFrom creates a new VolumeSource from our internal Struct representation.
@@ -24914,14 +25614,22 @@ func XXXNewVolumeSourceFrom(s *segment.Struct) VolumeSource {
     return VolumeSource{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x VolumeSource) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x VolumeSource) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x VolumeSource) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -25190,59 +25898,58 @@ func NewVolumeSourceFromRaw(ctx context.Context, raw VolumeSourceRaw) VolumeSour
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x VolumeSource) ToRaw() VolumeSourceRaw {
+func (x VolumeSource) ToRaw(ctx context.Context) VolumeSourceRaw {
     raw := VolumeSourceRaw{}
     if x.s.HasField(0) {
-        nestedRaw := x.HostPath().ToRaw()
+        nestedRaw := x.HostPath().ToRaw(ctx)
         raw.HostPath = &nestedRaw
     }
     if x.s.HasField(1) {
-        nestedRaw := x.EmptyDir().ToRaw()
+        nestedRaw := x.EmptyDir().ToRaw(ctx)
         raw.EmptyDir = &nestedRaw
     }
     if x.s.HasField(2) {
-        nestedRaw := x.GcePersistentDisk().ToRaw()
+        nestedRaw := x.GcePersistentDisk().ToRaw(ctx)
         raw.GcePersistentDisk = &nestedRaw
     }
     if x.s.HasField(3) {
-        nestedRaw := x.AwsElasticBlockStore().ToRaw()
+        nestedRaw := x.AwsElasticBlockStore().ToRaw(ctx)
         raw.AwsElasticBlockStore = &nestedRaw
     }
     if x.s.HasField(4) {
-        nestedRaw := x.Secret().ToRaw()
+        nestedRaw := x.Secret().ToRaw(ctx)
         raw.Secret = &nestedRaw
     }
     if x.s.HasField(5) {
-        nestedRaw := x.Nfs().ToRaw()
+        nestedRaw := x.Nfs().ToRaw(ctx)
         raw.Nfs = &nestedRaw
     }
     if x.s.HasField(6) {
-        nestedRaw := x.PersistentVolumeClaim().ToRaw()
+        nestedRaw := x.PersistentVolumeClaim().ToRaw(ctx)
         raw.PersistentVolumeClaim = &nestedRaw
     }
     if x.s.HasField(7) {
-        nestedRaw := x.DownwardApi().ToRaw()
+        nestedRaw := x.DownwardApi().ToRaw(ctx)
         raw.DownwardApi = &nestedRaw
     }
     if x.s.HasField(8) {
-        nestedRaw := x.ConfigMap().ToRaw()
+        nestedRaw := x.ConfigMap().ToRaw(ctx)
         raw.ConfigMap = &nestedRaw
     }
     if x.s.HasField(9) {
-        nestedRaw := x.Projected().ToRaw()
+        nestedRaw := x.Projected().ToRaw(ctx)
         raw.Projected = &nestedRaw
     }
     if x.s.HasField(10) {
-        nestedRaw := x.Csi().ToRaw()
+        nestedRaw := x.Csi().ToRaw(ctx)
         raw.Csi = &nestedRaw
     }
     if x.s.HasField(11) {
-        nestedRaw := x.Ephemeral().ToRaw()
+        nestedRaw := x.Ephemeral().ToRaw(ctx)
         raw.Ephemeral = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -25261,7 +25968,7 @@ type WeightedPodAffinityTerm struct {
 // NewWeightedPodAffinityTerm creates a new pooled instance of WeightedPodAffinityTerm.
 // Call Release() when done to return it to the pool for reuse.
 func NewWeightedPodAffinityTerm(ctx context.Context) WeightedPodAffinityTerm {
-    s := segment.NewPooled(ctx, XXXMappingWeightedPodAffinityTerm)
+    s := segment.New(ctx, XXXMappingWeightedPodAffinityTerm)
     s.SetIsSetEnabled(true)
     return WeightedPodAffinityTerm{
         s: s,
@@ -25271,7 +25978,7 @@ func NewWeightedPodAffinityTerm(ctx context.Context) WeightedPodAffinityTerm {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x WeightedPodAffinityTerm) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewWeightedPodAffinityTermFrom creates a new WeightedPodAffinityTerm from our internal Struct representation.
@@ -25284,14 +25991,22 @@ func XXXNewWeightedPodAffinityTermFrom(s *segment.Struct) WeightedPodAffinityTer
     return WeightedPodAffinityTerm{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x WeightedPodAffinityTerm) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x WeightedPodAffinityTerm) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x WeightedPodAffinityTerm) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -25389,16 +26104,15 @@ func NewWeightedPodAffinityTermFromRaw(ctx context.Context, raw WeightedPodAffin
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x WeightedPodAffinityTerm) ToRaw() WeightedPodAffinityTermRaw {
+func (x WeightedPodAffinityTerm) ToRaw(ctx context.Context) WeightedPodAffinityTermRaw {
     raw := WeightedPodAffinityTermRaw{}
     raw.Weight = x.Weight()
     if x.s.HasField(1) {
-        nestedRaw := x.PodAffinityTerm().ToRaw()
+        nestedRaw := x.PodAffinityTerm().ToRaw(ctx)
         raw.PodAffinityTerm = &nestedRaw
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -25417,7 +26131,7 @@ type WindowsSecurityContextOptions struct {
 // NewWindowsSecurityContextOptions creates a new pooled instance of WindowsSecurityContextOptions.
 // Call Release() when done to return it to the pool for reuse.
 func NewWindowsSecurityContextOptions(ctx context.Context) WindowsSecurityContextOptions {
-    s := segment.NewPooled(ctx, XXXMappingWindowsSecurityContextOptions)
+    s := segment.New(ctx, XXXMappingWindowsSecurityContextOptions)
     s.SetIsSetEnabled(true)
     return WindowsSecurityContextOptions{
         s: s,
@@ -25427,7 +26141,7 @@ func NewWindowsSecurityContextOptions(ctx context.Context) WindowsSecurityContex
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x WindowsSecurityContextOptions) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewWindowsSecurityContextOptionsFrom creates a new WindowsSecurityContextOptions from our internal Struct representation.
@@ -25440,14 +26154,22 @@ func XXXNewWindowsSecurityContextOptionsFrom(s *segment.Struct) WindowsSecurityC
     return WindowsSecurityContextOptions{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x WindowsSecurityContextOptions) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x WindowsSecurityContextOptions) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x WindowsSecurityContextOptions) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -25576,7 +26298,7 @@ func NewWindowsSecurityContextOptionsFromRaw(ctx context.Context, raw WindowsSec
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x WindowsSecurityContextOptions) ToRaw() WindowsSecurityContextOptionsRaw {
+func (x WindowsSecurityContextOptions) ToRaw(ctx context.Context) WindowsSecurityContextOptionsRaw {
     raw := WindowsSecurityContextOptionsRaw{}
     raw.GmsaCredentialSpecName = x.GmsaCredentialSpecName()
     raw.GmsaCredentialSpec = x.GmsaCredentialSpec()
@@ -25584,7 +26306,6 @@ func (x WindowsSecurityContextOptions) ToRaw() WindowsSecurityContextOptionsRaw 
     raw.HostProcess = x.HostProcess()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

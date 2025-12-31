@@ -13,6 +13,7 @@ import (
 	"github.com/bearlytools/claw/languages/go/reflect/internal/interfaces"
 	"github.com/bearlytools/claw/languages/go/reflect/internal/pragma"
 	"github.com/bearlytools/claw/languages/go/reflect/runtime"
+	"github.com/gostdlib/base/context"
 )
 
 // PackageDescrImpl is the implementation of PackageDescr.
@@ -95,7 +96,7 @@ type StructDescrImpl struct {
 
 // New creates a new interfaces.Struct based on this StructDescrImpl.
 func (s StructDescrImpl) New() interfaces.Struct {
-	v := segment.New(s.Mapping)
+	v := segment.New(context.Background(), s.Mapping)
 	return StructImpl{
 		s:     v,
 		descr: s,
@@ -420,7 +421,7 @@ func (l ListStructs) Append(v interfaces.Value) {
 }
 
 func (l ListStructs) New() interfaces.Struct {
-	newStruct := segment.New(l.sd.Mapping)
+	newStruct := segment.New(context.Background(), l.sd.Mapping)
 	return NewStruct(newStruct, l.sd)
 }
 
@@ -626,7 +627,7 @@ func (s StructImpl) Descriptor() interfaces.StructDescr {
 }
 
 func (s StructImpl) New() interfaces.Struct {
-	n := segment.New(s.s.Mapping())
+	n := segment.New(context.Background(), s.s.Mapping())
 	return NewStruct(n, s.descr)
 }
 
@@ -1032,7 +1033,7 @@ func getListStrings(s *segment.Struct, fieldNum uint16) []string {
 
 // getListStructs parses a struct list from segment data.
 func getListStructs(s *segment.Struct, fieldNum uint16, m *mapping.Map) []*segment.Struct {
-	structs := segment.NewStructs(s, fieldNum, m)
+	structs := segment.NewStructs(context.Background(), s, fieldNum, m)
 	result := make([]*segment.Struct, structs.Len())
 	for i := 0; i < structs.Len(); i++ {
 		result[i] = structs.Get(i)

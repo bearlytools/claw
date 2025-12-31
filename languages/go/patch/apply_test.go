@@ -46,7 +46,7 @@ func TestApplyScalarFields(t *testing.T) {
 		target := test.target()
 
 		// Create patch from base to target
-		p, err := Diff(base, target)
+		p, err := Diff(ctx, base, target)
 		switch {
 		case err == nil && test.wantErr:
 			t.Errorf("TestApplyScalarFields(%s): got err == nil, want err != nil", test.name)
@@ -60,7 +60,7 @@ func TestApplyScalarFields(t *testing.T) {
 
 		// Apply patch to a fresh base
 		freshBase := test.base()
-		if err := Apply(freshBase, p); err != nil {
+		if err := Apply(ctx, freshBase, p); err != nil {
 			t.Errorf("TestApplyScalarFields(%s): Apply error: %s", test.name, err)
 			continue
 		}
@@ -79,7 +79,7 @@ func TestApplyRoundTrip(t *testing.T) {
 	to := cars.NewCar(ctx).SetYear(2024)
 
 	// Generate patch
-	p, err := Diff(from, to)
+	p, err := Diff(ctx, from, to)
 	if err != nil {
 		t.Fatalf("TestApplyRoundTrip: Diff error: %s", err)
 	}
@@ -98,7 +98,7 @@ func TestApplyRoundTrip(t *testing.T) {
 
 	// Apply to a fresh base
 	base := cars.NewCar(ctx).SetYear(2023)
-	if err := Apply(base, receivedPatch); err != nil {
+	if err := Apply(ctx, base, receivedPatch); err != nil {
 		t.Fatalf("TestApplyRoundTrip: Apply error: %s", err)
 	}
 
@@ -115,14 +115,14 @@ func TestApplyMultipleFields(t *testing.T) {
 	to := cars.NewCar(ctx).SetYear(2024).SetModel(cars.Venza)
 
 	// Generate patch
-	p, err := Diff(from, to)
+	p, err := Diff(ctx, from, to)
 	if err != nil {
 		t.Fatalf("TestApplyMultipleFields: Diff error: %s", err)
 	}
 
 	// Apply to a fresh base
 	base := cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT)
-	if err := Apply(base, p); err != nil {
+	if err := Apply(ctx, base, p); err != nil {
 		t.Fatalf("TestApplyMultipleFields: Apply error: %s", err)
 	}
 
@@ -144,12 +144,12 @@ func TestApplyListOperations(t *testing.T) {
 		to := cars.NewCar(ctx).SetYear(2023)
 
 		// Verify Diff produces no ops for identical structs
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Fatalf("Diff error: %v", err)
 		}
-		if p.OpsLen() != 0 {
-			t.Errorf("expected 0 ops for identical structs, got %d", p.OpsLen())
+		if p.OpsLen(ctx) != 0 {
+			t.Errorf("expected 0 ops for identical structs, got %d", p.OpsLen(ctx))
 		}
 	})
 
@@ -158,14 +158,14 @@ func TestApplyListOperations(t *testing.T) {
 		from := cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT)
 		to := cars.NewCar(ctx).SetYear(2025).SetModel(cars.ModelS)
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Fatalf("Diff error: %v", err)
 		}
 
 		// Apply to base
 		base := cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT)
-		if err := Apply(base, p); err != nil {
+		if err := Apply(ctx, base, p); err != nil {
 			t.Fatalf("Apply error: %v", err)
 		}
 
@@ -211,7 +211,7 @@ func TestApplyPatchVersioning(t *testing.T) {
 	from := cars.NewCar(ctx).SetYear(2023)
 	to := cars.NewCar(ctx).SetYear(2024)
 
-	p, err := Diff(from, to)
+	p, err := Diff(ctx, from, to)
 	if err != nil {
 		t.Fatalf("Diff error: %v", err)
 	}
@@ -279,7 +279,7 @@ func TestApplyListBools(t *testing.T) {
 			to.SetBools(test.toBools...)
 		}
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		switch {
 		case err == nil && test.wantErr:
 			t.Errorf("TestApplyListBools(%s): got err == nil, want err != nil", test.name)
@@ -291,8 +291,8 @@ func TestApplyListBools(t *testing.T) {
 			continue
 		}
 
-		if p.OpsLen() != test.wantOps {
-			t.Errorf("TestApplyListBools(%s): got %d ops, want %d ops", test.name, p.OpsLen(), test.wantOps)
+		if p.OpsLen(ctx) != test.wantOps {
+			t.Errorf("TestApplyListBools(%s): got %d ops, want %d ops", test.name, p.OpsLen(ctx), test.wantOps)
 		}
 
 		// Apply patch
@@ -301,7 +301,7 @@ func TestApplyListBools(t *testing.T) {
 			freshFrom.SetBools(test.fromBools...)
 		}
 
-		if err := Apply(freshFrom, p); err != nil {
+		if err := Apply(ctx, freshFrom, p); err != nil {
 			t.Errorf("TestApplyListBools(%s): Apply error: %s", test.name, err)
 			continue
 		}
@@ -330,13 +330,13 @@ func TestApplyNestedStruct(t *testing.T) {
 		from := vehicles.NewVehicle(ctx).SetCar(cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT))
 		to := vehicles.NewVehicle(ctx).SetCar(cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT))
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Fatalf("TestApplyNestedStruct: Diff error: %s", err)
 		}
 
-		if p.OpsLen() != 0 {
-			t.Errorf("TestApplyNestedStruct: got %d ops, want 0 ops for identical structs", p.OpsLen())
+		if p.OpsLen(ctx) != 0 {
+			t.Errorf("TestApplyNestedStruct: got %d ops, want 0 ops for identical structs", p.OpsLen(ctx))
 		}
 	})
 
@@ -345,22 +345,22 @@ func TestApplyNestedStruct(t *testing.T) {
 		from := vehicles.NewVehicle(ctx).SetCar(cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT))
 		to := vehicles.NewVehicle(ctx).SetCar(cars.NewCar(ctx).SetYear(2024).SetModel(cars.Venza))
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Fatalf("TestApplyNestedStruct: Diff error: %s", err)
 		}
 
-		if p.OpsLen() != 1 {
-			t.Errorf("TestApplyNestedStruct: got %d ops, want 1 op", p.OpsLen())
+		if p.OpsLen(ctx) != 1 {
+			t.Errorf("TestApplyNestedStruct: got %d ops, want 1 op", p.OpsLen(ctx))
 		}
 
-		if p.OpsLen() > 0 && p.OpsGet(0).Type() != msgs.StructPatch {
-			t.Errorf("TestApplyNestedStruct: got op type %v, want StructPatch", p.OpsGet(0).Type())
+		if p.OpsLen(ctx) > 0 && p.OpsGet(ctx,0).Type() != msgs.StructPatch {
+			t.Errorf("TestApplyNestedStruct: got op type %v, want StructPatch", p.OpsGet(ctx,0).Type())
 		}
 
 		// Apply the patch and verify the nested struct was updated
 		base := vehicles.NewVehicle(ctx).SetCar(cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT))
-		if err := Apply(base, p); err != nil {
+		if err := Apply(ctx, base, p); err != nil {
 			t.Fatalf("TestApplyNestedStruct: Apply error: %s", err)
 		}
 
@@ -389,7 +389,7 @@ func TestApplyListStructs(t *testing.T) {
 			},
 			target: func() vehicles.Vehicle {
 				v := vehicles.NewVehicle(ctx)
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
 				return v
 			},
 			wantLen: 1,
@@ -398,12 +398,12 @@ func TestApplyListStructs(t *testing.T) {
 			name: "Success: modify truck in list",
 			base: func() vehicles.Vehicle {
 				v := vehicles.NewVehicle(ctx)
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
 				return v
 			},
 			target: func() vehicles.Vehicle {
 				v := vehicles.NewVehicle(ctx)
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2024).SetModel(trucks.Tundra))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2024).SetModel(trucks.Tundra))
 				return v
 			},
 			wantLen: 1,
@@ -412,13 +412,13 @@ func TestApplyListStructs(t *testing.T) {
 			name: "Success: add additional truck",
 			base: func() vehicles.Vehicle {
 				v := vehicles.NewVehicle(ctx)
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
 				return v
 			},
 			target: func() vehicles.Vehicle {
 				v := vehicles.NewVehicle(ctx)
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2024).SetModel(trucks.Tundra))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2024).SetModel(trucks.Tundra))
 				return v
 			},
 			wantLen: 2,
@@ -427,13 +427,13 @@ func TestApplyListStructs(t *testing.T) {
 			name: "Success: remove truck from list",
 			base: func() vehicles.Vehicle {
 				v := vehicles.NewVehicle(ctx)
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2024).SetModel(trucks.Tundra))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2024).SetModel(trucks.Tundra))
 				return v
 			},
 			target: func() vehicles.Vehicle {
 				v := vehicles.NewVehicle(ctx)
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023).SetModel(trucks.F100))
 				return v
 			},
 			wantLen: 1,
@@ -444,7 +444,7 @@ func TestApplyListStructs(t *testing.T) {
 		base := test.base()
 		target := test.target()
 
-		p, err := Diff(base, target)
+		p, err := Diff(ctx, base, target)
 		switch {
 		case err == nil && test.wantErr:
 			t.Errorf("TestApplyListStructs(%s): got err == nil, want err != nil", test.name)
@@ -458,13 +458,13 @@ func TestApplyListStructs(t *testing.T) {
 
 		// Apply the patch
 		applied := test.base()
-		if err := Apply(applied, p); err != nil {
+		if err := Apply(ctx, applied, p); err != nil {
 			t.Errorf("TestApplyListStructs(%s): Apply error: %s", test.name, err)
 			continue
 		}
 
 		// Verify list length
-		truckList := applied.TruckList()
+		truckList := applied.TruckList(ctx)
 		if truckList == nil && test.wantLen > 0 {
 			t.Errorf("TestApplyListStructs(%s): got nil truck list, want len %d", test.name, test.wantLen)
 			continue
@@ -485,18 +485,18 @@ func TestApplyNestedStructWithManufacturer(t *testing.T) {
 		cars.NewCar(ctx).SetYear(2024).SetManufacturer(manufacturers.Ford),
 	)
 
-	p, err := Diff(from, to)
+	p, err := Diff(ctx, from, to)
 	if err != nil {
 		t.Fatalf("TestApplyNestedStructWithManufacturer: Diff error: %s", err)
 	}
 
 	// Should produce 1 STRUCT_PATCH op for the Car field
-	if p.OpsLen() != 1 {
-		t.Errorf("TestApplyNestedStructWithManufacturer: got %d ops, want 1", p.OpsLen())
+	if p.OpsLen(ctx) != 1 {
+		t.Errorf("TestApplyNestedStructWithManufacturer: got %d ops, want 1", p.OpsLen(ctx))
 	}
 
-	if p.OpsLen() > 0 && p.OpsGet(0).Type() != msgs.StructPatch {
-		t.Errorf("TestApplyNestedStructWithManufacturer: got op type %v, want StructPatch", p.OpsGet(0).Type())
+	if p.OpsLen(ctx) > 0 && p.OpsGet(ctx,0).Type() != msgs.StructPatch {
+		t.Errorf("TestApplyNestedStructWithManufacturer: got op type %v, want StructPatch", p.OpsGet(ctx,0).Type())
 	}
 }
 
@@ -507,7 +507,7 @@ func TestApplyEmptyPatch(t *testing.T) {
 	p := msgs.NewPatch(ctx)
 	p.SetVersion(PatchVersion)
 
-	if err := Apply(base, p); err != nil {
+	if err := Apply(ctx, base, p); err != nil {
 		t.Fatalf("TestApplyEmptyPatch: Apply error: %s", err)
 	}
 
@@ -525,13 +525,13 @@ func TestDiffIdenticalStructs(t *testing.T) {
 	from := cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT)
 	to := cars.NewCar(ctx).SetYear(2023).SetModel(cars.GT)
 
-	p, err := Diff(from, to)
+	p, err := Diff(ctx, from, to)
 	if err != nil {
 		t.Fatalf("TestDiffIdenticalStructs: Diff error: %s", err)
 	}
 
-	if !IsEmpty(p) {
-		t.Errorf("TestDiffIdenticalStructs: expected empty patch for identical structs, got %d ops", p.OpsLen())
+	if !IsEmpty(ctx, p) {
+		t.Errorf("TestDiffIdenticalStructs: expected empty patch for identical structs, got %d ops", p.OpsLen(ctx))
 	}
 }
 
@@ -578,14 +578,14 @@ func TestApplyEnumList(t *testing.T) {
 			to.SetTypes(test.toTypes...)
 		}
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Errorf("TestApplyEnumList(%s): Diff error: %s", test.name, err)
 			continue
 		}
 
-		if p.OpsLen() != test.wantOps {
-			t.Errorf("TestApplyEnumList(%s): got %d ops, want %d ops", test.name, p.OpsLen(), test.wantOps)
+		if p.OpsLen(ctx) != test.wantOps {
+			t.Errorf("TestApplyEnumList(%s): got %d ops, want %d ops", test.name, p.OpsLen(ctx), test.wantOps)
 		}
 
 		if test.wantOps == 0 {
@@ -597,7 +597,7 @@ func TestApplyEnumList(t *testing.T) {
 			freshFrom.SetTypes(test.fromTypes...)
 		}
 
-		if err := Apply(freshFrom, p); err != nil {
+		if err := Apply(ctx, freshFrom, p); err != nil {
 			t.Errorf("TestApplyEnumList(%s): Apply error: %s", test.name, err)
 			continue
 		}
@@ -669,30 +669,30 @@ func TestDiffListSetInsertRemove(t *testing.T) {
 		to := vehicles.NewVehicle(ctx)
 		to.SetBools(test.toBools...)
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Errorf("TestDiffListSetInsertRemove(%s): Diff error: %s", test.name, err)
 			continue
 		}
 
-		if p.OpsLen() != test.wantOps {
-			t.Errorf("TestDiffListSetInsertRemove(%s): got %d ops, want %d ops", test.name, p.OpsLen(), test.wantOps)
+		if p.OpsLen(ctx) != test.wantOps {
+			t.Errorf("TestDiffListSetInsertRemove(%s): got %d ops, want %d ops", test.name, p.OpsLen(ctx), test.wantOps)
 			continue
 		}
 
 		for i, wantType := range test.wantOpTypes {
-			if i >= p.OpsLen() {
+			if i >= p.OpsLen(ctx) {
 				break
 			}
-			if p.OpsGet(i).Type() != wantType {
-				t.Errorf("TestDiffListSetInsertRemove(%s): op[%d] got type %v, want %v", test.name, i, p.OpsGet(i).Type(), wantType)
+			if p.OpsGet(ctx,i).Type() != wantType {
+				t.Errorf("TestDiffListSetInsertRemove(%s): op[%d] got type %v, want %v", test.name, i, p.OpsGet(ctx,i).Type(), wantType)
 			}
 		}
 
 		freshFrom := vehicles.NewVehicle(ctx)
 		freshFrom.SetBools(test.fromBools...)
 
-		if err := Apply(freshFrom, p); err != nil {
+		if err := Apply(ctx, freshFrom, p); err != nil {
 			t.Errorf("TestDiffListSetInsertRemove(%s): Apply error: %s", test.name, err)
 			continue
 		}
@@ -743,42 +743,42 @@ func TestDiffListStructPatch(t *testing.T) {
 	for _, test := range tests {
 		from := vehicles.NewVehicle(ctx)
 		for _, year := range test.fromYears {
-			from.TruckAppend(trucks.NewTruck(ctx).SetYear(year).SetModel(trucks.F100))
+			from.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(year).SetModel(trucks.F100))
 		}
 
 		to := vehicles.NewVehicle(ctx)
 		for _, year := range test.toYears {
-			to.TruckAppend(trucks.NewTruck(ctx).SetYear(year).SetModel(trucks.F100))
+			to.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(year).SetModel(trucks.F100))
 		}
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Errorf("TestDiffListStructPatch(%s): Diff error: %s", test.name, err)
 			continue
 		}
 
-		if p.OpsLen() != test.wantOps {
-			t.Errorf("TestDiffListStructPatch(%s): got %d ops, want %d ops", test.name, p.OpsLen(), test.wantOps)
+		if p.OpsLen(ctx) != test.wantOps {
+			t.Errorf("TestDiffListStructPatch(%s): got %d ops, want %d ops", test.name, p.OpsLen(ctx), test.wantOps)
 			continue
 		}
 
-		if test.checkPatch && p.OpsLen() > 0 {
-			if p.OpsGet(0).Type() != msgs.ListStructPatch {
-				t.Errorf("TestDiffListStructPatch(%s): got op type %v, want ListStructPatch", test.name, p.OpsGet(0).Type())
+		if test.checkPatch && p.OpsLen(ctx) > 0 {
+			if p.OpsGet(ctx,0).Type() != msgs.ListStructPatch {
+				t.Errorf("TestDiffListStructPatch(%s): got op type %v, want ListStructPatch", test.name, p.OpsGet(ctx,0).Type())
 			}
 		}
 
 		freshFrom := vehicles.NewVehicle(ctx)
 		for _, year := range test.fromYears {
-			freshFrom.TruckAppend(trucks.NewTruck(ctx).SetYear(year).SetModel(trucks.F100))
+			freshFrom.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(year).SetModel(trucks.F100))
 		}
 
-		if err := Apply(freshFrom, p); err != nil {
+		if err := Apply(ctx, freshFrom, p); err != nil {
 			t.Errorf("TestDiffListStructPatch(%s): Apply error: %s", test.name, err)
 			continue
 		}
 
-		truckList := freshFrom.TruckList()
+		truckList := freshFrom.TruckList(ctx)
 		if truckList.Len() != len(test.toYears) {
 			t.Errorf("TestDiffListStructPatch(%s): got %d trucks, want %d trucks", test.name, truckList.Len(), len(test.toYears))
 			continue

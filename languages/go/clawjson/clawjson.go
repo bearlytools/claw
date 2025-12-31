@@ -20,7 +20,7 @@ import (
 
 // Walker is an interface for walking over Claw tokens.
 type Walker interface {
-	Walk() iter.Seq[clawiter.Token]
+	Walk(ctx context.Context) iter.Seq[clawiter.Token]
 }
 
 // marshalOptions provides options for writing Claw output to JSON.
@@ -40,16 +40,16 @@ func WithUseEnumNumbers(use bool) MarshalOption {
 }
 
 // Marshal marshals the Walker to JSON.
-func Marshal(v Walker, options ...MarshalOption) ([]byte, error) {
+func Marshal(ctx context.Context, v Walker, options ...MarshalOption) ([]byte, error) {
 	var buf bytes.Buffer
-	if err := MarshalWriter(v, &buf, options...); err != nil {
+	if err := MarshalWriter(ctx, v, &buf, options...); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
 }
 
 // MarshalWriter marshals the Walker to JSON, writing to the provided io.Writer.
-func MarshalWriter(v Walker, w io.Writer, options ...MarshalOption) error {
+func MarshalWriter(ctx context.Context, v Walker, w io.Writer, options ...MarshalOption) error {
 	opts := marshalOptions{}
 	for _, opt := range options {
 		var err error
@@ -58,16 +58,16 @@ func MarshalWriter(v Walker, w io.Writer, options ...MarshalOption) error {
 			return err
 		}
 	}
-	return writeJSON(w, v, opts)
+	return writeJSON(ctx, w, v, opts)
 }
 
 // writeJSON writes JSON from the token stream to an io.Writer.
-func writeJSON(w io.Writer, walker Walker, opts marshalOptions) error {
+func writeJSON(ctx context.Context, w io.Writer, walker Walker, opts marshalOptions) error {
 	// Stack to track whether we need commas (true = first element, no comma needed)
 	// Each entry represents a nesting level (struct or list)
 	firstStack := []bool{}
 
-	for tok := range walker.Walk() {
+	for tok := range walker.Walk(ctx) {
 		switch tok.Kind {
 		case clawiter.TokenStructStart:
 			if _, err := w.Write([]byte("{")); err != nil {
@@ -270,7 +270,7 @@ func NewArray(w io.Writer, options ...MarshalOption) (*Array, error) {
 }
 
 // Write writes a Walker to the JSON array.
-func (a *Array) Write(v Walker, options ...MarshalOption) error {
+func (a *Array) Write(ctx context.Context, v Walker, options ...MarshalOption) error {
 	opts := a.opts
 	for _, opt := range options {
 		var err error
@@ -291,7 +291,7 @@ func (a *Array) Write(v Walker, options ...MarshalOption) error {
 		}
 	}
 
-	return writeJSON(a.writer, v, opts)
+	return writeJSON(ctx, a.writer, v, opts)
 }
 
 // Close finishes writing the JSON array.

@@ -42,7 +42,7 @@ func TestDiffScalarFields(t *testing.T) {
 		from := test.from()
 		to := test.to()
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		switch {
 		case err == nil && test.wantErr:
 			t.Errorf("TestDiffScalarFields(%s): got err == nil, want err != nil", test.name)
@@ -54,7 +54,7 @@ func TestDiffScalarFields(t *testing.T) {
 			continue
 		}
 
-		gotOps := p.OpsLen()
+		gotOps := p.OpsLen(ctx)
 		if gotOps != test.wantOps {
 			t.Errorf("TestDiffScalarFields(%s): got %d ops, want %d ops", test.name, gotOps, test.wantOps)
 		}
@@ -95,13 +95,13 @@ func TestDiffIsEmpty(t *testing.T) {
 		from := test.from()
 		to := test.to()
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Errorf("TestDiffIsEmpty(%s): unexpected error: %s", test.name, err)
 			continue
 		}
 
-		gotEmpty := IsEmpty(p)
+		gotEmpty := IsEmpty(ctx, p)
 		if gotEmpty != test.wantEmpty {
 			t.Errorf("TestDiffIsEmpty(%s): got IsEmpty=%v, want IsEmpty=%v", test.name, gotEmpty, test.wantEmpty)
 		}
@@ -156,14 +156,14 @@ func TestDiffPatchSerialization(t *testing.T) {
 		from := test.from()
 		to := test.to()
 
-		p, err := Diff(from, to)
+		p, err := Diff(ctx, from, to)
 		if err != nil {
 			t.Errorf("TestDiffPatchSerialization(%s): Diff error: %s", test.name, err)
 			continue
 		}
 
-		if p.OpsLen() != test.wantOps {
-			t.Errorf("TestDiffPatchSerialization(%s): original patch has %d ops, want %d", test.name, p.OpsLen(), test.wantOps)
+		if p.OpsLen(ctx) != test.wantOps {
+			t.Errorf("TestDiffPatchSerialization(%s): original patch has %d ops, want %d", test.name, p.OpsLen(ctx), test.wantOps)
 			continue
 		}
 
@@ -182,7 +182,7 @@ func TestDiffPatchSerialization(t *testing.T) {
 		}
 
 		// Verify deserialized patch has same number of ops
-		gotOps := deserializedPatch.OpsLen()
+		gotOps := deserializedPatch.OpsLen(ctx)
 		if gotOps != test.wantOps {
 			t.Errorf("TestDiffPatchSerialization(%s): deserialized patch has %d ops, want %d", test.name, gotOps, test.wantOps)
 			continue
@@ -195,7 +195,7 @@ func TestDiffPatchSerialization(t *testing.T) {
 
 		// Apply the roundtripped patch and verify it produces correct result
 		base := test.from()
-		if err := Apply(base, deserializedPatch); err != nil {
+		if err := Apply(ctx, base, deserializedPatch); err != nil {
 			t.Errorf("TestDiffPatchSerialization(%s): Apply error: %s", test.name, err)
 			continue
 		}

@@ -89,7 +89,7 @@ func (x *Vehicle) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Truck[]: %w", err)
                 }
-                x.TruckAppend(item)
+                x.TruckAppend(ctx, item)
             }
         case "Types":
             if tok.IsNil {

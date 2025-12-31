@@ -31,7 +31,7 @@ func TestPatchVsFullWireSize(t *testing.T) {
 	statusTo.SetMessage("Container crashed due to OOM")
 	podTo.SetStatus(statusTo)
 
-	diffPatch, err := patch.Diff(podFrom, podTo)
+	diffPatch, err := patch.Diff(ctx, podFrom, podTo)
 	if err != nil {
 		t.Fatalf("Diff error: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestPatchVsFullWireSize(t *testing.T) {
 		patchOp.SetType(msgs.OpType(op.OpType))
 		patchOp.SetIndex(op.Index)
 		patchOp.SetData(op.Data)
-		patchObj.AppendOps(patchOp)
+		patchObj.AppendOps(ctx, patchOp)
 	}
 	recordingPatchData, err := patchObj.Marshal()
 	if err != nil {
@@ -84,7 +84,7 @@ func TestPatchVsFullWireSize(t *testing.T) {
 		patchOp.SetType(msgs.OpType(op.OpType))
 		patchOp.SetIndex(op.Index)
 		patchOp.SetData(op.Data)
-		patchObj3.AppendOps(patchOp)
+		patchObj3.AppendOps(ctx, patchOp)
 	}
 	nestedRecordingPatchData, err := patchObj3.Marshal()
 	if err != nil {
@@ -139,14 +139,14 @@ func BenchmarkPatchMarshal(b *testing.B) {
 	op1.SetType(msgs.Set)                                    // Set operation
 	op1.SetIndex(segment.NoListIndex)                        // Not a list
 	op1.SetData([]byte{byte(clawpod.PodPhaseFailed)})        // New value
-	patchObj.AppendOps(op1)
+	patchObj.AppendOps(ctx, op1)
 
 	op2 := msgs.NewOp(ctx)
 	op2.SetFieldNum(2)                                       // Message field
 	op2.SetType(msgs.Set)
 	op2.SetIndex(segment.NoListIndex)
 	op2.SetData([]byte("Container crashed due to OOM"))
-	patchObj.AppendOps(op2)
+	patchObj.AppendOps(ctx, op2)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -171,14 +171,14 @@ func BenchmarkPatchUnmarshal(b *testing.B) {
 	op1.SetType(msgs.Set)
 	op1.SetIndex(segment.NoListIndex)
 	op1.SetData([]byte{byte(clawpod.PodPhaseFailed)})
-	patchObj.AppendOps(op1)
+	patchObj.AppendOps(ctx, op1)
 
 	op2 := msgs.NewOp(ctx)
 	op2.SetFieldNum(2)
 	op2.SetType(msgs.Set)
 	op2.SetIndex(segment.NoListIndex)
 	op2.SetData([]byte("Container crashed due to OOM"))
-	patchObj.AppendOps(op2)
+	patchObj.AppendOps(ctx, op2)
 
 	data, err := patchObj.Marshal()
 	if err != nil {
@@ -248,6 +248,7 @@ func BenchmarkRecordingOverhead(b *testing.B) {
 
 // BenchmarkDiffVsRecording compares creating a patch via Diff vs Recording.
 func BenchmarkDiffVsRecording(b *testing.B) {
+	ctx := context.Background()
 	b.Run("Diff", func(b *testing.B) {
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
@@ -258,7 +259,7 @@ func BenchmarkDiffVsRecording(b *testing.B) {
 			status.SetMessage("Container crashed due to OOM")
 			podTo.SetStatus(status)
 
-			_, err := patch.Diff(podFrom, podTo)
+			_, err := patch.Diff(ctx, podFrom, podTo)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -308,7 +309,7 @@ func TestPatchApplyRoundtrip(t *testing.T) {
 		patchOp.SetType(msgs.OpType(op.OpType))
 		patchOp.SetIndex(op.Index)
 		patchOp.SetData(op.Data)
-		patchObj.AppendOps(patchOp)
+		patchObj.AppendOps(ctx, patchOp)
 	}
 
 	// Serialize and deserialize (simulate network transmission)
@@ -325,8 +326,8 @@ func TestPatchApplyRoundtrip(t *testing.T) {
 	// Apply patch to original
 	// Note: This would need the Apply function to work with the raw ops
 	// For now, we just verify the patch structure is correct
-	if receivedPatch.OpsLen() != patchObj.OpsLen() {
-		t.Errorf("OpsLen mismatch: got %d, want %d", receivedPatch.OpsLen(), patchObj.OpsLen())
+	if receivedPatch.OpsLen(ctx) != patchObj.OpsLen(ctx) {
+		t.Errorf("OpsLen mismatch: got %d, want %d", receivedPatch.OpsLen(ctx), patchObj.OpsLen(ctx))
 	}
 
 	// Verify original is unchanged
@@ -337,5 +338,5 @@ func TestPatchApplyRoundtrip(t *testing.T) {
 	fmt.Printf("\n=== Patch Roundtrip Test ===\n")
 	fmt.Printf("Original status phase: %v\n", original.Status().Phase())
 	fmt.Printf("Patch size: %d bytes\n", len(patchData))
-	fmt.Printf("Number of ops: %d\n", receivedPatch.OpsLen())
+	fmt.Printf("Number of ops: %d\n", receivedPatch.OpsLen(ctx))
 }

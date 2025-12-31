@@ -413,7 +413,7 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting {{ $field.Name }}[]: %w", err)
                 }
-                x.{{ $field.Name }}Append(item)
+                x.{{ $field.Name }}Append(ctx, item)
             }
             {{- else if eq $field.TypeAsString "Map" }}
             if tok.IsNil {

@@ -131,7 +131,7 @@ func (x *Close) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Metadata[]: %w", err)
                 }
-                x.MetadataAppend(item)
+                x.MetadataAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -506,7 +506,7 @@ func (x *Open) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Metadata[]: %w", err)
                 }
-                x.MetadataAppend(item)
+                x.MetadataAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -592,7 +592,7 @@ func (x *OpenAck) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Metadata[]: %w", err)
                 }
-                x.MetadataAppend(item)
+                x.MetadataAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -674,7 +674,7 @@ func (x *Payload) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Metadata[]: %w", err)
                 }
-                x.MetadataAppend(item)
+                x.MetadataAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {

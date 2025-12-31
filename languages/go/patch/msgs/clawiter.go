@@ -4,6 +4,7 @@
 package msgs
 
 import (
+    "context"
     "iter"
     "math"
 
@@ -14,11 +15,12 @@ import (
 
 // Ensure imports are used.
 var _ = math.Float32bits
+var _ context.Context
 
 
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x Op) Walk() iter.Seq[clawiter.Token] {
+func (x Op) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
         if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Op"}) {
             return
@@ -65,7 +67,7 @@ func (x Op) Walk() iter.Seq[clawiter.Token] {
 
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x Patch) Walk() iter.Seq[clawiter.Token] {
+func (x Patch) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
         if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Patch"}) {
             return
@@ -81,7 +83,7 @@ func (x Patch) Walk() iter.Seq[clawiter.Token] {
         }
         // Field 1: Ops
         {
-            list := x.OpsList()
+            list := x.OpsList(ctx)
             listLen := list.Len()
             if listLen == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Ops", Type: field.FTListStructs, StructName: "Op", IsNil: true}) {
@@ -95,8 +97,8 @@ func (x Patch) Walk() iter.Seq[clawiter.Token] {
                     return
                 }
                 for i := 0; i < listLen; i++ {
-                    item := x.OpsGet(i)
-                    for tok := range item.Walk() {
+                    item := x.OpsGet(ctx, i)
+                    for tok := range item.Walk(ctx) {
                         if !yield(tok) {
                             return
                         }

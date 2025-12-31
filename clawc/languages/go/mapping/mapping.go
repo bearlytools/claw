@@ -4,14 +4,11 @@
 package mapping
 
 import (
-	"context"
 	"fmt"
 	"io"
-	"path"
 	"unsafe"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
-	"github.com/gostdlib/base/concurrency/sync"
 )
 
 // EncodeFunc is the signature for field encoder functions.
@@ -41,8 +38,8 @@ type ScanSizeFunc func(data []byte, header []byte) uint32
 //   - desc: field descriptor with type and metadata
 type LazyDecodeFunc func(structPtr unsafe.Pointer, fieldNum uint16, data []byte, desc *FieldDescr)
 
-// Registration functions - set by the codec package during init.
-// This pattern avoids circular dependencies between mapping and codec.
+// Registration functions - set by the codec/segment packages during init.
+// This pattern avoids circular dependencies between mapping and codec/segment.
 var (
 	// RegisterEncoders is called by Init() to populate the Encoders slice.
 	RegisterEncoders func(m *Map)
@@ -50,6 +47,8 @@ var (
 	RegisterScanSizers func(m *Map)
 	// RegisterLazyDecoders is called by Init() to populate the LazyDecoders slice.
 	RegisterLazyDecoders func(m *Map)
+	// RegisterSegmentPool is called by Init() to register a per-mapping segment pool.
+	RegisterSegmentPool func(m *Map)
 )
 
 // FieldDescr describes a field. FieldDescr are created when the IDL renders to a file
@@ -136,11 +135,6 @@ type Map struct {
 	ScanSizers   []ScanSizeFunc   // For scanFieldOffsets()
 	LazyDecoders []LazyDecodeFunc // For decodeFieldFromRaw()
 
-	// FieldStates is a pool of FieldState slices for use during lazy decoding.
-	FieldStates *sync.Pool[*[]FieldState]
-	// OffsetsPool is a pool of FieldOffset slices for use during lazy decoding.
-	OffsetsPool *sync.Pool[*[]FieldOffset]
-
 	initialized bool
 }
 
@@ -152,7 +146,7 @@ func (m *Map) Init() {
 		return
 	}
 
-	// Use registration functions set by the codec package
+	// Use registration functions set by the codec/segment packages
 	if RegisterEncoders != nil {
 		RegisterEncoders(m)
 	}
@@ -162,22 +156,9 @@ func (m *Map) Init() {
 	if RegisterLazyDecoders != nil {
 		RegisterLazyDecoders(m)
 	}
-	m.FieldStates = sync.NewPool(
-		context.Background(),
-		path.Join(m.Path, m.Pkg, m.Name)+".FieldStatesPool",
-		func() *[]FieldState {
-			slice := make([]FieldState, len(m.Fields))
-			return &slice
-		},
-	)
-	m.OffsetsPool = sync.NewPool(
-		context.Background(),
-		path.Join(m.Path, m.Pkg, m.Name)+".OffsetsPool",
-		func() *[]FieldOffset {
-			slice := make([]FieldOffset, 0, len(m.Fields))
-			return &slice
-		},
-	)
+	if RegisterSegmentPool != nil {
+		RegisterSegmentPool(m)
+	}
 
 	m.initialized = true
 
@@ -216,16 +197,4 @@ func (m Map) MustValidate() {
 	if err := m.validate(); err != nil {
 		panic(err)
 	}
-}
-
-// FieldState represents the decode state of a field in lazy decoding mode.
-// Defined here instead of structs to avoid import cycles, as I want a pool of these in mapping.
-type FieldState uint8
-
-// FieldOffset stores the location of a field within raw serialized data.
-// Defined here instead of structs to allow pooling in mapping without import cycles.
-type FieldOffset struct {
-	FieldNum uint16 // The field number
-	Offset   uint32 // Byte offset into rawData where this field starts
-	Size     uint32 // Size of this field in bytes (including any padding)
 }

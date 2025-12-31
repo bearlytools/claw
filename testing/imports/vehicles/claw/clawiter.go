@@ -4,6 +4,7 @@
 package vehicles
 
 import (
+    "context"
     "iter"
     "math"
 
@@ -14,11 +15,12 @@ import (
 
 // Ensure imports are used.
 var _ = math.Float32bits
+var _ context.Context
 
 
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
+func (x Vehicle) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
         if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Vehicle"}) {
             return
@@ -43,7 +45,7 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk() {
+                for tok := range nested.Walk(ctx) {
                     if !yield(tok) {
                         return
                     }
@@ -52,7 +54,7 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
         }
         // Field 2: Truck
         {
-            list := x.TruckList()
+            list := x.TruckList(ctx)
             listLen := list.Len()
             if listLen == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Truck", Type: field.FTListStructs, StructName: "trucks.Truck", IsNil: true}) {
@@ -66,8 +68,8 @@ func (x Vehicle) Walk() iter.Seq[clawiter.Token] {
                     return
                 }
                 for i := 0; i < listLen; i++ {
-                    item := x.TruckGet(i)
-                    for tok := range item.Walk() {
+                    item := x.TruckGet(ctx, i)
+                    for tok := range item.Walk(ctx) {
                         if !yield(tok) {
                             return
                         }

@@ -160,7 +160,7 @@ func TestRecordingListStructs(t *testing.T) {
 		{
 			name: "Success: record TruckAppend",
 			modify: func(v vehicles.Vehicle) {
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023))
 			},
 			wantOps: 1,
 			wantOp:  opListInsert,
@@ -168,8 +168,8 @@ func TestRecordingListStructs(t *testing.T) {
 		{
 			name: "Success: record multiple TruckAppends",
 			modify: func(v vehicles.Vehicle) {
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2023))
-				v.TruckAppend(trucks.NewTruck(ctx).SetYear(2024))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2023))
+				v.TruckAppend(ctx, trucks.NewTruck(ctx).SetYear(2024))
 			},
 			wantOps: 2,
 		},

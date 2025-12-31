@@ -191,9 +191,9 @@ func (c *ServerConn) handleOpen(ctx context.Context, open msgs.Open) {
 	c.nextSessionID++
 
 	// Convert metadata list to slice.
-	md := make([]msgs.Metadata, open.MetadataLen())
-	for i := 0; i < open.MetadataLen(); i++ {
-		md[i] = open.MetadataGet(i)
+	md := make([]msgs.Metadata, open.MetadataLen(ctx))
+	for i := 0; i < open.MetadataLen(ctx); i++ {
+		md[i] = open.MetadataGet(ctx, i)
 	}
 	sess := newServerSession(sessionID, descr.Type(), handler, md)
 	c.sessions[sessionID] = sess
