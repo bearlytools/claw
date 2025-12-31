@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/gostdlib/base/context"
+
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
 	"github.com/bearlytools/claw/clawc/languages/go/segment"
@@ -33,7 +35,7 @@ type NoPatcher interface {
 // Diff computes the patch to transform 'from' into 'to'.
 // Both must be the same struct type.
 // Returns error if the struct has NoPatch() option or if types don't match.
-func Diff[T ClawStruct](from, to T) (msgs.Patch, error) {
+func Diff[T ClawStruct](ctx context.Context, from, to T) (msgs.Patch, error) {
 	// Check if type has NoPatch option
 	if noPatcher, ok := any(from).(NoPatcher); ok && noPatcher.XXXHasNoPatch() {
 		return msgs.Patch{}, fmt.Errorf("struct type has NoPatch option and cannot be diffed")
@@ -52,7 +54,7 @@ func Diff[T ClawStruct](from, to T) (msgs.Patch, error) {
 	patch := msgs.NewPatch(nil)
 	patch.SetVersion(PatchVersion)
 
-	if err := diffStructToPatch(fromS, toS, &patch); err != nil {
+	if err := diffStructToPatch(ctx, fromS, toS, &patch); err != nil {
 		return msgs.Patch{}, err
 	}
 
@@ -60,7 +62,7 @@ func Diff[T ClawStruct](from, to T) (msgs.Patch, error) {
 }
 
 // diffStructToPatch compares two structs and appends operations to the patch.
-func diffStructToPatch(from, to *segment.Struct, patch *msgs.Patch) error {
+func diffStructToPatch(ctx context.Context, from, to *segment.Struct, patch *msgs.Patch) error {
 	m := from.Mapping()
 
 	// Diff known fields
@@ -70,12 +72,12 @@ func diffStructToPatch(from, to *segment.Struct, patch *msgs.Patch) error {
 		}
 		fieldNum := fd.FieldNum
 
-		ops, err := diffField(from, to, fd)
+		ops, err := diffField(ctx, from, to, fd)
 		if err != nil {
 			return fmt.Errorf("field %d (%s): %w", fieldNum, fd.Name, err)
 		}
 		for _, op := range ops {
-			patch.OpsAppend(op)
+			patch.OpsAppend(ctx, op)
 		}
 	}
 
@@ -87,7 +89,7 @@ func diffStructToPatch(from, to *segment.Struct, patch *msgs.Patch) error {
 
 // diffField compares a single field and returns Op(s) if different, nil if same.
 // For scalar fields, returns at most one op. For list fields, may return multiple ops.
-func diffField(from, to *segment.Struct, fd *mapping.FieldDescr) ([]msgs.Op, error) {
+func diffField(ctx context.Context, from, to *segment.Struct, fd *mapping.FieldDescr) ([]msgs.Op, error) {
 	fieldNum := fd.FieldNum
 
 	switch fd.Type {
@@ -112,7 +114,7 @@ func diffField(from, to *segment.Struct, fd *mapping.FieldDescr) ([]msgs.Op, err
 		}
 		return []msgs.Op{*op}, nil
 	case field.FTStruct:
-		op, err := diffNestedStruct(from, to, fieldNum, fd)
+		op, err := diffNestedStruct(ctx, from, to, fieldNum, fd)
 		if err != nil || op == nil {
 			return nil, err
 		}
@@ -126,7 +128,7 @@ func diffField(from, to *segment.Struct, fd *mapping.FieldDescr) ([]msgs.Op, err
 	case field.FTListBytes, field.FTListStrings:
 		return diffListBytes(from, to, fieldNum, fd.Type)
 	case field.FTListStructs:
-		return diffListStructs(from, to, fieldNum, fd)
+		return diffListStructs(ctx, from, to, fieldNum, fd)
 	default:
 		return nil, fmt.Errorf("unsupported field type: %v", fd.Type)
 	}
@@ -275,7 +277,7 @@ func diffBytes(from, to *segment.Struct, fieldNum uint16) (*msgs.Op, error) {
 	return &op, nil
 }
 
-func diffNestedStruct(from, to *segment.Struct, fieldNum uint16, fd *mapping.FieldDescr) (*msgs.Op, error) {
+func diffNestedStruct(ctx context.Context, from, to *segment.Struct, fieldNum uint16, fd *mapping.FieldDescr) (*msgs.Op, error) {
 	fromSub := segment.GetNestedStruct(from, fieldNum, fd.Mapping)
 	toSub := segment.GetNestedStruct(to, fieldNum, fd.Mapping)
 
@@ -293,7 +295,7 @@ func diffNestedStruct(from, to *segment.Struct, fieldNum uint16, fd *mapping.Fie
 	}
 	if fromSub == nil && toSub != nil {
 		// Nested struct was added - encode full struct
-		buf, err := toSub.MarshalBytes()
+		buf, err := toSub.Marshal()
 		if err != nil {
 			return nil, fmt.Errorf("marshal nested struct: %w", err)
 		}
@@ -308,12 +310,12 @@ func diffNestedStruct(from, to *segment.Struct, fieldNum uint16, fd *mapping.Fie
 	// Both exist - compute recursive patch
 	subPatch := msgs.NewPatch(nil)
 	subPatch.SetVersion(PatchVersion)
-	if err := diffStructToPatch(fromSub, toSub, &subPatch); err != nil {
+	if err := diffStructToPatch(ctx, fromSub, toSub, &subPatch); err != nil {
 		return nil, fmt.Errorf("diff nested struct: %w", err)
 	}
 
 	// If no changes, return nil
-	if subPatch.OpsLen() == 0 {
+	if subPatch.OpsLen(ctx) == 0 {
 		return nil, nil
 	}
 
@@ -682,9 +684,9 @@ func (g stringsAsBytesGetter) Get(i int) []byte {
 	return []byte(g.s.Get(i))
 }
 
-func diffListStructs(from, to *segment.Struct, fieldNum uint16, fd *mapping.FieldDescr) ([]msgs.Op, error) {
-	fromList := segment.GetListStructs(from, fieldNum, fd.Mapping)
-	toList := segment.GetListStructs(to, fieldNum, fd.Mapping)
+func diffListStructs(ctx context.Context, from, to *segment.Struct, fieldNum uint16, fd *mapping.FieldDescr) ([]msgs.Op, error) {
+	fromList := segment.GetListStructs(ctx, from, fieldNum, fd.Mapping)
+	toList := segment.GetListStructs(ctx, to, fieldNum, fd.Mapping)
 
 	var fromLen, toLen int
 	if fromList != nil {
@@ -712,11 +714,11 @@ func diffListStructs(from, to *segment.Struct, fieldNum uint16, fd *mapping.Fiel
 		// Compute recursive patch - if structs are equal, this produces 0 ops
 		subPatch := msgs.NewPatch(nil)
 		subPatch.SetVersion(PatchVersion)
-		if err := diffStructToPatch(fromItem, toItem, &subPatch); err != nil {
+		if err := diffStructToPatch(ctx, fromItem, toItem, &subPatch); err != nil {
 			return nil, fmt.Errorf("diff struct at index %d: %w", i, err)
 		}
 
-		if subPatch.OpsLen() > 0 {
+		if subPatch.OpsLen(ctx) > 0 {
 			patchBytes, err := subPatch.Marshal()
 			if err != nil {
 				return nil, fmt.Errorf("marshal sub-patch at index %d: %w", i, err)
@@ -734,7 +736,7 @@ func diffListStructs(from, to *segment.Struct, fieldNum uint16, fd *mapping.Fiel
 	// For new indices in 'to', generate INSERT with full struct data
 	for i := fromLen; i < toLen; i++ {
 		toItem := toList.Get(i)
-		buf, err := toItem.MarshalBytes()
+		buf, err := toItem.Marshal()
 		if err != nil {
 			return nil, fmt.Errorf("marshal struct for insert at index %d: %w", i, err)
 		}
@@ -986,7 +988,10 @@ func encodeListNumberFloat64(from, to *segment.Struct, fieldNum uint16) ([]byte,
 	return data, true
 }
 
-func createListReplaceBytes(fieldNum uint16, toList interface{ Len() int; Get(int) []byte }) (*msgs.Op, error) {
+func createListReplaceBytes(fieldNum uint16, toList interface {
+	Len() int
+	Get(int) []byte
+}) (*msgs.Op, error) {
 	op := msgs.NewOp(nil)
 	op.SetFieldNum(fieldNum)
 	op.SetType(msgs.ListReplace)
@@ -1044,7 +1049,7 @@ func createListReplaceStructs(fieldNum uint16, toList *segment.Structs) (*msgs.O
 	// Write each struct
 	for i := 0; i < toList.Len(); i++ {
 		item := toList.Get(i)
-		if _, err := item.Marshal(buf); err != nil {
+		if _, err := item.MarshalWriter(buf); err != nil {
 			return nil, fmt.Errorf("marshal struct at index %d: %w", i, err)
 		}
 	}
@@ -1054,6 +1059,6 @@ func createListReplaceStructs(fieldNum uint16, toList *segment.Structs) (*msgs.O
 }
 
 // IsEmpty returns true if the patch has no operations.
-func IsEmpty(p msgs.Patch) bool {
-	return p.OpsLen() == 0
+func IsEmpty(ctx context.Context, p msgs.Patch) bool {
+	return p.OpsLen(ctx) == 0
 }

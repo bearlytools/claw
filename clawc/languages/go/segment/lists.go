@@ -9,6 +9,7 @@ import (
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
+	"github.com/gostdlib/base/context"
 )
 
 // Bools represents a list of boolean values with external buffer storage.
@@ -986,6 +987,7 @@ func (b *Bytes) SyncToSegment() error {
 
 // Structs represents a list of structs with external storage.
 type Structs struct {
+	ctx      context.Context
 	parent   *Struct
 	fieldNum uint16
 	mapping  *mapping.Map
@@ -995,8 +997,9 @@ type Structs struct {
 
 // NewStructs creates a new Structs list attached to a struct field.
 // If the field already exists in the parent segment, it parses the items from the data.
-func NewStructs(parent *Struct, fieldNum uint16, m *mapping.Map) *Structs {
+func NewStructs(ctx context.Context, parent *Struct, fieldNum uint16, m *mapping.Map) *Structs {
 	s := &Structs{
+		ctx:      ctx,
 		parent:   parent,
 		fieldNum: fieldNum,
 		mapping:  m,
@@ -1085,7 +1088,7 @@ func (s *Structs) Get(index int) *Struct {
 
 // NewItem creates a new struct item with the list's mapping.
 func (s *Structs) NewItem() *Struct {
-	return New(s.mapping)
+	return New(s.ctx, s.mapping)
 }
 
 // Set sets the struct at index.

@@ -264,7 +264,7 @@ func TestTCPTransportWithTLS(t *testing.T) {
 	// Generate self-signed certificate for testing.
 	tlsConfig, err := generateTestTLSConfig()
 	if err != nil {
-		t.Fatalf("[TestTCPTransportWithTLS]: failed to generate TLS config: %v", err)
+		t.Fatalf("TestTCPTransportWithTLS: failed to generate TLS config: %v", err)
 	}
 
 	// Setup RPC server.
@@ -278,7 +278,7 @@ func TestTCPTransportWithTLS(t *testing.T) {
 	// Create TLS listener.
 	listener, err := Listen(ctx, "127.0.0.1:0", WithTLSConfig(tlsConfig))
 	if err != nil {
-		t.Fatalf("[TestTCPTransportWithTLS]: failed to listen: %v", err)
+		t.Fatalf("TestTCPTransportWithTLS: failed to listen: %v", err)
 	}
 	defer listener.Close()
 
@@ -301,7 +301,7 @@ func TestTCPTransportWithTLS(t *testing.T) {
 	// Connect via TLS TCP transport.
 	transport, err := Dial(ctx, listener.Addr().String(), WithTLSConfig(clientTLSConfig))
 	if err != nil {
-		t.Fatalf("[TestTCPTransportWithTLS]: failed to dial: %v", err)
+		t.Fatalf("TestTCPTransportWithTLS: failed to dial: %v", err)
 	}
 	defer transport.Close()
 
@@ -312,19 +312,19 @@ func TestTCPTransportWithTLS(t *testing.T) {
 	// Create sync client.
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestTCPTransportWithTLS]: failed to create sync client: %v", err)
+		t.Fatalf("TestTCPTransportWithTLS: failed to create sync client: %v", err)
 	}
 	defer syncClient.Close()
 
 	// Send request.
 	resp, err := syncClient.Call(ctx, []byte("hello"))
 	if err != nil {
-		t.Fatalf("[TestTCPTransportWithTLS]: call failed: %v", err)
+		t.Fatalf("TestTCPTransportWithTLS: call failed: %v", err)
 	}
 
 	want := []byte("secure:hello")
 	if diff := pretty.Compare(want, resp); diff != "" {
-		t.Errorf("[TestTCPTransportWithTLS]: response mismatch (-want +got):\n%s", diff)
+		t.Errorf("TestTCPTransportWithTLS: response mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -340,7 +340,7 @@ func TestTCPTransportConnectionClose(t *testing.T) {
 
 	listener, err := Listen(ctx, "127.0.0.1:0")
 	if err != nil {
-		t.Fatalf("[TestTCPTransportConnectionClose]: failed to listen: %v", err)
+		t.Fatalf("TestTCPTransportConnectionClose: failed to listen: %v", err)
 	}
 	defer listener.Close()
 
@@ -356,7 +356,7 @@ func TestTCPTransportConnectionClose(t *testing.T) {
 
 	transport, err := Dial(ctx, listener.Addr().String())
 	if err != nil {
-		t.Fatalf("[TestTCPTransportConnectionClose]: failed to dial: %v", err)
+		t.Fatalf("TestTCPTransportConnectionClose: failed to dial: %v", err)
 	}
 
 	conn := client.New(ctx, transport)
@@ -364,7 +364,7 @@ func TestTCPTransportConnectionClose(t *testing.T) {
 	// Create a session.
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestTCPTransportConnectionClose]: failed to create sync client: %v", err)
+		t.Fatalf("TestTCPTransportConnectionClose: failed to create sync client: %v", err)
 	}
 
 	// Close the connection.
@@ -374,7 +374,7 @@ func TestTCPTransportConnectionClose(t *testing.T) {
 	// Verify session operations fail.
 	_, err = syncClient.Call(ctx, []byte("test"))
 	if err == nil {
-		t.Errorf("[TestTCPTransportConnectionClose]: expected error after connection close, got nil")
+		t.Errorf("TestTCPTransportConnectionClose: expected error after connection close, got nil")
 	}
 
 	// Verify Err() returns the fatal error.
@@ -408,9 +408,9 @@ func TestTCPTransportDialErrors(t *testing.T) {
 			_, err := Dial(ctx, test.addr)
 			switch {
 			case err == nil && test.wantErr:
-				t.Errorf("[TestTCPTransportDialErrors(%s)]: got err == nil, want err != nil", test.name)
+				t.Errorf("TestTCPTransportDialErrors(%s): got err == nil, want err != nil", test.name)
 			case err != nil && !test.wantErr:
-				t.Errorf("[TestTCPTransportDialErrors(%s)]: got err == %v, want err == nil", test.name, err)
+				t.Errorf("TestTCPTransportDialErrors(%s): got err == %v, want err == nil", test.name, err)
 			}
 		})
 	}
@@ -430,7 +430,7 @@ func TestTCPTransportBufferedIO(t *testing.T) {
 
 	listener, err := Listen(ctx, "127.0.0.1:0")
 	if err != nil {
-		t.Fatalf("[TestTCPTransportBufferedIO]: failed to listen: %v", err)
+		t.Fatalf("TestTCPTransportBufferedIO: failed to listen: %v", err)
 	}
 	defer listener.Close()
 
@@ -446,7 +446,7 @@ func TestTCPTransportBufferedIO(t *testing.T) {
 
 	transport, err := Dial(ctx, listener.Addr().String())
 	if err != nil {
-		t.Fatalf("[TestTCPTransportBufferedIO]: failed to dial: %v", err)
+		t.Fatalf("TestTCPTransportBufferedIO: failed to dial: %v", err)
 	}
 	defer transport.Close()
 
@@ -455,7 +455,7 @@ func TestTCPTransportBufferedIO(t *testing.T) {
 
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestTCPTransportBufferedIO]: failed to create sync client: %v", err)
+		t.Fatalf("TestTCPTransportBufferedIO: failed to create sync client: %v", err)
 	}
 	defer syncClient.Close()
 
@@ -464,10 +464,10 @@ func TestTCPTransportBufferedIO(t *testing.T) {
 		req := []byte("small")
 		resp, err := syncClient.Call(ctx, req)
 		if err != nil {
-			t.Fatalf("[TestTCPTransportBufferedIO]: call %d failed: %v", i, err)
+			t.Fatalf("TestTCPTransportBufferedIO: call %d failed: %v", i, err)
 		}
 		if diff := pretty.Compare(req, resp); diff != "" {
-			t.Errorf("[TestTCPTransportBufferedIO]: call %d: response mismatch (-want +got):\n%s", i, diff)
+			t.Errorf("TestTCPTransportBufferedIO: call %d: response mismatch (-want +got):\n%s", i, diff)
 		}
 	}
 }
@@ -483,7 +483,7 @@ func TestTCPServerListenAndServe(t *testing.T) {
 		},
 	})
 	if err != nil {
-		t.Fatalf("[TestTCPServerListenAndServe]: failed to register handler: %v", err)
+		t.Fatalf("TestTCPServerListenAndServe: failed to register handler: %v", err)
 	}
 
 	// Create TCP server using new pattern.
@@ -505,13 +505,13 @@ func TestTCPServerListenAndServe(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	if addr == nil {
-		t.Fatalf("[TestTCPServerListenAndServe]: server did not start listening")
+		t.Fatalf("TestTCPServerListenAndServe: server did not start listening")
 	}
 
 	// Connect via TCP transport.
 	transport, err := Dial(ctx, addr.String())
 	if err != nil {
-		t.Fatalf("[TestTCPServerListenAndServe]: failed to dial: %v", err)
+		t.Fatalf("TestTCPServerListenAndServe: failed to dial: %v", err)
 	}
 	defer transport.Close()
 
@@ -522,34 +522,34 @@ func TestTCPServerListenAndServe(t *testing.T) {
 	// Create sync client.
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestTCPServerListenAndServe]: failed to create sync client: %v", err)
+		t.Fatalf("TestTCPServerListenAndServe: failed to create sync client: %v", err)
 	}
 	defer syncClient.Close()
 
 	// Send request.
 	resp, err := syncClient.Call(ctx, []byte("hello"))
 	if err != nil {
-		t.Fatalf("[TestTCPServerListenAndServe]: call failed: %v", err)
+		t.Fatalf("TestTCPServerListenAndServe: call failed: %v", err)
 	}
 
 	want := []byte("server:hello")
 	if diff := pretty.Compare(want, resp); diff != "" {
-		t.Errorf("[TestTCPServerListenAndServe]: response mismatch (-want +got):\n%s", diff)
+		t.Errorf("TestTCPServerListenAndServe: response mismatch (-want +got):\n%s", diff)
 	}
 
 	// Shutdown the server.
 	if err := tcpSrv.Close(); err != nil {
-		t.Errorf("[TestTCPServerListenAndServe]: close failed: %v", err)
+		t.Errorf("TestTCPServerListenAndServe: close failed: %v", err)
 	}
 
 	// Wait for server to stop.
 	select {
 	case err := <-serverErr:
 		if err != nil {
-			t.Logf("[TestTCPServerListenAndServe]: server returned: %v", err)
+			t.Logf("TestTCPServerListenAndServe: server returned: %v", err)
 		}
 	case <-time.After(5 * time.Second):
-		t.Errorf("[TestTCPServerListenAndServe]: server did not stop")
+		t.Errorf("TestTCPServerListenAndServe: server did not stop")
 	}
 }
 
@@ -587,7 +587,7 @@ func TestTCPServerShutdown(t *testing.T) {
 	defer cancel()
 
 	if err := tcpSrv.Shutdown(shutdownCtx); err != nil {
-		t.Errorf("[TestTCPServerShutdown]: shutdown failed: %v", err)
+		t.Errorf("TestTCPServerShutdown: shutdown failed: %v", err)
 	}
 
 	// Wait for server to stop.
@@ -595,7 +595,7 @@ func TestTCPServerShutdown(t *testing.T) {
 	case <-serverDone:
 		// Success
 	case <-time.After(5 * time.Second):
-		t.Errorf("[TestTCPServerShutdown]: server did not stop after shutdown")
+		t.Errorf("TestTCPServerShutdown: server did not stop after shutdown")
 	}
 }
 

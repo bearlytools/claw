@@ -150,7 +150,7 @@ func TestWalkVehicle(t *testing.T) {
 	for _, test := range tests {
 		v := test.setup()
 		var got []tokenCompare
-		for tok := range v.Walk() {
+		for tok := range v.Walk(ctx) {
 			got = append(got, toTokenCompare(tok))
 		}
 		if diff := pretty.Compare(test.want, got); diff != "" {
@@ -200,7 +200,7 @@ func TestWalkCar(t *testing.T) {
 	for _, test := range tests {
 		c := test.setup()
 		var got []tokenCompare
-		for tok := range c.Walk() {
+		for tok := range c.Walk(ctx) {
 			got = append(got, toTokenCompare(tok))
 		}
 		if diff := pretty.Compare(test.want, got); diff != "" {

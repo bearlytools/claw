@@ -271,7 +271,7 @@ func TestUnixTransportConnectionClose(t *testing.T) {
 
 	listener, err := Listen(ctx, socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixTransportConnectionClose]: failed to listen: %v", err)
+		t.Fatalf("TestUnixTransportConnectionClose: failed to listen: %v", err)
 	}
 	defer listener.Close()
 
@@ -287,7 +287,7 @@ func TestUnixTransportConnectionClose(t *testing.T) {
 
 	transport, err := Dial(ctx, socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixTransportConnectionClose]: failed to dial: %v", err)
+		t.Fatalf("TestUnixTransportConnectionClose: failed to dial: %v", err)
 	}
 
 	conn := client.New(ctx, transport)
@@ -295,7 +295,7 @@ func TestUnixTransportConnectionClose(t *testing.T) {
 	// Create a session.
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestUnixTransportConnectionClose]: failed to create sync client: %v", err)
+		t.Fatalf("TestUnixTransportConnectionClose: failed to create sync client: %v", err)
 	}
 
 	// Close the connection.
@@ -305,7 +305,7 @@ func TestUnixTransportConnectionClose(t *testing.T) {
 	// Verify session operations fail.
 	_, err = syncClient.Call(ctx, []byte("test"))
 	if err == nil {
-		t.Errorf("[TestUnixTransportConnectionClose]: expected error after connection close, got nil")
+		t.Errorf("TestUnixTransportConnectionClose: expected error after connection close, got nil")
 	}
 
 	// Verify Err() returns the fatal error.
@@ -334,9 +334,9 @@ func TestUnixTransportDialErrors(t *testing.T) {
 			_, err := Dial(ctx, test.path)
 			switch {
 			case err == nil && test.wantErr:
-				t.Errorf("[TestUnixTransportDialErrors(%s)]: got err == nil, want err != nil", test.name)
+				t.Errorf("TestUnixTransportDialErrors(%s): got err == nil, want err != nil", test.name)
 			case err != nil && !test.wantErr:
-				t.Errorf("[TestUnixTransportDialErrors(%s)]: got err == %v, want err == nil", test.name, err)
+				t.Errorf("TestUnixTransportDialErrors(%s): got err == %v, want err == nil", test.name, err)
 			}
 		})
 	}
@@ -350,20 +350,20 @@ func TestUnixTransportSocketPermissions(t *testing.T) {
 	// Create listener with specific permissions.
 	listener, err := Listen(ctx, socketPath, WithSocketMode(0666))
 	if err != nil {
-		t.Fatalf("[TestUnixTransportSocketPermissions]: failed to listen: %v", err)
+		t.Fatalf("TestUnixTransportSocketPermissions: failed to listen: %v", err)
 	}
 	defer listener.Close()
 
 	// Verify socket file permissions.
 	info, err := os.Stat(socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixTransportSocketPermissions]: failed to stat socket: %v", err)
+		t.Fatalf("TestUnixTransportSocketPermissions: failed to stat socket: %v", err)
 	}
 
 	// Check that the socket mode is set (note: socket bit will also be set).
 	mode := info.Mode().Perm()
 	if mode != 0666 {
-		t.Errorf("[TestUnixTransportSocketPermissions]: got mode %o, want %o", mode, 0666)
+		t.Errorf("TestUnixTransportSocketPermissions: got mode %o, want %o", mode, 0666)
 	}
 }
 
@@ -375,7 +375,7 @@ func TestUnixTransportUnlinkExisting(t *testing.T) {
 	// Create first listener.
 	listener1, err := Listen(ctx, socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixTransportUnlinkExisting]: failed to create first listener: %v", err)
+		t.Fatalf("TestUnixTransportUnlinkExisting: failed to create first listener: %v", err)
 	}
 	listener1.Close()
 
@@ -383,14 +383,14 @@ func TestUnixTransportUnlinkExisting(t *testing.T) {
 	// Actually, our Close() removes the file, so let's create a dummy file instead.
 	f, err := os.Create(socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixTransportUnlinkExisting]: failed to create dummy file: %v", err)
+		t.Fatalf("TestUnixTransportUnlinkExisting: failed to create dummy file: %v", err)
 	}
 	f.Close()
 
 	// Try to create second listener with unlink disabled - should fail.
 	_, err = Listen(ctx, socketPath, WithUnlinkExisting(false))
 	if err == nil {
-		t.Errorf("[TestUnixTransportUnlinkExisting]: expected error when socket exists and unlink disabled")
+		t.Errorf("TestUnixTransportUnlinkExisting: expected error when socket exists and unlink disabled")
 	}
 
 	// Create second listener with unlink enabled (default) - should succeed.
@@ -399,7 +399,7 @@ func TestUnixTransportUnlinkExisting(t *testing.T) {
 
 	listener2, err := Listen(ctx, socketPath, WithUnlinkExisting(true))
 	if err != nil {
-		t.Fatalf("[TestUnixTransportUnlinkExisting]: failed to create second listener: %v", err)
+		t.Fatalf("TestUnixTransportUnlinkExisting: failed to create second listener: %v", err)
 	}
 	defer listener2.Close()
 }
@@ -419,7 +419,7 @@ func TestUnixTransportBufferedIO(t *testing.T) {
 
 	listener, err := Listen(ctx, socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixTransportBufferedIO]: failed to listen: %v", err)
+		t.Fatalf("TestUnixTransportBufferedIO: failed to listen: %v", err)
 	}
 	defer listener.Close()
 
@@ -435,7 +435,7 @@ func TestUnixTransportBufferedIO(t *testing.T) {
 
 	transport, err := Dial(ctx, socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixTransportBufferedIO]: failed to dial: %v", err)
+		t.Fatalf("TestUnixTransportBufferedIO: failed to dial: %v", err)
 	}
 	defer transport.Close()
 
@@ -444,7 +444,7 @@ func TestUnixTransportBufferedIO(t *testing.T) {
 
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestUnixTransportBufferedIO]: failed to create sync client: %v", err)
+		t.Fatalf("TestUnixTransportBufferedIO: failed to create sync client: %v", err)
 	}
 	defer syncClient.Close()
 
@@ -453,10 +453,10 @@ func TestUnixTransportBufferedIO(t *testing.T) {
 		req := []byte("small")
 		resp, err := syncClient.Call(ctx, req)
 		if err != nil {
-			t.Fatalf("[TestUnixTransportBufferedIO]: call %d failed: %v", i, err)
+			t.Fatalf("TestUnixTransportBufferedIO: call %d failed: %v", i, err)
 		}
 		if diff := pretty.Compare(req, resp); diff != "" {
-			t.Errorf("[TestUnixTransportBufferedIO]: call %d: response mismatch (-want +got):\n%s", i, diff)
+			t.Errorf("TestUnixTransportBufferedIO: call %d: response mismatch (-want +got):\n%s", i, diff)
 		}
 	}
 }
@@ -496,7 +496,7 @@ func TestUnixServerListenAndServe(t *testing.T) {
 		},
 	})
 	if err != nil {
-		t.Fatalf("[TestUnixServerListenAndServe]: failed to register handler: %v", err)
+		t.Fatalf("TestUnixServerListenAndServe: failed to register handler: %v", err)
 	}
 
 	// Create Unix server using new pattern.
@@ -516,13 +516,13 @@ func TestUnixServerListenAndServe(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	if unixSrv.Addr() == nil {
-		t.Fatalf("[TestUnixServerListenAndServe]: server did not start listening")
+		t.Fatalf("TestUnixServerListenAndServe: server did not start listening")
 	}
 
 	// Connect via Unix socket transport.
 	transport, err := Dial(ctx, socketPath)
 	if err != nil {
-		t.Fatalf("[TestUnixServerListenAndServe]: failed to dial: %v", err)
+		t.Fatalf("TestUnixServerListenAndServe: failed to dial: %v", err)
 	}
 	defer transport.Close()
 
@@ -533,34 +533,34 @@ func TestUnixServerListenAndServe(t *testing.T) {
 	// Create sync client.
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestUnixServerListenAndServe]: failed to create sync client: %v", err)
+		t.Fatalf("TestUnixServerListenAndServe: failed to create sync client: %v", err)
 	}
 	defer syncClient.Close()
 
 	// Send request.
 	resp, err := syncClient.Call(ctx, []byte("hello"))
 	if err != nil {
-		t.Fatalf("[TestUnixServerListenAndServe]: call failed: %v", err)
+		t.Fatalf("TestUnixServerListenAndServe: call failed: %v", err)
 	}
 
 	want := []byte("server:hello")
 	if diff := pretty.Compare(want, resp); diff != "" {
-		t.Errorf("[TestUnixServerListenAndServe]: response mismatch (-want +got):\n%s", diff)
+		t.Errorf("TestUnixServerListenAndServe: response mismatch (-want +got):\n%s", diff)
 	}
 
 	// Shutdown the server.
 	if err := unixSrv.Close(); err != nil {
-		t.Errorf("[TestUnixServerListenAndServe]: close failed: %v", err)
+		t.Errorf("TestUnixServerListenAndServe: close failed: %v", err)
 	}
 
 	// Wait for server to stop.
 	select {
 	case err := <-serverErr:
 		if err != nil {
-			t.Logf("[TestUnixServerListenAndServe]: server returned: %v", err)
+			t.Logf("TestUnixServerListenAndServe: server returned: %v", err)
 		}
 	case <-time.After(5 * time.Second):
-		t.Errorf("[TestUnixServerListenAndServe]: server did not stop")
+		t.Errorf("TestUnixServerListenAndServe: server did not stop")
 	}
 }
 
@@ -600,7 +600,7 @@ func TestUnixServerShutdown(t *testing.T) {
 	defer cancel()
 
 	if err := unixSrv.Shutdown(shutdownCtx); err != nil {
-		t.Errorf("[TestUnixServerShutdown]: shutdown failed: %v", err)
+		t.Errorf("TestUnixServerShutdown: shutdown failed: %v", err)
 	}
 
 	// Wait for server to stop.
@@ -608,6 +608,6 @@ func TestUnixServerShutdown(t *testing.T) {
 	case <-serverDone:
 		// Success
 	case <-time.After(5 * time.Second):
-		t.Errorf("[TestUnixServerShutdown]: server did not stop after shutdown")
+		t.Errorf("TestUnixServerShutdown: server did not stop after shutdown")
 	}
 }

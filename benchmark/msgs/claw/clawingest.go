@@ -256,7 +256,7 @@ func (x *CSIVolumeSource) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenS
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting VolumeAttributes[]: %w", err)
                 }
-                x.VolumeAttributesAppend(item)
+                x.VolumeAttributesAppend(ctx, item)
             }
         case "NodePublishSecretRef":
             if tok.IsNil {
@@ -580,7 +580,7 @@ func (x *ConfigMapProjection) XXXIngestFrom(ctx context.Context, ts *clawiter.To
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Items[]: %w", err)
                 }
-                x.ItemsAppend(item)
+                x.ItemsAppend(ctx, item)
             }
         case "Optional":
             x.SetOptional(tok.Bool())
@@ -652,7 +652,7 @@ func (x *ConfigMapVolumeSource) XXXIngestFrom(ctx context.Context, ts *clawiter.
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Items[]: %w", err)
                 }
-                x.ItemsAppend(item)
+                x.ItemsAppend(ctx, item)
             }
         case "DefaultMode":
             x.SetDefaultMode(tok.Int32())
@@ -768,7 +768,7 @@ func (x *Container) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Ports[]: %w", err)
                 }
-                x.PortsAppend(item)
+                x.PortsAppend(ctx, item)
             }
         case "EnvFrom":
             if tok.IsNil {
@@ -791,7 +791,7 @@ func (x *Container) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting EnvFrom[]: %w", err)
                 }
-                x.EnvFromAppend(item)
+                x.EnvFromAppend(ctx, item)
             }
         case "Env":
             if tok.IsNil {
@@ -814,7 +814,7 @@ func (x *Container) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Env[]: %w", err)
                 }
-                x.EnvAppend(item)
+                x.EnvAppend(ctx, item)
             }
         case "Resources":
             if tok.IsNil {
@@ -846,7 +846,7 @@ func (x *Container) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting ResizePolicy[]: %w", err)
                 }
-                x.ResizePolicyAppend(item)
+                x.ResizePolicyAppend(ctx, item)
             }
         case "RestartPolicy":
             if len(tok.Bytes) > 0 {
@@ -875,7 +875,7 @@ func (x *Container) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting VolumeMounts[]: %w", err)
                 }
-                x.VolumeMountsAppend(item)
+                x.VolumeMountsAppend(ctx, item)
             }
         case "VolumeDevices":
             if tok.IsNil {
@@ -898,7 +898,7 @@ func (x *Container) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting VolumeDevices[]: %w", err)
                 }
-                x.VolumeDevicesAppend(item)
+                x.VolumeDevicesAppend(ctx, item)
             }
         case "LivenessProbe":
             if tok.IsNil {
@@ -1423,7 +1423,7 @@ func (x *ContainerStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenS
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting AllocatedResources[]: %w", err)
                 }
-                x.AllocatedResourcesAppend(item)
+                x.AllocatedResourcesAppend(ctx, item)
             }
         case "Resources":
             if tok.IsNil {
@@ -1455,7 +1455,7 @@ func (x *ContainerStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenS
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting VolumeMounts[]: %w", err)
                 }
-                x.VolumeMountsAppend(item)
+                x.VolumeMountsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -1523,7 +1523,7 @@ func (x *DownwardAPIProjection) XXXIngestFrom(ctx context.Context, ts *clawiter.
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Items[]: %w", err)
                 }
-                x.ItemsAppend(item)
+                x.ItemsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -1658,7 +1658,7 @@ func (x *DownwardAPIVolumeSource) XXXIngestFrom(ctx context.Context, ts *clawite
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Items[]: %w", err)
                 }
-                x.ItemsAppend(item)
+                x.ItemsAppend(ctx, item)
             }
         case "DefaultMode":
             x.SetDefaultMode(tok.Int32())
@@ -2029,7 +2029,7 @@ func (x *EphemeralContainer) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Ports[]: %w", err)
                 }
-                x.PortsAppend(item)
+                x.PortsAppend(ctx, item)
             }
         case "EnvFrom":
             if tok.IsNil {
@@ -2052,7 +2052,7 @@ func (x *EphemeralContainer) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting EnvFrom[]: %w", err)
                 }
-                x.EnvFromAppend(item)
+                x.EnvFromAppend(ctx, item)
             }
         case "Env":
             if tok.IsNil {
@@ -2075,7 +2075,7 @@ func (x *EphemeralContainer) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Env[]: %w", err)
                 }
-                x.EnvAppend(item)
+                x.EnvAppend(ctx, item)
             }
         case "Resources":
             if tok.IsNil {
@@ -2107,7 +2107,7 @@ func (x *EphemeralContainer) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting VolumeMounts[]: %w", err)
                 }
-                x.VolumeMountsAppend(item)
+                x.VolumeMountsAppend(ctx, item)
             }
         case "VolumeDevices":
             if tok.IsNil {
@@ -2130,7 +2130,7 @@ func (x *EphemeralContainer) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting VolumeDevices[]: %w", err)
                 }
-                x.VolumeDevicesAppend(item)
+                x.VolumeDevicesAppend(ctx, item)
             }
         case "LivenessProbe":
             if tok.IsNil {
@@ -2504,7 +2504,7 @@ func (x *HTTPGetAction) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStr
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting HttpHeaders[]: %w", err)
                 }
-                x.HttpHeadersAppend(item)
+                x.HttpHeadersAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -2938,7 +2938,7 @@ func (x *LabelSelector) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStr
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting MatchLabels[]: %w", err)
                 }
-                x.MatchLabelsAppend(item)
+                x.MatchLabelsAppend(ctx, item)
             }
         case "MatchExpressions":
             if tok.IsNil {
@@ -2961,7 +2961,7 @@ func (x *LabelSelector) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStr
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting MatchExpressions[]: %w", err)
                 }
-                x.MatchExpressionsAppend(item)
+                x.MatchExpressionsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -3418,7 +3418,7 @@ func (x *NodeAffinity) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStre
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting PreferredDuringSchedulingIgnoredDuringExecution[]: %w", err)
                 }
-                x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(item)
+                x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -3486,7 +3486,7 @@ func (x *NodeSelector) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStre
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting NodeSelectorTerms[]: %w", err)
                 }
-                x.NodeSelectorTermsAppend(item)
+                x.NodeSelectorTermsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -3626,7 +3626,7 @@ func (x *NodeSelectorTerm) XXXIngestFrom(ctx context.Context, ts *clawiter.Token
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting MatchExpressions[]: %w", err)
                 }
-                x.MatchExpressionsAppend(item)
+                x.MatchExpressionsAppend(ctx, item)
             }
         case "MatchFields":
             if tok.IsNil {
@@ -3649,7 +3649,7 @@ func (x *NodeSelectorTerm) XXXIngestFrom(ctx context.Context, ts *clawiter.Token
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting MatchFields[]: %w", err)
                 }
-                x.MatchFieldsAppend(item)
+                x.MatchFieldsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -3800,7 +3800,7 @@ func (x *ObjectMeta) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Labels[]: %w", err)
                 }
-                x.LabelsAppend(item)
+                x.LabelsAppend(ctx, item)
             }
         case "Annotations":
             if tok.IsNil {
@@ -3823,7 +3823,7 @@ func (x *ObjectMeta) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Annotations[]: %w", err)
                 }
-                x.AnnotationsAppend(item)
+                x.AnnotationsAppend(ctx, item)
             }
         case "OwnerReferences":
             if tok.IsNil {
@@ -3846,7 +3846,7 @@ func (x *ObjectMeta) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting OwnerReferences[]: %w", err)
                 }
-                x.OwnerReferencesAppend(item)
+                x.OwnerReferencesAppend(ctx, item)
             }
         case "Finalizers":
             if tok.IsNil {
@@ -3888,7 +3888,7 @@ func (x *ObjectMeta) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting ManagedFields[]: %w", err)
                 }
-                x.ManagedFieldsAppend(item)
+                x.ManagedFieldsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -4339,7 +4339,7 @@ func (x *PodAffinity) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStrea
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting RequiredDuringSchedulingIgnoredDuringExecution[]: %w", err)
                 }
-                x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(item)
+                x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx, item)
             }
         case "PreferredDuringSchedulingIgnoredDuringExecution":
             if tok.IsNil {
@@ -4362,7 +4362,7 @@ func (x *PodAffinity) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStrea
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting PreferredDuringSchedulingIgnoredDuringExecution[]: %w", err)
                 }
-                x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(item)
+                x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -4552,7 +4552,7 @@ func (x *PodAntiAffinity) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenS
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting RequiredDuringSchedulingIgnoredDuringExecution[]: %w", err)
                 }
-                x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(item)
+                x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx, item)
             }
         case "PreferredDuringSchedulingIgnoredDuringExecution":
             if tok.IsNil {
@@ -4575,7 +4575,7 @@ func (x *PodAntiAffinity) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenS
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting PreferredDuringSchedulingIgnoredDuringExecution[]: %w", err)
                 }
-                x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(item)
+                x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -4760,7 +4760,7 @@ func (x *PodDNSConfig) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStre
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Options[]: %w", err)
                 }
-                x.OptionsAppend(item)
+                x.OptionsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -5220,7 +5220,7 @@ func (x *PodSecurityContext) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Sysctls[]: %w", err)
                 }
-                x.SysctlsAppend(item)
+                x.SysctlsAppend(ctx, item)
             }
         case "FsGroupChangePolicy":
             if len(tok.Bytes) > 0 {
@@ -5318,7 +5318,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Volumes[]: %w", err)
                 }
-                x.VolumesAppend(item)
+                x.VolumesAppend(ctx, item)
             }
         case "InitContainers":
             if tok.IsNil {
@@ -5341,7 +5341,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting InitContainers[]: %w", err)
                 }
-                x.InitContainersAppend(item)
+                x.InitContainersAppend(ctx, item)
             }
         case "Containers":
             if tok.IsNil {
@@ -5364,7 +5364,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Containers[]: %w", err)
                 }
-                x.ContainersAppend(item)
+                x.ContainersAppend(ctx, item)
             }
         case "EphemeralContainers":
             if tok.IsNil {
@@ -5387,7 +5387,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting EphemeralContainers[]: %w", err)
                 }
-                x.EphemeralContainersAppend(item)
+                x.EphemeralContainersAppend(ctx, item)
             }
         case "RestartPolicy":
             if len(tok.Bytes) > 0 {
@@ -5426,7 +5426,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting NodeSelector[]: %w", err)
                 }
-                x.NodeSelectorAppend(item)
+                x.NodeSelectorAppend(ctx, item)
             }
         case "ServiceAccountName":
             x.SetServiceAccountName(tok.String())
@@ -5472,7 +5472,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting ImagePullSecrets[]: %w", err)
                 }
-                x.ImagePullSecretsAppend(item)
+                x.ImagePullSecretsAppend(ctx, item)
             }
         case "Hostname":
             x.SetHostname(tok.String())
@@ -5510,7 +5510,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Tolerations[]: %w", err)
                 }
-                x.TolerationsAppend(item)
+                x.TolerationsAppend(ctx, item)
             }
         case "HostAliases":
             if tok.IsNil {
@@ -5533,7 +5533,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting HostAliases[]: %w", err)
                 }
-                x.HostAliasesAppend(item)
+                x.HostAliasesAppend(ctx, item)
             }
         case "PriorityClassName":
             x.SetPriorityClassName(tok.String())
@@ -5569,7 +5569,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting ReadinessGates[]: %w", err)
                 }
-                x.ReadinessGatesAppend(item)
+                x.ReadinessGatesAppend(ctx, item)
             }
         case "RuntimeClassName":
             x.SetRuntimeClassName(tok.String())
@@ -5602,7 +5602,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Overhead[]: %w", err)
                 }
-                x.OverheadAppend(item)
+                x.OverheadAppend(ctx, item)
             }
         case "TopologySpreadConstraints":
             if tok.IsNil {
@@ -5625,7 +5625,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting TopologySpreadConstraints[]: %w", err)
                 }
-                x.TopologySpreadConstraintsAppend(item)
+                x.TopologySpreadConstraintsAppend(ctx, item)
             }
         case "SetHostnameAsFqdn":
             x.SetSetHostnameAsFqdn(tok.Bool())
@@ -5661,7 +5661,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting SchedulingGates[]: %w", err)
                 }
-                x.SchedulingGatesAppend(item)
+                x.SchedulingGatesAppend(ctx, item)
             }
         case "ResourceClaims":
             if tok.IsNil {
@@ -5684,7 +5684,7 @@ func (x *PodSpec) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting ResourceClaims[]: %w", err)
                 }
-                x.ResourceClaimsAppend(item)
+                x.ResourceClaimsAppend(ctx, item)
             }
         case "Resources":
             if tok.IsNil {
@@ -5767,7 +5767,7 @@ func (x *PodStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Conditions[]: %w", err)
                 }
-                x.ConditionsAppend(item)
+                x.ConditionsAppend(ctx, item)
             }
         case "Message":
             x.SetMessage(tok.String())
@@ -5798,7 +5798,7 @@ func (x *PodStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting HostIps[]: %w", err)
                 }
-                x.HostIpsAppend(item)
+                x.HostIpsAppend(ctx, item)
             }
         case "PodIp":
             x.SetPodIp(tok.String())
@@ -5823,7 +5823,7 @@ func (x *PodStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting PodIps[]: %w", err)
                 }
-                x.PodIpsAppend(item)
+                x.PodIpsAppend(ctx, item)
             }
         case "StartTime":
             if tok.IsNil {
@@ -5855,7 +5855,7 @@ func (x *PodStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting InitContainerStatuses[]: %w", err)
                 }
-                x.InitContainerStatusesAppend(item)
+                x.InitContainerStatusesAppend(ctx, item)
             }
         case "ContainerStatuses":
             if tok.IsNil {
@@ -5878,7 +5878,7 @@ func (x *PodStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting ContainerStatuses[]: %w", err)
                 }
-                x.ContainerStatusesAppend(item)
+                x.ContainerStatusesAppend(ctx, item)
             }
         case "QosClass":
             if len(tok.Bytes) > 0 {
@@ -5907,7 +5907,7 @@ func (x *PodStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting EphemeralContainerStatuses[]: %w", err)
                 }
-                x.EphemeralContainerStatusesAppend(item)
+                x.EphemeralContainerStatusesAppend(ctx, item)
             }
         case "Resize":
             if len(tok.Bytes) > 0 {
@@ -5936,7 +5936,7 @@ func (x *PodStatus) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream,
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting ResourceClaimStatuses[]: %w", err)
                 }
-                x.ResourceClaimStatusesAppend(item)
+                x.ResourceClaimStatusesAppend(ctx, item)
             }
         case "ObservedGeneration":
             x.SetObservedGeneration(tok.Int64())
@@ -6209,7 +6209,7 @@ func (x *ProjectedVolumeSource) XXXIngestFrom(ctx context.Context, ts *clawiter.
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Sources[]: %w", err)
                 }
-                x.SourcesAppend(item)
+                x.SourcesAppend(ctx, item)
             }
         case "DefaultMode":
             x.SetDefaultMode(tok.Int32())
@@ -6379,7 +6379,7 @@ func (x *ResourceRequirements) XXXIngestFrom(ctx context.Context, ts *clawiter.T
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Limits[]: %w", err)
                 }
-                x.LimitsAppend(item)
+                x.LimitsAppend(ctx, item)
             }
         case "Requests":
             if tok.IsNil {
@@ -6402,7 +6402,7 @@ func (x *ResourceRequirements) XXXIngestFrom(ctx context.Context, ts *clawiter.T
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Requests[]: %w", err)
                 }
-                x.RequestsAppend(item)
+                x.RequestsAppend(ctx, item)
             }
         case "Claims":
             if tok.IsNil {
@@ -6425,7 +6425,7 @@ func (x *ResourceRequirements) XXXIngestFrom(ctx context.Context, ts *clawiter.T
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Claims[]: %w", err)
                 }
-                x.ClaimsAppend(item)
+                x.ClaimsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {
@@ -6701,7 +6701,7 @@ func (x *SecretProjection) XXXIngestFrom(ctx context.Context, ts *clawiter.Token
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Items[]: %w", err)
                 }
-                x.ItemsAppend(item)
+                x.ItemsAppend(ctx, item)
             }
         case "Optional":
             x.SetOptional(tok.Bool())
@@ -6773,7 +6773,7 @@ func (x *SecretVolumeSource) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Items[]: %w", err)
                 }
-                x.ItemsAppend(item)
+                x.ItemsAppend(ctx, item)
             }
         case "DefaultMode":
             x.SetDefaultMode(tok.Int32())

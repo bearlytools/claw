@@ -26,44 +26,44 @@ func TestConfigMapsRoundtrip(t *testing.T) {
 	// Marshal
 	data, err := c.Marshal()
 	if err != nil {
-		t.Fatalf("[TestConfigMapsRoundtrip]: Marshal() error: %v", err)
+		t.Fatalf("TestConfigMapsRoundtrip: Marshal() error: %v", err)
 	}
 
 	// Unmarshal into new struct
 	c2 := NewConfig(ctx)
 	if err := c2.Unmarshal(data); err != nil {
-		t.Fatalf("[TestConfigMapsRoundtrip]: Unmarshal() error: %v", err)
+		t.Fatalf("TestConfigMapsRoundtrip: Unmarshal() error: %v", err)
 	}
 
 	// Verify Labels
 	if v, ok := c2.LabelsGet("env"); !ok || v != "production" {
-		t.Errorf("[TestConfigMapsRoundtrip]: LabelsGet(env) = %q, %v, want production, true", v, ok)
+		t.Errorf("TestConfigMapsRoundtrip: LabelsGet(env) = %q, %v, want production, true", v, ok)
 	}
 	if v, ok := c2.LabelsGet("team"); !ok || v != "platform" {
-		t.Errorf("[TestConfigMapsRoundtrip]: LabelsGet(team) = %q, %v, want platform, true", v, ok)
+		t.Errorf("TestConfigMapsRoundtrip: LabelsGet(team) = %q, %v, want platform, true", v, ok)
 	}
 
 	// Verify Ports
 	if v, ok := c2.PortsGet("http"); !ok || v != 8080 {
-		t.Errorf("[TestConfigMapsRoundtrip]: PortsGet(http) = %d, %v, want 8080, true", v, ok)
+		t.Errorf("TestConfigMapsRoundtrip: PortsGet(http) = %d, %v, want 8080, true", v, ok)
 	}
 
 	// Verify Enabled
 	if v, ok := c2.EnabledGet("debug"); !ok || v != true {
-		t.Errorf("[TestConfigMapsRoundtrip]: EnabledGet(debug) = %v, %v, want true, true", v, ok)
+		t.Errorf("TestConfigMapsRoundtrip: EnabledGet(debug) = %v, %v, want true, true", v, ok)
 	}
 	if v, ok := c2.EnabledGet("logging"); !ok || v != false {
-		t.Errorf("[TestConfigMapsRoundtrip]: EnabledGet(logging) = %v, %v, want false, true", v, ok)
+		t.Errorf("TestConfigMapsRoundtrip: EnabledGet(logging) = %v, %v, want false, true", v, ok)
 	}
 
 	// Verify Counts
 	if v, ok := c2.CountsGet(1); !ok || v != 100 {
-		t.Errorf("[TestConfigMapsRoundtrip]: CountsGet(1) = %d, %v, want 100, true", v, ok)
+		t.Errorf("TestConfigMapsRoundtrip: CountsGet(1) = %d, %v, want 100, true", v, ok)
 	}
 
 	// Verify Ratios
 	if v, ok := c2.RatiosGet(3.14); !ok || v != "pi" {
-		t.Errorf("[TestConfigMapsRoundtrip]: RatiosGet(3.14) = %q, %v, want pi, true", v, ok)
+		t.Errorf("TestConfigMapsRoundtrip: RatiosGet(3.14) = %q, %v, want pi, true", v, ok)
 	}
 }
 
@@ -82,35 +82,35 @@ func TestComplexMapsRoundtrip(t *testing.T) {
 	// Marshal
 	data, err := c.Marshal()
 	if err != nil {
-		t.Fatalf("[TestComplexMapsRoundtrip]: Marshal() error: %v", err)
+		t.Fatalf("TestComplexMapsRoundtrip: Marshal() error: %v", err)
 	}
 
 	// Unmarshal into new struct
 	c2 := NewComplexMaps(ctx)
 	if err := c2.Unmarshal(data); err != nil {
-		t.Fatalf("[TestComplexMapsRoundtrip]: Unmarshal() error: %v", err)
+		t.Fatalf("TestComplexMapsRoundtrip: Unmarshal() error: %v", err)
 	}
 
 	// Verify Settings
 	if v, ok := c2.SettingsGet("config1"); !ok {
-		t.Errorf("[TestComplexMapsRoundtrip]: SettingsGet(config1) not found")
+		t.Errorf("TestComplexMapsRoundtrip: SettingsGet(config1) not found")
 	} else {
 		if v.Name() != "timeout" {
-			t.Errorf("[TestComplexMapsRoundtrip]: config1.Name() = %q, want timeout", v.Name())
+			t.Errorf("TestComplexMapsRoundtrip: config1.Name() = %q, want timeout", v.Name())
 		}
 		if v.Value() != "30s" {
-			t.Errorf("[TestComplexMapsRoundtrip]: config1.Value() = %q, want 30s", v.Value())
+			t.Errorf("TestComplexMapsRoundtrip: config1.Value() = %q, want 30s", v.Value())
 		}
 		if v.Priority() != 1 {
-			t.Errorf("[TestComplexMapsRoundtrip]: config1.Priority() = %d, want 1", v.Priority())
+			t.Errorf("TestComplexMapsRoundtrip: config1.Priority() = %d, want 1", v.Priority())
 		}
 	}
 
 	if v, ok := c2.SettingsGet("config2"); !ok {
-		t.Errorf("[TestComplexMapsRoundtrip]: SettingsGet(config2) not found")
+		t.Errorf("TestComplexMapsRoundtrip: SettingsGet(config2) not found")
 	} else {
 		if v.Name() != "retries" {
-			t.Errorf("[TestComplexMapsRoundtrip]: config2.Name() = %q, want retries", v.Name())
+			t.Errorf("TestComplexMapsRoundtrip: config2.Name() = %q, want retries", v.Name())
 		}
 	}
 }
@@ -124,17 +124,17 @@ func TestConfigToRawFromRaw(t *testing.T) {
 	c.PortsSet("port1", 1234)
 
 	// Convert to raw
-	raw := c.ToRaw()
+	raw := c.ToRaw(ctx)
 
 	// Verify raw values
 	wantLabels := map[string]string{"key1": "value1"}
 	if diff := pretty.Compare(wantLabels, raw.Labels); diff != "" {
-		t.Errorf("[TestConfigToRawFromRaw]: Labels diff:\n%s", diff)
+		t.Errorf("TestConfigToRawFromRaw: Labels diff:\n%s", diff)
 	}
 
 	wantPorts := map[string]int32{"port1": 1234}
 	if diff := pretty.Compare(wantPorts, raw.Ports); diff != "" {
-		t.Errorf("[TestConfigToRawFromRaw]: Ports diff:\n%s", diff)
+		t.Errorf("TestConfigToRawFromRaw: Ports diff:\n%s", diff)
 	}
 
 	// Create from raw
@@ -142,10 +142,10 @@ func TestConfigToRawFromRaw(t *testing.T) {
 
 	// Verify roundtrip
 	if v, ok := c2.LabelsGet("key1"); !ok || v != "value1" {
-		t.Errorf("[TestConfigToRawFromRaw]: After FromRaw, LabelsGet(key1) = %q, %v, want value1, true", v, ok)
+		t.Errorf("TestConfigToRawFromRaw: After FromRaw, LabelsGet(key1) = %q, %v, want value1, true", v, ok)
 	}
 	if v, ok := c2.PortsGet("port1"); !ok || v != 1234 {
-		t.Errorf("[TestConfigToRawFromRaw]: After FromRaw, PortsGet(port1) = %d, %v, want 1234, true", v, ok)
+		t.Errorf("TestConfigToRawFromRaw: After FromRaw, PortsGet(port1) = %d, %v, want 1234, true", v, ok)
 	}
 }
 
@@ -157,39 +157,39 @@ func TestMapOperations(t *testing.T) {
 	// Test Set and Get
 	c.LabelsSet("key1", "value1")
 	if v, ok := c.LabelsGet("key1"); !ok || v != "value1" {
-		t.Errorf("[TestMapOperations]: Get after Set failed")
+		t.Errorf("TestMapOperations: Get after Set failed")
 	}
 
 	// Test Has
 	if !c.LabelsHas("key1") {
-		t.Errorf("[TestMapOperations]: Has(key1) = false, want true")
+		t.Errorf("TestMapOperations: Has(key1) = false, want true")
 	}
 	if c.LabelsHas("nonexistent") {
-		t.Errorf("[TestMapOperations]: Has(nonexistent) = true, want false")
+		t.Errorf("TestMapOperations: Has(nonexistent) = true, want false")
 	}
 
 	// Test Len
 	c.LabelsSet("key2", "value2")
 	if c.LabelsLen() != 2 {
-		t.Errorf("[TestMapOperations]: Len() = %d, want 2", c.LabelsLen())
+		t.Errorf("TestMapOperations: Len() = %d, want 2", c.LabelsLen())
 	}
 
 	// Test Delete
 	c.LabelsDelete("key1")
 	if c.LabelsHas("key1") {
-		t.Errorf("[TestMapOperations]: Has(key1) after delete = true, want false")
+		t.Errorf("TestMapOperations: Has(key1) after delete = true, want false")
 	}
 	if c.LabelsLen() != 1 {
-		t.Errorf("[TestMapOperations]: Len() after delete = %d, want 1", c.LabelsLen())
+		t.Errorf("TestMapOperations: Len() after delete = %d, want 1", c.LabelsLen())
 	}
 
 	// Test Update existing key
 	c.LabelsSet("key2", "updated")
 	if v, ok := c.LabelsGet("key2"); !ok || v != "updated" {
-		t.Errorf("[TestMapOperations]: Get(key2) after update = %q, %v, want updated, true", v, ok)
+		t.Errorf("TestMapOperations: Get(key2) after update = %q, %v, want updated, true", v, ok)
 	}
 	if c.LabelsLen() != 1 {
-		t.Errorf("[TestMapOperations]: Len() after update = %d, want 1", c.LabelsLen())
+		t.Errorf("TestMapOperations: Len() after update = %d, want 1", c.LabelsLen())
 	}
 }
 
@@ -209,29 +209,29 @@ func TestMapIteration(t *testing.T) {
 		switch k {
 		case "alpha":
 			if v != "a" {
-				t.Errorf("[TestMapIteration]: alpha = %q, want a", v)
+				t.Errorf("TestMapIteration: alpha = %q, want a", v)
 			}
 		case "beta":
 			if v != "b" {
-				t.Errorf("[TestMapIteration]: beta = %q, want b", v)
+				t.Errorf("TestMapIteration: beta = %q, want b", v)
 			}
 		case "gamma":
 			if v != "g" {
-				t.Errorf("[TestMapIteration]: gamma = %q, want g", v)
+				t.Errorf("TestMapIteration: gamma = %q, want g", v)
 			}
 		default:
-			t.Errorf("[TestMapIteration]: unexpected key %q", k)
+			t.Errorf("TestMapIteration: unexpected key %q", k)
 		}
 	}
 	if count != 3 {
-		t.Errorf("[TestMapIteration]: iterated %d items, want 3", count)
+		t.Errorf("TestMapIteration: iterated %d items, want 3", count)
 	}
 
 	// Keys should be sorted
 	keys := m.Keys()
 	wantKeys := []string{"alpha", "beta", "gamma"}
 	if diff := pretty.Compare(wantKeys, keys); diff != "" {
-		t.Errorf("[TestMapIteration]: Keys() diff:\n%s", diff)
+		t.Errorf("TestMapIteration: Keys() diff:\n%s", diff)
 	}
 }
 
@@ -251,46 +251,46 @@ func TestWalkIngestConfig(t *testing.T) {
 	c.RatiosSet(3.14, "pi")
 
 	// Walk the struct
-	tokens := c.Walk()
+	tokens := c.Walk(ctx)
 
 	// Create new struct and ingest from tokens
 	c2 := NewConfig(ctx)
 	if err := c2.IngestWithOptions(ctx, tokens, clawiter.IngestOptions{}); err != nil {
-		t.Fatalf("[TestWalkIngestConfig]: IngestWithOptions() error: %v", err)
+		t.Fatalf("TestWalkIngestConfig: IngestWithOptions() error: %v", err)
 	}
 
 	// Verify Labels
 	if v, ok := c2.LabelsGet("env"); !ok || v != "production" {
-		t.Errorf("[TestWalkIngestConfig]: LabelsGet(env) = %q, %v, want production, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: LabelsGet(env) = %q, %v, want production, true", v, ok)
 	}
 	if v, ok := c2.LabelsGet("team"); !ok || v != "platform" {
-		t.Errorf("[TestWalkIngestConfig]: LabelsGet(team) = %q, %v, want platform, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: LabelsGet(team) = %q, %v, want platform, true", v, ok)
 	}
 
 	// Verify Ports
 	if v, ok := c2.PortsGet("http"); !ok || v != 8080 {
-		t.Errorf("[TestWalkIngestConfig]: PortsGet(http) = %d, %v, want 8080, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: PortsGet(http) = %d, %v, want 8080, true", v, ok)
 	}
 	if v, ok := c2.PortsGet("https"); !ok || v != 8443 {
-		t.Errorf("[TestWalkIngestConfig]: PortsGet(https) = %d, %v, want 8443, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: PortsGet(https) = %d, %v, want 8443, true", v, ok)
 	}
 
 	// Verify Enabled
 	if v, ok := c2.EnabledGet("debug"); !ok || v != true {
-		t.Errorf("[TestWalkIngestConfig]: EnabledGet(debug) = %v, %v, want true, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: EnabledGet(debug) = %v, %v, want true, true", v, ok)
 	}
 	if v, ok := c2.EnabledGet("logging"); !ok || v != false {
-		t.Errorf("[TestWalkIngestConfig]: EnabledGet(logging) = %v, %v, want false, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: EnabledGet(logging) = %v, %v, want false, true", v, ok)
 	}
 
 	// Verify Counts
 	if v, ok := c2.CountsGet(1); !ok || v != 100 {
-		t.Errorf("[TestWalkIngestConfig]: CountsGet(1) = %d, %v, want 100, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: CountsGet(1) = %d, %v, want 100, true", v, ok)
 	}
 
 	// Verify Ratios
 	if v, ok := c2.RatiosGet(3.14); !ok || v != "pi" {
-		t.Errorf("[TestWalkIngestConfig]: RatiosGet(3.14) = %q, %v, want pi, true", v, ok)
+		t.Errorf("TestWalkIngestConfig: RatiosGet(3.14) = %q, %v, want pi, true", v, ok)
 	}
 }
 
@@ -307,34 +307,34 @@ func TestWalkIngestComplexMaps(t *testing.T) {
 	c.SettingsSet("config2", s2)
 
 	// Walk the struct
-	tokens := c.Walk()
+	tokens := c.Walk(ctx)
 
 	// Create new struct and ingest from tokens
 	c2 := NewComplexMaps(ctx)
 	if err := c2.IngestWithOptions(ctx, tokens, clawiter.IngestOptions{}); err != nil {
-		t.Fatalf("[TestWalkIngestComplexMaps]: IngestWithOptions() error: %v", err)
+		t.Fatalf("TestWalkIngestComplexMaps: IngestWithOptions() error: %v", err)
 	}
 
 	// Verify Settings
 	if v, ok := c2.SettingsGet("config1"); !ok {
-		t.Errorf("[TestWalkIngestComplexMaps]: SettingsGet(config1) not found")
+		t.Errorf("TestWalkIngestComplexMaps: SettingsGet(config1) not found")
 	} else {
 		if v.Name() != "timeout" {
-			t.Errorf("[TestWalkIngestComplexMaps]: config1.Name() = %q, want timeout", v.Name())
+			t.Errorf("TestWalkIngestComplexMaps: config1.Name() = %q, want timeout", v.Name())
 		}
 		if v.Value() != "30s" {
-			t.Errorf("[TestWalkIngestComplexMaps]: config1.Value() = %q, want 30s", v.Value())
+			t.Errorf("TestWalkIngestComplexMaps: config1.Value() = %q, want 30s", v.Value())
 		}
 		if v.Priority() != 1 {
-			t.Errorf("[TestWalkIngestComplexMaps]: config1.Priority() = %d, want 1", v.Priority())
+			t.Errorf("TestWalkIngestComplexMaps: config1.Priority() = %d, want 1", v.Priority())
 		}
 	}
 
 	if v, ok := c2.SettingsGet("config2"); !ok {
-		t.Errorf("[TestWalkIngestComplexMaps]: SettingsGet(config2) not found")
+		t.Errorf("TestWalkIngestComplexMaps: SettingsGet(config2) not found")
 	} else {
 		if v.Name() != "retries" {
-			t.Errorf("[TestWalkIngestComplexMaps]: config2.Name() = %q, want retries", v.Name())
+			t.Errorf("TestWalkIngestComplexMaps: config2.Name() = %q, want retries", v.Name())
 		}
 	}
 }
@@ -346,20 +346,20 @@ func TestWalkIngestEmptyMaps(t *testing.T) {
 	c := NewConfig(ctx)
 
 	// Walk the struct
-	tokens := c.Walk()
+	tokens := c.Walk(ctx)
 
 	// Create new struct and ingest from tokens
 	c2 := NewConfig(ctx)
 	if err := c2.IngestWithOptions(ctx, tokens, clawiter.IngestOptions{}); err != nil {
-		t.Fatalf("[TestWalkIngestEmptyMaps]: IngestWithOptions() error: %v", err)
+		t.Fatalf("TestWalkIngestEmptyMaps: IngestWithOptions() error: %v", err)
 	}
 
 	// Verify maps are empty
 	if c2.LabelsLen() != 0 {
-		t.Errorf("[TestWalkIngestEmptyMaps]: LabelsLen() = %d, want 0", c2.LabelsLen())
+		t.Errorf("TestWalkIngestEmptyMaps: LabelsLen() = %d, want 0", c2.LabelsLen())
 	}
 	if c2.PortsLen() != 0 {
-		t.Errorf("[TestWalkIngestEmptyMaps]: PortsLen() = %d, want 0", c2.PortsLen())
+		t.Errorf("TestWalkIngestEmptyMaps: PortsLen() = %d, want 0", c2.PortsLen())
 	}
 }
 
@@ -368,71 +368,71 @@ func TestReflectionMapFieldDescr(t *testing.T) {
 	pkgDescr := PackageDescr()
 	configDescr := pkgDescr.Structs().ByName("Config")
 	if configDescr == nil {
-		t.Fatalf("[TestReflectionMapFieldDescr]: Config struct not found")
+		t.Fatalf("TestReflectionMapFieldDescr: Config struct not found")
 	}
 
 	// Test Labels field (map[string]string)
 	labelsField := configDescr.FieldDescrByName("Labels")
 	if labelsField == nil {
-		t.Fatalf("[TestReflectionMapFieldDescr]: Labels field not found")
+		t.Fatalf("TestReflectionMapFieldDescr: Labels field not found")
 	}
 	if !labelsField.IsMap() {
-		t.Errorf("[TestReflectionMapFieldDescr]: Labels.IsMap() = false, want true")
+		t.Errorf("TestReflectionMapFieldDescr: Labels.IsMap() = false, want true")
 	}
 	if labelsField.MapKeyType() != field.FTString {
-		t.Errorf("[TestReflectionMapFieldDescr]: Labels.MapKeyType() = %v, want FTString", labelsField.MapKeyType())
+		t.Errorf("TestReflectionMapFieldDescr: Labels.MapKeyType() = %v, want FTString", labelsField.MapKeyType())
 	}
 	if labelsField.MapValueType() != field.FTString {
-		t.Errorf("[TestReflectionMapFieldDescr]: Labels.MapValueType() = %v, want FTString", labelsField.MapValueType())
+		t.Errorf("TestReflectionMapFieldDescr: Labels.MapValueType() = %v, want FTString", labelsField.MapValueType())
 	}
 
 	// Test Ports field (map[string]int32)
 	portsField := configDescr.FieldDescrByName("Ports")
 	if portsField == nil {
-		t.Fatalf("[TestReflectionMapFieldDescr]: Ports field not found")
+		t.Fatalf("TestReflectionMapFieldDescr: Ports field not found")
 	}
 	if !portsField.IsMap() {
-		t.Errorf("[TestReflectionMapFieldDescr]: Ports.IsMap() = false, want true")
+		t.Errorf("TestReflectionMapFieldDescr: Ports.IsMap() = false, want true")
 	}
 	if portsField.MapKeyType() != field.FTString {
-		t.Errorf("[TestReflectionMapFieldDescr]: Ports.MapKeyType() = %v, want FTString", portsField.MapKeyType())
+		t.Errorf("TestReflectionMapFieldDescr: Ports.MapKeyType() = %v, want FTString", portsField.MapKeyType())
 	}
 	if portsField.MapValueType() != field.FTInt32 {
-		t.Errorf("[TestReflectionMapFieldDescr]: Ports.MapValueType() = %v, want FTInt32", portsField.MapValueType())
+		t.Errorf("TestReflectionMapFieldDescr: Ports.MapValueType() = %v, want FTInt32", portsField.MapValueType())
 	}
 
 	// Test Counts field (map[int32]int64)
 	countsField := configDescr.FieldDescrByName("Counts")
 	if countsField == nil {
-		t.Fatalf("[TestReflectionMapFieldDescr]: Counts field not found")
+		t.Fatalf("TestReflectionMapFieldDescr: Counts field not found")
 	}
 	if !countsField.IsMap() {
-		t.Errorf("[TestReflectionMapFieldDescr]: Counts.IsMap() = false, want true")
+		t.Errorf("TestReflectionMapFieldDescr: Counts.IsMap() = false, want true")
 	}
 	if countsField.MapKeyType() != field.FTInt32 {
-		t.Errorf("[TestReflectionMapFieldDescr]: Counts.MapKeyType() = %v, want FTInt32", countsField.MapKeyType())
+		t.Errorf("TestReflectionMapFieldDescr: Counts.MapKeyType() = %v, want FTInt32", countsField.MapKeyType())
 	}
 	if countsField.MapValueType() != field.FTInt64 {
-		t.Errorf("[TestReflectionMapFieldDescr]: Counts.MapValueType() = %v, want FTInt64", countsField.MapValueType())
+		t.Errorf("TestReflectionMapFieldDescr: Counts.MapValueType() = %v, want FTInt64", countsField.MapValueType())
 	}
 
 	// Test ComplexMaps Settings field (map[string]Setting)
 	complexDescr := pkgDescr.Structs().ByName("ComplexMaps")
 	if complexDescr == nil {
-		t.Fatalf("[TestReflectionMapFieldDescr]: ComplexMaps struct not found")
+		t.Fatalf("TestReflectionMapFieldDescr: ComplexMaps struct not found")
 	}
 	settingsField := complexDescr.FieldDescrByName("Settings")
 	if settingsField == nil {
-		t.Fatalf("[TestReflectionMapFieldDescr]: Settings field not found")
+		t.Fatalf("TestReflectionMapFieldDescr: Settings field not found")
 	}
 	if !settingsField.IsMap() {
-		t.Errorf("[TestReflectionMapFieldDescr]: Settings.IsMap() = false, want true")
+		t.Errorf("TestReflectionMapFieldDescr: Settings.IsMap() = false, want true")
 	}
 	if settingsField.MapKeyType() != field.FTString {
-		t.Errorf("[TestReflectionMapFieldDescr]: Settings.MapKeyType() = %v, want FTString", settingsField.MapKeyType())
+		t.Errorf("TestReflectionMapFieldDescr: Settings.MapKeyType() = %v, want FTString", settingsField.MapKeyType())
 	}
 	if settingsField.MapValueType() != field.FTStruct {
-		t.Errorf("[TestReflectionMapFieldDescr]: Settings.MapValueType() = %v, want FTStruct", settingsField.MapValueType())
+		t.Errorf("TestReflectionMapFieldDescr: Settings.MapValueType() = %v, want FTStruct", settingsField.MapValueType())
 	}
 }
 
@@ -449,11 +449,11 @@ func TestReflectionMapClawStruct(t *testing.T) {
 	// HasField only returns true for fields written to the segment wire format
 	data, err := c.Marshal()
 	if err != nil {
-		t.Fatalf("[TestReflectionMapClawStruct]: Marshal() error: %v", err)
+		t.Fatalf("TestReflectionMapClawStruct: Marshal() error: %v", err)
 	}
 	c2 := NewConfig(ctx)
 	if err := c2.Unmarshal(data); err != nil {
-		t.Fatalf("[TestReflectionMapClawStruct]: Unmarshal() error: %v", err)
+		t.Fatalf("TestReflectionMapClawStruct: Unmarshal() error: %v", err)
 	}
 
 	// Get the reflection Struct
@@ -463,12 +463,12 @@ func TestReflectionMapClawStruct(t *testing.T) {
 	// Verify Labels field via reflection
 	labelsField := descr.FieldDescrByName("Labels")
 	if !rs.Has(labelsField) {
-		t.Errorf("[TestReflectionMapClawStruct]: Has(Labels) = false, want true")
+		t.Errorf("TestReflectionMapClawStruct: Has(Labels) = false, want true")
 	}
 
 	// Verify Ports field via reflection
 	portsField := descr.FieldDescrByName("Ports")
 	if !rs.Has(portsField) {
-		t.Errorf("[TestReflectionMapClawStruct]: Has(Ports) = false, want true")
+		t.Errorf("TestReflectionMapClawStruct: Has(Ports) = false, want true")
 	}
 }

@@ -92,7 +92,7 @@ type Vehicle struct {
 // NewVehicle creates a new pooled instance of Vehicle.
 // Call Release() when done to return it to the pool for reuse.
 func NewVehicle(ctx context.Context) Vehicle {
-    s := segment.NewPooled(ctx, XXXMappingVehicle)
+    s := segment.New(ctx, XXXMappingVehicle)
     return Vehicle{
         s: s,
     }
@@ -101,7 +101,7 @@ func NewVehicle(ctx context.Context) Vehicle {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Vehicle) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewVehicleFrom creates a new Vehicle from our internal Struct representation.
@@ -114,14 +114,22 @@ func XXXNewVehicleFrom(s *segment.Struct) Vehicle {
     return Vehicle{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Vehicle) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Vehicle) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Vehicle) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -155,43 +163,43 @@ func (x Vehicle) SetCar(value cars.Car) Vehicle {
 
 // TruckList returns the underlying Structs list for iteration.
 // Use NewTruck() to create items and Append to add them.
-func (x Vehicle) TruckList() *segment.Structs {
+func (x Vehicle) TruckList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 2, trucks.XXXMappingTruck); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 2, trucks.XXXMappingTruck); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 2, trucks.XXXMappingTruck)
+    structs := segment.NewStructs(ctx, x.s, 2, trucks.XXXMappingTruck)
     return structs
 }
 
 // TruckLen returns the number of items in the list.
-func (x Vehicle) TruckLen() int {
-    return x.TruckList().Len()
+func (x Vehicle) TruckLen(ctx context.Context) int {
+    return x.TruckList(ctx).Len()
 }
 
 // TruckGet returns the item at the given index.
-func (x Vehicle) TruckGet(index int) trucks.Truck {
-    s := x.TruckList().Get(index)
+func (x Vehicle) TruckGet(ctx context.Context, index int) trucks.Truck {
+    s := x.TruckList(ctx).Get(index)
     return trucks.XXXNewTruckFrom(s)
 }
 
 // TruckAppend appends items to the list.
-func (x Vehicle) TruckAppend(values ...trucks.Truck) {
-    list := x.TruckList()
+func (x Vehicle) TruckAppend(ctx context.Context, values ...trucks.Truck) {
+    list := x.TruckList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendTruck is an alias for TruckAppend for backwards compatibility.
-func (x Vehicle) AppendTruck(values ...trucks.Truck) {
-    x.TruckAppend(values...)
+func (x Vehicle) AppendTruck(ctx context.Context, values ...trucks.Truck) {
+    x.TruckAppend(ctx, values...)
 }
 
 // TruckAppendRaw appends items to the list using Raw struct representations.
 func (x Vehicle) TruckAppendRaw(ctx context.Context, values ...*trucks.TruckRaw) {
-    list := x.TruckList()
+    list := x.TruckList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(trucks.NewTruckFromRaw(ctx, *raw).XXXGetStruct())
@@ -294,7 +302,7 @@ func NewVehicleFromRaw(ctx context.Context, raw VehicleRaw) Vehicle {
         x.SetCar(cars.NewCarFromRaw(ctx, *raw.Car))
     }
     if raw.Truck != nil {
-        list := x.TruckList()
+        list := x.TruckList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Truck))
         for _, r := range raw.Truck {
             if r != nil {
@@ -313,11 +321,11 @@ func NewVehicleFromRaw(ctx context.Context, raw VehicleRaw) Vehicle {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Vehicle) ToRaw() VehicleRaw {
+func (x Vehicle) ToRaw(ctx context.Context) VehicleRaw {
     raw := VehicleRaw{}
     raw.Type = x.Type()
     if x.s.HasField(1) {
-        nestedRaw := x.Car().ToRaw()
+        nestedRaw := x.Car().ToRaw(ctx)
         raw.Car = &nestedRaw
     }
     if l := x.s.GetList(2); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -325,15 +333,15 @@ func (x Vehicle) ToRaw() VehicleRaw {
         raw.Truck = make([]*trucks.TruckRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := trucks.XXXNewTruckFrom(list.Get(i))
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Truck[i] = &itemRaw
         }
     } else if x.s.HasField(2) {
-        list := x.TruckList()
+        list := x.TruckList(ctx)
         raw.Truck = make([]*trucks.TruckRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := trucks.XXXNewTruckFrom(list.Get(i))
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Truck[i] = &itemRaw
         }
     }
@@ -349,7 +357,6 @@ func (x Vehicle) ToRaw() VehicleRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

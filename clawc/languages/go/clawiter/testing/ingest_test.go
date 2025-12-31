@@ -49,7 +49,7 @@ func TestIngestRoundTripCar(t *testing.T) {
 
 		// Round-trip: Walk -> Ingest
 		ingested := cars.NewCar(ctx)
-		if err := ingested.IngestWithOptions(ctx, original.Walk(), clawiter.IngestOptions{}); err != nil {
+		if err := ingested.IngestWithOptions(ctx, original.Walk(ctx), clawiter.IngestOptions{}); err != nil {
 			t.Errorf("TestIngestRoundTripCar(%s): Ingest error: %s", test.name, err)
 			continue
 		}
@@ -130,7 +130,7 @@ func TestIngestRoundTripVehicle(t *testing.T) {
 
 		// Round-trip: Walk -> Ingest
 		ingested := vehicles.NewVehicle(ctx)
-		if err := ingested.IngestWithOptions(ctx, original.Walk(), clawiter.IngestOptions{}); err != nil {
+		if err := ingested.IngestWithOptions(ctx, original.Walk(ctx), clawiter.IngestOptions{}); err != nil {
 			t.Errorf("TestIngestRoundTripVehicle(%s): Ingest error: %s", test.name, err)
 			continue
 		}

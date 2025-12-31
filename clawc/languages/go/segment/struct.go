@@ -6,6 +6,7 @@ import (
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
+	"github.com/gostdlib/base/context"
 )
 
 // fieldEntry tracks where a field is located in the segment.
@@ -24,6 +25,9 @@ type Struct struct {
 	mapping *mapping.Map
 	// fieldIndex tracks where each field is located in the segment.
 	fieldIndex []fieldEntry
+	// fieldIndexParsed indicates whether parseFieldIndex has been called.
+	// Used for lazy parsing optimization.
+	fieldIndexParsed bool
 	// parent tracks the parent.
 	parent *Struct
 	// parentFN is the field number in the parent struct where this struct is embedded.
@@ -87,30 +91,14 @@ const NoListIndex int32 = -1
 
 // New creates a new Struct with the given mapping.
 // The struct is initialized with an 8-byte header.
-func New(m *mapping.Map) *Struct {
-	numFields := len(m.Fields)
+func New(ctx context.Context, m *mapping.Map) *Struct {
 	s := &Struct{
-		seg:        NewSegment(64),
+		seg:        SegmentPool.Get(ctx, m),
 		mapping:    m,
-		fieldIndex: make([]fieldEntry, numFields),
+		fieldIndex: FieldIndexPool.Get(ctx, m),
 	}
 
 	// Initialize struct header (field 0, type Struct, size 8)
-	EncodeHeader(s.seg.data[0:8], 0, field.FTStruct, 8)
-
-	return s
-}
-
-// NewWithCapacity creates a new Struct with the given initial segment capacity.
-func NewWithCapacity(m *mapping.Map, capacity int) *Struct {
-	numFields := len(m.Fields)
-	s := &Struct{
-		seg:        NewSegment(capacity),
-		mapping:    m,
-		fieldIndex: make([]fieldEntry, numFields),
-	}
-
-	// Initialize struct header
 	EncodeHeader(s.seg.data[0:8], 0, field.FTStruct, 8)
 
 	return s
@@ -183,6 +171,7 @@ func (s *Struct) updateFieldOffsets(afterOffset int, delta int) {
 // insertField inserts or replaces a field in the segment.
 // The field data includes the 8-byte header followed by any additional data.
 func (s *Struct) insertField(fieldNum uint16, data []byte) {
+	s.ensureFieldIndexParsed()
 	if int(fieldNum) >= len(s.fieldIndex) {
 		panic(fmt.Sprintf("segment: field number %d out of range", fieldNum))
 	}
@@ -234,6 +223,7 @@ func (s *Struct) insertField(fieldNum uint16, data []byte) {
 
 // removeField removes a field from the segment.
 func (s *Struct) removeField(fieldNum uint16) {
+	s.ensureFieldIndexParsed()
 	if int(fieldNum) >= len(s.fieldIndex) {
 		return
 	}
@@ -368,10 +358,10 @@ func (s *Struct) appendIsSetBitfield() {
 	s.seg.Append(s.isSetBits)
 }
 
-// Marshal writes the struct to an io.Writer.
+// MarshalWriter writes the struct to an io.Writer.
 // This syncs any dirty lists, appends IsSet bitfield if enabled,
 // and writes the segment bytes directly.
-func (s *Struct) Marshal(w io.Writer) (int, error) {
+func (s *Struct) MarshalWriter(w io.Writer) (int, error) {
 	// Sync all dirty lists
 	if err := s.syncDirtyLists(); err != nil {
 		return 0, err
@@ -391,8 +381,10 @@ func (s *Struct) Marshal(w io.Writer) (int, error) {
 	return w.Write(s.seg.data)
 }
 
-// MarshalBytes returns the struct as a byte slice.
-func (s *Struct) MarshalBytes() ([]byte, error) {
+// Marshal returns the struct as a byte slice. This does not copy the data, it
+// returns the internal segment bytes. If you need to modify the *Struct after
+// this call, use MarshalSafe() which returns a copy.
+func (s *Struct) Marshal() ([]byte, error) {
 	// Sync all dirty lists
 	if err := s.syncDirtyLists(); err != nil {
 		return nil, err
@@ -413,40 +405,44 @@ func (s *Struct) MarshalBytes() ([]byte, error) {
 	return result, nil
 }
 
+// MarshalSafe returns a copy of the struct's byte slice.
+func (s *Struct) MarshalSafe() ([]byte, error) {
+	b, err := s.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	c := make([]byte, len(b))
+	copy(c, b)
+	return c, nil
+}
+
 // SegmentBytes returns the raw segment bytes without copying.
 // The caller must not modify the returned slice.
 func (s *Struct) SegmentBytes() []byte {
 	return s.seg.data
 }
 
-// Unmarshal unmarshals wire format bytes into the struct.
+// Unmarshal unmarshals without copying the data buffer. data should not be used again after this call.
 // The struct must have a mapping set (either via New() or Init()).
 func (s *Struct) Unmarshal(data []byte) error {
 	if len(data) < HeaderSize {
 		return fmt.Errorf("segment: data too short for header")
 	}
 
-	// Verify the header is a struct type
 	_, fieldType, totalSize := DecodeHeader(data[0:HeaderSize])
 	if fieldType != field.FTStruct {
 		return fmt.Errorf("segment: expected struct type, got %v", fieldType)
 	}
 
-	// Validate size
 	if int(totalSize) > len(data) {
 		return fmt.Errorf("segment: header size %d exceeds data length %d", totalSize, len(data))
 	}
 
-	// Reuse existing capacity if possible, otherwise allocate
-	if cap(s.seg.data) >= int(totalSize) {
-		s.seg.data = s.seg.data[:totalSize]
-	} else {
-		s.seg.data = make([]byte, totalSize)
-	}
-	copy(s.seg.data, data[:totalSize])
+	// NO COPY - directly reference the input slice
+	s.seg.data = data[:totalSize]
 
-	// Parse field index
-	parseFieldIndex(s)
+	// Field index is parsed lazily on first field access
+	s.fieldIndexParsed = false
 
 	return nil
 }
@@ -488,14 +484,23 @@ func (s *Struct) UnmarshalReader(r io.Reader) (int, error) {
 		}
 	}
 
-	// Parse field index
-	parseFieldIndex(s)
+	// Field index is parsed lazily on first field access
+	s.fieldIndexParsed = false
 
 	return n, nil
 }
 
+// ensureFieldIndexParsed parses the field index lazily on first access.
+func (s *Struct) ensureFieldIndexParsed() {
+	if !s.fieldIndexParsed {
+		parseFieldIndex(s)
+		s.fieldIndexParsed = true
+	}
+}
+
 // HasField returns true if the field is present in the segment.
 func (s *Struct) HasField(fieldNum uint16) bool {
+	s.ensureFieldIndexParsed()
 	if int(fieldNum) >= len(s.fieldIndex) {
 		return false
 	}
@@ -504,6 +509,7 @@ func (s *Struct) HasField(fieldNum uint16) bool {
 
 // FieldOffset returns the offset and size of a field, or (0, 0) if not present.
 func (s *Struct) FieldOffset(fieldNum uint16) (offset, size int) {
+	s.ensureFieldIndexParsed()
 	if int(fieldNum) >= len(s.fieldIndex) {
 		return 0, 0
 	}
@@ -516,14 +522,22 @@ func (s *Struct) SegmentData() []byte {
 	return s.seg.data
 }
 
+// Release returns the struct to the segment pool.
+func (s *Struct) Release(ctx context.Context) {
+	if s.seg != nil {
+		SegmentPool.Put(ctx, s.mapping, s.seg)
+	}
+	if s.fieldIndex != nil {
+		FieldIndexPool.Put(ctx, s.mapping, s.fieldIndex)
+	}
+}
+
 // Reset implements the Resetter interface for sync.Pool.
 // Called automatically by the pool on Put(). Clears all state for reuse.
 func (s *Struct) Reset() {
-	// Reset segment buffer
-	s.seg.Reset()
-
-	// Clear field index (keep capacity)
-	clear(s.fieldIndex)
+	s.seg = nil
+	s.fieldIndex = nil
+	s.fieldIndexParsed = false
 
 	// Clear references for GC
 	s.mapping = nil
@@ -541,11 +555,15 @@ func (s *Struct) Reset() {
 func (s *Struct) Init(m *mapping.Map) {
 	s.mapping = m
 
-	// Resize field index if needed
-	if cap(s.fieldIndex) < len(m.Fields) {
+	// If no segment, create one (for non-pooled usage)
+	if s.seg == nil {
+		s.seg = NewSegment(64)
+	}
+
+	// If no field index, create one (for non-pooled usage)
+	// Otherwise, fieldIndex was already set by NewPooled() from the pool
+	if s.fieldIndex == nil {
 		s.fieldIndex = make([]fieldEntry, len(m.Fields))
-	} else {
-		s.fieldIndex = s.fieldIndex[:len(m.Fields)]
 	}
 
 	// Initialize struct header (field 0, type Struct, size 8)

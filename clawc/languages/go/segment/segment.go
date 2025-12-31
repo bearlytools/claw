@@ -4,7 +4,138 @@ package segment
 
 import (
 	"encoding/binary"
+	"maps"
+	"sync/atomic"
+
+	"github.com/bearlytools/claw/clawc/languages/go/mapping"
+	"github.com/gostdlib/base/concurrency/sync"
+	"github.com/gostdlib/base/context"
 )
+
+// SegmentPools manages pools of segments for different mappings.
+type SegmentPools struct {
+	pools atomic.Pointer[map[*mapping.Map]*sync.Pool[*Segment]]
+}
+
+// NewSegmentPools creates a new SegmentPools.
+func NewSegmentPools() *SegmentPools {
+	m := map[*mapping.Map]*sync.Pool[*Segment]{}
+	sp := &SegmentPools{}
+	sp.pools.Store(&m)
+	return sp
+}
+
+// RegisterPool registers a segment pool for the given mapping.
+// If the mapping is already registered, this is a no-op.
+func (s *SegmentPools) RegisterPool(m *mapping.Map) {
+	old := s.pools.Load()
+	if _, ok := (*old)[m]; ok {
+		return // Already registered
+	}
+	newMap := maps.Clone(*old)
+	newMap[m] = sync.NewPool[*Segment](
+		context.Background(),
+		m.Name+"_segment_pool",
+		func() *Segment {
+			return NewSegment(64)
+		},
+	)
+	if !s.pools.CompareAndSwap(old, &newMap) {
+		s.RegisterPool(m)
+	}
+}
+
+// Get retrieves a segment from the pool for the given mapping.
+// If no pool is registered for the mapping, one is created automatically.
+func (s *SegmentPools) Get(ctx context.Context, m *mapping.Map) *Segment {
+	pool, ok := (*s.pools.Load())[m]
+	if !ok {
+		// Auto-register pool if not exists (useful for tests and dynamic mappings)
+		s.RegisterPool(m)
+		pool = (*s.pools.Load())[m]
+	}
+	seg := pool.Get(ctx)
+	return seg
+}
+
+// Put returns a segment to the pool for the given mapping.
+func (s *SegmentPools) Put(ctx context.Context, m *mapping.Map, seg *Segment) {
+	pool, ok := (*s.pools.Load())[m]
+	if !ok {
+		panic("segment: no pool registered for mapping " + m.Name)
+	}
+	// The pool will call Reset on the segment before putting it back.
+	pool.Put(ctx, seg)
+}
+
+// SegmentPool is the global segment pool manager.
+var SegmentPool = NewSegmentPools()
+
+// FieldIndexPools manages pools of field index slices for different mappings.
+// Each mapping gets a pool with slices sized for that mapping's field count.
+type FieldIndexPools struct {
+	pools atomic.Pointer[map[*mapping.Map]*sync.Pool[[]fieldEntry]]
+}
+
+// NewFieldIndexPools creates a new FieldIndexPools.
+func NewFieldIndexPools() *FieldIndexPools {
+	m := map[*mapping.Map]*sync.Pool[[]fieldEntry]{}
+	fp := &FieldIndexPools{}
+	fp.pools.Store(&m)
+	return fp
+}
+
+// RegisterPool registers a field index pool for the given mapping.
+// If the mapping is already registered, this is a no-op.
+func (f *FieldIndexPools) RegisterPool(m *mapping.Map) {
+	old := f.pools.Load()
+	if _, ok := (*old)[m]; ok {
+		return // Already registered
+	}
+	numFields := len(m.Fields)
+	newMap := maps.Clone(*old)
+	newMap[m] = sync.NewPool[[]fieldEntry](
+		context.Background(),
+		m.Name+"_fieldindex_pool",
+		func() []fieldEntry {
+			return make([]fieldEntry, numFields)
+		},
+	)
+	if !f.pools.CompareAndSwap(old, &newMap) {
+		f.RegisterPool(m)
+	}
+}
+
+// Get retrieves a field index slice from the pool for the given mapping.
+func (f *FieldIndexPools) Get(ctx context.Context, m *mapping.Map) []fieldEntry {
+	pool, ok := (*f.pools.Load())[m]
+	if !ok {
+		f.RegisterPool(m)
+		pool = (*f.pools.Load())[m]
+	}
+	return pool.Get(ctx)
+}
+
+// Put returns a field index slice to the pool for the given mapping.
+func (f *FieldIndexPools) Put(ctx context.Context, m *mapping.Map, fi []fieldEntry) {
+	clear(fi)
+	pool, ok := (*f.pools.Load())[m]
+	if !ok {
+		return
+	}
+	pool.Put(ctx, fi)
+}
+
+// FieldIndexPool is the global field index pool manager.
+var FieldIndexPool = NewFieldIndexPools()
+
+func init() {
+	// Set the registration function in mapping package to break import cycle.
+	mapping.RegisterSegmentPool = func(m *mapping.Map) {
+		SegmentPool.RegisterPool(m)
+		FieldIndexPool.RegisterPool(m)
+	}
+}
 
 // Segment is a contiguous byte buffer that IS the wire format.
 // All field writes go directly into this buffer in sorted field order.

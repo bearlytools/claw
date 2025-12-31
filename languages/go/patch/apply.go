@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/gostdlib/base/context"
+
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	"github.com/bearlytools/claw/clawc/languages/go/mapping"
 	"github.com/bearlytools/claw/clawc/languages/go/segment"
@@ -22,12 +24,12 @@ const (
 
 // Apply applies the patch to 'base', modifying it in place.
 // Returns error if patch cannot be applied.
-func Apply[T ClawStruct](base T, p msgs.Patch) error {
+func Apply[T ClawStruct](ctx context.Context, base T, p msgs.Patch) error {
 	if p.Version() != PatchVersion {
 		return fmt.Errorf("unsupported patch version: %d (expected %d)", p.Version(), PatchVersion)
 	}
 
-	opsLen := p.OpsLen()
+	opsLen := p.OpsLen(ctx)
 	if opsLen > MaxPatchOps {
 		return fmt.Errorf("patch has %d operations, exceeds maximum of %d", opsLen, MaxPatchOps)
 	}
@@ -36,8 +38,8 @@ func Apply[T ClawStruct](base T, p msgs.Patch) error {
 	m := s.Mapping()
 
 	for i := 0; i < opsLen; i++ {
-		op := p.OpsGet(i)
-		if err := applyOpWithDepth(s, m, op, 0); err != nil {
+		op := p.OpsGet(ctx, i)
+		if err := applyOpWithDepth(ctx, s, m, op, 0); err != nil {
 			return err
 		}
 	}
@@ -46,7 +48,7 @@ func Apply[T ClawStruct](base T, p msgs.Patch) error {
 }
 
 // applyOpWithDepth applies a single operation to the struct, tracking nesting depth.
-func applyOpWithDepth(s *segment.Struct, m *mapping.Map, op msgs.Op, depth int) error {
+func applyOpWithDepth(ctx context.Context, s *segment.Struct, m *mapping.Map, op msgs.Op, depth int) error {
 	fieldNum := op.FieldNum()
 	opType := op.Type()
 	data := op.Data()
@@ -59,28 +61,28 @@ func applyOpWithDepth(s *segment.Struct, m *mapping.Map, op msgs.Op, depth int) 
 
 	switch opType {
 	case msgs.Set:
-		return applySet(s, fd, fieldNum, data)
+		return applySet(ctx, s, fd, fieldNum, data)
 	case msgs.Clear:
 		return applyClear(s, fd, fieldNum)
 	case msgs.StructPatch:
-		return applyStructPatch(s, fd, fieldNum, data, depth)
+		return applyStructPatch(ctx, s, fd, fieldNum, data, depth)
 	case msgs.ListReplace:
-		return applyListReplace(s, fd, fieldNum, data)
+		return applyListReplace(ctx, s, fd, fieldNum, data)
 	case msgs.ListSet:
-		return applyListSet(s, fd, fieldNum, op.Index(), data)
+		return applyListSet(ctx, s, fd, fieldNum, op.Index(), data)
 	case msgs.ListInsert:
-		return applyListInsert(s, fd, fieldNum, op.Index(), data)
+		return applyListInsert(ctx, s, fd, fieldNum, op.Index(), data)
 	case msgs.ListRemove:
-		return applyListRemove(s, fd, fieldNum, op.Index())
+		return applyListRemove(ctx, s, fd, fieldNum, op.Index())
 	case msgs.ListStructPatch:
-		return applyListStructPatch(s, fd, fieldNum, op.Index(), data, depth)
+		return applyListStructPatch(ctx, s, fd, fieldNum, op.Index(), data, depth)
 	default:
 		// Unknown operation type, skip for forward compatibility
 		return nil
 	}
 }
 
-func applySet(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
+func applySet(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
 	if fd == nil {
 		// Unknown field - store as raw data for forward compatibility
 		// Note: segment doesn't support unknown fields yet
@@ -149,7 +151,7 @@ func applySet(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data [
 		segment.SetBytes(s, fieldNum, data)
 	case field.FTStruct:
 		// For SET on struct, unmarshal the full struct
-		subStruct := segment.New(fd.Mapping)
+		subStruct := segment.New(ctx, fd.Mapping)
 		if err := subStruct.Unmarshal(data); err != nil {
 			return fmt.Errorf("unmarshal nested struct: %w", err)
 		}
@@ -172,7 +174,7 @@ func applyClear(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16) erro
 	return nil
 }
 
-func applyStructPatch(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte, depth int) error {
+func applyStructPatch(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte, depth int) error {
 	if depth >= MaxPatchNestingDepth {
 		return fmt.Errorf("patch nesting depth %d exceeds maximum of %d", depth, MaxPatchNestingDepth)
 	}
@@ -185,7 +187,7 @@ func applyStructPatch(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16
 	subStruct := segment.GetNestedStruct(s, fieldNum, fd.Mapping)
 	if subStruct == nil {
 		// Create new struct if doesn't exist
-		subStruct = segment.New(fd.Mapping)
+		subStruct = segment.New(ctx, fd.Mapping)
 		segment.SetNestedStruct(s, fieldNum, subStruct)
 	}
 
@@ -196,10 +198,10 @@ func applyStructPatch(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16
 	}
 
 	// Apply each operation to the nested struct
-	opsLen := subPatch.OpsLen()
+	opsLen := subPatch.OpsLen(ctx)
 	for i := 0; i < opsLen; i++ {
-		op := subPatch.OpsGet(i)
-		if err := applyOpWithDepth(subStruct, fd.Mapping, op, depth+1); err != nil {
+		op := subPatch.OpsGet(ctx, i)
+		if err := applyOpWithDepth(ctx, subStruct, fd.Mapping, op, depth+1); err != nil {
 			return err
 		}
 	}
@@ -207,7 +209,7 @@ func applyStructPatch(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16
 	return nil
 }
 
-func applyListReplace(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
+func applyListReplace(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
 	if fd == nil {
 		return nil // Unknown field, skip
 	}
@@ -227,7 +229,7 @@ func applyListReplace(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16
 	case field.FTListBytes, field.FTListStrings:
 		return applyListReplaceBytes(s, fieldNum, data, fd.Type)
 	case field.FTListStructs:
-		return applyListReplaceStructs(s, fd, fieldNum, data)
+		return applyListReplaceStructs(ctx, s, fd, fieldNum, data)
 	default:
 		return fmt.Errorf("LIST_REPLACE not supported for field type: %v", fd.Type)
 	}
@@ -286,7 +288,7 @@ func applyListReplaceBytes(s *segment.Struct, fieldNum uint16, data []byte, ft f
 	return nil
 }
 
-func applyListReplaceStructs(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
+func applyListReplaceStructs(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, data []byte) error {
 	// Data format: [count:4][struct1...][struct2...]...
 	if len(data) < 4 {
 		return fmt.Errorf("struct list data too short")
@@ -294,10 +296,10 @@ func applyListReplaceStructs(s *segment.Struct, fd *mapping.FieldDescr, fieldNum
 	count := int(decodeUint32(data[:4]))
 	reader := bytes.NewReader(data[4:])
 
-	list := segment.NewStructs(s, fieldNum, fd.Mapping)
+	list := segment.NewStructs(ctx, s, fieldNum, fd.Mapping)
 	items := make([]*segment.Struct, 0, count)
 	for i := 0; i < count; i++ {
-		item := segment.New(fd.Mapping)
+		item := segment.New(ctx, fd.Mapping)
 		if _, err := item.UnmarshalReader(reader); err != nil {
 			return fmt.Errorf("unmarshal struct at index %d: %w", i, err)
 		}
@@ -309,7 +311,7 @@ func applyListReplaceStructs(s *segment.Struct, fd *mapping.FieldDescr, fieldNum
 	return nil
 }
 
-func applyListSet(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
+func applyListSet(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
 	if fd == nil {
 		return nil // Unknown field, skip
 	}
@@ -360,11 +362,11 @@ func applyListSet(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, in
 		}
 		list.Set(int(index), string(data))
 	case field.FTListStructs:
-		list := segment.GetListStructs(s, fieldNum, fd.Mapping)
+		list := segment.GetListStructs(ctx, s, fieldNum, fd.Mapping)
 		if list == nil || int(index) >= list.Len() {
 			return fmt.Errorf("LIST_SET index %d out of bounds", index)
 		}
-		item := segment.New(fd.Mapping)
+		item := segment.New(ctx, fd.Mapping)
 		if err := item.Unmarshal(data); err != nil {
 			return fmt.Errorf("unmarshal struct for LIST_SET: %w", err)
 		}
@@ -425,7 +427,7 @@ func getNumberListItemData(s *segment.Struct, fieldNum uint16, itemSize int) ([]
 	return itemData, nil
 }
 
-func applyListInsert(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
+func applyListInsert(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
 	if fd == nil {
 		return nil // Unknown field, skip
 	}
@@ -462,7 +464,7 @@ func applyListInsert(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16,
 	case field.FTListStrings:
 		return applyListInsertString(s, fieldNum, index, data)
 	case field.FTListStructs:
-		return applyListInsertStruct(s, fd, fieldNum, index, data)
+		return applyListInsertStruct(ctx, s, fd, fieldNum, index, data)
 	default:
 		return fmt.Errorf("LIST_INSERT not supported for field type: %v", fd.Type)
 	}
@@ -569,8 +571,8 @@ func applyListInsertString(s *segment.Struct, fieldNum uint16, index int32, data
 	return nil
 }
 
-func applyListInsertStruct(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
-	list := segment.GetListStructs(s, fieldNum, fd.Mapping)
+func applyListInsertStruct(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte) error {
+	list := segment.GetListStructs(ctx, s, fieldNum, fd.Mapping)
 	var existing []*segment.Struct
 	if list != nil {
 		existing = list.Slice()
@@ -578,13 +580,13 @@ func applyListInsertStruct(s *segment.Struct, fd *mapping.FieldDescr, fieldNum u
 	if int(index) > len(existing) {
 		return fmt.Errorf("LIST_INSERT index %d out of bounds (len=%d)", index, len(existing))
 	}
-	item := segment.New(fd.Mapping)
+	item := segment.New(ctx, fd.Mapping)
 	if err := item.Unmarshal(data); err != nil {
 		return fmt.Errorf("unmarshal struct for LIST_INSERT: %w", err)
 	}
 
 	// Create new list with inserted item
-	newList := segment.NewStructs(s, fieldNum, fd.Mapping)
+	newList := segment.NewStructs(ctx, s, fieldNum, fd.Mapping)
 	// Append items before index
 	for i := 0; i < int(index); i++ {
 		newList.Append(existing[i])
@@ -598,7 +600,7 @@ func applyListInsertStruct(s *segment.Struct, fd *mapping.FieldDescr, fieldNum u
 	return nil
 }
 
-func applyListRemove(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32) error {
+func applyListRemove(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32) error {
 	if fd == nil {
 		return nil // Unknown field, skip
 	}
@@ -634,7 +636,7 @@ func applyListRemove(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16,
 	case field.FTListStrings:
 		return applyListRemoveString(s, fieldNum, index)
 	case field.FTListStructs:
-		return applyListRemoveStruct(s, fd, fieldNum, index)
+		return applyListRemoveStruct(ctx, s, fd, fieldNum, index)
 	default:
 		return fmt.Errorf("LIST_REMOVE not supported for field type: %v", fd.Type)
 	}
@@ -725,8 +727,8 @@ func applyListRemoveString(s *segment.Struct, fieldNum uint16, index int32) erro
 	return nil
 }
 
-func applyListRemoveStruct(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32) error {
-	list := segment.GetListStructs(s, fieldNum, fd.Mapping)
+func applyListRemoveStruct(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32) error {
+	list := segment.GetListStructs(ctx, s, fieldNum, fd.Mapping)
 	if list == nil || int(index) >= list.Len() {
 		return fmt.Errorf("LIST_REMOVE index %d out of bounds", index)
 	}
@@ -736,7 +738,7 @@ func applyListRemoveStruct(s *segment.Struct, fd *mapping.FieldDescr, fieldNum u
 		return nil
 	}
 	// Create new list without the item at index
-	newList := segment.NewStructs(s, fieldNum, fd.Mapping)
+	newList := segment.NewStructs(ctx, s, fieldNum, fd.Mapping)
 	for i, item := range existing {
 		if i == int(index) {
 			continue
@@ -746,7 +748,7 @@ func applyListRemoveStruct(s *segment.Struct, fd *mapping.FieldDescr, fieldNum u
 	return nil
 }
 
-func applyListStructPatch(s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte, depth int) error {
+func applyListStructPatch(ctx context.Context, s *segment.Struct, fd *mapping.FieldDescr, fieldNum uint16, index int32, data []byte, depth int) error {
 	if depth >= MaxPatchNestingDepth {
 		return fmt.Errorf("patch nesting depth %d exceeds maximum of %d", depth, MaxPatchNestingDepth)
 	}
@@ -756,7 +758,7 @@ func applyListStructPatch(s *segment.Struct, fd *mapping.FieldDescr, fieldNum ui
 	}
 
 	// Get the list of structs
-	list := segment.GetListStructs(s, fieldNum, fd.Mapping)
+	list := segment.GetListStructs(ctx, s, fieldNum, fd.Mapping)
 	if list == nil || int(index) >= list.Len() {
 		return fmt.Errorf("list index %d out of bounds", index)
 	}
@@ -774,10 +776,10 @@ func applyListStructPatch(s *segment.Struct, fd *mapping.FieldDescr, fieldNum ui
 	}
 
 	// Apply each operation to the struct at the index
-	opsLen := subPatch.OpsLen()
+	opsLen := subPatch.OpsLen(ctx)
 	for i := 0; i < opsLen; i++ {
-		op := subPatch.OpsGet(i)
-		if err := applyOpWithDepth(itemStruct, fd.Mapping, op, depth+1); err != nil {
+		op := subPatch.OpsGet(ctx, i)
+		if err := applyOpWithDepth(ctx, itemStruct, fd.Mapping, op, depth+1); err != nil {
 			return err
 		}
 	}

@@ -82,6 +82,7 @@ func verifyTypeMeta(t *testing.T, want, got clawpod.TypeMeta) {
 
 func verifyObjectMeta(t *testing.T, want, got clawpod.ObjectMeta) {
 	t.Helper()
+	ctx := context.Background()
 
 	if want.Name() != got.Name() {
 		t.Errorf("ObjectMeta.Name: got %q, want %q", got.Name(), want.Name())
@@ -116,12 +117,12 @@ func verifyObjectMeta(t *testing.T, want, got clawpod.ObjectMeta) {
 	}
 
 	// Verify Labels
-	if want.LabelsLen() != got.LabelsLen() {
-		t.Errorf("ObjectMeta.LabelsLen: got %d, want %d", got.LabelsLen(), want.LabelsLen())
+	if want.LabelsLen(ctx) != got.LabelsLen(ctx) {
+		t.Errorf("ObjectMeta.LabelsLen: got %d, want %d", got.LabelsLen(ctx), want.LabelsLen(ctx))
 	} else {
-		for i := 0; i < want.LabelsLen(); i++ {
-			wantKV := want.LabelsGet(i)
-			gotKV := got.LabelsGet(i)
+		for i := 0; i < want.LabelsLen(ctx); i++ {
+			wantKV := want.LabelsGet(ctx, i)
+			gotKV := got.LabelsGet(ctx, i)
 			if wantKV.Key() != gotKV.Key() {
 				t.Errorf("ObjectMeta.Labels[%d].Key: got %q, want %q", i, gotKV.Key(), wantKV.Key())
 			}
@@ -132,12 +133,12 @@ func verifyObjectMeta(t *testing.T, want, got clawpod.ObjectMeta) {
 	}
 
 	// Verify Annotations
-	if want.AnnotationsLen() != got.AnnotationsLen() {
-		t.Errorf("ObjectMeta.AnnotationsLen: got %d, want %d", got.AnnotationsLen(), want.AnnotationsLen())
+	if want.AnnotationsLen(ctx) != got.AnnotationsLen(ctx) {
+		t.Errorf("ObjectMeta.AnnotationsLen: got %d, want %d", got.AnnotationsLen(ctx), want.AnnotationsLen(ctx))
 	} else {
-		for i := 0; i < want.AnnotationsLen(); i++ {
-			wantKV := want.AnnotationsGet(i)
-			gotKV := got.AnnotationsGet(i)
+		for i := 0; i < want.AnnotationsLen(ctx); i++ {
+			wantKV := want.AnnotationsGet(ctx, i)
+			gotKV := got.AnnotationsGet(ctx, i)
 			if wantKV.Key() != gotKV.Key() {
 				t.Errorf("ObjectMeta.Annotations[%d].Key: got %q, want %q", i, gotKV.Key(), wantKV.Key())
 			}
@@ -148,12 +149,12 @@ func verifyObjectMeta(t *testing.T, want, got clawpod.ObjectMeta) {
 	}
 
 	// Verify OwnerReferences
-	if want.OwnerReferencesLen() != got.OwnerReferencesLen() {
-		t.Errorf("ObjectMeta.OwnerReferencesLen: got %d, want %d", got.OwnerReferencesLen(), want.OwnerReferencesLen())
+	if want.OwnerReferencesLen(ctx) != got.OwnerReferencesLen(ctx) {
+		t.Errorf("ObjectMeta.OwnerReferencesLen: got %d, want %d", got.OwnerReferencesLen(ctx), want.OwnerReferencesLen(ctx))
 	} else {
-		for i := 0; i < want.OwnerReferencesLen(); i++ {
-			wantOR := want.OwnerReferencesGet(i)
-			gotOR := got.OwnerReferencesGet(i)
+		for i := 0; i < want.OwnerReferencesLen(ctx); i++ {
+			wantOR := want.OwnerReferencesGet(ctx, i)
+			gotOR := got.OwnerReferencesGet(ctx, i)
 			if wantOR.ApiVersion() != gotOR.ApiVersion() {
 				t.Errorf("OwnerReferences[%d].ApiVersion: got %q, want %q", i, gotOR.ApiVersion(), wantOR.ApiVersion())
 			}
@@ -185,14 +186,15 @@ func verifyObjectMeta(t *testing.T, want, got clawpod.ObjectMeta) {
 
 func verifyPodSpec(t *testing.T, want, got clawpod.PodSpec) {
 	t.Helper()
+	ctx := context.Background()
 
 	// Verify Volumes
-	if want.VolumesLen() != got.VolumesLen() {
-		t.Errorf("PodSpec.VolumesLen: got %d, want %d", got.VolumesLen(), want.VolumesLen())
+	if want.VolumesLen(ctx) != got.VolumesLen(ctx) {
+		t.Errorf("PodSpec.VolumesLen: got %d, want %d", got.VolumesLen(ctx), want.VolumesLen(ctx))
 	} else {
-		for i := 0; i < want.VolumesLen(); i++ {
-			wantV := want.VolumesGet(i)
-			gotV := got.VolumesGet(i)
+		for i := 0; i < want.VolumesLen(ctx); i++ {
+			wantV := want.VolumesGet(ctx, i)
+			gotV := got.VolumesGet(ctx, i)
 			if wantV.Name() != gotV.Name() {
 				t.Errorf("Volumes[%d].Name: got %q, want %q", i, gotV.Name(), wantV.Name())
 			}
@@ -203,20 +205,20 @@ func verifyPodSpec(t *testing.T, want, got clawpod.PodSpec) {
 	}
 
 	// Verify InitContainers
-	if want.InitContainersLen() != got.InitContainersLen() {
-		t.Errorf("PodSpec.InitContainersLen: got %d, want %d", got.InitContainersLen(), want.InitContainersLen())
+	if want.InitContainersLen(ctx) != got.InitContainersLen(ctx) {
+		t.Errorf("PodSpec.InitContainersLen: got %d, want %d", got.InitContainersLen(ctx), want.InitContainersLen(ctx))
 	} else {
-		for i := 0; i < want.InitContainersLen(); i++ {
-			verifyContainer(t, fmt.Sprintf("InitContainers[%d]", i), want.InitContainersGet(i), got.InitContainersGet(i))
+		for i := 0; i < want.InitContainersLen(ctx); i++ {
+			verifyContainer(t, ctx, fmt.Sprintf("InitContainers[%d]", i), want.InitContainersGet(ctx, i), got.InitContainersGet(ctx, i))
 		}
 	}
 
 	// Verify Containers
-	if want.ContainersLen() != got.ContainersLen() {
-		t.Errorf("PodSpec.ContainersLen: got %d, want %d", got.ContainersLen(), want.ContainersLen())
+	if want.ContainersLen(ctx) != got.ContainersLen(ctx) {
+		t.Errorf("PodSpec.ContainersLen: got %d, want %d", got.ContainersLen(ctx), want.ContainersLen(ctx))
 	} else {
-		for i := 0; i < want.ContainersLen(); i++ {
-			verifyContainer(t, fmt.Sprintf("Containers[%d]", i), want.ContainersGet(i), got.ContainersGet(i))
+		for i := 0; i < want.ContainersLen(ctx); i++ {
+			verifyContainer(t, ctx, fmt.Sprintf("Containers[%d]", i), want.ContainersGet(ctx, i), got.ContainersGet(ctx, i))
 		}
 	}
 
@@ -232,12 +234,12 @@ func verifyPodSpec(t *testing.T, want, got clawpod.PodSpec) {
 	}
 
 	// Verify NodeSelector
-	if want.NodeSelectorLen() != got.NodeSelectorLen() {
-		t.Errorf("PodSpec.NodeSelectorLen: got %d, want %d", got.NodeSelectorLen(), want.NodeSelectorLen())
+	if want.NodeSelectorLen(ctx) != got.NodeSelectorLen(ctx) {
+		t.Errorf("PodSpec.NodeSelectorLen: got %d, want %d", got.NodeSelectorLen(ctx), want.NodeSelectorLen(ctx))
 	} else {
-		for i := 0; i < want.NodeSelectorLen(); i++ {
-			wantKV := want.NodeSelectorGet(i)
-			gotKV := got.NodeSelectorGet(i)
+		for i := 0; i < want.NodeSelectorLen(ctx); i++ {
+			wantKV := want.NodeSelectorGet(ctx, i)
+			gotKV := got.NodeSelectorGet(ctx, i)
 			if wantKV.Key() != gotKV.Key() {
 				t.Errorf("NodeSelector[%d].Key: got %q, want %q", i, gotKV.Key(), wantKV.Key())
 			}
@@ -277,12 +279,12 @@ func verifyPodSpec(t *testing.T, want, got clawpod.PodSpec) {
 	}
 
 	// Verify Tolerations
-	if want.TolerationsLen() != got.TolerationsLen() {
-		t.Errorf("PodSpec.TolerationsLen: got %d, want %d", got.TolerationsLen(), want.TolerationsLen())
+	if want.TolerationsLen(ctx) != got.TolerationsLen(ctx) {
+		t.Errorf("PodSpec.TolerationsLen: got %d, want %d", got.TolerationsLen(ctx), want.TolerationsLen(ctx))
 	} else {
-		for i := 0; i < want.TolerationsLen(); i++ {
-			wantT := want.TolerationsGet(i)
-			gotT := got.TolerationsGet(i)
+		for i := 0; i < want.TolerationsLen(ctx); i++ {
+			wantT := want.TolerationsGet(ctx, i)
+			gotT := got.TolerationsGet(ctx, i)
 			if wantT.Key() != gotT.Key() {
 				t.Errorf("Tolerations[%d].Key: got %q, want %q", i, gotT.Key(), wantT.Key())
 			}
@@ -299,12 +301,12 @@ func verifyPodSpec(t *testing.T, want, got clawpod.PodSpec) {
 	}
 
 	// Verify HostAliases
-	if want.HostAliasesLen() != got.HostAliasesLen() {
-		t.Errorf("PodSpec.HostAliasesLen: got %d, want %d", got.HostAliasesLen(), want.HostAliasesLen())
+	if want.HostAliasesLen(ctx) != got.HostAliasesLen(ctx) {
+		t.Errorf("PodSpec.HostAliasesLen: got %d, want %d", got.HostAliasesLen(ctx), want.HostAliasesLen(ctx))
 	} else {
-		for i := 0; i < want.HostAliasesLen(); i++ {
-			wantHA := want.HostAliasesGet(i)
-			gotHA := got.HostAliasesGet(i)
+		for i := 0; i < want.HostAliasesLen(ctx); i++ {
+			wantHA := want.HostAliasesGet(ctx, i)
+			gotHA := got.HostAliasesGet(ctx, i)
 			if wantHA.Ip() != gotHA.Ip() {
 				t.Errorf("HostAliases[%d].Ip: got %q, want %q", i, gotHA.Ip(), wantHA.Ip())
 			}
@@ -336,7 +338,7 @@ func verifyPodSpec(t *testing.T, want, got clawpod.PodSpec) {
 	verifyAffinity(t, want.Affinity(), got.Affinity())
 }
 
-func verifyContainer(t *testing.T, name string, want, got clawpod.Container) {
+func verifyContainer(t *testing.T, ctx context.Context, name string, want, got clawpod.Container) {
 	t.Helper()
 
 	if want.Name() != got.Name() {
@@ -377,12 +379,12 @@ func verifyContainer(t *testing.T, name string, want, got clawpod.Container) {
 	}
 
 	// Verify Ports
-	if want.PortsLen() != got.PortsLen() {
-		t.Errorf("%s.PortsLen: got %d, want %d", name, got.PortsLen(), want.PortsLen())
+	if want.PortsLen(ctx) != got.PortsLen(ctx) {
+		t.Errorf("%s.PortsLen: got %d, want %d", name, got.PortsLen(ctx), want.PortsLen(ctx))
 	} else {
-		for i := 0; i < want.PortsLen(); i++ {
-			wantP := want.PortsGet(i)
-			gotP := got.PortsGet(i)
+		for i := 0; i < want.PortsLen(ctx); i++ {
+			wantP := want.PortsGet(ctx, i)
+			gotP := got.PortsGet(ctx, i)
 			if wantP.Name() != gotP.Name() {
 				t.Errorf("%s.Ports[%d].Name: got %q, want %q", name, i, gotP.Name(), wantP.Name())
 			}
@@ -396,12 +398,12 @@ func verifyContainer(t *testing.T, name string, want, got clawpod.Container) {
 	}
 
 	// Verify Env
-	if want.EnvLen() != got.EnvLen() {
-		t.Errorf("%s.EnvLen: got %d, want %d", name, got.EnvLen(), want.EnvLen())
+	if want.EnvLen(ctx) != got.EnvLen(ctx) {
+		t.Errorf("%s.EnvLen: got %d, want %d", name, got.EnvLen(ctx), want.EnvLen(ctx))
 	} else {
-		for i := 0; i < want.EnvLen(); i++ {
-			wantE := want.EnvGet(i)
-			gotE := got.EnvGet(i)
+		for i := 0; i < want.EnvLen(ctx); i++ {
+			wantE := want.EnvGet(ctx, i)
+			gotE := got.EnvGet(ctx, i)
 			if wantE.Name() != gotE.Name() {
 				t.Errorf("%s.Env[%d].Name: got %q, want %q", name, i, gotE.Name(), wantE.Name())
 			}
@@ -414,12 +416,12 @@ func verifyContainer(t *testing.T, name string, want, got clawpod.Container) {
 	// Verify Resources
 	wantRes := want.Resources()
 	gotRes := got.Resources()
-	if wantRes.LimitsLen() != gotRes.LimitsLen() {
-		t.Errorf("%s.Resources.LimitsLen: got %d, want %d", name, gotRes.LimitsLen(), wantRes.LimitsLen())
+	if wantRes.LimitsLen(ctx) != gotRes.LimitsLen(ctx) {
+		t.Errorf("%s.Resources.LimitsLen: got %d, want %d", name, gotRes.LimitsLen(ctx), wantRes.LimitsLen(ctx))
 	} else {
-		for i := 0; i < wantRes.LimitsLen(); i++ {
-			wantL := wantRes.LimitsGet(i)
-			gotL := gotRes.LimitsGet(i)
+		for i := 0; i < wantRes.LimitsLen(ctx); i++ {
+			wantL := wantRes.LimitsGet(ctx, i)
+			gotL := gotRes.LimitsGet(ctx, i)
 			if wantL.Key() != gotL.Key() {
 				t.Errorf("%s.Resources.Limits[%d].Key: got %q, want %q", name, i, gotL.Key(), wantL.Key())
 			}
@@ -428,12 +430,12 @@ func verifyContainer(t *testing.T, name string, want, got clawpod.Container) {
 			}
 		}
 	}
-	if wantRes.RequestsLen() != gotRes.RequestsLen() {
-		t.Errorf("%s.Resources.RequestsLen: got %d, want %d", name, gotRes.RequestsLen(), wantRes.RequestsLen())
+	if wantRes.RequestsLen(ctx) != gotRes.RequestsLen(ctx) {
+		t.Errorf("%s.Resources.RequestsLen: got %d, want %d", name, gotRes.RequestsLen(ctx), wantRes.RequestsLen(ctx))
 	} else {
-		for i := 0; i < wantRes.RequestsLen(); i++ {
-			wantR := wantRes.RequestsGet(i)
-			gotR := gotRes.RequestsGet(i)
+		for i := 0; i < wantRes.RequestsLen(ctx); i++ {
+			wantR := wantRes.RequestsGet(ctx, i)
+			gotR := gotRes.RequestsGet(ctx, i)
 			if wantR.Key() != gotR.Key() {
 				t.Errorf("%s.Resources.Requests[%d].Key: got %q, want %q", name, i, gotR.Key(), wantR.Key())
 			}
@@ -444,12 +446,12 @@ func verifyContainer(t *testing.T, name string, want, got clawpod.Container) {
 	}
 
 	// Verify VolumeMounts
-	if want.VolumeMountsLen() != got.VolumeMountsLen() {
-		t.Errorf("%s.VolumeMountsLen: got %d, want %d", name, got.VolumeMountsLen(), want.VolumeMountsLen())
+	if want.VolumeMountsLen(ctx) != got.VolumeMountsLen(ctx) {
+		t.Errorf("%s.VolumeMountsLen: got %d, want %d", name, got.VolumeMountsLen(ctx), want.VolumeMountsLen(ctx))
 	} else {
-		for i := 0; i < want.VolumeMountsLen(); i++ {
-			wantVM := want.VolumeMountsGet(i)
-			gotVM := got.VolumeMountsGet(i)
+		for i := 0; i < want.VolumeMountsLen(ctx); i++ {
+			wantVM := want.VolumeMountsGet(ctx, i)
+			gotVM := got.VolumeMountsGet(ctx, i)
 			if wantVM.Name() != gotVM.Name() {
 				t.Errorf("%s.VolumeMounts[%d].Name: got %q, want %q", name, i, gotVM.Name(), wantVM.Name())
 			}
@@ -558,6 +560,7 @@ func verifyDnsConfig(t *testing.T, want, got clawpod.PodDNSConfig) {
 
 func verifyAffinity(t *testing.T, want, got clawpod.Affinity) {
 	t.Helper()
+	ctx := context.Background()
 
 	// Verify NodeAffinity
 	wantNA := want.NodeAffinity()
@@ -566,23 +569,23 @@ func verifyAffinity(t *testing.T, want, got clawpod.Affinity) {
 	wantNS := wantNA.RequiredDuringSchedulingIgnoredDuringExecution()
 	gotNS := gotNA.RequiredDuringSchedulingIgnoredDuringExecution()
 
-	if wantNS.NodeSelectorTermsLen() != gotNS.NodeSelectorTermsLen() {
-		t.Errorf("Affinity.NodeAffinity.NodeSelectorTermsLen: got %d, want %d", gotNS.NodeSelectorTermsLen(), wantNS.NodeSelectorTermsLen())
+	if wantNS.NodeSelectorTermsLen(ctx) != gotNS.NodeSelectorTermsLen(ctx) {
+		t.Errorf("Affinity.NodeAffinity.NodeSelectorTermsLen: got %d, want %d", gotNS.NodeSelectorTermsLen(ctx), wantNS.NodeSelectorTermsLen(ctx))
 		return
 	}
 
-	for i := 0; i < wantNS.NodeSelectorTermsLen(); i++ {
-		wantTerm := wantNS.NodeSelectorTermsGet(i)
-		gotTerm := gotNS.NodeSelectorTermsGet(i)
+	for i := 0; i < wantNS.NodeSelectorTermsLen(ctx); i++ {
+		wantTerm := wantNS.NodeSelectorTermsGet(ctx, i)
+		gotTerm := gotNS.NodeSelectorTermsGet(ctx, i)
 
-		if wantTerm.MatchExpressionsLen() != gotTerm.MatchExpressionsLen() {
-			t.Errorf("Affinity.NodeSelectorTerms[%d].MatchExpressionsLen: got %d, want %d", i, gotTerm.MatchExpressionsLen(), wantTerm.MatchExpressionsLen())
+		if wantTerm.MatchExpressionsLen(ctx) != gotTerm.MatchExpressionsLen(ctx) {
+			t.Errorf("Affinity.NodeSelectorTerms[%d].MatchExpressionsLen: got %d, want %d", i, gotTerm.MatchExpressionsLen(ctx), wantTerm.MatchExpressionsLen(ctx))
 			continue
 		}
 
-		for j := 0; j < wantTerm.MatchExpressionsLen(); j++ {
-			wantExpr := wantTerm.MatchExpressionsGet(j)
-			gotExpr := gotTerm.MatchExpressionsGet(j)
+		for j := 0; j < wantTerm.MatchExpressionsLen(ctx); j++ {
+			wantExpr := wantTerm.MatchExpressionsGet(ctx, j)
+			gotExpr := gotTerm.MatchExpressionsGet(ctx, j)
 
 			if wantExpr.Key() != gotExpr.Key() {
 				t.Errorf("Affinity.MatchExpressions[%d].Key: got %q, want %q", j, gotExpr.Key(), wantExpr.Key())
@@ -608,14 +611,14 @@ func verifyAffinity(t *testing.T, want, got clawpod.Affinity) {
 	wantPA := want.PodAffinity()
 	gotPA := got.PodAffinity()
 
-	if wantPA.RequiredDuringSchedulingIgnoredDuringExecutionLen() != gotPA.RequiredDuringSchedulingIgnoredDuringExecutionLen() {
-		t.Errorf("Affinity.PodAffinity.RequiredTermsLen: got %d, want %d", gotPA.RequiredDuringSchedulingIgnoredDuringExecutionLen(), wantPA.RequiredDuringSchedulingIgnoredDuringExecutionLen())
+	if wantPA.RequiredDuringSchedulingIgnoredDuringExecutionLen(ctx) != gotPA.RequiredDuringSchedulingIgnoredDuringExecutionLen(ctx) {
+		t.Errorf("Affinity.PodAffinity.RequiredTermsLen: got %d, want %d", gotPA.RequiredDuringSchedulingIgnoredDuringExecutionLen(ctx), wantPA.RequiredDuringSchedulingIgnoredDuringExecutionLen(ctx))
 		return
 	}
 
-	for i := 0; i < wantPA.RequiredDuringSchedulingIgnoredDuringExecutionLen(); i++ {
-		wantPATerm := wantPA.RequiredDuringSchedulingIgnoredDuringExecutionGet(i)
-		gotPATerm := gotPA.RequiredDuringSchedulingIgnoredDuringExecutionGet(i)
+	for i := 0; i < wantPA.RequiredDuringSchedulingIgnoredDuringExecutionLen(ctx); i++ {
+		wantPATerm := wantPA.RequiredDuringSchedulingIgnoredDuringExecutionGet(ctx, i)
+		gotPATerm := gotPA.RequiredDuringSchedulingIgnoredDuringExecutionGet(ctx, i)
 
 		if wantPATerm.TopologyKey() != gotPATerm.TopologyKey() {
 			t.Errorf("Affinity.PodAffinityTerms[%d].TopologyKey: got %q, want %q", i, gotPATerm.TopologyKey(), wantPATerm.TopologyKey())
@@ -624,12 +627,12 @@ func verifyAffinity(t *testing.T, want, got clawpod.Affinity) {
 		wantLS := wantPATerm.LabelSelector()
 		gotLS := gotPATerm.LabelSelector()
 
-		if wantLS.MatchLabelsLen() != gotLS.MatchLabelsLen() {
-			t.Errorf("Affinity.PodAffinityTerms[%d].LabelSelector.MatchLabelsLen: got %d, want %d", i, gotLS.MatchLabelsLen(), wantLS.MatchLabelsLen())
+		if wantLS.MatchLabelsLen(ctx) != gotLS.MatchLabelsLen(ctx) {
+			t.Errorf("Affinity.PodAffinityTerms[%d].LabelSelector.MatchLabelsLen: got %d, want %d", i, gotLS.MatchLabelsLen(ctx), wantLS.MatchLabelsLen(ctx))
 		} else {
-			for j := 0; j < wantLS.MatchLabelsLen(); j++ {
-				wantML := wantLS.MatchLabelsGet(j)
-				gotML := gotLS.MatchLabelsGet(j)
+			for j := 0; j < wantLS.MatchLabelsLen(ctx); j++ {
+				wantML := wantLS.MatchLabelsGet(ctx, j)
+				gotML := gotLS.MatchLabelsGet(ctx, j)
 				if wantML.Key() != gotML.Key() {
 					t.Errorf("Affinity.MatchLabels[%d].Key: got %q, want %q", j, gotML.Key(), wantML.Key())
 				}
@@ -643,18 +646,19 @@ func verifyAffinity(t *testing.T, want, got clawpod.Affinity) {
 
 func verifyPodStatus(t *testing.T, want, got clawpod.PodStatus) {
 	t.Helper()
+	ctx := context.Background()
 
 	if want.Phase() != got.Phase() {
 		t.Errorf("PodStatus.Phase: got %v, want %v", got.Phase(), want.Phase())
 	}
 
 	// Verify Conditions
-	if want.ConditionsLen() != got.ConditionsLen() {
-		t.Errorf("PodStatus.ConditionsLen: got %d, want %d", got.ConditionsLen(), want.ConditionsLen())
+	if want.ConditionsLen(ctx) != got.ConditionsLen(ctx) {
+		t.Errorf("PodStatus.ConditionsLen: got %d, want %d", got.ConditionsLen(ctx), want.ConditionsLen(ctx))
 	} else {
-		for i := 0; i < want.ConditionsLen(); i++ {
-			wantC := want.ConditionsGet(i)
-			gotC := got.ConditionsGet(i)
+		for i := 0; i < want.ConditionsLen(ctx); i++ {
+			wantC := want.ConditionsGet(ctx, i)
+			gotC := got.ConditionsGet(ctx, i)
 			if wantC.Type() != gotC.Type() {
 				t.Errorf("PodConditions[%d].Type: got %v, want %v", i, gotC.Type(), wantC.Type())
 			}
@@ -678,12 +682,12 @@ func verifyPodStatus(t *testing.T, want, got clawpod.PodStatus) {
 	}
 
 	// Verify PodIPs
-	if want.PodIpsLen() != got.PodIpsLen() {
-		t.Errorf("PodStatus.PodIpsLen: got %d, want %d", got.PodIpsLen(), want.PodIpsLen())
+	if want.PodIpsLen(ctx) != got.PodIpsLen(ctx) {
+		t.Errorf("PodStatus.PodIpsLen: got %d, want %d", got.PodIpsLen(ctx), want.PodIpsLen(ctx))
 	} else {
-		for i := 0; i < want.PodIpsLen(); i++ {
-			if want.PodIpsGet(i).Ip() != got.PodIpsGet(i).Ip() {
-				t.Errorf("PodIPs[%d].Ip: got %q, want %q", i, got.PodIpsGet(i).Ip(), want.PodIpsGet(i).Ip())
+		for i := 0; i < want.PodIpsLen(ctx); i++ {
+			if want.PodIpsGet(ctx, i).Ip() != got.PodIpsGet(ctx, i).Ip() {
+				t.Errorf("PodIPs[%d].Ip: got %q, want %q", i, got.PodIpsGet(ctx, i).Ip(), want.PodIpsGet(ctx, i).Ip())
 			}
 		}
 	}
@@ -694,12 +698,12 @@ func verifyPodStatus(t *testing.T, want, got clawpod.PodStatus) {
 	}
 
 	// Verify ContainerStatuses
-	if want.ContainerStatusesLen() != got.ContainerStatusesLen() {
-		t.Errorf("PodStatus.ContainerStatusesLen: got %d, want %d", got.ContainerStatusesLen(), want.ContainerStatusesLen())
+	if want.ContainerStatusesLen(ctx) != got.ContainerStatusesLen(ctx) {
+		t.Errorf("PodStatus.ContainerStatusesLen: got %d, want %d", got.ContainerStatusesLen(ctx), want.ContainerStatusesLen(ctx))
 	} else {
-		for i := 0; i < want.ContainerStatusesLen(); i++ {
-			wantCS := want.ContainerStatusesGet(i)
-			gotCS := got.ContainerStatusesGet(i)
+		for i := 0; i < want.ContainerStatusesLen(ctx); i++ {
+			wantCS := want.ContainerStatusesGet(ctx, i)
+			gotCS := got.ContainerStatusesGet(ctx, i)
 			if wantCS.Name() != gotCS.Name() {
 				t.Errorf("ContainerStatuses[%d].Name: got %q, want %q", i, gotCS.Name(), wantCS.Name())
 			}

@@ -116,7 +116,7 @@ type Op struct {
 // NewOp creates a new pooled instance of Op.
 // Call Release() when done to return it to the pool for reuse.
 func NewOp(ctx context.Context) Op {
-    s := segment.NewPooled(ctx, XXXMappingOp)
+    s := segment.New(ctx, XXXMappingOp)
     return Op{
         s: s,
     }
@@ -125,7 +125,7 @@ func NewOp(ctx context.Context) Op {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Op) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewOpFrom creates a new Op from our internal Struct representation.
@@ -138,14 +138,22 @@ func XXXNewOpFrom(s *segment.Struct) Op {
     return Op{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Op) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Op) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Op) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -271,7 +279,7 @@ func NewOpFromRaw(ctx context.Context, raw OpRaw) Op {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Op) ToRaw() OpRaw {
+func (x Op) ToRaw(ctx context.Context) OpRaw {
     raw := OpRaw{}
     raw.FieldNum = x.FieldNum()
     raw.Type = x.Type()
@@ -281,7 +289,6 @@ func (x Op) ToRaw() OpRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -300,7 +307,7 @@ type Patch struct {
 // NewPatch creates a new pooled instance of Patch.
 // Call Release() when done to return it to the pool for reuse.
 func NewPatch(ctx context.Context) Patch {
-    s := segment.NewPooled(ctx, XXXMappingPatch)
+    s := segment.New(ctx, XXXMappingPatch)
     return Patch{
         s: s,
     }
@@ -309,7 +316,7 @@ func NewPatch(ctx context.Context) Patch {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Patch) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewPatchFrom creates a new Patch from our internal Struct representation.
@@ -322,14 +329,22 @@ func XXXNewPatchFrom(s *segment.Struct) Patch {
     return Patch{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Patch) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Patch) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Patch) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -356,43 +371,43 @@ func (x Patch) SetVersion(value uint8) Patch {
 // Ops is the list of operations to apply.
 // OpsList returns the underlying Structs list for iteration.
 // Use NewOp() to create items and Append to add them.
-func (x Patch) OpsList() *segment.Structs {
+func (x Patch) OpsList(ctx context.Context) *segment.Structs {
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, 1, XXXMappingOp); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, 1, XXXMappingOp); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, 1, XXXMappingOp)
+    structs := segment.NewStructs(ctx, x.s, 1, XXXMappingOp)
     return structs
 }
 
 // OpsLen returns the number of items in the list.
-func (x Patch) OpsLen() int {
-    return x.OpsList().Len()
+func (x Patch) OpsLen(ctx context.Context) int {
+    return x.OpsList(ctx).Len()
 }
 
 // OpsGet returns the item at the given index.
-func (x Patch) OpsGet(index int) Op {
-    s := x.OpsList().Get(index)
+func (x Patch) OpsGet(ctx context.Context, index int) Op {
+    s := x.OpsList(ctx).Get(index)
     return Op{s: s}
 }
 
 // OpsAppend appends items to the list.
-func (x Patch) OpsAppend(values ...Op) {
-    list := x.OpsList()
+func (x Patch) OpsAppend(ctx context.Context, values ...Op) {
+    list := x.OpsList(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // AppendOps is an alias for OpsAppend for backwards compatibility.
-func (x Patch) AppendOps(values ...Op) {
-    x.OpsAppend(values...)
+func (x Patch) AppendOps(ctx context.Context, values ...Op) {
+    x.OpsAppend(ctx, values...)
 }
 
 // OpsAppendRaw appends items to the list using Raw struct representations.
 func (x Patch) OpsAppendRaw(ctx context.Context, values ...*OpRaw) {
-    list := x.OpsList()
+    list := x.OpsList(ctx)
     for _, raw := range values {
         if raw != nil {
             list.Append(NewOpFromRaw(ctx, *raw).XXXGetStruct())
@@ -454,7 +469,7 @@ func NewPatchFromRaw(ctx context.Context, raw PatchRaw) Patch {
         x.SetVersion(raw.Version)
     }
     if raw.Ops != nil {
-        list := x.OpsList()
+        list := x.OpsList(ctx)
         items := make([]*segment.Struct, 0, len(raw.Ops))
         for _, r := range raw.Ops {
             if r != nil {
@@ -467,7 +482,7 @@ func NewPatchFromRaw(ctx context.Context, raw PatchRaw) Patch {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Patch) ToRaw() PatchRaw {
+func (x Patch) ToRaw(ctx context.Context) PatchRaw {
     raw := PatchRaw{}
     raw.Version = x.Version()
     if l := x.s.GetList(1); l != nil && l.(*segment.Structs).Len() > 0 {
@@ -475,21 +490,20 @@ func (x Patch) ToRaw() PatchRaw {
         raw.Ops = make([]*OpRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Op{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Ops[i] = &itemRaw
         }
     } else if x.s.HasField(1) {
-        list := x.OpsList()
+        list := x.OpsList(ctx)
         raw.Ops = make([]*OpRaw, list.Len())
         for i := 0; i < list.Len(); i++ {
             item := Op{s: list.Get(i)}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Ops[i] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

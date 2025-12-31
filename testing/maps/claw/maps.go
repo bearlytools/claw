@@ -47,7 +47,7 @@ type ComplexMaps struct {
 // NewComplexMaps creates a new pooled instance of ComplexMaps.
 // Call Release() when done to return it to the pool for reuse.
 func NewComplexMaps(ctx context.Context) ComplexMaps {
-    s := segment.NewPooled(ctx, XXXMappingComplexMaps)
+    s := segment.New(ctx, XXXMappingComplexMaps)
     s.SetIsSetEnabled(true)
     return ComplexMaps{
         s: s,
@@ -57,7 +57,7 @@ func NewComplexMaps(ctx context.Context) ComplexMaps {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x ComplexMaps) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewComplexMapsFrom creates a new ComplexMaps from our internal Struct representation.
@@ -70,14 +70,22 @@ func XXXNewComplexMapsFrom(s *segment.Struct) ComplexMaps {
     return ComplexMaps{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x ComplexMaps) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x ComplexMaps) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x ComplexMaps) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -197,7 +205,7 @@ func NewComplexMapsFromRaw(ctx context.Context, raw ComplexMapsRaw) ComplexMaps 
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x ComplexMaps) ToRaw() ComplexMapsRaw {
+func (x ComplexMaps) ToRaw(ctx context.Context) ComplexMapsRaw {
     raw := ComplexMapsRaw{}
     // For maps, check if there's a cached dirty map or field data
     // Don't use HasField alone as the map may not have been synced yet
@@ -205,13 +213,12 @@ func (x ComplexMaps) ToRaw() ComplexMapsRaw {
         raw.Settings = make(map[string]*SettingRaw)
         for k, v := range m.All() {
             item := Setting{s: v}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.Settings[k] = &itemRaw
         }
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -229,7 +236,7 @@ type Config struct {
 // NewConfig creates a new pooled instance of Config.
 // Call Release() when done to return it to the pool for reuse.
 func NewConfig(ctx context.Context) Config {
-    s := segment.NewPooled(ctx, XXXMappingConfig)
+    s := segment.New(ctx, XXXMappingConfig)
     s.SetIsSetEnabled(true)
     return Config{
         s: s,
@@ -239,7 +246,7 @@ func NewConfig(ctx context.Context) Config {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Config) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewConfigFrom creates a new Config from our internal Struct representation.
@@ -252,14 +259,22 @@ func XXXNewConfigFrom(s *segment.Struct) Config {
     return Config{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Config) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Config) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Config) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -564,7 +579,7 @@ func NewConfigFromRaw(ctx context.Context, raw ConfigRaw) Config {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Config) ToRaw() ConfigRaw {
+func (x Config) ToRaw(ctx context.Context) ConfigRaw {
     raw := ConfigRaw{}
     // For maps, check if there's a cached dirty map or field data
     // Don't use HasField alone as the map may not have been synced yet
@@ -608,7 +623,6 @@ func (x Config) ToRaw() ConfigRaw {
     }
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used
@@ -626,7 +640,7 @@ type Setting struct {
 // NewSetting creates a new pooled instance of Setting.
 // Call Release() when done to return it to the pool for reuse.
 func NewSetting(ctx context.Context) Setting {
-    s := segment.NewPooled(ctx, XXXMappingSetting)
+    s := segment.New(ctx, XXXMappingSetting)
     s.SetIsSetEnabled(true)
     return Setting{
         s: s,
@@ -636,7 +650,7 @@ func NewSetting(ctx context.Context) Setting {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Setting) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewSettingFrom creates a new Setting from our internal Struct representation.
@@ -649,14 +663,22 @@ func XXXNewSettingFrom(s *segment.Struct) Setting {
     return Setting{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Setting) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Setting) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Setting) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -769,14 +791,13 @@ func NewSettingFromRaw(ctx context.Context, raw SettingRaw) Setting {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Setting) ToRaw() SettingRaw {
+func (x Setting) ToRaw(ctx context.Context) SettingRaw {
     raw := SettingRaw{}
     raw.Name = x.Name()
     raw.Value = x.Value()
     raw.Priority = x.Priority()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

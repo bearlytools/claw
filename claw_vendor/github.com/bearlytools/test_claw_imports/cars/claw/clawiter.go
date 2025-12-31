@@ -4,6 +4,7 @@
 package cars
 
 import (
+    "context"
     "iter"
     "math"
 
@@ -15,11 +16,12 @@ import (
 
 // Ensure imports are used.
 var _ = math.Float32bits
+var _ context.Context
 
 
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x Car) Walk() iter.Seq[clawiter.Token] {
+func (x Car) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
         if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Car"}) {
             return

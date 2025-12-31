@@ -131,7 +131,7 @@ func (x *Patch) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
                 if err := item.XXXIngestFrom(ctx, ts, opts); err != nil {
                     return fmt.Errorf("ingesting Ops[]: %w", err)
                 }
-                x.OpsAppend(item)
+                x.OpsAppend(ctx, item)
             }
         default:
             if opts.IgnoreUnknownFields {

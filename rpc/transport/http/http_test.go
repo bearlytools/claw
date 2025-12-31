@@ -238,7 +238,7 @@ func TestHTTPTransportConnectionClose(t *testing.T) {
 	// Connect via HTTP transport (uses h2c for HTTP/2 cleartext).
 	transport, err := Dial(ctx, httpServer.URL)
 	if err != nil {
-		t.Fatalf("[TestHTTPTransportConnectionClose]: failed to dial: %v", err)
+		t.Fatalf("TestHTTPTransportConnectionClose: failed to dial: %v", err)
 	}
 
 	conn := client.New(ctx, transport)
@@ -246,7 +246,7 @@ func TestHTTPTransportConnectionClose(t *testing.T) {
 	// Create a session.
 	syncClient, err := conn.Sync(ctx, "test", "TestService", "Echo")
 	if err != nil {
-		t.Fatalf("[TestHTTPTransportConnectionClose]: failed to create sync client: %v", err)
+		t.Fatalf("TestHTTPTransportConnectionClose: failed to create sync client: %v", err)
 	}
 
 	// Close the connection.
@@ -256,7 +256,7 @@ func TestHTTPTransportConnectionClose(t *testing.T) {
 	// Verify session operations fail.
 	_, err = syncClient.Call(ctx, []byte("test"))
 	if err == nil {
-		t.Errorf("[TestHTTPTransportConnectionClose]: expected error after connection close, got nil")
+		t.Errorf("TestHTTPTransportConnectionClose: expected error after connection close, got nil")
 	}
 
 	// Verify Err() returns the fatal error.

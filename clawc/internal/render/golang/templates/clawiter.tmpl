@@ -4,6 +4,7 @@
 package {{ .File.Package }}
 
 import (
+    "context"
     "iter"
     "math"
 
@@ -16,13 +17,14 @@ import (
 
 // Ensure imports are used.
 var _ = math.Float32bits
+var _ context.Context
 
 {{- $file := .File }}
 
 {{ range $structIndex, $struct := .File.Structs }}
 // Walk returns an iterator that emits tokens for serialization.
 // This walks all fields including nested structs and lists.
-func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
+func (x {{ $struct.Name }}) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
     return func(yield func(clawiter.Token) bool) {
         if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "{{ $struct.Name }}"}) {
             return
@@ -149,7 +151,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk() {
+                for tok := range nested.Walk(ctx) {
                     if !yield(tok) {
                         return
                     }
@@ -502,7 +504,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
         }
         {{- else if eq $field.TypeAsString "ListStructs" }}
         {
-            list := x.{{ $field.Name }}List()
+            list := x.{{ $field.Name }}List(ctx)
             listLen := list.Len()
             if listLen == 0 {
                 if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListStructs, StructName: "{{ $field.IdentName }}", IsNil: true}) {
@@ -516,8 +518,8 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
                     return
                 }
                 for i := 0; i < listLen; i++ {
-                    item := x.{{ $field.Name }}Get(i)
-                    for tok := range item.Walk() {
+                    item := x.{{ $field.Name }}Get(ctx, i)
+                    for tok := range item.Walk(ctx) {
                         if !yield(tok) {
                             return
                         }
@@ -587,7 +589,7 @@ func (x {{ $struct.Name }}) Walk() iter.Seq[clawiter.Token] {
                         {{- else }}
                         wrapped := XXXNew{{ $field.ValueIdentName }}From(v)
                         {{- end }}
-                        for structTok := range wrapped.Walk() {
+                        for structTok := range wrapped.Walk(ctx) {
                             if !yield(structTok) {
                                 return
                             }

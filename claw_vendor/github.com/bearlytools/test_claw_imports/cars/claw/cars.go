@@ -91,7 +91,7 @@ type Car struct {
 // NewCar creates a new pooled instance of Car.
 // Call Release() when done to return it to the pool for reuse.
 func NewCar(ctx context.Context) Car {
-    s := segment.NewPooled(ctx, XXXMappingCar)
+    s := segment.New(ctx, XXXMappingCar)
     return Car{
         s: s,
     }
@@ -100,7 +100,7 @@ func NewCar(ctx context.Context) Car {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x Car) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNewCarFrom creates a new Car from our internal Struct representation.
@@ -113,14 +113,22 @@ func XXXNewCarFrom(s *segment.Struct) Car {
     return Car{s: s}
 }
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x Car) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Car) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x Car) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -225,14 +233,13 @@ func NewCarFromRaw(ctx context.Context, raw CarRaw) Car {
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x Car) ToRaw() CarRaw {
+func (x Car) ToRaw(ctx context.Context) CarRaw {
     raw := CarRaw{}
     raw.Manufacturer = x.Manufacturer()
     raw.Model = x.Model()
     raw.Year = x.Year()
     return raw
 }
-
  
 
 // XXXDescr returns the Struct's descriptor. This should only be used

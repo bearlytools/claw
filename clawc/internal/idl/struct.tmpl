@@ -12,7 +12,7 @@ type {{ .Name }} struct {
 // New{{ .Name }} creates a new pooled instance of {{ .Name }}.
 // Call Release() when done to return it to the pool for reuse.
 func New{{ .Name }}(ctx context.Context) {{ .Name }} {
-    s := segment.NewPooled(ctx, XXXMapping{{ .Name }})
+    s := segment.New(ctx, XXXMapping{{ .Name }})
     {{- if $isSetEnabled }}
     s.SetIsSetEnabled(true)
     {{- end }}
@@ -24,7 +24,7 @@ func New{{ .Name }}(ctx context.Context) {{ .Name }} {
 // Release returns the struct to the pool for reuse.
 // After calling Release, the struct should not be used.
 func (x {{ .Name }}) Release(ctx context.Context) {
-    segment.Release(ctx, x.s)
+    x.s.Release(ctx)
 }
 
 // XXXNew{{ .Name }}From creates a new {{ .Name }} from our internal Struct representation.
@@ -39,14 +39,22 @@ func XXXNew{{ .Name }}From(s *segment.Struct) {{ .Name }} {
 
 {{- $struct := . }}
 
-// Marshal marshal's the Struct to []byte.
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
 func (x {{ $struct.Name }}) Marshal() ([]byte, error) {
-    return x.s.MarshalBytes()
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x {{ $struct.Name }}) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
 }
 
 // MarshalWriter marshals to an io.Writer.
 func (x {{ $struct.Name }}) MarshalWriter(w io.Writer) (n int, err error) {
-    return x.s.Marshal(w)
+    return x.s.MarshalWriter(w)
 }
 
 // Unmarshal unmarshals b into the Struct.
@@ -485,33 +493,33 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 {{ end -}}
 // {{ $field.Name }}List returns the underlying Structs list for iteration.
 // Use New{{ $field.IdentInFile }}() to create items and Append to add them.
-func (x {{ $struct.Name }}) {{ $field.Name }}List() *segment.Structs {
+func (x {{ $struct.Name }}) {{ $field.Name }}List(ctx context.Context) *segment.Structs {
     {{- if $field.IsExternal }}
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, {{ $field.Index }}, {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }}); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, {{ $field.Index }}, {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }}); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, {{ $field.Index }}, {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }})
+    structs := segment.NewStructs(ctx, x.s, {{ $field.Index }}, {{ $field.Package }}.XXXMapping{{ $field.IdentInFile }})
     {{- else }}
     // Try to get cached or parse from segment
-    if structs := segment.GetListStructs(x.s, {{ $field.Index }}, XXXMapping{{ $field.IdentInFile }}); structs != nil {
+    if structs := segment.GetListStructs(ctx, x.s, {{ $field.Index }}, XXXMapping{{ $field.IdentInFile }}); structs != nil {
         return structs
     }
     // Create new empty list if no data exists
-    structs := segment.NewStructs(x.s, {{ $field.Index }}, XXXMapping{{ $field.IdentInFile }})
+    structs := segment.NewStructs(ctx, x.s, {{ $field.Index }}, XXXMapping{{ $field.IdentInFile }})
     {{- end }}
     return structs
 }
 
 // {{ $field.Name }}Len returns the number of items in the list.
-func (x {{ $struct.Name }}) {{ $field.Name }}Len() int {
-    return x.{{ $field.Name }}List().Len()
+func (x {{ $struct.Name }}) {{ $field.Name }}Len(ctx context.Context) int {
+    return x.{{ $field.Name }}List(ctx).Len()
 }
 
 // {{ $field.Name }}Get returns the item at the given index.
-func (x {{ $struct.Name }}) {{ $field.Name }}Get(index int) {{ $field.IdentName }} {
-    s := x.{{ $field.Name }}List().Get(index)
+func (x {{ $struct.Name }}) {{ $field.Name }}Get(ctx context.Context, index int) {{ $field.IdentName }} {
+    s := x.{{ $field.Name }}List(ctx).Get(index)
     {{- if $field.IsExternal }}
     return {{ $field.Package }}.XXXNew{{ $field.IdentInFile }}From(s)
     {{- else }}
@@ -520,21 +528,21 @@ func (x {{ $struct.Name }}) {{ $field.Name }}Get(index int) {{ $field.IdentName 
 }
 
 // {{ $field.Name }}Append appends items to the list.
-func (x {{ $struct.Name }}) {{ $field.Name }}Append(values ...{{ $field.IdentName }}) {
-    list := x.{{ $field.Name }}List()
+func (x {{ $struct.Name }}) {{ $field.Name }}Append(ctx context.Context, values ...{{ $field.IdentName }}) {
+    list := x.{{ $field.Name }}List(ctx)
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
 }
 
 // Append{{ $field.Name }} is an alias for {{ $field.Name }}Append for backwards compatibility.
-func (x {{ $struct.Name }}) Append{{ $field.Name }}(values ...{{ $field.IdentName }}) {
-    x.{{ $field.Name }}Append(values...)
+func (x {{ $struct.Name }}) Append{{ $field.Name }}(ctx context.Context, values ...{{ $field.IdentName }}) {
+    x.{{ $field.Name }}Append(ctx, values...)
 }
 
 // {{ $field.Name }}AppendRaw appends items to the list using Raw struct representations.
 func (x {{ $struct.Name }}) {{ $field.Name }}AppendRaw(ctx context.Context, values ...*{{ if $field.IsExternal }}{{ $field.Package }}.{{ $field.IdentInFile }}{{ else }}{{ $field.IdentName }}{{ end }}Raw) {
-    list := x.{{ $field.Name }}List()
+    list := x.{{ $field.Name }}List(ctx)
     for _, raw := range values {
         if raw != nil {
             {{- if $field.IsExternal }}
@@ -744,7 +752,7 @@ func New{{ $struct.Name }}FromRaw(ctx context.Context, raw {{ $struct.Name }}Raw
     }
 {{- else if eq $field.TypeAsString "ListStructs" }}
     if raw.{{ $field.Name }} != nil {
-        list := x.{{ $field.Name }}List()
+        list := x.{{ $field.Name }}List(ctx)
         items := make([]*segment.Struct, 0, len(raw.{{ $field.Name }}))
         for _, r := range raw.{{ $field.Name }} {
             if r != nil {
@@ -782,7 +790,7 @@ func New{{ $struct.Name }}FromRaw(ctx context.Context, raw {{ $struct.Name }}Raw
 }
 
 // ToRaw converts the struct to a plain Go struct representation.
-func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
+func (x {{ $struct.Name }}) ToRaw(ctx context.Context) {{ $struct.Name }}Raw {
     raw := {{ $struct.Name }}Raw{}
 {{- range $field := .Fields }}
 {{- if eq $field.TypeAsString "Bool" "Int8" "Int16" "Int32" "Int64" "Uint8" "Uint16" "Uint32" "Uint64" "Float32" "Float64" "String" }}
@@ -793,7 +801,7 @@ func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
     }
 {{- else if eq $field.TypeAsString "Struct" }}
     if x.s.HasField({{ $field.Index }}) {
-        nestedRaw := x.{{ $field.Name }}().ToRaw()
+        nestedRaw := x.{{ $field.Name }}().ToRaw(ctx)
         raw.{{ $field.Name }} = &nestedRaw
     }
 {{- else if eq $field.TypeAsString "ListBools" }}
@@ -830,11 +838,11 @@ func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
             {{- else }}
             item := {{ $field.IdentName }}{s: list.Get(i)}
             {{- end }}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.{{ $field.Name }}[i] = &itemRaw
         }
     } else if x.s.HasField({{ $field.Index }}) {
-        list := x.{{ $field.Name }}List()
+        list := x.{{ $field.Name }}List(ctx)
         raw.{{ $field.Name }} = make({{ $field.RawGoType }}, list.Len())
         for i := 0; i < list.Len(); i++ {
             {{- if $field.IsExternal }}
@@ -842,7 +850,7 @@ func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
             {{- else }}
             item := {{ $field.IdentName }}{s: list.Get(i)}
             {{- end }}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.{{ $field.Name }}[i] = &itemRaw
         }
     }
@@ -858,7 +866,7 @@ func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
             {{- else }}
             item := {{ $field.ValueIdentName }}{s: v}
             {{- end }}
-            itemRaw := item.ToRaw()
+            itemRaw := item.ToRaw(ctx)
             raw.{{ $field.Name }}[k] = &itemRaw
             {{- else }}
             raw.{{ $field.Name }}[k] = v
@@ -869,4 +877,3 @@ func (x {{ $struct.Name }}) ToRaw() {{ $struct.Name }}Raw {
 {{- end }}
     return raw
 }
-
