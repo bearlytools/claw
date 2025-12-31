@@ -13,7 +13,10 @@ import (
 	"github.com/gostdlib/base/context"
 
 	"github.com/bearlytools/claw/rpc/compress"
+	"github.com/bearlytools/claw/rpc/interceptor"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
+	"github.com/bearlytools/claw/rpc/metadata"
+	"github.com/bearlytools/claw/rpc/retry"
 )
 
 // Protocol version constants.
@@ -24,11 +27,13 @@ const (
 
 // Common errors.
 var (
-	ErrClosed        = errors.New("connection closed")
-	ErrSessionClosed = errors.New("session closed")
-	ErrFatalError    = errors.New("fatal connection error")
-	ErrTimeout       = errors.New("operation timed out")
-	ErrCanceled      = errors.New("operation canceled")
+	ErrClosed             = errors.New("connection closed")
+	ErrSessionClosed      = errors.New("session closed")
+	ErrFatalError         = errors.New("fatal connection error")
+	ErrTimeout            = errors.New("operation timed out")
+	ErrCanceled           = errors.New("operation canceled")
+	ErrMessageTooLarge    = errors.New("message size exceeds limit")
+	ErrInsecureTransport  = errors.New("credentials require transport security but connection is not secure")
 )
 
 // Option configures a Conn.
@@ -63,6 +68,120 @@ func WithCompression(alg msgs.Compression) Option {
 	}
 }
 
+// WithMaxRecvMsgSize sets the maximum size of messages the client will accept.
+// Messages larger than this are rejected. Default is 4MB (same as maxPayloadSize).
+// Set to 0 to use the default.
+func WithMaxRecvMsgSize(size int) Option {
+	return func(c *Conn) {
+		c.maxRecvMsgSize = size
+	}
+}
+
+// WithMaxSendMsgSize sets the maximum size of messages the client will send.
+// Attempts to send larger messages return ErrMessageTooLarge.
+// Default is 0 (no limit beyond maxPayloadSize).
+func WithMaxSendMsgSize(size int) Option {
+	return func(c *Conn) {
+		c.maxSendMsgSize = size
+	}
+}
+
+// WithSecure marks the connection as using transport-level security (TLS).
+// This is used by PerRPCCredentials that require transport security.
+// Transports should call this option when establishing a TLS connection.
+func WithSecure(secure bool) Option {
+	return func(c *Conn) {
+		c.secure = secure
+	}
+}
+
+// WithUnaryInterceptor adds unary interceptors to the client connection.
+// Multiple calls chain the interceptors; they execute in the order provided.
+func WithUnaryInterceptor(interceptors ...interceptor.UnaryClientInterceptor) Option {
+	return func(c *Conn) {
+		if c.unaryInterceptor == nil {
+			c.unaryInterceptor = interceptor.ChainUnaryClient(interceptors...)
+		} else {
+			c.unaryInterceptor = interceptor.ChainUnaryClient(append([]interceptor.UnaryClientInterceptor{c.unaryInterceptor}, interceptors...)...)
+		}
+	}
+}
+
+// WithStreamInterceptor adds stream interceptors to the client connection.
+// Multiple calls chain the interceptors; they execute in the order provided.
+func WithStreamInterceptor(interceptors ...interceptor.StreamClientInterceptor) Option {
+	return func(c *Conn) {
+		if c.streamInterceptor == nil {
+			c.streamInterceptor = interceptor.ChainStreamClient(interceptors...)
+		} else {
+			c.streamInterceptor = interceptor.ChainStreamClient(append([]interceptor.StreamClientInterceptor{c.streamInterceptor}, interceptors...)...)
+		}
+	}
+}
+
+// WithRetryPolicy adds a retry interceptor with the given policy for unary calls.
+// The retry interceptor is prepended to any existing unary interceptors.
+func WithRetryPolicy(policy retry.Policy) Option {
+	return func(c *Conn) {
+		retryInterceptor := retry.UnaryClientInterceptor(policy)
+		if c.unaryInterceptor == nil {
+			c.unaryInterceptor = retryInterceptor
+		} else {
+			c.unaryInterceptor = interceptor.ChainUnaryClient(retryInterceptor, c.unaryInterceptor)
+		}
+	}
+}
+
+// CallOption configures a single RPC call.
+type CallOption func(*callOptions)
+
+// callOptions holds per-call configuration.
+type callOptions struct {
+	metadata     metadata.MD
+	waitForReady bool
+	creds        PerRPCCredentials
+}
+
+// PerRPCCredentials provides credentials for each RPC call.
+// This is similar to gRPC's PerRPCCredentials interface.
+type PerRPCCredentials interface {
+	// GetRequestMetadata returns metadata to attach to each RPC.
+	// The context allows credentials to be retrieved dynamically
+	// (e.g., refreshing tokens). The uri is the target of the call
+	// in "package/service/method" format.
+	GetRequestMetadata(ctx context.Context, uri string) (map[string]string, error)
+
+	// RequireTransportSecurity returns true if the credentials require
+	// transport-level security (TLS). If true and the connection is not
+	// secure, calls will fail with an error.
+	RequireTransportSecurity() bool
+}
+
+// WithWaitForReady configures the call to block until the connection is ready
+// or the context times out, rather than failing immediately if the connection
+// is not ready. Default is false (fail fast).
+func WithWaitForReady(wait bool) CallOption {
+	return func(o *callOptions) {
+		o.waitForReady = wait
+	}
+}
+
+// WithMetadata sets metadata to send with the RPC call.
+func WithMetadata(md metadata.MD) CallOption {
+	return func(o *callOptions) {
+		o.metadata = md
+	}
+}
+
+// WithPerRPCCredentials attaches credentials to the RPC call.
+// The credentials are fetched dynamically via GetRequestMetadata
+// and merged into the call's metadata.
+func WithPerRPCCredentials(creds PerRPCCredentials) CallOption {
+	return func(o *callOptions) {
+		o.creds = creds
+	}
+}
+
 // session represents an active RPC session.
 type session struct {
 	id        uint32
@@ -72,6 +191,7 @@ type session struct {
 	cancelCh  chan struct{}
 	readyCh   chan struct{} // Closed when session is ready (OpenAck received)
 	closeOnce sync.Once
+	respMD    metadata.MD // Metadata from OpenAck
 }
 
 func newSession(id uint32, rpcType msgs.RPCType) *session {
@@ -108,27 +228,38 @@ type Conn struct {
 	nextOpenID uint32
 
 	closed   chan struct{}
+	readyCh  chan struct{} // Closed when connection is ready for use
 	fatalErr error
 
 	pingInterval       time.Duration
 	pingTimeout        time.Duration
 	maxPayloadSize     uint32
+	maxRecvMsgSize     int // Maximum size of received messages (0 = default 4MB)
+	maxSendMsgSize     int // Maximum size of sent messages (0 = no limit)
 	defaultCompression msgs.Compression
+	secure             bool // True if transport is secured (TLS)
 
 	// Keepalive state (times stored as UnixNano)
 	lastActivity atomic.Int64  // Last time we sent or received data
 	pongCh       chan struct{} // Signals pong received
+
+	unaryInterceptor  interceptor.UnaryClientInterceptor
+	streamInterceptor interceptor.StreamClientInterceptor
 
 	ctx context.Context
 }
 
 // New creates a new connection over the given transport.
 func New(ctx context.Context, transport io.ReadWriteCloser, opts ...Option) *Conn {
+	readyCh := make(chan struct{})
+	close(readyCh) // Transport is already connected, so connection is immediately ready
+
 	c := &Conn{
 		transport:      transport,
 		sessions:       make(map[uint32]*session),
 		pending:        make(map[uint32]*session),
 		closed:         make(chan struct{}),
+		readyCh:        readyCh,
 		pingInterval:   30 * time.Second,
 		pingTimeout:    10 * time.Second,
 		maxPayloadSize: 4 * 1024 * 1024, // 4MB default
@@ -183,6 +314,71 @@ func (c *Conn) Err() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.fatalErr
+}
+
+// Ready returns a channel that is closed when the connection is ready for use.
+// This can be used with select to wait for the connection to become ready.
+func (c *Conn) Ready() <-chan struct{} {
+	return c.readyCh
+}
+
+// IsReady returns true if the connection is ready for use.
+// A connection is ready if it's not closed and has no fatal error.
+func (c *Conn) IsReady() bool {
+	select {
+	case <-c.closed:
+		return false
+	default:
+		c.mu.Lock()
+		ready := c.fatalErr == nil
+		c.mu.Unlock()
+		return ready
+	}
+}
+
+// waitForReady blocks until the connection is ready or context is done.
+// If waitForReady is false, it checks readiness immediately and returns an error if not ready.
+func (c *Conn) waitForReady(ctx context.Context, waitForReady bool) error {
+	// Fast path: check if already closed
+	select {
+	case <-c.closed:
+		if err := c.Err(); err != nil {
+			return err
+		}
+		return ErrClosed
+	default:
+	}
+
+	// If not waiting, just check current state
+	if !waitForReady {
+		if !c.IsReady() {
+			if err := c.Err(); err != nil {
+				return err
+			}
+			return ErrClosed
+		}
+		return nil
+	}
+
+	// Wait for ready or context cancellation
+	select {
+	case <-c.readyCh:
+		// Check if connection is actually usable
+		if !c.IsReady() {
+			if err := c.Err(); err != nil {
+				return err
+			}
+			return ErrClosed
+		}
+		return nil
+	case <-c.closed:
+		if err := c.Err(); err != nil {
+			return err
+		}
+		return ErrClosed
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // setFatalError sets a fatal error and closes the connection.
@@ -271,6 +467,17 @@ func (c *Conn) handleOpenAck(ack msgs.OpenAck) {
 	}
 
 	sess.id = ack.SessionID()
+
+	// Extract metadata from OpenAck.
+	mdLen := ack.MetadataLen(c.ctx)
+	if mdLen > 0 {
+		mds := make([]msgs.Metadata, mdLen)
+		for i := 0; i < mdLen; i++ {
+			mds[i] = ack.MetadataGet(c.ctx, i)
+		}
+		sess.respMD = metadata.FromMsgs(c.ctx, mds)
+	}
+
 	c.sessions[sess.id] = sess
 	close(sess.readyCh) // Signal that session is ready
 	c.mu.Unlock()
@@ -320,6 +527,16 @@ func (c *Conn) handlePayload(p msgs.Payload) {
 			SetCompression(msgs.CmpNone)
 	}
 
+	// Check message size limit (after decompression).
+	maxSize := c.maxRecvMsgSize
+	if maxSize == 0 {
+		maxSize = int(c.maxPayloadSize) // Use default
+	}
+	if maxSize > 0 && len(p.Payload()) > maxSize {
+		// Message too large, drop it.
+		return
+	}
+
 	select {
 	case sess.recvCh <- p:
 	case <-sess.cancelCh:
@@ -363,7 +580,7 @@ func (c *Conn) sendMsg(msg msgs.Msg) error {
 }
 
 // openSession opens a new session with the server.
-func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcType msgs.RPCType) (*session, error) {
+func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcType msgs.RPCType, md metadata.MD) (*session, error) {
 	c.mu.Lock()
 	select {
 	case <-c.closed:
@@ -399,6 +616,12 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 		if ms > 0 {
 			open = open.SetDeadlineMS(uint64(ms))
 		}
+	}
+
+	// Add metadata if provided.
+	if md != nil {
+		mds := md.ToMsgs(ctx)
+		open.MetadataAppend(ctx, mds...)
 	}
 
 	msg := msgs.NewMsg(ctx).SetType(msgs.TOpen).SetOpen(open)
@@ -451,6 +674,11 @@ func (c *Conn) closeSession(sessionID uint32, errCode msgs.ErrCode, errMsg strin
 
 // sendPayload sends a Payload message.
 func (c *Conn) sendPayload(sessionID, reqID uint32, payload []byte, endStream bool) error {
+	// Check send size limit before compression (check uncompressed size).
+	if c.maxSendMsgSize > 0 && len(payload) > c.maxSendMsgSize {
+		return fmt.Errorf("%w: %d bytes exceeds send limit of %d", ErrMessageTooLarge, len(payload), c.maxSendMsgSize)
+	}
+
 	// Compress if compression is configured and there's data to compress.
 	compressed := payload
 	compression := c.defaultCompression
@@ -483,9 +711,62 @@ func (c *Conn) sendCancel(sessionID, reqID uint32) error {
 	return c.sendMsg(msg)
 }
 
+// applyCredentials applies per-RPC credentials to metadata.
+// Returns the updated metadata and any error from credential retrieval.
+func (c *Conn) applyCredentials(ctx context.Context, opts *callOptions, uri string) (metadata.MD, error) {
+	md := opts.metadata
+	if md == nil {
+		md, _ = metadata.FromContext(ctx)
+	}
+
+	if opts.creds == nil {
+		return md, nil
+	}
+
+	// Check transport security requirement.
+	if opts.creds.RequireTransportSecurity() && !c.secure {
+		return nil, ErrInsecureTransport
+	}
+
+	// Get credential metadata.
+	credMD, err := opts.creds.GetRequestMetadata(ctx, uri)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get credentials: %w", err)
+	}
+
+	// Merge credential metadata.
+	if len(credMD) > 0 {
+		if md == nil {
+			md = metadata.MD{}
+		}
+		for k, v := range credMD {
+			md.SetString(k, v)
+		}
+	}
+
+	return md, nil
+}
+
 // Sync creates a new synchronous RPC client.
-func (c *Conn) Sync(ctx context.Context, pkg, service, call string) (*SyncClient, error) {
-	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTSynchronous)
+func (c *Conn) Sync(ctx context.Context, pkg, service, call string, opts ...CallOption) (*SyncClient, error) {
+	var callOpts callOptions
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	// Wait for connection to be ready if requested.
+	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
+		return nil, err
+	}
+
+	// Apply per-RPC credentials.
+	uri := pkg + "/" + service + "/" + call
+	md, err := c.applyCredentials(ctx, &callOpts, uri)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTSynchronous, md)
 	if err != nil {
 		return nil, err
 	}
@@ -495,12 +776,30 @@ func (c *Conn) Sync(ctx context.Context, pkg, service, call string) (*SyncClient
 		sessionID: sess.id,
 		session:   sess,
 		pending:   make(map[uint32]chan response),
+		method:    uri,
 	}, nil
 }
 
 // BiDir creates a new bidirectional streaming RPC client.
-func (c *Conn) BiDir(ctx context.Context, pkg, service, call string) (*BiDirClient, error) {
-	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTBiDirectional)
+func (c *Conn) BiDir(ctx context.Context, pkg, service, call string, opts ...CallOption) (*BiDirClient, error) {
+	var callOpts callOptions
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	// Wait for connection to be ready if requested.
+	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
+		return nil, err
+	}
+
+	// Apply per-RPC credentials.
+	uri := pkg + "/" + service + "/" + call
+	md, err := c.applyCredentials(ctx, &callOpts, uri)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTBiDirectional, md)
 	if err != nil {
 		return nil, err
 	}
@@ -513,8 +812,25 @@ func (c *Conn) BiDir(ctx context.Context, pkg, service, call string) (*BiDirClie
 }
 
 // Send creates a new send-only streaming RPC client.
-func (c *Conn) Send(ctx context.Context, pkg, service, call string) (*SendClient, error) {
-	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTSend)
+func (c *Conn) Send(ctx context.Context, pkg, service, call string, opts ...CallOption) (*SendClient, error) {
+	var callOpts callOptions
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	// Wait for connection to be ready if requested.
+	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
+		return nil, err
+	}
+
+	// Apply per-RPC credentials.
+	uri := pkg + "/" + service + "/" + call
+	md, err := c.applyCredentials(ctx, &callOpts, uri)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTSend, md)
 	if err != nil {
 		return nil, err
 	}
@@ -527,8 +843,25 @@ func (c *Conn) Send(ctx context.Context, pkg, service, call string) (*SendClient
 }
 
 // Recv creates a new receive-only streaming RPC client.
-func (c *Conn) Recv(ctx context.Context, pkg, service, call string) (*RecvClient, error) {
-	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTRecv)
+func (c *Conn) Recv(ctx context.Context, pkg, service, call string, opts ...CallOption) (*RecvClient, error) {
+	var callOpts callOptions
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	// Wait for connection to be ready if requested.
+	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
+		return nil, err
+	}
+
+	// Apply per-RPC credentials.
+	uri := pkg + "/" + service + "/" + call
+	md, err := c.applyCredentials(ctx, &callOpts, uri)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := c.openSession(ctx, pkg, service, call, msgs.RTRecv, md)
 	if err != nil {
 		return nil, err
 	}
@@ -541,21 +874,52 @@ func (c *Conn) Recv(ctx context.Context, pkg, service, call string) (*RecvClient
 }
 
 // recvIter creates an iterator for receiving payloads from a session.
+// When context is cancelled, it drains and yields any buffered messages before returning.
 func recvIter(ctx context.Context, sess *session, errPtr *error) iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
-		for p := range sess.recvCh {
-			payload := p.Payload()
-			if p.EndStream() && len(payload) == 0 {
-				break
-			}
-			if !yield(payload) {
-				return
-			}
-			if p.EndStream() {
-				break
+		for {
+			select {
+			case <-ctx.Done():
+				// Context cancelled - drain and yield buffered messages before returning.
+				for {
+					select {
+					case p, ok := <-sess.recvCh:
+						if !ok {
+							goto checkClose
+						}
+						payload := p.Payload()
+						if p.EndStream() && len(payload) == 0 {
+							goto checkClose
+						}
+						if !yield(payload) {
+							return
+						}
+						if p.EndStream() {
+							goto checkClose
+						}
+					default:
+						// No more buffered messages.
+						goto checkClose
+					}
+				}
+			case p, ok := <-sess.recvCh:
+				if !ok {
+					goto checkClose
+				}
+				payload := p.Payload()
+				if p.EndStream() && len(payload) == 0 {
+					goto checkClose
+				}
+				if !yield(payload) {
+					return
+				}
+				if p.EndStream() {
+					goto checkClose
+				}
 			}
 		}
 
+	checkClose:
 		// Check for error info from Close message.
 		select {
 		case cl := <-sess.closeCh:
@@ -616,3 +980,63 @@ func (c *Conn) pingLoop() {
 		}
 	}
 }
+
+// biDirClientAdapter wraps BiDirClient to implement interceptor.ClientStream.
+type biDirClientAdapter struct {
+	*BiDirClient
+}
+
+func (a *biDirClientAdapter) Send(ctx context.Context, payload []byte) error {
+	return a.BiDirClient.Send(ctx, payload)
+}
+
+func (a *biDirClientAdapter) Recv(ctx context.Context) iter.Seq[[]byte] {
+	return a.BiDirClient.Recv(ctx)
+}
+
+// Compile-time check that biDirClientAdapter implements interceptor.ClientStream.
+var _ interceptor.ClientStream = (*biDirClientAdapter)(nil)
+
+// sendClientAdapter wraps SendClient to implement interceptor.ClientStream.
+type sendClientAdapter struct {
+	*SendClient
+}
+
+func (a *sendClientAdapter) Send(ctx context.Context, payload []byte) error {
+	return a.SendClient.Send(ctx, payload)
+}
+
+func (a *sendClientAdapter) Recv(ctx context.Context) iter.Seq[[]byte] {
+	return func(yield func([]byte) bool) {}
+}
+
+func (a *sendClientAdapter) CloseSend() error {
+	return nil // Close() handles this for SendClient
+}
+
+func (a *sendClientAdapter) Err() error {
+	return nil
+}
+
+// Compile-time check that sendClientAdapter implements interceptor.ClientStream.
+var _ interceptor.ClientStream = (*sendClientAdapter)(nil)
+
+// recvClientAdapter wraps RecvClient to implement interceptor.ClientStream.
+type recvClientAdapter struct {
+	*RecvClient
+}
+
+func (a *recvClientAdapter) Send(ctx context.Context, payload []byte) error {
+	return nil
+}
+
+func (a *recvClientAdapter) Recv(ctx context.Context) iter.Seq[[]byte] {
+	return a.RecvClient.Recv(ctx)
+}
+
+func (a *recvClientAdapter) CloseSend() error {
+	return nil
+}
+
+// Compile-time check that recvClientAdapter implements interceptor.ClientStream.
+var _ interceptor.ClientStream = (*recvClientAdapter)(nil)

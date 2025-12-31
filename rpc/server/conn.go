@@ -10,7 +10,9 @@ import (
 	"github.com/gostdlib/base/context"
 
 	"github.com/bearlytools/claw/rpc/compress"
+	"github.com/bearlytools/claw/rpc/interceptor"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
+	"github.com/bearlytools/claw/rpc/metadata"
 )
 
 // Protocol version constants.
@@ -18,6 +20,9 @@ const (
 	ProtocolMajor = 1
 	ProtocolMinor = 0
 )
+
+// Default max payload size (4MB).
+const defaultMaxPayloadSize = 4 * 1024 * 1024
 
 // serverSession represents a server-side session.
 type serverSession struct {
@@ -28,9 +33,13 @@ type serverSession struct {
 	cancelCh  chan struct{}
 	closeOnce sync.Once
 	metadata  []msgs.Metadata
+
+	pkg     string
+	service string
+	method  string
 }
 
-func newServerSession(id uint32, rpcType msgs.RPCType, handler Handler, md []msgs.Metadata) *serverSession {
+func newServerSession(id uint32, rpcType msgs.RPCType, handler Handler, md []msgs.Metadata, pkg, service, method string) *serverSession {
 	return &serverSession{
 		id:       id,
 		rpcType:  rpcType,
@@ -38,6 +47,9 @@ func newServerSession(id uint32, rpcType msgs.RPCType, handler Handler, md []msg
 		recvCh:   make(chan msgs.Payload, 16),
 		cancelCh: make(chan struct{}),
 		metadata: md,
+		pkg:      pkg,
+		service:  service,
+		method:   method,
 	}
 }
 
@@ -60,6 +72,9 @@ type ServerConn struct {
 	nextSessionID      uint32
 	defaultCompression msgs.Compression
 
+	maxRecvMsgSize int // Maximum size of received messages (0 = default 4MB)
+	maxSendMsgSize int // Maximum size of sent messages (0 = no limit)
+
 	ctx context.Context
 }
 
@@ -71,6 +86,8 @@ func newServerConn(ctx context.Context, server *Server, transport io.ReadWriteCl
 		closed:             make(chan struct{}),
 		nextSessionID:      1,
 		defaultCompression: compression,
+		maxRecvMsgSize:     server.maxRecvMsgSize,
+		maxSendMsgSize:     server.maxSendMsgSize,
 		ctx:                ctx,
 	}
 }
@@ -195,7 +212,7 @@ func (c *ServerConn) handleOpen(ctx context.Context, open msgs.Open) {
 	for i := 0; i < open.MetadataLen(ctx); i++ {
 		md[i] = open.MetadataGet(ctx, i)
 	}
-	sess := newServerSession(sessionID, descr.Type(), handler, md)
+	sess := newServerSession(sessionID, descr.Type(), handler, md, descr.Package(), descr.Service(), descr.Call())
 	c.sessions[sessionID] = sess
 	c.mu.Unlock()
 
@@ -230,22 +247,26 @@ func (c *ServerConn) runHandler(ctx context.Context, sess *serverSession) {
 	}()
 
 	var err error
+	var trailer metadata.MD
 
 	switch h := sess.handler.(type) {
 	case SyncHandler:
 		err = c.runSyncHandler(ctx, sess, h)
 	case BiDirHandler:
-		stream := newBiDirStream(sess.id, c, sess.recvCh, sess.cancelCh)
-		err = h.HandleFunc(ctx, stream)
+		stream := newBiDirStream(ctx, sess.id, c, sess.recvCh, sess.cancelCh)
+		err = c.runBiDirHandler(ctx, sess, stream, h)
+		trailer = stream.Trailer()
 		stream.close()
 		// Send EndStream to signal we're done sending.
 		c.sendPayload(sess.id, 0, nil, true)
 	case SendHandler:
-		stream := newRecvStream(sess.id, c, sess.recvCh, sess.cancelCh)
-		err = h.HandleFunc(ctx, stream)
+		stream := newRecvStream(ctx, sess.id, c, sess.recvCh, sess.cancelCh)
+		err = c.runSendHandler(ctx, sess, stream, h)
+		trailer = stream.Trailer()
 	case RecvHandler:
-		stream := newSendStream(sess.id, c, sess.cancelCh)
-		err = h.HandleFunc(ctx, stream)
+		stream := newSendStream(ctx, sess.id, c, sess.cancelCh)
+		err = c.runRecvHandler(ctx, sess, stream, h)
+		trailer = stream.Trailer()
 		stream.close()
 		// Send EndStream to signal we're done.
 		c.sendPayload(sess.id, 0, nil, true)
@@ -253,16 +274,103 @@ func (c *ServerConn) runHandler(ctx context.Context, sess *serverSession) {
 		err = fmt.Errorf("unknown handler type: %T", sess.handler)
 	}
 
-	// Send Close with error if any.
+	// Send Close with error and trailer metadata if any.
 	errCode := errCodeFromError(err)
 	errMsg := errorMessage(err)
-	c.sendClose(sess.id, errCode, errMsg)
+	c.sendClose(sess.id, errCode, errMsg, trailer)
+}
+
+// runBiDirHandler runs a bidirectional stream handler with interceptor support.
+func (c *ServerConn) runBiDirHandler(ctx context.Context, sess *serverSession, stream *BiDirStream, h BiDirHandler) error {
+	if c.server.streamInterceptor == nil {
+		return h.HandleFunc(ctx, stream)
+	}
+
+	info := &interceptor.StreamServerInfo{
+		Package:   sess.pkg,
+		Service:   sess.service,
+		Method:    sess.method,
+		SessionID: sess.id,
+		Metadata:  sess.metadata,
+		RPCType:   sess.rpcType,
+	}
+
+	handler := func(ctx context.Context, s interceptor.ServerStream) error {
+		return h.HandleFunc(ctx, s.(*BiDirStream))
+	}
+
+	return c.server.streamInterceptor(ctx, stream, info, handler)
+}
+
+// runSendHandler runs a send handler (client sends, server receives) with interceptor support.
+func (c *ServerConn) runSendHandler(ctx context.Context, sess *serverSession, stream *RecvStream, h SendHandler) error {
+	if c.server.streamInterceptor == nil {
+		return h.HandleFunc(ctx, stream)
+	}
+
+	info := &interceptor.StreamServerInfo{
+		Package:   sess.pkg,
+		Service:   sess.service,
+		Method:    sess.method,
+		SessionID: sess.id,
+		Metadata:  sess.metadata,
+		RPCType:   sess.rpcType,
+	}
+
+	adapter := &recvStreamAdapter{stream: stream}
+	handler := func(ctx context.Context, s interceptor.ServerStream) error {
+		return h.HandleFunc(ctx, s.(*recvStreamAdapter).stream)
+	}
+
+	return c.server.streamInterceptor(ctx, adapter, info, handler)
+}
+
+// runRecvHandler runs a recv handler (server sends, client receives) with interceptor support.
+func (c *ServerConn) runRecvHandler(ctx context.Context, sess *serverSession, stream *SendStream, h RecvHandler) error {
+	if c.server.streamInterceptor == nil {
+		return h.HandleFunc(ctx, stream)
+	}
+
+	info := &interceptor.StreamServerInfo{
+		Package:   sess.pkg,
+		Service:   sess.service,
+		Method:    sess.method,
+		SessionID: sess.id,
+		Metadata:  sess.metadata,
+		RPCType:   sess.rpcType,
+	}
+
+	adapter := &sendStreamAdapter{stream: stream}
+	handler := func(ctx context.Context, s interceptor.ServerStream) error {
+		return h.HandleFunc(ctx, s.(*sendStreamAdapter).stream)
+	}
+
+	return c.server.streamInterceptor(ctx, adapter, info, handler)
 }
 
 // runSyncHandler handles synchronous request/response sessions.
 func (c *ServerConn) runSyncHandler(ctx context.Context, sess *serverSession, h SyncHandler) error {
+	info := &interceptor.UnaryServerInfo{
+		Package:   sess.pkg,
+		Service:   sess.service,
+		Method:    sess.method,
+		SessionID: sess.id,
+		Metadata:  sess.metadata,
+	}
+
+	handler := func(ctx context.Context, req []byte) ([]byte, error) {
+		return h.HandleFunc(ctx, req, sess.metadata)
+	}
+
 	for p := range sess.recvCh {
-		resp, err := h.HandleFunc(ctx, p.Payload(), sess.metadata)
+		var resp []byte
+		var err error
+
+		if c.server.unaryInterceptor != nil {
+			resp, err = c.server.unaryInterceptor(ctx, p.Payload(), info, handler)
+		} else {
+			resp, err = handler(ctx, p.Payload())
+		}
 		if err != nil {
 			return err
 		}
@@ -311,6 +419,16 @@ func (c *ServerConn) handlePayload(p msgs.Payload) {
 			SetPayload(decompressed).
 			SetEndStream(p.EndStream()).
 			SetCompression(msgs.CmpNone)
+	}
+
+	// Check message size limit (after decompression).
+	maxSize := c.maxRecvMsgSize
+	if maxSize == 0 {
+		maxSize = defaultMaxPayloadSize // Use default
+	}
+	if maxSize > 0 && len(p.Payload()) > maxSize {
+		// Message too large, drop it.
+		return
 	}
 
 	select {
@@ -375,11 +493,17 @@ func (c *ServerConn) sendOpenAck(openID, sessionID uint32, errCode msgs.ErrCode,
 }
 
 // sendClose sends a Close message.
-func (c *ServerConn) sendClose(sessionID uint32, errCode msgs.ErrCode, errMsg string) error {
+func (c *ServerConn) sendClose(sessionID uint32, errCode msgs.ErrCode, errMsg string, md metadata.MD) error {
 	cl := msgs.NewClose(c.ctx).
 		SetSessionID(sessionID).
 		SetErrCode(errCode).
 		SetError(errMsg)
+
+	// Add trailer metadata if provided.
+	if md != nil {
+		mds := md.ToMsgs(c.ctx)
+		cl.MetadataAppend(c.ctx, mds...)
+	}
 
 	msg := msgs.NewMsg(c.ctx).SetType(msgs.TClose).SetClose(cl)
 	return c.sendMsg(msg)
@@ -387,6 +511,11 @@ func (c *ServerConn) sendClose(sessionID uint32, errCode msgs.ErrCode, errMsg st
 
 // sendPayload sends a Payload message.
 func (c *ServerConn) sendPayload(sessionID, reqID uint32, payload []byte, endStream bool) error {
+	// Check message size limit (before compression, check uncompressed size).
+	if c.maxSendMsgSize > 0 && len(payload) > c.maxSendMsgSize {
+		return ErrMessageTooLarge
+	}
+
 	// Compress if compression is configured and there's data to compress.
 	compressed := payload
 	compression := c.defaultCompression

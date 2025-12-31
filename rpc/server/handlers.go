@@ -1,13 +1,17 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"iter"
 
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 
+	"github.com/bearlytools/claw/rpc/interceptor"
+	"github.com/bearlytools/claw/rpc/interceptor/ratelimit"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
+	"github.com/bearlytools/claw/rpc/metadata"
 )
 
 // Handler is the interface implemented by all RPC type handlers.
@@ -64,15 +68,44 @@ type BiDirStream struct {
 	mu        sync.Mutex
 	err       error
 	closed    bool
+	ctx       context.Context
+	trailer   metadata.MD
 }
 
-func newBiDirStream(sessionID uint32, conn *ServerConn, recvCh chan msgs.Payload, cancelCh chan struct{}) *BiDirStream {
+func newBiDirStream(ctx context.Context, sessionID uint32, conn *ServerConn, recvCh chan msgs.Payload, cancelCh chan struct{}) *BiDirStream {
 	return &BiDirStream{
 		sessionID: sessionID,
 		conn:      conn,
 		recvCh:    recvCh,
 		cancelCh:  cancelCh,
+		ctx:       ctx,
 	}
+}
+
+// SetTrailer sets metadata to be sent with the Close message.
+// This can be called multiple times; subsequent calls will merge metadata.
+func (s *BiDirStream) SetTrailer(md metadata.MD) {
+	s.mu.Lock()
+	if s.trailer == nil {
+		s.trailer = md.Clone()
+	} else {
+		for k, v := range md {
+			s.trailer[k] = v
+		}
+	}
+	s.mu.Unlock()
+}
+
+// Trailer returns the trailer metadata that was set.
+func (s *BiDirStream) Trailer() metadata.MD {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.trailer
+}
+
+// Context returns the context for this stream.
+func (s *BiDirStream) Context() context.Context {
+	return s.ctx
 }
 
 // Send sends a payload to the client.
@@ -88,18 +121,48 @@ func (s *BiDirStream) Send(payload []byte) error {
 }
 
 // Recv returns an iterator over received payloads.
+// When context is cancelled, it drains and yields any buffered messages before returning.
 func (s *BiDirStream) Recv() iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
-		for p := range s.recvCh {
-			payload := p.Payload()
-			if p.EndStream() && len(payload) == 0 {
-				return
-			}
-			if !yield(payload) {
-				return
-			}
-			if p.EndStream() {
-				return
+		for {
+			select {
+			case <-s.ctx.Done():
+				// Context cancelled - drain and yield buffered messages before returning.
+				for {
+					select {
+					case p, ok := <-s.recvCh:
+						if !ok {
+							return
+						}
+						payload := p.Payload()
+						if p.EndStream() && len(payload) == 0 {
+							return
+						}
+						if !yield(payload) {
+							return
+						}
+						if p.EndStream() {
+							return
+						}
+					default:
+						// No more buffered messages.
+						return
+					}
+				}
+			case p, ok := <-s.recvCh:
+				if !ok {
+					return
+				}
+				payload := p.Payload()
+				if p.EndStream() && len(payload) == 0 {
+					return
+				}
+				if !yield(payload) {
+					return
+				}
+				if p.EndStream() {
+					return
+				}
 			}
 		}
 	}
@@ -136,14 +199,43 @@ type SendStream struct {
 	cancelCh  chan struct{}
 	mu        sync.Mutex
 	closed    bool
+	ctx       context.Context
+	trailer   metadata.MD
 }
 
-func newSendStream(sessionID uint32, conn *ServerConn, cancelCh chan struct{}) *SendStream {
+func newSendStream(ctx context.Context, sessionID uint32, conn *ServerConn, cancelCh chan struct{}) *SendStream {
 	return &SendStream{
 		sessionID: sessionID,
 		conn:      conn,
 		cancelCh:  cancelCh,
+		ctx:       ctx,
 	}
+}
+
+// SetTrailer sets metadata to be sent with the Close message.
+// This can be called multiple times; subsequent calls will merge metadata.
+func (s *SendStream) SetTrailer(md metadata.MD) {
+	s.mu.Lock()
+	if s.trailer == nil {
+		s.trailer = md.Clone()
+	} else {
+		for k, v := range md {
+			s.trailer[k] = v
+		}
+	}
+	s.mu.Unlock()
+}
+
+// Trailer returns the trailer metadata that was set.
+func (s *SendStream) Trailer() metadata.MD {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.trailer
+}
+
+// Context returns the context for this stream.
+func (s *SendStream) Context() context.Context {
+	return s.ctx
 }
 
 // Send sends a payload to the client.
@@ -180,30 +272,89 @@ type RecvStream struct {
 	cancelCh  chan struct{}
 	mu        sync.Mutex
 	err       error
+	ctx       context.Context
+	trailer   metadata.MD
 }
 
-func newRecvStream(sessionID uint32, conn *ServerConn, recvCh chan msgs.Payload, cancelCh chan struct{}) *RecvStream {
+func newRecvStream(ctx context.Context, sessionID uint32, conn *ServerConn, recvCh chan msgs.Payload, cancelCh chan struct{}) *RecvStream {
 	return &RecvStream{
 		sessionID: sessionID,
 		conn:      conn,
 		recvCh:    recvCh,
 		cancelCh:  cancelCh,
+		ctx:       ctx,
 	}
 }
 
+// Context returns the context for this stream.
+func (s *RecvStream) Context() context.Context {
+	return s.ctx
+}
+
+// SetTrailer sets metadata to be sent with the Close message.
+// This can be called multiple times; subsequent calls will merge metadata.
+func (s *RecvStream) SetTrailer(md metadata.MD) {
+	s.mu.Lock()
+	if s.trailer == nil {
+		s.trailer = md.Clone()
+	} else {
+		for k, v := range md {
+			s.trailer[k] = v
+		}
+	}
+	s.mu.Unlock()
+}
+
+// Trailer returns the trailer metadata that was set.
+func (s *RecvStream) Trailer() metadata.MD {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.trailer
+}
+
 // Recv returns an iterator over received payloads.
+// When context is cancelled, it drains and yields any buffered messages before returning.
 func (s *RecvStream) Recv() iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
-		for p := range s.recvCh {
-			payload := p.Payload()
-			if p.EndStream() && len(payload) == 0 {
-				return
-			}
-			if !yield(payload) {
-				return
-			}
-			if p.EndStream() {
-				return
+		for {
+			select {
+			case <-s.ctx.Done():
+				// Context cancelled - drain and yield buffered messages before returning.
+				for {
+					select {
+					case p, ok := <-s.recvCh:
+						if !ok {
+							return
+						}
+						payload := p.Payload()
+						if p.EndStream() && len(payload) == 0 {
+							return
+						}
+						if !yield(payload) {
+							return
+						}
+						if p.EndStream() {
+							return
+						}
+					default:
+						// No more buffered messages.
+						return
+					}
+				}
+			case p, ok := <-s.recvCh:
+				if !ok {
+					return
+				}
+				payload := p.Payload()
+				if p.EndStream() && len(payload) == 0 {
+					return
+				}
+				if !yield(payload) {
+					return
+				}
+				if p.EndStream() {
+					return
+				}
 			}
 		}
 	}
@@ -230,6 +381,15 @@ func errCodeFromError(err error) msgs.ErrCode {
 	if err == nil {
 		return msgs.ErrNone
 	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return msgs.ErrDeadlineExceeded
+	}
+	if errors.Is(err, context.Canceled) {
+		return msgs.ErrCanceled
+	}
+	if errors.Is(err, ratelimit.ErrRateLimited) {
+		return msgs.ErrResourceExhausted
+	}
 	// Default to internal error. Handlers can wrap specific error types
 	// to indicate different error codes.
 	return msgs.ErrInternal
@@ -241,4 +401,41 @@ func errorMessage(err error) string {
 		return ""
 	}
 	return fmt.Sprintf("%v", err)
+}
+
+// Compile-time check that BiDirStream implements interceptor.ServerStream.
+var _ interceptor.ServerStream = (*BiDirStream)(nil)
+
+// sendStreamAdapter wraps a SendStream to implement interceptor.ServerStream.
+type sendStreamAdapter struct {
+	stream *SendStream
+}
+
+func (a *sendStreamAdapter) Send(payload []byte) error {
+	return a.stream.Send(payload)
+}
+
+func (a *sendStreamAdapter) Recv() iter.Seq[[]byte] {
+	return func(yield func([]byte) bool) {}
+}
+
+func (a *sendStreamAdapter) Context() context.Context {
+	return a.stream.Context()
+}
+
+// recvStreamAdapter wraps a RecvStream to implement interceptor.ServerStream.
+type recvStreamAdapter struct {
+	stream *RecvStream
+}
+
+func (a *recvStreamAdapter) Send(payload []byte) error {
+	return nil
+}
+
+func (a *recvStreamAdapter) Recv() iter.Seq[[]byte] {
+	return a.stream.Recv()
+}
+
+func (a *recvStreamAdapter) Context() context.Context {
+	return a.stream.Context()
 }

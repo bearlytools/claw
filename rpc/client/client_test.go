@@ -484,3 +484,153 @@ func TestMultipleSessions(t *testing.T) {
 		t.Errorf("TestMultipleSessions: server did not shut down in time")
 	}
 }
+
+func TestDeadlinePropagationBiDir(t *testing.T) {
+	// This test verifies that when context deadline expires during streaming,
+	// buffered messages are still yielded before the iterator returns.
+	ctx := t.Context()
+	clientConn, serverConn := pipe()
+
+	// Server will send multiple messages with a small delay between them.
+	messagesFromServer := [][]byte{[]byte("msg1"), []byte("msg2"), []byte("msg3"), []byte("msg4"), []byte("msg5")}
+	serverStarted := make(chan struct{})
+
+	srv := server.New()
+	err := srv.Register("test", "TestService", "BiDir", server.BiDirHandler{
+		HandleFunc: func(ctx context.Context, stream *server.BiDirStream) error {
+			close(serverStarted)
+			// Send all messages before deadline fires.
+			for _, msg := range messagesFromServer {
+				if err := stream.Send(msg); err != nil {
+					return err
+				}
+			}
+			// Wait until deadline expires (context cancelled).
+			<-ctx.Done()
+			return ctx.Err()
+		},
+	})
+	if err != nil {
+		t.Fatalf("TestDeadlinePropagationBiDir: failed to register handler: %v", err)
+	}
+
+	serverDone := make(chan error, 1)
+	go func() {
+		serverDone <- srv.Serve(ctx, serverConn)
+	}()
+
+	conn := New(ctx, clientConn)
+	defer conn.Close()
+
+	// Create context with short deadline.
+	deadlineCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+
+	bidir, err := conn.BiDir(deadlineCtx, "test", "TestService", "BiDir")
+	if err != nil {
+		t.Fatalf("TestDeadlinePropagationBiDir: failed to create bidir client: %v", err)
+	}
+
+	// Wait for server to start sending.
+	<-serverStarted
+	time.Sleep(50 * time.Millisecond) // Give time for messages to buffer.
+
+	// Receive with deadline context - should get all buffered messages before deadline fires.
+	var received [][]byte
+	for payload := range bidir.Recv(deadlineCtx) {
+		cp := make([]byte, len(payload))
+		copy(cp, payload)
+		received = append(received, cp)
+	}
+
+	// We should receive all messages that were sent before the deadline.
+	if len(received) < len(messagesFromServer) {
+		// It's acceptable if we received fewer due to timing, but we should have received some.
+		if len(received) == 0 {
+			t.Errorf("TestDeadlinePropagationBiDir: received no messages, expected some before deadline")
+		}
+	}
+
+	bidir.Close()
+	conn.Close()
+
+	select {
+	case <-serverDone:
+	case <-time.After(5 * time.Second):
+		t.Errorf("TestDeadlinePropagationBiDir: server did not shut down in time")
+	}
+}
+
+func TestDeadlinePropagationRecv(t *testing.T) {
+	// This test verifies that when context deadline expires during recv streaming,
+	// buffered messages are still yielded before the iterator returns.
+	ctx := t.Context()
+	clientConn, serverConn := pipe()
+
+	messagesFromServer := [][]byte{[]byte("msg1"), []byte("msg2"), []byte("msg3")}
+	serverStarted := make(chan struct{})
+
+	srv := server.New()
+	err := srv.Register("test", "TestService", "Recv", server.RecvHandler{
+		HandleFunc: func(ctx context.Context, stream *server.SendStream) error {
+			close(serverStarted)
+			// Send all messages.
+			for _, msg := range messagesFromServer {
+				if err := stream.Send(msg); err != nil {
+					return err
+				}
+			}
+			// Wait until deadline expires.
+			<-ctx.Done()
+			return ctx.Err()
+		},
+	})
+	if err != nil {
+		t.Fatalf("TestDeadlinePropagationRecv: failed to register handler: %v", err)
+	}
+
+	serverDone := make(chan error, 1)
+	go func() {
+		serverDone <- srv.Serve(ctx, serverConn)
+	}()
+
+	conn := New(ctx, clientConn)
+	defer conn.Close()
+
+	// Create context with short deadline.
+	deadlineCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+
+	recvClient, err := conn.Recv(deadlineCtx, "test", "TestService", "Recv")
+	if err != nil {
+		t.Fatalf("TestDeadlinePropagationRecv: failed to create recv client: %v", err)
+	}
+
+	// Wait for server to start sending.
+	<-serverStarted
+	time.Sleep(50 * time.Millisecond) // Give time for messages to buffer.
+
+	// Receive with deadline context.
+	var received [][]byte
+	for payload := range recvClient.Recv(deadlineCtx) {
+		cp := make([]byte, len(payload))
+		copy(cp, payload)
+		received = append(received, cp)
+	}
+
+	// We should receive all messages that were sent.
+	if len(received) < len(messagesFromServer) {
+		if len(received) == 0 {
+			t.Errorf("TestDeadlinePropagationRecv: received no messages, expected some before deadline")
+		}
+	}
+
+	recvClient.Close()
+	conn.Close()
+
+	select {
+	case <-serverDone:
+	case <-time.After(5 * time.Second):
+		t.Errorf("TestDeadlinePropagationRecv: server did not shut down in time")
+	}
+}

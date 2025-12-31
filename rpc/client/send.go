@@ -39,6 +39,21 @@ func (s *SendClient) Send(ctx context.Context, payload []byte) error {
 	return s.conn.sendPayload(s.sessionID, 0, payload, false)
 }
 
+// Cancel cancels the RPC, sending a Cancel message to the server.
+// This signals to the server that the client is no longer interested
+// in the result and the server may stop processing.
+// After Cancel, the stream should be closed with Close().
+func (s *SendClient) Cancel() error {
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return nil
+	}
+	s.mu.Unlock()
+
+	return s.conn.sendCancel(s.sessionID, 0)
+}
+
 // Close closes the send client, signaling end of stream.
 func (s *SendClient) Close() error {
 	s.mu.Lock()

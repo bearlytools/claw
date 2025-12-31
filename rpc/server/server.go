@@ -8,13 +8,15 @@ import (
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 
+	"github.com/bearlytools/claw/rpc/interceptor"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 )
 
 // Common errors.
 var (
-	ErrClosed        = errors.New("server closed")
-	ErrSessionClosed = errors.New("session closed")
+	ErrClosed          = errors.New("server closed")
+	ErrSessionClosed   = errors.New("session closed")
+	ErrMessageTooLarge = errors.New("message size exceeds limit")
 )
 
 // Option configures a Server.
@@ -28,6 +30,48 @@ func WithCompression(alg msgs.Compression) Option {
 	}
 }
 
+// WithUnaryInterceptor adds unary interceptors to the server.
+// Multiple calls chain the interceptors; they execute in the order provided.
+func WithUnaryInterceptor(interceptors ...interceptor.UnaryServerInterceptor) Option {
+	return func(s *Server) {
+		if s.unaryInterceptor == nil {
+			s.unaryInterceptor = interceptor.ChainUnaryServer(interceptors...)
+		} else {
+			s.unaryInterceptor = interceptor.ChainUnaryServer(append([]interceptor.UnaryServerInterceptor{s.unaryInterceptor}, interceptors...)...)
+		}
+	}
+}
+
+// WithStreamInterceptor adds stream interceptors to the server.
+// Multiple calls chain the interceptors; they execute in the order provided.
+func WithStreamInterceptor(interceptors ...interceptor.StreamServerInterceptor) Option {
+	return func(s *Server) {
+		if s.streamInterceptor == nil {
+			s.streamInterceptor = interceptor.ChainStreamServer(interceptors...)
+		} else {
+			s.streamInterceptor = interceptor.ChainStreamServer(append([]interceptor.StreamServerInterceptor{s.streamInterceptor}, interceptors...)...)
+		}
+	}
+}
+
+// WithMaxRecvMsgSize sets the maximum size for received messages.
+// Messages larger than this will be rejected with ErrMessageTooLarge.
+// Default is 4MB (maxPayloadSize).
+func WithMaxRecvMsgSize(size int) Option {
+	return func(s *Server) {
+		s.maxRecvMsgSize = size
+	}
+}
+
+// WithMaxSendMsgSize sets the maximum size for sent messages.
+// Messages larger than this will cause the send to fail with ErrMessageTooLarge.
+// Default is 0 (no limit, only protocol max applies).
+func WithMaxSendMsgSize(size int) Option {
+	return func(s *Server) {
+		s.maxSendMsgSize = size
+	}
+}
+
 // Server handles RPC connections and dispatches to registered handlers.
 type Server struct {
 	registry           *Registry
@@ -35,6 +79,12 @@ type Server struct {
 	mu                 sync.Mutex
 	closed             bool
 	defaultCompression msgs.Compression
+
+	unaryInterceptor  interceptor.UnaryServerInterceptor
+	streamInterceptor interceptor.StreamServerInterceptor
+
+	maxRecvMsgSize int // Maximum size of received messages (0 = default 4MB)
+	maxSendMsgSize int // Maximum size of sent messages (0 = no limit)
 }
 
 // New creates a new RPC server.

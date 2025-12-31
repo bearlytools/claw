@@ -6,7 +6,6 @@ package msgs
 import (
     "context"
     "fmt"
-    "iter"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
@@ -18,12 +17,26 @@ var _ = fmt.Errorf
 var _ = field.FTBool
 
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Cancel) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Cancel) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -67,12 +80,26 @@ func (x *Cancel) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, op
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Close) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Close) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -145,12 +172,26 @@ func (x *Close) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Descr) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Descr) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -202,12 +243,26 @@ func (x *Descr) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *GoAway) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *GoAway) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -257,12 +312,26 @@ func (x *GoAway) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, op
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Metadata) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Metadata) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -306,12 +375,26 @@ func (x *Metadata) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, 
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Msg) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Msg) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -429,12 +512,26 @@ func (x *Msg) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts 
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Open) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Open) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -520,12 +617,26 @@ func (x *Open) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *OpenAck) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *OpenAck) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -606,12 +717,26 @@ func (x *OpenAck) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Payload) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Payload) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -688,12 +813,26 @@ func (x *Payload) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Ping) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Ping) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
@@ -735,12 +874,26 @@ func (x *Ping) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts
     }
 }
 
-// IngestWithOptions populates the struct from a token stream with options.
+// Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
-func (x *Pong) IngestWithOptions(ctx context.Context, tokens iter.Seq[clawiter.Token], opts clawiter.IngestOptions) error {
-    ts := clawiter.NewTokenStream(tokens)
+func (x *Pong) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
     defer ts.Close()
-    return x.XXXIngestFrom(ctx, ts, opts)
+    return x.XXXIngestFrom(ctx, ts, o)
 }
 
 // XXXIngestFrom is for internal use - ingests from a shared token stream.
