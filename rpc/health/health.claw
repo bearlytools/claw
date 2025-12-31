@@ -1,0 +1,26 @@
+package health
+
+// ServingStatus indicates the health status of a service.
+Enum ServingStatus uint8 {
+	// Unknown indicates the status is unknown.
+	Unknown @0
+	// Serving indicates the service is healthy and serving requests.
+	Serving @1
+	// NotServing indicates the service is not serving requests.
+	NotServing @2
+	// ServiceUnknown indicates the requested service is not known to the server.
+	ServiceUnknown @3
+}
+
+// HealthCheckRequest is the request message for health checks.
+Struct HealthCheckRequest {
+	// Service is the name of the service to check.
+	// An empty string means check the overall server health.
+	Service string @0
+}
+
+// HealthCheckResponse is the response message for health checks.
+Struct HealthCheckResponse {
+	// Status indicates the health status.
+	Status ServingStatus @0
+}

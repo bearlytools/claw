@@ -71,6 +71,21 @@ func (b *BiDirClient) CloseSend() error {
 	return b.conn.sendPayload(b.sessionID, 0, nil, true)
 }
 
+// Cancel cancels the RPC, sending a Cancel message to the server.
+// This signals to the server that the client is no longer interested
+// in the result and the server may stop processing.
+// After Cancel, the stream should be closed with Close().
+func (b *BiDirClient) Cancel() error {
+	b.mu.Lock()
+	if b.closed {
+		b.mu.Unlock()
+		return nil
+	}
+	b.mu.Unlock()
+
+	return b.conn.sendCancel(b.sessionID, 0)
+}
+
 // Close closes the bidirectional client and its session.
 func (b *BiDirClient) Close() error {
 	b.mu.Lock()

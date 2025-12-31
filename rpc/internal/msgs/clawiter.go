@@ -5,7 +5,6 @@ package msgs
 
 import (
     "context"
-    "iter"
     "math"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
@@ -18,13 +17,12 @@ var _ = math.Float32bits
 var _ context.Context
 
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Cancel) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Cancel"}) {
-            return
-        }
+func (x Cancel) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Cancel"}) {
+        return
+    }
         // Field 0: SessionID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "SessionID", Type: field.FTUint32}
@@ -42,19 +40,17 @@ func (x Cancel) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Cancel"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Cancel"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Close) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Close"}) {
-            return
-        }
+func (x Close) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Close"}) {
+        return
+    }
         // Field 0: SessionID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "SessionID", Type: field.FTUint32}
@@ -99,11 +95,7 @@ func (x Close) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MetadataGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Metadata"}) {
                     return
@@ -111,19 +103,17 @@ func (x Close) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Close"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Close"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Descr) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Descr"}) {
-            return
-        }
+func (x Descr) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Descr"}) {
+        return
+    }
         // Field 0: Package
         {
             s := x.Package()
@@ -158,19 +148,17 @@ func (x Descr) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Descr"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Descr"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x GoAway) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GoAway"}) {
-            return
-        }
+func (x GoAway) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "GoAway"}) {
+        return
+    }
         // Field 0: LastSessionID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "LastSessionID", Type: field.FTUint32}
@@ -199,19 +187,17 @@ func (x GoAway) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GoAway"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "GoAway"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Metadata) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Metadata"}) {
-            return
-        }
+func (x Metadata) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Metadata"}) {
+        return
+    }
         // Field 0: Key
         {
             s := x.Key()
@@ -224,19 +210,17 @@ func (x Metadata) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             return
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Metadata"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Metadata"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Msg"}) {
-            return
-        }
+func (x Msg) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Msg"}) {
+        return
+    }
         // Field 0: Type
         {
             v := x.Type()
@@ -257,11 +241,7 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: OpenAck
@@ -272,11 +252,7 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 3: Close
@@ -287,11 +263,7 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 4: Payload
@@ -302,11 +274,7 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 5: Cancel
@@ -317,11 +285,7 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 6: Ping
@@ -332,11 +296,7 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 7: Pong
@@ -347,11 +307,7 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 8: GoAway
@@ -362,27 +318,21 @@ func (x Msg) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Msg"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Msg"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Open) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Open"}) {
-            return
-        }
+func (x Open) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Open"}) {
+        return
+    }
         // Field 0: OpenID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "OpenID", Type: field.FTUint32}
@@ -399,11 +349,7 @@ func (x Open) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 return
             }
             if !isNil {
-                for tok := range nested.Walk(ctx) {
-                    if !yield(tok) {
-                        return
-                    }
-                }
+                nested.Walk(ctx, yield, opts...)
             }
         }
         // Field 2: ProtocolMajor
@@ -465,11 +411,7 @@ func (x Open) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MetadataGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Metadata"}) {
                     return
@@ -477,19 +419,17 @@ func (x Open) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Open"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Open"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x OpenAck) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "OpenAck"}) {
-            return
-        }
+func (x OpenAck) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "OpenAck"}) {
+        return
+    }
         // Field 0: OpenID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "OpenID", Type: field.FTUint32}
@@ -568,11 +508,7 @@ func (x OpenAck) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MetadataGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Metadata"}) {
                     return
@@ -580,19 +516,17 @@ func (x OpenAck) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "OpenAck"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "OpenAck"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Payload) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Payload"}) {
-            return
-        }
+func (x Payload) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Payload"}) {
+        return
+    }
         // Field 0: SessionID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "SessionID", Type: field.FTUint32}
@@ -650,11 +584,7 @@ func (x Payload) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
                 }
                 for i := 0; i < listLen; i++ {
                     item := x.MetadataGet(ctx, i)
-                    for tok := range item.Walk(ctx) {
-                        if !yield(tok) {
-                            return
-                        }
-                    }
+                    item.Walk(ctx, yield, opts...)
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Metadata"}) {
                     return
@@ -662,19 +592,17 @@ func (x Payload) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Payload"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Payload"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Ping) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Ping"}) {
-            return
-        }
+func (x Ping) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Ping"}) {
+        return
+    }
         // Field 0: ID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ID", Type: field.FTUint32}
@@ -684,19 +612,17 @@ func (x Ping) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Ping"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Ping"}) {
+        return
     }
 }
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Pong) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Pong"}) {
-            return
-        }
+func (x Pong) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Pong"}) {
+        return
+    }
         // Field 0: ID
         {
             tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ID", Type: field.FTUint32}
@@ -706,9 +632,8 @@ func (x Pong) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Pong"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Pong"}) {
+        return
     }
 }
 
