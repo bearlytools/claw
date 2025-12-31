@@ -59,9 +59,10 @@ func TestMarshalSimpleCar(t *testing.T) {
 			t.Errorf("TestMarshalSimpleCar(%s): got err == %s, want err == nil", test.name, err)
 			continue
 		}
-		if string(got) != test.want {
-			t.Errorf("TestMarshalSimpleCar(%s): got %s, want %s", test.name, string(got), test.want)
+		if got.String() != test.want {
+			t.Errorf("TestMarshalSimpleCar(%s): got %s, want %s", test.name, got.String(), test.want)
 		}
+		got.Release(ctx)
 	}
 }
 
@@ -104,9 +105,10 @@ func TestMarshalNestedStruct(t *testing.T) {
 			t.Errorf("TestMarshalNestedStruct(%s): got err == %s, want err == nil", test.name, err)
 			continue
 		}
-		if string(got) != test.want {
-			t.Errorf("TestMarshalNestedStruct(%s): got %s, want %s", test.name, string(got), test.want)
+		if got.String() != test.want {
+			t.Errorf("TestMarshalNestedStruct(%s): got %s, want %s", test.name, got.String(), test.want)
 		}
+		got.Release(ctx)
 	}
 }
 
@@ -153,9 +155,10 @@ func TestMarshalLists(t *testing.T) {
 			t.Errorf("TestMarshalLists(%s): got err == %s, want err == nil", test.name, err)
 			continue
 		}
-		if string(got) != test.want {
-			t.Errorf("TestMarshalLists(%s): got %s, want %s", test.name, string(got), test.want)
+		if got.String() != test.want {
+			t.Errorf("TestMarshalLists(%s): got %s, want %s", test.name, got.String(), test.want)
 		}
+		got.Release(ctx)
 	}
 }
 
@@ -268,10 +271,11 @@ func TestMarshalProducesValidJSON(t *testing.T) {
 		t.Errorf("TestMarshalProducesValidJSON: Marshal error: %s", err)
 		return
 	}
+	defer got.Release(ctx)
 
 	var parsed map[string]any
-	if err := json.Unmarshal(got, &parsed); err != nil {
-		t.Errorf("TestMarshalProducesValidJSON: produced invalid JSON: %s\nJSON: %s", err, string(got))
+	if err := json.Unmarshal(got.Bytes(), &parsed); err != nil {
+		t.Errorf("TestMarshalProducesValidJSON: produced invalid JSON: %s\nJSON: %s", err, got.String())
 		return
 	}
 
@@ -338,10 +342,12 @@ func TestUnmarshalRoundTripCar(t *testing.T) {
 
 		// Unmarshal back into a new struct
 		restored := cars.NewCar(ctx)
-		if err := Unmarshal(ctx, jsonData, &restored); err != nil {
-			t.Errorf("TestUnmarshalRoundTripCar(%s): Unmarshal error: %s\nJSON: %s", test.name, err, string(jsonData))
+		if err := Unmarshal(ctx, jsonData.Bytes(), &restored); err != nil {
+			t.Errorf("TestUnmarshalRoundTripCar(%s): Unmarshal error: %s\nJSON: %s", test.name, err, jsonData.String())
+			jsonData.Release(ctx)
 			continue
 		}
+		jsonData.Release(ctx)
 
 		// Compare fields
 		if original.Manufacturer() != restored.Manufacturer() {
@@ -428,10 +434,12 @@ func TestUnmarshalRoundTripVehicle(t *testing.T) {
 
 		// Unmarshal back into a new struct
 		restored := vehicles.NewVehicle(ctx)
-		if err := Unmarshal(ctx, jsonData, &restored); err != nil {
-			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Unmarshal error: %s\nJSON: %s", test.name, err, string(jsonData))
+		if err := Unmarshal(ctx, jsonData.Bytes(), &restored); err != nil {
+			t.Errorf("TestUnmarshalRoundTripVehicle(%s): Unmarshal error: %s\nJSON: %s", test.name, err, jsonData.String())
+			jsonData.Release(ctx)
 			continue
 		}
+		jsonData.Release(ctx)
 
 		// Compare Type enum
 		if original.Type() != restored.Type() {

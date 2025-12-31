@@ -5,22 +5,40 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"iter"
 	"math"
 	"strconv"
+	"unicode/utf8"
+	"unsafe"
 
 	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
 	jsonv2 "github.com/go-json-experiment/json"
 	"github.com/go-json-experiment/json/jsontext"
+	"github.com/gostdlib/base/concurrency/sync"
+	"github.com/gostdlib/base/values/sizes"
 )
 
-// Walker is an interface for walking over Claw tokens.
-type Walker interface {
-	Walk(ctx context.Context) iter.Seq[clawiter.Token]
+// Pre-allocated byte slices for common JSON tokens to avoid allocations.
+var (
+	jsonOpenBrace    = []byte("{")
+	jsonCloseBrace   = []byte("}")
+	jsonOpenBracket  = []byte("[")
+	jsonCloseBracket = []byte("]")
+	jsonComma        = []byte(",")
+	jsonColon        = []byte(":")
+	jsonNull         = []byte("null")
+	jsonTrue         = []byte("true")
+	jsonFalse        = []byte("false")
+	jsonQuote        = []byte(`"`)
+	jsonEmptyArray   = []byte("[]")
+)
+
+// Walkable is an interface for types that can walk over Claw tokens.
+type Walkable interface {
+	Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption)
 }
 
 // marshalOptions provides options for writing Claw output to JSON.
@@ -39,17 +57,83 @@ func WithUseEnumNumbers(use bool) MarshalOption {
 	}
 }
 
-// Marshal marshals the Walker to JSON.
-func Marshal(ctx context.Context, v Walker, options ...MarshalOption) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := MarshalWriter(ctx, v, &buf, options...); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+var marshalPool = &marshallerPool{
+	pool: sync.NewPool[*bytes.Buffer](
+		context.Background(),
+		"clawjson.marshallerPool",
+		func() *bytes.Buffer {
+			b := &bytes.Buffer{}
+			b.Grow(256)
+			return b
+		},
+	),
 }
 
-// MarshalWriter marshals the Walker to JSON, writing to the provided io.Writer.
-func MarshalWriter(ctx context.Context, v Walker, w io.Writer, options ...MarshalOption) error {
+// marshalState holds reusable state for marshaling to avoid allocations.
+type marshalState struct {
+	firstStack []bool
+	scratch    []byte
+}
+
+var marshalStatePool = sync.NewPool[*marshalState](
+	context.Background(),
+	"clawjson.marshalStatePool",
+	func() *marshalState {
+		return &marshalState{
+			firstStack: make([]bool, 0, 8),
+			scratch:    make([]byte, 0, 64),
+		}
+	},
+)
+
+func getMarshalState(ctx context.Context) *marshalState {
+	s := marshalStatePool.Get(ctx)
+	s.firstStack = s.firstStack[:0]
+	s.scratch = s.scratch[:0]
+	return s
+}
+
+func putMarshalState(ctx context.Context, s *marshalState) {
+	marshalStatePool.Put(ctx, s)
+}
+
+// Buffer is a bytes.Buffer with a Release method to return it to the pool.
+type Buffer struct {
+	*bytes.Buffer
+}
+
+// Release returns the Buffer to the pool. Only use this once you are done with it.
+func (b Buffer) Release(ctx context.Context) {
+	marshalPool.put(ctx, b.Buffer)
+}
+
+type marshallerPool struct {
+	pool *sync.Pool[*bytes.Buffer]
+}
+
+func (m *marshallerPool) get(ctx context.Context) *bytes.Buffer {
+	return m.pool.Get(ctx)
+}
+
+func (m *marshallerPool) put(ctx context.Context, b *bytes.Buffer) {
+	if b.Cap() > 10*sizes.MiB {
+		return
+	}
+
+	m.pool.Put(ctx, b)
+}
+
+// Marshal marshals the Walkable to JSON.
+func Marshal(ctx context.Context, v Walkable, options ...MarshalOption) (Buffer, error) {
+	buf := marshalPool.get(ctx)
+	if err := MarshalWriter(ctx, v, buf, options...); err != nil {
+		return Buffer{}, err
+	}
+	return Buffer{buf}, nil
+}
+
+// MarshalWriter marshals the Walkable to JSON, writing to the provided io.Writer.
+func MarshalWriter(ctx context.Context, v Walkable, w io.Writer, options ...MarshalOption) error {
 	opts := marshalOptions{}
 	for _, opt := range options {
 		var err error
@@ -62,80 +146,88 @@ func MarshalWriter(ctx context.Context, v Walker, w io.Writer, options ...Marsha
 }
 
 // writeJSON writes JSON from the token stream to an io.Writer.
-func writeJSON(ctx context.Context, w io.Writer, walker Walker, opts marshalOptions) error {
-	// Stack to track whether we need commas (true = first element, no comma needed)
-	// Each entry represents a nesting level (struct or list)
-	firstStack := []bool{}
+func writeJSON(ctx context.Context, w io.Writer, walker Walkable, opts marshalOptions) error {
+	// Get pooled state to avoid allocations
+	state := getMarshalState(ctx)
+	defer putMarshalState(ctx, state)
 
-	for tok := range walker.Walk(ctx) {
+	var writeErr error
+	walker.Walk(ctx, func(tok clawiter.Token) bool {
 		switch tok.Kind {
 		case clawiter.TokenStructStart:
-			if _, err := w.Write([]byte("{")); err != nil {
-				return err
+			if _, err := w.Write(jsonOpenBrace); err != nil {
+				writeErr = err
+				return false
 			}
-			firstStack = append(firstStack, true)
+			state.firstStack = append(state.firstStack, true)
 
 		case clawiter.TokenStructEnd:
-			if _, err := w.Write([]byte("}")); err != nil {
-				return err
+			if _, err := w.Write(jsonCloseBrace); err != nil {
+				writeErr = err
+				return false
 			}
-			if len(firstStack) > 0 {
-				firstStack = firstStack[:len(firstStack)-1]
+			if len(state.firstStack) > 0 {
+				state.firstStack = state.firstStack[:len(state.firstStack)-1]
 			}
 
 		case clawiter.TokenListStart:
-			if _, err := w.Write([]byte("[")); err != nil {
-				return err
+			if _, err := w.Write(jsonOpenBracket); err != nil {
+				writeErr = err
+				return false
 			}
-			firstStack = append(firstStack, true)
+			state.firstStack = append(state.firstStack, true)
 
 		case clawiter.TokenListEnd:
-			if _, err := w.Write([]byte("]")); err != nil {
-				return err
+			if _, err := w.Write(jsonCloseBracket); err != nil {
+				writeErr = err
+				return false
 			}
-			if len(firstStack) > 0 {
-				firstStack = firstStack[:len(firstStack)-1]
+			if len(state.firstStack) > 0 {
+				state.firstStack = state.firstStack[:len(state.firstStack)-1]
 			}
 
 		case clawiter.TokenField:
 			// Write comma if not first element
-			if len(firstStack) > 0 {
-				if !firstStack[len(firstStack)-1] {
-					if _, err := w.Write([]byte(",")); err != nil {
-						return err
+			if len(state.firstStack) > 0 {
+				if !state.firstStack[len(state.firstStack)-1] {
+					if _, err := w.Write(jsonComma); err != nil {
+						writeErr = err
+						return false
 					}
 				}
-				firstStack[len(firstStack)-1] = false
+				state.firstStack[len(state.firstStack)-1] = false
 			}
 
 			// Write field name if present (not present for list items)
 			if tok.Name != "" {
-				escaped, err := json.Marshal(tok.Name)
-				if err != nil {
-					return fmt.Errorf("failed to escape field name %q: %w", tok.Name, err)
+				state.scratch = appendEscapedString(state.scratch[:0], tok.Name)
+				if _, err := w.Write(state.scratch); err != nil {
+					writeErr = err
+					return false
 				}
-				if _, err := w.Write(escaped); err != nil {
-					return err
-				}
-				if _, err := w.Write([]byte(":")); err != nil {
-					return err
+				if _, err := w.Write(jsonColon); err != nil {
+					writeErr = err
+					return false
 				}
 			}
 
 			// Write field value based on type
-			if err := writeValue(w, tok, opts); err != nil {
-				return err
+			if err := writeValue(w, tok, opts, &state.scratch); err != nil {
+				writeErr = err
+				return false
 			}
 		}
-	}
-	return nil
+		return true
+	})
+	return writeErr
 }
 
 // writeValue writes the JSON value for a field token.
-func writeValue(w io.Writer, tok clawiter.Token, opts marshalOptions) error {
+// scratch is a reusable buffer for formatting values.
+func writeValue(w io.Writer, tok clawiter.Token, opts marshalOptions, scratch *[]byte) error {
 	// Handle nil structs and lists
 	if tok.IsNil {
-		_, err := w.Write([]byte("null"))
+		_, err := w.Write(jsonNull)
 		return err
 	}
 
@@ -153,18 +245,17 @@ func writeValue(w io.Writer, tok clawiter.Token, opts marshalOptions) error {
 		if opts.UseEnumNumbers {
 			switch tok.Type {
 			case field.FTUint8:
-				_, err := w.Write([]byte(strconv.FormatUint(uint64(tok.Uint8()), 10)))
+				*scratch = strconv.AppendUint((*scratch)[:0], uint64(tok.Uint8()), 10)
+				_, err := w.Write(*scratch)
 				return err
 			case field.FTUint16:
-				_, err := w.Write([]byte(strconv.FormatUint(uint64(tok.Uint16()), 10)))
+				*scratch = strconv.AppendUint((*scratch)[:0], uint64(tok.Uint16()), 10)
+				_, err := w.Write(*scratch)
 				return err
 			}
 		}
-		escaped, err := json.Marshal(tok.EnumName)
-		if err != nil {
-			return fmt.Errorf("failed to escape enum name %q: %w", tok.EnumName, err)
-		}
-		_, err = w.Write(escaped)
+		*scratch = appendEscapedString((*scratch)[:0], tok.EnumName)
+		_, err := w.Write(*scratch)
 		return err
 	}
 
@@ -172,81 +263,148 @@ func writeValue(w io.Writer, tok clawiter.Token, opts marshalOptions) error {
 	switch tok.Type {
 	case field.FTBool:
 		if tok.Bool() {
-			_, err := w.Write([]byte("true"))
+			_, err := w.Write(jsonTrue)
 			return err
 		}
-		_, err := w.Write([]byte("false"))
+		_, err := w.Write(jsonFalse)
 		return err
 
 	case field.FTInt8:
-		_, err := w.Write([]byte(strconv.FormatInt(int64(tok.Int8()), 10)))
+		*scratch = strconv.AppendInt((*scratch)[:0], int64(tok.Int8()), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTInt16:
-		_, err := w.Write([]byte(strconv.FormatInt(int64(tok.Int16()), 10)))
+		*scratch = strconv.AppendInt((*scratch)[:0], int64(tok.Int16()), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTInt32:
-		_, err := w.Write([]byte(strconv.FormatInt(int64(tok.Int32()), 10)))
+		*scratch = strconv.AppendInt((*scratch)[:0], int64(tok.Int32()), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTInt64:
-		_, err := w.Write([]byte(strconv.FormatInt(tok.Int64(), 10)))
+		*scratch = strconv.AppendInt((*scratch)[:0], tok.Int64(), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTUint8:
-		_, err := w.Write([]byte(strconv.FormatUint(uint64(tok.Uint8()), 10)))
+		*scratch = strconv.AppendUint((*scratch)[:0], uint64(tok.Uint8()), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTUint16:
-		_, err := w.Write([]byte(strconv.FormatUint(uint64(tok.Uint16()), 10)))
+		*scratch = strconv.AppendUint((*scratch)[:0], uint64(tok.Uint16()), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTUint32:
-		_, err := w.Write([]byte(strconv.FormatUint(uint64(tok.Uint32()), 10)))
+		*scratch = strconv.AppendUint((*scratch)[:0], uint64(tok.Uint32()), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTUint64:
-		_, err := w.Write([]byte(strconv.FormatUint(tok.Uint64(), 10)))
+		*scratch = strconv.AppendUint((*scratch)[:0], tok.Uint64(), 10)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTFloat32:
 		f := tok.Float32()
 		if math.IsInf(float64(f), 0) || math.IsNaN(float64(f)) {
-			_, err := w.Write([]byte("null"))
+			_, err := w.Write(jsonNull)
 			return err
 		}
-		_, err := w.Write([]byte(strconv.FormatFloat(float64(f), 'g', -1, 32)))
+		*scratch = strconv.AppendFloat((*scratch)[:0], float64(f), 'g', -1, 32)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTFloat64:
 		f := tok.Float64()
 		if math.IsInf(f, 0) || math.IsNaN(f) {
-			_, err := w.Write([]byte("null"))
+			_, err := w.Write(jsonNull)
 			return err
 		}
-		_, err := w.Write([]byte(strconv.FormatFloat(f, 'g', -1, 64)))
+		*scratch = strconv.AppendFloat((*scratch)[:0], f, 'g', -1, 64)
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTString:
-		escaped, err := json.Marshal(tok.String())
-		if err != nil {
-			return fmt.Errorf("failed to escape string: %w", err)
-		}
-		_, err = w.Write(escaped)
+		*scratch = appendEscapedString((*scratch)[:0], tok.String())
+		_, err := w.Write(*scratch)
 		return err
 
 	case field.FTBytes:
-		encoded := base64.StdEncoding.EncodeToString(tok.Bytes)
-		escaped, err := json.Marshal(encoded)
-		if err != nil {
-			return fmt.Errorf("failed to escape bytes: %w", err)
-		}
-		_, err = w.Write(escaped)
+		// For bytes, base64 encode directly into scratch buffer with quotes
+		// This avoids allocating an intermediate string
+		*scratch = append((*scratch)[:0], '"')
+		*scratch = base64.StdEncoding.AppendEncode(*scratch, tok.Bytes)
+		*scratch = append(*scratch, '"')
+		_, err := w.Write(*scratch)
 		return err
 	}
 
 	return fmt.Errorf("unsupported field type: %v", tok.Type)
+}
+
+// appendEscapedString appends a JSON-escaped string (with quotes) to dst.
+// This is an optimized version that avoids json.Marshal for common cases.
+func appendEscapedString(dst []byte, s string) []byte {
+	dst = append(dst, '"')
+
+	// Get unsafe byte view of string to avoid allocation during scan
+	sb := stringToBytes(s)
+
+	// Fast path: check if the string needs escaping
+	needsEscape := false
+	for _, c := range sb {
+		if c < 0x20 || c == '"' || c == '\\' || c > 0x7e {
+			needsEscape = true
+			break
+		}
+	}
+
+	if !needsEscape {
+		// Fast path: no escaping needed, append directly from unsafe view
+		dst = append(dst, sb...)
+	} else {
+		// Slow path: escape special characters
+		for _, r := range s {
+			switch {
+			case r == '"':
+				dst = append(dst, '\\', '"')
+			case r == '\\':
+				dst = append(dst, '\\', '\\')
+			case r == '\n':
+				dst = append(dst, '\\', 'n')
+			case r == '\r':
+				dst = append(dst, '\\', 'r')
+			case r == '\t':
+				dst = append(dst, '\\', 't')
+			case r < 0x20:
+				// Control characters: use \uXXXX
+				dst = append(dst, '\\', 'u', '0', '0')
+				dst = append(dst, hexDigits[r>>4], hexDigits[r&0xf])
+			case r > utf8.MaxRune:
+				// Invalid rune
+				dst = append(dst, '\\', 'u', 'f', 'f', 'f', 'd')
+			default:
+				// Valid UTF-8, just append
+				dst = utf8.AppendRune(dst, r)
+			}
+		}
+	}
+
+	dst = append(dst, '"')
+	return dst
+}
+
+const hexDigits = "0123456789abcdef"
+
+// stringToBytes converts a string to a byte slice without copying.
+// WARNING: The returned slice must NOT be modified.
+func stringToBytes(s string) []byte {
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
 // Array is used to write out an array of JSON objects.
@@ -269,8 +427,8 @@ func NewArray(w io.Writer, options ...MarshalOption) (*Array, error) {
 	return &Array{writer: w, opts: opts}, nil
 }
 
-// Write writes a Walker to the JSON array.
-func (a *Array) Write(ctx context.Context, v Walker, options ...MarshalOption) error {
+// Write writes a Walkable to the JSON array.
+func (a *Array) Write(ctx context.Context, v Walkable, options ...MarshalOption) error {
 	opts := a.opts
 	for _, opt := range options {
 		var err error
@@ -281,12 +439,12 @@ func (a *Array) Write(ctx context.Context, v Walker, options ...MarshalOption) e
 	}
 
 	if !a.written {
-		if _, err := a.writer.Write([]byte("[")); err != nil {
+		if _, err := a.writer.Write(jsonOpenBracket); err != nil {
 			return err
 		}
 		a.written = true
 	} else {
-		if _, err := a.writer.Write([]byte(",")); err != nil {
+		if _, err := a.writer.Write(jsonComma); err != nil {
 			return err
 		}
 	}
@@ -297,10 +455,10 @@ func (a *Array) Write(ctx context.Context, v Walker, options ...MarshalOption) e
 // Close finishes writing the JSON array.
 func (a *Array) Close() error {
 	if !a.written {
-		_, err := a.writer.Write([]byte("[]"))
+		_, err := a.writer.Write(jsonEmptyArray)
 		return err
 	}
-	_, err := a.writer.Write([]byte("]"))
+	_, err := a.writer.Write(jsonCloseBracket)
 	return err
 }
 
@@ -312,7 +470,7 @@ func (a *Array) Reset(w io.Writer) {
 
 // Ingester is an interface for ingesting Claw tokens into a struct.
 type Ingester interface {
-	IngestWithOptions(context.Context, iter.Seq[clawiter.Token], clawiter.IngestOptions) error
+	Ingest(context.Context, clawiter.Walker, ...clawiter.IngestOption) error
 }
 
 // unmarshalOptions provides options for reading JSON into Claw structs.
@@ -348,10 +506,15 @@ func UnmarshalReader(ctx context.Context, r io.Reader, v Ingester, options ...Un
 	}
 
 	tokens := jsonToTokens(r)
-	ingestOpts := clawiter.IngestOptions{
-		IgnoreUnknownFields: opts.IgnoreUnknownFields,
+	// Convert iter.Seq to clawiter.Walker (both are func(func(Token) bool) but need explicit conversion)
+	walker := clawiter.Walker(func(yield clawiter.YieldToken) {
+		tokens(yield)
+	})
+	var ingestOpts []clawiter.IngestOption
+	if opts.IgnoreUnknownFields {
+		ingestOpts = append(ingestOpts, clawiter.WithIgnoreUnknownFields(true))
 	}
-	return v.IngestWithOptions(ctx, tokens, ingestOpts)
+	return v.Ingest(ctx, walker, ingestOpts...)
 }
 
 // jsonToTokens parses JSON and yields Claw tokens.

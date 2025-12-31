@@ -226,3 +226,11 @@ func (t *Token) SetKeyFloat32(v float32) { t.Key = uint64(math.Float32bits(v)) }
 
 // SetKeyFloat64 sets a float64 key.
 func (t *Token) SetKeyFloat64(v float64) { t.Key = math.Float64bits(v) }
+
+// YieldToken is the callback type for Walk iteration.
+// Returns false to stop iteration early.
+type YieldToken func(Token) bool
+
+// Walker is a function that walks tokens and yields them to a callback.
+// This is the type accepted by Ingest.
+type Walker func(YieldToken)

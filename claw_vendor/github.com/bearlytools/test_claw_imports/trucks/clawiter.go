@@ -5,7 +5,6 @@ package trucks
 
 import (
     "context"
-    "iter"
     "math"
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
@@ -19,13 +18,12 @@ var _ = math.Float32bits
 var _ context.Context
 
 
-// Walk returns an iterator that emits tokens for serialization.
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
-func (x Truck) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
-    return func(yield func(clawiter.Token) bool) {
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Truck"}) {
-            return
-        }
+func (x Truck) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Truck"}) {
+        return
+    }
         // Field 0: Manufacturer
         {
             v := x.Manufacturer()
@@ -60,9 +58,8 @@ func (x Truck) Walk(ctx context.Context) iter.Seq[clawiter.Token] {
             }
         }
 
-        if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Truck"}) {
-            return
-        }
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Truck"}) {
+        return
     }
 }
 
