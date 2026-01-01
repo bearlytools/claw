@@ -1,15 +1,12 @@
-# Claw
-
 <p align="center">
   <img src="docs/claw_logo_light.svg" alt="Claw Logo" width="200">
 </p>
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![GoDoc](https://godoc.org/github.com/bearlytools/claw?status.svg)](https://pkg.go.dev/github.com/bearlytools/claw)
-[![Go Report Card](https://goreportcard.com/badge/github.com/bearlytools/claw)](https://goreportcard.com/report/github.com/bearlytools/claw)
-![Go version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go)
+<p align="center">
+    Claw
+</p>
 
-Since you've made it this far, why don't you hit that :star: up in the right corner.
+---
 
 <p align="center">
   <strong>A fast, zero-allocation binary serialization format with code generation</strong>
@@ -17,7 +14,24 @@ Since you've made it this far, why don't you hit that :star: up in the right cor
 
 ---
 
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
+  </a>
+  <a href="https://pkg.go.dev/github.com/bearlytools/claw">
+    <img src="https://godoc.org/github.com/bearlytools/claw?status.svg" alt="GoDoc">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/bearlytools/claw">
+    <img src="https://goreportcard.com/badge/github.com/bearlytools/claw" alt="Go Report Card">
+  </a>
+  <img src="https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go" alt="Go version">
+</p>
+
+
+
 Claw is a binary serialization format and IDL (Interface Definition Language) designed for performance-critical applications. It prioritizes machine efficiency over wire size, offering lazy decoding and minimal heap allocations.
+
+Since you've made it this far, why don't you hit that :star: up in the right corner.
 
 ## Features
 
