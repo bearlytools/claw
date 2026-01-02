@@ -62,11 +62,11 @@ func (x Close) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...claw
         // Field 1: ErrCode
         {
             v := x.ErrCode()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint16}
+            tok.SetUint16(uint16(v))
             tok.IsEnum = true
             tok.EnumGroup = "ErrCode"
-            tok.EnumName = ErrCodeByValue[uint8(v)]
+            tok.EnumName = ErrCodeByValue[uint16(v)]
             if !yield(tok) {
                 return
             }
@@ -170,11 +170,11 @@ func (x GoAway) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...cla
         // Field 1: ErrCode
         {
             v := x.ErrCode()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint16}
+            tok.SetUint16(uint16(v))
             tok.IsEnum = true
             tok.EnumGroup = "ErrCode"
-            tok.EnumName = ErrCodeByValue[uint8(v)]
+            tok.EnumName = ErrCodeByValue[uint16(v)]
             if !yield(tok) {
                 return
             }
@@ -418,6 +418,14 @@ func (x Open) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawi
                 }
             }
         }
+        // Field 9: Packing
+        {
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Packing", Type: field.FTBool}
+            tok.SetBool(x.Packing())
+            if !yield(tok) {
+                return
+            }
+        }
 
     if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Open"}) {
         return
@@ -475,11 +483,11 @@ func (x OpenAck) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...cl
         // Field 5: ErrCode
         {
             v := x.ErrCode()
-            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint8}
-            tok.SetUint8(uint8(v))
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ErrCode", Type: field.FTUint16}
+            tok.SetUint16(uint16(v))
             tok.IsEnum = true
             tok.EnumGroup = "ErrCode"
-            tok.EnumName = ErrCodeByValue[uint8(v)]
+            tok.EnumName = ErrCodeByValue[uint16(v)]
             if !yield(tok) {
                 return
             }
@@ -513,6 +521,14 @@ func (x OpenAck) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...cl
                 if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "Metadata"}) {
                     return
                 }
+            }
+        }
+        // Field 8: Packing
+        {
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "Packing", Type: field.FTBool}
+            tok.SetBool(x.Packing())
+            if !yield(tok) {
+                return
             }
         }
 

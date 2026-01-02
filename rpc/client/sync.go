@@ -6,6 +6,7 @@ import (
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 
+	"github.com/bearlytools/claw/rpc/errors"
 	"github.com/bearlytools/claw/rpc/interceptor"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 	"github.com/bearlytools/claw/rpc/metadata"
@@ -40,7 +41,7 @@ func (s *SyncClient) doCall(ctx context.Context, req []byte) ([]byte, error) {
 	s.mu.Lock()
 	if s.closed {
 		s.mu.Unlock()
-		return nil, ErrSessionClosed
+		return nil, errors.E(ctx, errors.Unavailable, ErrSessionClosed)
 	}
 
 	reqID := s.nextReqID
@@ -69,14 +70,14 @@ func (s *SyncClient) doCall(ctx context.Context, req []byte) ([]byte, error) {
 			s.conn.sendCancel(s.sessionID, reqID)
 			return nil, ctx.Err()
 		case <-s.conn.closed:
-			return nil, ErrClosed
+			return nil, errors.E(ctx, errors.Unavailable, ErrClosed)
 		case <-s.session.cancelCh:
-			return nil, ErrSessionClosed
+			return nil, errors.E(ctx, errors.Unavailable, ErrSessionClosed)
 		case cl := <-s.session.closeCh:
 			if cl.ErrCode() != msgs.ErrNone {
-				return nil, fmt.Errorf("session closed with error: %s", cl.Error())
+				return nil, errors.E(ctx, errors.Category(cl.ErrCode()), fmt.Errorf("server error: %s", cl.Error()))
 			}
-			return nil, ErrSessionClosed
+			return nil, errors.E(ctx, errors.Unavailable, ErrSessionClosed)
 		case p := <-s.session.recvCh:
 			if p.ReqID() == reqID {
 				return p.Payload(), nil

@@ -172,6 +172,14 @@ func (x HealthCheckRequest) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x HealthCheckRequest) XXXTypeHash() [16]byte {
+    return XXXTypeHashHealthCheckRequest
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x HealthCheckRequest) SetRecording(enabled bool) HealthCheckRequest {
@@ -311,6 +319,14 @@ func (x HealthCheckResponse) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x HealthCheckResponse) XXXTypeHash() [16]byte {
+    return XXXTypeHashHealthCheckResponse
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x HealthCheckResponse) SetRecording(enabled bool) HealthCheckResponse {
@@ -368,6 +384,15 @@ func (x HealthCheckResponse) XXXDescr() reflect.StructDescr {
 } 
 
 // Everything below this line is internal details.
+
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashHealthCheckRequest = [16]byte{0xa0, 0xd4, 0xb7, 0x28, 0x9e, 0xf7, 0xeb, 0x4b, 0xf2, 0xf2, 0x7b, 0xbc, 0x7b, 0xd0, 0xb4, 0x70}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashHealthCheckResponse = [16]byte{0x4b, 0xf4, 0xeb, 0x9a, 0x3e, 0xa9, 0x8b, 0xb7, 0x57, 0xd6, 0xdf, 0x19, 0x9a, 0x52, 0x73, 0xab}
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingHealthCheckRequest = &mapping.Map{
     Name: "HealthCheckRequest",
@@ -381,6 +406,7 @@ var XXXMappingHealthCheckRequest = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/health",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -398,6 +424,7 @@ var XXXMappingHealthCheckResponse = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/health",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ServingStatus",
         },
     },
@@ -506,4 +533,20 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
+    runtime.RegisterTypeHash(XXXTypeHashHealthCheckRequest, runtime.TypeEntry{
+        Name:     "HealthCheckRequest",
+        FullPath: "github.com/bearlytools/claw/rpc/health",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewHealthCheckRequest(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashHealthCheckResponse, runtime.TypeEntry{
+        Name:     "HealthCheckResponse",
+        FullPath: "github.com/bearlytools/claw/rpc/health",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewHealthCheckResponse(ctx)
+        },
+    })
 }

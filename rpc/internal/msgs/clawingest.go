@@ -9,12 +9,14 @@ import (
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
+    "github.com/bearlytools/claw/clawc/languages/go/segment"
 )
 
 // Ensure imports are used.
 var _ context.Context
 var _ = fmt.Errorf
 var _ = field.FTBool
+var _ segment.AnyRawItem
 
 
 // Ingest populates the struct from a Walker with options.
@@ -133,7 +135,7 @@ func (x *Close) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opt
             if len(tok.Bytes) > 0 {
                 x.SetErrCode(ErrCodeByName[tok.String()])
             } else {
-                x.SetErrCode(ErrCode(tok.Uint8()))
+                x.SetErrCode(ErrCode(tok.Uint16()))
             }
         case "Error":
             x.SetError(tok.String())
@@ -296,7 +298,7 @@ func (x *GoAway) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, op
             if len(tok.Bytes) > 0 {
                 x.SetErrCode(ErrCodeByName[tok.String()])
             } else {
-                x.SetErrCode(ErrCode(tok.Uint8()))
+                x.SetErrCode(ErrCode(tok.Uint16()))
             }
         case "DebugData":
             x.SetDebugData(tok.String())
@@ -605,6 +607,8 @@ func (x *Open) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts
                 }
                 x.MetadataAppend(ctx, item)
             }
+        case "Packing":
+            x.SetPacking(tok.Bool())
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {
@@ -678,7 +682,7 @@ func (x *OpenAck) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
             if len(tok.Bytes) > 0 {
                 x.SetErrCode(ErrCodeByName[tok.String()])
             } else {
-                x.SetErrCode(ErrCode(tok.Uint8()))
+                x.SetErrCode(ErrCode(tok.Uint16()))
             }
         case "Error":
             x.SetError(tok.String())
@@ -705,6 +709,8 @@ func (x *OpenAck) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, o
                 }
                 x.MetadataAppend(ctx, item)
             }
+        case "Packing":
+            x.SetPacking(tok.Bool())
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {

@@ -113,6 +113,9 @@ Struct Open {
 	SpanID bytes @7
 	// Metadata is the request metadata (headers).
 	Metadata []Metadata @8
+	// Packing indicates the client wants to use Cap'n Proto-style packing for subsequent messages.
+	// If true and the server agrees, all messages after OpenAck will be packed.
+	Packing bool @9
 }
 
 // OpenAck is the response to an Open message.
@@ -133,42 +136,48 @@ Struct OpenAck {
 	Error string @6
 	// Metadata is the response metadata (headers).
 	Metadata []Metadata @7
+	// Packing indicates the server agrees to use Cap'n Proto-style packing.
+	// If true, all messages after this OpenAck will be packed.
+	Packing bool @8
 }
 
 // ErrCode are error codes sent over Close or OpenAck messages.
-Enum ErrCode uint8 {
+// Values are aligned with rpc/errors.Category for direct conversion.
+Enum ErrCode uint16 {
 	// ErrNone indicates there was no error.
 	ErrNone @0
-	// ErrInternal indicates there was an internal error.
-	ErrInternal @1
-	// ErrInvalidArgument indicates the client specified an invalid argument.
-	ErrInvalidArgument @2
-	// ErrNotFound indicates a requested resource was not found.
-	ErrNotFound @3
-	// ErrPermissionDenied indicates the caller does not have permission.
-	ErrPermissionDenied @4
-	// ErrUnauthenticated indicates the request does not have valid authentication credentials.
-	ErrUnauthenticated @5
-	// ErrDeadlineExceeded indicates the deadline expired before the operation completed.
-	ErrDeadlineExceeded @6
-	// ErrResourceExhausted indicates some resource has been exhausted.
-	ErrResourceExhausted @7
-	// ErrUnavailable indicates the service is currently unavailable.
-	ErrUnavailable @8
-	// ErrUnimplemented indicates the operation is not implemented.
-	ErrUnimplemented @9
 	// ErrCanceled indicates the operation was canceled.
-	ErrCanceled @10
-	// ErrAborted indicates the operation was aborted.
-	ErrAborted @11
-	// ErrOutOfRange indicates the operation was attempted past the valid range.
-	ErrOutOfRange @12
-	// ErrDataLoss indicates unrecoverable data loss or corruption.
-	ErrDataLoss @13
-	// ErrFailedPrecondition indicates the operation was rejected because the system is not in a required state.
-	ErrFailedPrecondition @14
+	ErrCanceled @1
+	// ErrReserved is reserved (gRPC Unknown, we use 0 for unknown). Do not use.
+	ErrReserved @2
+	// ErrInvalidArgument indicates the client specified an invalid argument.
+	ErrInvalidArgument @3
+	// ErrDeadlineExceeded indicates the deadline expired before the operation completed.
+	ErrDeadlineExceeded @4
+	// ErrNotFound indicates a requested resource was not found.
+	ErrNotFound @5
 	// ErrAlreadyExists indicates the resource already exists.
-	ErrAlreadyExists @15
+	ErrAlreadyExists @6
+	// ErrPermissionDenied indicates the caller does not have permission.
+	ErrPermissionDenied @7
+	// ErrResourceExhausted indicates some resource has been exhausted.
+	ErrResourceExhausted @8
+	// ErrFailedPrecondition indicates the operation was rejected because the system is not in a required state.
+	ErrFailedPrecondition @9
+	// ErrAborted indicates the operation was aborted.
+	ErrAborted @10
+	// ErrOutOfRange indicates the operation was attempted past the valid range.
+	ErrOutOfRange @11
+	// ErrUnimplemented indicates the operation is not implemented.
+	ErrUnimplemented @12
+	// ErrInternal indicates there was an internal error.
+	ErrInternal @13
+	// ErrUnavailable indicates the service is currently unavailable.
+	ErrUnavailable @14
+	// ErrDataLoss indicates unrecoverable data loss or corruption.
+	ErrDataLoss @15
+	// ErrUnauthenticated indicates the request does not have valid authentication credentials.
+	ErrUnauthenticated @16
 }
 
 // Close is a message that closes the session. If ErrCode is set then the session close is due to some type

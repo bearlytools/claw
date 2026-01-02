@@ -4,6 +4,7 @@ import (
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 
+	"github.com/bearlytools/claw/rpc/errors"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 )
 
@@ -22,7 +23,7 @@ func (s *SendClient) Send(ctx context.Context, payload []byte) error {
 	s.mu.Lock()
 	if s.closed {
 		s.mu.Unlock()
-		return ErrSessionClosed
+		return errors.E(ctx, errors.Unavailable, ErrSessionClosed)
 	}
 	s.mu.Unlock()
 
@@ -30,9 +31,9 @@ func (s *SendClient) Send(ctx context.Context, payload []byte) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-s.conn.closed:
-		return ErrClosed
+		return errors.E(ctx, errors.Unavailable, ErrClosed)
 	case <-s.session.cancelCh:
-		return ErrSessionClosed
+		return errors.E(ctx, errors.Unavailable, ErrSessionClosed)
 	default:
 	}
 

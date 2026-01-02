@@ -374,3 +374,38 @@ func (d *Dialer) Dial(ctx context.Context) (transport.Transport, error) {
 
 // Verify Dialer implements transport.Dialer.
 var _ transport.Dialer = (*Dialer)(nil)
+
+// NewResolvingDialer creates an HTTP dialer with name resolution.
+// The target is parsed according to the scheme://authority/endpoint format.
+// If no scheme is specified, "passthrough" is used.
+//
+// For HTTP transport, the endpoint in the target becomes the URL to connect to.
+// The resolver resolves the host portion of that URL.
+//
+// Example targets:
+//   - "dns:///myservice.namespace:8080" - resolves host, connects via HTTP
+//   - "passthrough:///https://localhost:8080/rpc" - direct URL
+//   - "https://localhost:8080/rpc" - direct URL (uses passthrough)
+//
+// This function requires importing the resolver packages you want to use:
+//
+//	import _ "github.com/bearlytools/claw/rpc/transport/resolver/passthrough"
+//	import _ "github.com/bearlytools/claw/rpc/transport/resolver/dns"
+func NewResolvingDialer(target string, opts ...Option) (*transport.ResolvingDialer, error) {
+	cfg := defaultConfig()
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	dialFunc := func(ctx context.Context, addr string) (transport.Transport, error) {
+		return Dial(ctx, addr,
+			WithHTTPClient(cfg.httpClient),
+			WithTLSConfig(cfg.tlsConfig),
+			WithHeaders(cfg.headers),
+			WithRetryPolicy(cfg.retryPolicy),
+			WithDialTimeout(cfg.dialTimeout),
+		)
+	}
+
+	return transport.NewResolvingDialer(target, dialFunc)
+}

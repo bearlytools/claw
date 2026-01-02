@@ -1,15 +1,14 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"iter"
 
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 
+	"github.com/bearlytools/claw/rpc/errors"
 	"github.com/bearlytools/claw/rpc/interceptor"
-	"github.com/bearlytools/claw/rpc/interceptor/ratelimit"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 	"github.com/bearlytools/claw/rpc/metadata"
 )
@@ -113,7 +112,7 @@ func (s *BiDirStream) Send(payload []byte) error {
 	s.mu.Lock()
 	if s.closed {
 		s.mu.Unlock()
-		return ErrSessionClosed
+		return errors.E(s.ctx, errors.Unavailable, ErrSessionClosed)
 	}
 	s.mu.Unlock()
 
@@ -243,13 +242,13 @@ func (s *SendStream) Send(payload []byte) error {
 	s.mu.Lock()
 	if s.closed {
 		s.mu.Unlock()
-		return ErrSessionClosed
+		return errors.E(s.ctx, errors.Unavailable, ErrSessionClosed)
 	}
 	s.mu.Unlock()
 
 	select {
 	case <-s.cancelCh:
-		return ErrSessionClosed
+		return errors.E(s.ctx, errors.Unavailable, ErrSessionClosed)
 	default:
 	}
 
@@ -377,21 +376,28 @@ func (s *RecvStream) setErr(err error) {
 }
 
 // errCodeFromError converts a Go error to an ErrCode.
+// If the error is an rpc/errors.Error, the Category is extracted and converted directly.
 func errCodeFromError(err error) msgs.ErrCode {
 	if err == nil {
 		return msgs.ErrNone
 	}
+
+	// Check for rpc/errors.Error to extract Category.
+	var e errors.Error
+	if errors.As(err, &e) {
+		if cat, ok := e.Category.(errors.Category); ok {
+			return msgs.ErrCode(cat)
+		}
+	}
+
+	// Fallback for context errors not wrapped in errors.E().
 	if errors.Is(err, context.DeadlineExceeded) {
 		return msgs.ErrDeadlineExceeded
 	}
 	if errors.Is(err, context.Canceled) {
 		return msgs.ErrCanceled
 	}
-	if errors.Is(err, ratelimit.ErrRateLimited) {
-		return msgs.ErrResourceExhausted
-	}
-	// Default to internal error. Handlers can wrap specific error types
-	// to indicate different error codes.
+
 	return msgs.ErrInternal
 }
 

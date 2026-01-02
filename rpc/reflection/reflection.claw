@@ -1,0 +1,75 @@
+package reflection
+
+import (
+	"github.com/bearlytools/claw/rpc/internal/msgs"
+)
+
+// MethodInfo contains information about a single RPC method.
+Struct MethodInfo {
+    // Name is the method name.
+    Name string @0
+    // Type is the RPC type (synchronous, send, recv, bidirectional).
+    Type msgs.RPCType @1
+}
+
+// ServiceInfo contains information about a service and its methods.
+Struct ServiceInfo {
+    // Name is the service name.
+    Name string @0
+    // Methods is the list of methods in this service.
+    Methods []MethodInfo @1
+}
+
+// PackageInfo contains information about a package and its services.
+Struct PackageInfo {
+    // Name is the package name.
+    Name string @0
+    // Services is the list of services in this package.
+    Services []ServiceInfo @1
+}
+
+// ListServicesRequest is the request for listing all services.
+Struct ListServicesRequest {
+    // Reserved for future use (claw requires at least one field).
+    Reserved uint8 @0
+}
+
+// ListServicesResponse is the response containing all registered services.
+Struct ListServicesResponse {
+    // Packages is the list of all registered packages with their services.
+    Packages []PackageInfo @0
+}
+
+// GetServiceInfoRequest is the request for getting info about a specific service.
+Struct GetServiceInfoRequest {
+    // Package is the package name.
+    Package string @0
+    // Service is the service name.
+    Service string @1
+}
+
+// GetServiceInfoResponse is the response with service information.
+Struct GetServiceInfoResponse {
+    // Service is the service information.
+    Service ServiceInfo @0
+    // Found indicates whether the service was found.
+    Found bool @1
+}
+
+// GetMethodInfoRequest is the request for getting info about a specific method.
+Struct GetMethodInfoRequest {
+    // Package is the package name.
+    Package string @0
+    // Service is the service name.
+    Service string @1
+    // Method is the method name.
+    Method string @2
+}
+
+// GetMethodInfoResponse is the response with method information.
+Struct GetMethodInfoResponse {
+    // Method is the method information.
+    Method MethodInfo @0
+    // Found indicates whether the method was found.
+    Found bool @1
+}

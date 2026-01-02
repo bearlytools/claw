@@ -87,11 +87,12 @@ var CompressionByValue = map[uint8]string{
     3: "CmpZstd",
 }
 // ErrCode are error codes sent over Close or OpenAck messages.
-type ErrCode uint8
+// Values are aligned with rpc/errors.Category for direct conversion.
+type ErrCode uint16
 
 // String implements fmt.Stringer.
 func (x ErrCode) String() string {
-    return ErrCodeByValue[uint8(x)]
+    return ErrCodeByValue[uint16(x)]
 }
 
 // XXXEnumGroup will return the EnumGroup descriptor for this group of enumerators.
@@ -111,76 +112,80 @@ func (x ErrCode) XXXEnumValueDescr() reflect.EnumValueDescr {
 const (
     // ErrNone indicates there was no error.
     ErrNone ErrCode = 0
-    // ErrInternal indicates there was an internal error.
-    ErrInternal ErrCode = 1
-    // ErrInvalidArgument indicates the client specified an invalid argument.
-    ErrInvalidArgument ErrCode = 2
-    // ErrNotFound indicates a requested resource was not found.
-    ErrNotFound ErrCode = 3
-    // ErrPermissionDenied indicates the caller does not have permission.
-    ErrPermissionDenied ErrCode = 4
-    // ErrUnauthenticated indicates the request does not have valid authentication credentials.
-    ErrUnauthenticated ErrCode = 5
-    // ErrDeadlineExceeded indicates the deadline expired before the operation completed.
-    ErrDeadlineExceeded ErrCode = 6
-    // ErrResourceExhausted indicates some resource has been exhausted.
-    ErrResourceExhausted ErrCode = 7
-    // ErrUnavailable indicates the service is currently unavailable.
-    ErrUnavailable ErrCode = 8
-    // ErrUnimplemented indicates the operation is not implemented.
-    ErrUnimplemented ErrCode = 9
     // ErrCanceled indicates the operation was canceled.
-    ErrCanceled ErrCode = 10
-    // ErrAborted indicates the operation was aborted.
-    ErrAborted ErrCode = 11
-    // ErrOutOfRange indicates the operation was attempted past the valid range.
-    ErrOutOfRange ErrCode = 12
-    // ErrDataLoss indicates unrecoverable data loss or corruption.
-    ErrDataLoss ErrCode = 13
-    // ErrFailedPrecondition indicates the operation was rejected because the system is not in a required state.
-    ErrFailedPrecondition ErrCode = 14
+    ErrCanceled ErrCode = 1
+    // ErrReserved is reserved (gRPC Unknown, we use 0 for unknown). Do not use.
+    ErrReserved ErrCode = 2
+    // ErrInvalidArgument indicates the client specified an invalid argument.
+    ErrInvalidArgument ErrCode = 3
+    // ErrDeadlineExceeded indicates the deadline expired before the operation completed.
+    ErrDeadlineExceeded ErrCode = 4
+    // ErrNotFound indicates a requested resource was not found.
+    ErrNotFound ErrCode = 5
     // ErrAlreadyExists indicates the resource already exists.
-    ErrAlreadyExists ErrCode = 15
+    ErrAlreadyExists ErrCode = 6
+    // ErrPermissionDenied indicates the caller does not have permission.
+    ErrPermissionDenied ErrCode = 7
+    // ErrResourceExhausted indicates some resource has been exhausted.
+    ErrResourceExhausted ErrCode = 8
+    // ErrFailedPrecondition indicates the operation was rejected because the system is not in a required state.
+    ErrFailedPrecondition ErrCode = 9
+    // ErrAborted indicates the operation was aborted.
+    ErrAborted ErrCode = 10
+    // ErrOutOfRange indicates the operation was attempted past the valid range.
+    ErrOutOfRange ErrCode = 11
+    // ErrUnimplemented indicates the operation is not implemented.
+    ErrUnimplemented ErrCode = 12
+    // ErrInternal indicates there was an internal error.
+    ErrInternal ErrCode = 13
+    // ErrUnavailable indicates the service is currently unavailable.
+    ErrUnavailable ErrCode = 14
+    // ErrDataLoss indicates unrecoverable data loss or corruption.
+    ErrDataLoss ErrCode = 15
+    // ErrUnauthenticated indicates the request does not have valid authentication credentials.
+    ErrUnauthenticated ErrCode = 16
 )
 
 // ErrCodeByName converts a string representing the enumerator into a ErrCode.
 var ErrCodeByName = map[string]ErrCode{
-    "ErrAborted": 11,
-    "ErrAlreadyExists": 15,
-    "ErrCanceled": 10,
-    "ErrDataLoss": 13,
-    "ErrDeadlineExceeded": 6,
-    "ErrFailedPrecondition": 14,
-    "ErrInternal": 1,
-    "ErrInvalidArgument": 2,
+    "ErrAborted": 10,
+    "ErrAlreadyExists": 6,
+    "ErrCanceled": 1,
+    "ErrDataLoss": 15,
+    "ErrDeadlineExceeded": 4,
+    "ErrFailedPrecondition": 9,
+    "ErrInternal": 13,
+    "ErrInvalidArgument": 3,
     "ErrNone": 0,
-    "ErrNotFound": 3,
-    "ErrOutOfRange": 12,
-    "ErrPermissionDenied": 4,
-    "ErrResourceExhausted": 7,
-    "ErrUnauthenticated": 5,
-    "ErrUnavailable": 8,
-    "ErrUnimplemented": 9,
+    "ErrNotFound": 5,
+    "ErrOutOfRange": 11,
+    "ErrPermissionDenied": 7,
+    "ErrReserved": 2,
+    "ErrResourceExhausted": 8,
+    "ErrUnauthenticated": 16,
+    "ErrUnavailable": 14,
+    "ErrUnimplemented": 12,
 }
 
-// ErrCodeByValue converts a uint8 representing a ErrCode into its string name.
-var ErrCodeByValue = map[uint8]string{
+// ErrCodeByValue converts a uint16 representing a ErrCode into its string name.
+var ErrCodeByValue = map[uint16]string{
     0: "ErrNone",
-    1: "ErrInternal",
-    2: "ErrInvalidArgument",
-    3: "ErrNotFound",
-    4: "ErrPermissionDenied",
-    5: "ErrUnauthenticated",
-    6: "ErrDeadlineExceeded",
-    7: "ErrResourceExhausted",
-    8: "ErrUnavailable",
-    9: "ErrUnimplemented",
-    10: "ErrCanceled",
-    11: "ErrAborted",
-    12: "ErrOutOfRange",
-    13: "ErrDataLoss",
-    14: "ErrFailedPrecondition",
-    15: "ErrAlreadyExists",
+    1: "ErrCanceled",
+    2: "ErrReserved",
+    3: "ErrInvalidArgument",
+    4: "ErrDeadlineExceeded",
+    5: "ErrNotFound",
+    6: "ErrAlreadyExists",
+    7: "ErrPermissionDenied",
+    8: "ErrResourceExhausted",
+    9: "ErrFailedPrecondition",
+    10: "ErrAborted",
+    11: "ErrOutOfRange",
+    12: "ErrUnimplemented",
+    13: "ErrInternal",
+    14: "ErrUnavailable",
+    15: "ErrDataLoss",
+    16: "ErrUnauthenticated",
 }
 // MsgType is used to determine the type of message.
 type MsgType uint8
@@ -404,6 +409,14 @@ func (x Cancel) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Cancel) XXXTypeHash() [16]byte {
+    return XXXTypeHashCancel
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Cancel) SetRecording(enabled bool) Cancel {
@@ -540,11 +553,11 @@ func (x Close) IsSetSessionID() bool{
 
 // ErrCode is a code describing the error type. 0 indicates no error.
 func (x Close) ErrCode() ErrCode {
-    return ErrCode(segment.GetUint8(x.s, 1))
+    return ErrCode(segment.GetUint16(x.s, 1))
 }
 
 func (x Close) SetErrCode(value ErrCode) Close {
-    segment.SetUint8(x.s, 1, uint8(value))
+    segment.SetUint16(x.s, 1, uint16(value))
     return x
 }
 func (x Close) IsSetErrCode() bool{
@@ -596,11 +609,6 @@ func (x Close) MetadataAppend(ctx context.Context, values ...Metadata) {
     }
 }
 
-// AppendMetadata is an alias for MetadataAppend for backwards compatibility.
-func (x Close) AppendMetadata(ctx context.Context, values ...Metadata) {
-    x.MetadataAppend(ctx, values...)
-}
-
 // MetadataAppendRaw appends items to the list using Raw struct representations.
 func (x Close) MetadataAppendRaw(ctx context.Context, values ...*MetadataRaw) {
     list := x.MetadataList(ctx)
@@ -627,6 +635,14 @@ func (x Close) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Close) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Close) XXXTypeHash() [16]byte {
+    return XXXTypeHashClose
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -849,6 +865,14 @@ func (x Descr) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Descr) XXXTypeHash() [16]byte {
+    return XXXTypeHashDescr
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Descr) SetRecording(enabled bool) Descr {
@@ -994,11 +1018,11 @@ func (x GoAway) IsSetLastSessionID() bool{
 
 // ErrCode is a code describing the reason for going away.
 func (x GoAway) ErrCode() ErrCode {
-    return ErrCode(segment.GetUint8(x.s, 1))
+    return ErrCode(segment.GetUint16(x.s, 1))
 }
 
 func (x GoAway) SetErrCode(value ErrCode) GoAway {
-    segment.SetUint8(x.s, 1, uint8(value))
+    segment.SetUint16(x.s, 1, uint16(value))
     return x
 }
 func (x GoAway) IsSetErrCode() bool{
@@ -1031,6 +1055,14 @@ func (x GoAway) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x GoAway) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x GoAway) XXXTypeHash() [16]byte {
+    return XXXTypeHashGoAway
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -1201,6 +1233,14 @@ func (x Metadata) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Metadata) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Metadata) XXXTypeHash() [16]byte {
+    return XXXTypeHashMetadata
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -1463,6 +1503,14 @@ func (x Msg) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Msg) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Msg) XXXTypeHash() [16]byte {
+    return XXXTypeHashMsg
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -1791,11 +1839,6 @@ func (x Open) MetadataAppend(ctx context.Context, values ...Metadata) {
     }
 }
 
-// AppendMetadata is an alias for MetadataAppend for backwards compatibility.
-func (x Open) AppendMetadata(ctx context.Context, values ...Metadata) {
-    x.MetadataAppend(ctx, values...)
-}
-
 // MetadataAppendRaw appends items to the list using Raw struct representations.
 func (x Open) MetadataAppendRaw(ctx context.Context, values ...*MetadataRaw) {
     list := x.MetadataList(ctx)
@@ -1807,6 +1850,20 @@ func (x Open) MetadataAppendRaw(ctx context.Context, values ...*MetadataRaw) {
 }
 func (x Open) IsSetMetadata() bool{
     return x.s.HasField(8)
+}
+
+// Packing indicates the client wants to use Cap'n Proto-style packing for subsequent messages.
+// If true and the server agrees, all messages after OpenAck will be packed.
+func (x Open) Packing() bool {
+    return segment.GetBool(x.s, 9)
+}
+
+func (x Open) SetPacking(value bool) Open {
+    segment.SetBool(x.s, 9, value)
+    return x
+}
+func (x Open) IsSetPacking() bool{
+    return x.s.HasField(9)
 }
 
 
@@ -1822,6 +1879,14 @@ func (x Open) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Open) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Open) XXXTypeHash() [16]byte {
+    return XXXTypeHashOpen
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -1860,6 +1925,7 @@ type OpenRaw struct {
     TraceID []byte
     SpanID []byte
     Metadata []*MetadataRaw
+    Packing bool
 }
 
 // NewOpenFromRaw creates a new Open from a Raw struct representation.
@@ -1900,6 +1966,9 @@ func NewOpenFromRaw(ctx context.Context, raw OpenRaw) Open {
         }
         list.SetAll(items)
     }
+    if raw.Packing {
+        x.SetPacking(raw.Packing)
+    }
     return x
 }
 
@@ -1938,6 +2007,7 @@ func (x Open) ToRaw(ctx context.Context) OpenRaw {
             raw.Metadata[i] = &itemRaw
         }
     }
+    raw.Packing = x.Packing()
     return raw
 }
  
@@ -2078,11 +2148,11 @@ func (x OpenAck) IsSetMaxPayloadSize() bool{
 
 // ErrCode is a code describing an error if the open was rejected. 0 indicates success.
 func (x OpenAck) ErrCode() ErrCode {
-    return ErrCode(segment.GetUint8(x.s, 5))
+    return ErrCode(segment.GetUint16(x.s, 5))
 }
 
 func (x OpenAck) SetErrCode(value ErrCode) OpenAck {
-    segment.SetUint8(x.s, 5, uint8(value))
+    segment.SetUint16(x.s, 5, uint16(value))
     return x
 }
 func (x OpenAck) IsSetErrCode() bool{
@@ -2134,11 +2204,6 @@ func (x OpenAck) MetadataAppend(ctx context.Context, values ...Metadata) {
     }
 }
 
-// AppendMetadata is an alias for MetadataAppend for backwards compatibility.
-func (x OpenAck) AppendMetadata(ctx context.Context, values ...Metadata) {
-    x.MetadataAppend(ctx, values...)
-}
-
 // MetadataAppendRaw appends items to the list using Raw struct representations.
 func (x OpenAck) MetadataAppendRaw(ctx context.Context, values ...*MetadataRaw) {
     list := x.MetadataList(ctx)
@@ -2150,6 +2215,20 @@ func (x OpenAck) MetadataAppendRaw(ctx context.Context, values ...*MetadataRaw) 
 }
 func (x OpenAck) IsSetMetadata() bool{
     return x.s.HasField(7)
+}
+
+// Packing indicates the server agrees to use Cap'n Proto-style packing.
+// If true, all messages after this OpenAck will be packed.
+func (x OpenAck) Packing() bool {
+    return segment.GetBool(x.s, 8)
+}
+
+func (x OpenAck) SetPacking(value bool) OpenAck {
+    segment.SetBool(x.s, 8, value)
+    return x
+}
+func (x OpenAck) IsSetPacking() bool{
+    return x.s.HasField(8)
 }
 
 
@@ -2165,6 +2244,14 @@ func (x OpenAck) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x OpenAck) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x OpenAck) XXXTypeHash() [16]byte {
+    return XXXTypeHashOpenAck
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -2202,6 +2289,7 @@ type OpenAckRaw struct {
     ErrCode ErrCode
     Error string
     Metadata []*MetadataRaw
+    Packing bool
 }
 
 // NewOpenAckFromRaw creates a new OpenAck from a Raw struct representation.
@@ -2239,6 +2327,9 @@ func NewOpenAckFromRaw(ctx context.Context, raw OpenAckRaw) OpenAck {
         }
         list.SetAll(items)
     }
+    if raw.Packing {
+        x.SetPacking(raw.Packing)
+    }
     return x
 }
 
@@ -2269,6 +2360,7 @@ func (x OpenAck) ToRaw(ctx context.Context) OpenAckRaw {
             raw.Metadata[i] = &itemRaw
         }
     }
+    raw.Packing = x.Packing()
     return raw
 }
  
@@ -2441,11 +2533,6 @@ func (x Payload) MetadataAppend(ctx context.Context, values ...Metadata) {
     }
 }
 
-// AppendMetadata is an alias for MetadataAppend for backwards compatibility.
-func (x Payload) AppendMetadata(ctx context.Context, values ...Metadata) {
-    x.MetadataAppend(ctx, values...)
-}
-
 // MetadataAppendRaw appends items to the list using Raw struct representations.
 func (x Payload) MetadataAppendRaw(ctx context.Context, values ...*MetadataRaw) {
     list := x.MetadataList(ctx)
@@ -2472,6 +2559,14 @@ func (x Payload) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Payload) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Payload) XXXTypeHash() [16]byte {
+    return XXXTypeHashPayload
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -2667,6 +2762,14 @@ func (x Ping) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Ping) XXXTypeHash() [16]byte {
+    return XXXTypeHashPing
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Ping) SetRecording(enabled bool) Ping {
@@ -2810,6 +2913,14 @@ func (x Pong) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Pong) XXXTypeHash() [16]byte {
+    return XXXTypeHashPong
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Pong) SetRecording(enabled bool) Pong {
@@ -2867,6 +2978,42 @@ func (x Pong) XXXDescr() reflect.StructDescr {
 } 
 
 // Everything below this line is internal details.
+
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashCancel = [16]byte{0x27, 0x12, 0x10, 0x3f, 0x41, 0x01, 0xe8, 0x81, 0x86, 0xd8, 0x1d, 0xfc, 0xb1, 0x87, 0x20, 0x54}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashClose = [16]byte{0xb9, 0x61, 0xf8, 0x04, 0x52, 0x84, 0x74, 0xf2, 0xc1, 0x2f, 0x9d, 0xfe, 0x3e, 0x15, 0x15, 0xb0}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashDescr = [16]byte{0x4a, 0x9e, 0x2f, 0x67, 0x2f, 0x29, 0xef, 0x42, 0x9b, 0x26, 0x35, 0xc5, 0x14, 0xe2, 0x30, 0x62}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashGoAway = [16]byte{0x16, 0x28, 0xae, 0x65, 0xf8, 0x90, 0xad, 0x02, 0x3b, 0xa0, 0x67, 0x56, 0x53, 0x99, 0xbf, 0xb3}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashMetadata = [16]byte{0x73, 0x78, 0xa0, 0x60, 0x33, 0x08, 0x4a, 0xd7, 0x24, 0xb4, 0x1b, 0x0c, 0xe5, 0x4a, 0x30, 0xee}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashMsg = [16]byte{0x2d, 0x16, 0x41, 0x75, 0x5d, 0xba, 0x40, 0xd8, 0xa0, 0xea, 0xba, 0x24, 0xb7, 0x91, 0x6b, 0x22}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashOpen = [16]byte{0xb6, 0x42, 0xcb, 0x81, 0xa4, 0x95, 0xd4, 0xbe, 0x31, 0x5a, 0x6c, 0xce, 0x2c, 0xda, 0xe4, 0xc7}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashOpenAck = [16]byte{0xb5, 0x8a, 0x70, 0xf7, 0xda, 0x02, 0x72, 0x09, 0x87, 0x8e, 0xb7, 0x85, 0x17, 0x16, 0xa1, 0x6e}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPayload = [16]byte{0x72, 0xd1, 0x6c, 0x82, 0x0d, 0xa5, 0x68, 0x94, 0xbb, 0x43, 0x80, 0xcf, 0x25, 0x86, 0x3e, 0x65}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPing = [16]byte{0xd0, 0xc8, 0xe7, 0x22, 0xba, 0x81, 0x4c, 0x70, 0x0b, 0xe6, 0xbb, 0xed, 0x20, 0xae, 0x86, 0x28}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPong = [16]byte{0x4d, 0x17, 0xb1, 0xaa, 0xe1, 0x1a, 0xa8, 0x2b, 0x21, 0xd8, 0xd3, 0xeb, 0x7a, 0xe9, 0xed, 0x7c}
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingCancel = &mapping.Map{
     Name: "Cancel",
@@ -2880,6 +3027,7 @@ var XXXMappingCancel = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReqID",
@@ -2888,6 +3036,7 @@ var XXXMappingCancel = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -2905,14 +3054,16 @@ var XXXMappingClose = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ErrCode",
-            Type: field.FTUint8,
+            Type: field.FTUint16,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ErrCode",
         },
         {
@@ -2922,6 +3073,7 @@ var XXXMappingClose = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Metadata",
@@ -2930,6 +3082,7 @@ var XXXMappingClose = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "Metadata",
             
             Mapping: XXXMappingMetadata,
@@ -2950,6 +3103,7 @@ var XXXMappingDescr = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Service",
@@ -2958,6 +3112,7 @@ var XXXMappingDescr = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Call",
@@ -2966,6 +3121,7 @@ var XXXMappingDescr = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Type",
@@ -2974,6 +3130,7 @@ var XXXMappingDescr = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 3,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "RPCType",
         },
     },
@@ -2992,14 +3149,16 @@ var XXXMappingGoAway = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ErrCode",
-            Type: field.FTUint8,
+            Type: field.FTUint16,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ErrCode",
         },
         {
@@ -3009,6 +3168,7 @@ var XXXMappingGoAway = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -3026,6 +3186,7 @@ var XXXMappingMetadata = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Value",
@@ -3034,6 +3195,7 @@ var XXXMappingMetadata = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -3051,6 +3213,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "MsgType",
         },
         {
@@ -3060,6 +3223,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "Open",
             
             Mapping: XXXMappingOpen,
@@ -3071,6 +3235,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "OpenAck",
             
             Mapping: XXXMappingOpenAck,
@@ -3082,6 +3247,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "Close",
             
             Mapping: XXXMappingClose,
@@ -3093,6 +3259,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
             StructName: "Payload",
             
             Mapping: XXXMappingPayload,
@@ -3104,6 +3271,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
             StructName: "Cancel",
             
             Mapping: XXXMappingCancel,
@@ -3115,6 +3283,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
             StructName: "Ping",
             
             Mapping: XXXMappingPing,
@@ -3126,6 +3295,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
             StructName: "Pong",
             
             Mapping: XXXMappingPong,
@@ -3137,6 +3307,7 @@ var XXXMappingMsg = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "GoAway",
             
             Mapping: XXXMappingGoAway,
@@ -3157,6 +3328,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Descr",
@@ -3165,6 +3337,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "Descr",
             
             Mapping: XXXMappingDescr,
@@ -3176,6 +3349,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ProtocolMinor",
@@ -3184,6 +3358,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "DeadlineMS",
@@ -3192,6 +3367,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "MaxPayloadSize",
@@ -3200,6 +3376,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TraceID",
@@ -3208,6 +3385,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SpanID",
@@ -3216,6 +3394,7 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Metadata",
@@ -3224,9 +3403,19 @@ var XXXMappingOpen = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "Metadata",
             
             Mapping: XXXMappingMetadata,
+        },
+        {
+            Name: "Packing",
+            Type: field.FTBool,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 9,
+            IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -3244,6 +3433,7 @@ var XXXMappingOpenAck = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SessionID",
@@ -3252,6 +3442,7 @@ var XXXMappingOpenAck = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ProtocolMajor",
@@ -3260,6 +3451,7 @@ var XXXMappingOpenAck = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ProtocolMinor",
@@ -3268,6 +3460,7 @@ var XXXMappingOpenAck = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "MaxPayloadSize",
@@ -3276,14 +3469,16 @@ var XXXMappingOpenAck = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ErrCode",
-            Type: field.FTUint8,
+            Type: field.FTUint16,
             Package: "msgs",
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 5,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ErrCode",
         },
         {
@@ -3293,6 +3488,7 @@ var XXXMappingOpenAck = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Metadata",
@@ -3301,9 +3497,19 @@ var XXXMappingOpenAck = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
             StructName: "Metadata",
             
             Mapping: XXXMappingMetadata,
+        },
+        {
+            Name: "Packing",
+            Type: field.FTBool,
+            Package: "msgs",
+            FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+            FieldNum: 8,
+            IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -3321,6 +3527,7 @@ var XXXMappingPayload = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReqID",
@@ -3329,6 +3536,7 @@ var XXXMappingPayload = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Payload",
@@ -3337,6 +3545,7 @@ var XXXMappingPayload = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "EndStream",
@@ -3345,6 +3554,7 @@ var XXXMappingPayload = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Compression",
@@ -3353,6 +3563,7 @@ var XXXMappingPayload = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 4,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "Compression",
         },
         {
@@ -3362,6 +3573,7 @@ var XXXMappingPayload = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
             StructName: "Metadata",
             
             Mapping: XXXMappingMetadata,
@@ -3382,6 +3594,7 @@ var XXXMappingPing = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -3399,6 +3612,7 @@ var XXXMappingPong = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -3452,88 +3666,93 @@ var XXXEnumGroupCompression = reflect.XXXEnumGroupImpl{
 
 var XXXEnumGroupErrCode = reflect.XXXEnumGroupImpl{
     GroupName: "ErrCode",
-    GroupLen: 16,
-    EnumSize: 8,
+    GroupLen: 17,
+    EnumSize: 16,
     Descrs: []reflect.EnumValueDescr{
         reflect.XXXEnumValueDescrImpl{
             EnumName: "ErrNone",
             EnumNumber: 0,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrInternal",
-            EnumNumber: 1,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrInvalidArgument",
-            EnumNumber: 2,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrNotFound",
-            EnumNumber: 3,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrPermissionDenied",
-            EnumNumber: 4,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrUnauthenticated",
-            EnumNumber: 5,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrDeadlineExceeded",
-            EnumNumber: 6,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrResourceExhausted",
-            EnumNumber: 7,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrUnavailable",
-            EnumNumber: 8,
-            EnumSize: 8,
-        },
-        reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrUnimplemented",
-            EnumNumber: 9,
-            EnumSize: 8,
+            EnumSize: 16,
         },
         reflect.XXXEnumValueDescrImpl{
             EnumName: "ErrCanceled",
-            EnumNumber: 10,
-            EnumSize: 8,
+            EnumNumber: 1,
+            EnumSize: 16,
         },
         reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrAborted",
-            EnumNumber: 11,
-            EnumSize: 8,
+            EnumName: "ErrReserved",
+            EnumNumber: 2,
+            EnumSize: 16,
         },
         reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrOutOfRange",
-            EnumNumber: 12,
-            EnumSize: 8,
+            EnumName: "ErrInvalidArgument",
+            EnumNumber: 3,
+            EnumSize: 16,
         },
         reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrDataLoss",
-            EnumNumber: 13,
-            EnumSize: 8,
+            EnumName: "ErrDeadlineExceeded",
+            EnumNumber: 4,
+            EnumSize: 16,
         },
         reflect.XXXEnumValueDescrImpl{
-            EnumName: "ErrFailedPrecondition",
-            EnumNumber: 14,
-            EnumSize: 8,
+            EnumName: "ErrNotFound",
+            EnumNumber: 5,
+            EnumSize: 16,
         },
         reflect.XXXEnumValueDescrImpl{
             EnumName: "ErrAlreadyExists",
+            EnumNumber: 6,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrPermissionDenied",
+            EnumNumber: 7,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrResourceExhausted",
+            EnumNumber: 8,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrFailedPrecondition",
+            EnumNumber: 9,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrAborted",
+            EnumNumber: 10,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrOutOfRange",
+            EnumNumber: 11,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrUnimplemented",
+            EnumNumber: 12,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrInternal",
+            EnumNumber: 13,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrUnavailable",
+            EnumNumber: 14,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrDataLoss",
             EnumNumber: 15,
-            EnumSize: 8,
+            EnumSize: 16,
+        },
+        reflect.XXXEnumValueDescrImpl{
+            EnumName: "ErrUnauthenticated",
+            EnumNumber: 16,
+            EnumSize: 16,
         },
     },
 }
@@ -3848,6 +4067,10 @@ var XXXStructDescrOpen = &reflect.XXXStructDescrImpl{
         reflect.XXXFieldDescrImpl{
             FD:  XXXMappingOpen.Fields[8],
             SD: XXXStructDescrMetadata,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingOpen.Fields[9],  
         },  
     },
 }
@@ -3891,6 +4114,10 @@ var XXXStructDescrOpenAck = &reflect.XXXStructDescrImpl{
         reflect.XXXFieldDescrImpl{
             FD:  XXXMappingOpenAck.Fields[7],
             SD: XXXStructDescrMetadata,  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingOpenAck.Fields[8],  
         },  
     },
 }
@@ -4000,4 +4227,83 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
+    runtime.RegisterTypeHash(XXXTypeHashCancel, runtime.TypeEntry{
+        Name:     "Cancel",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewCancel(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashClose, runtime.TypeEntry{
+        Name:     "Close",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewClose(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashDescr, runtime.TypeEntry{
+        Name:     "Descr",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewDescr(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashGoAway, runtime.TypeEntry{
+        Name:     "GoAway",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewGoAway(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashMetadata, runtime.TypeEntry{
+        Name:     "Metadata",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewMetadata(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashMsg, runtime.TypeEntry{
+        Name:     "Msg",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewMsg(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashOpen, runtime.TypeEntry{
+        Name:     "Open",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewOpen(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashOpenAck, runtime.TypeEntry{
+        Name:     "OpenAck",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewOpenAck(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPayload, runtime.TypeEntry{
+        Name:     "Payload",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPayload(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPing, runtime.TypeEntry{
+        Name:     "Ping",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPing(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPong, runtime.TypeEntry{
+        Name:     "Pong",
+        FullPath: "github.com/bearlytools/claw/rpc/internal/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPong(ctx)
+        },
+    })
 }

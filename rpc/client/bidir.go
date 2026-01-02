@@ -6,6 +6,7 @@ import (
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
 
+	"github.com/bearlytools/claw/rpc/errors"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 )
 
@@ -25,7 +26,7 @@ func (b *BiDirClient) Send(ctx context.Context, payload []byte) error {
 	b.mu.Lock()
 	if b.closed || b.sendDone {
 		b.mu.Unlock()
-		return ErrSessionClosed
+		return errors.E(ctx, errors.Unavailable, ErrSessionClosed)
 	}
 	b.mu.Unlock()
 
@@ -33,9 +34,9 @@ func (b *BiDirClient) Send(ctx context.Context, payload []byte) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-b.conn.closed:
-		return ErrClosed
+		return errors.E(ctx, errors.Unavailable, ErrClosed)
 	case <-b.session.cancelCh:
-		return ErrSessionClosed
+		return errors.E(ctx, errors.Unavailable, ErrSessionClosed)
 	default:
 	}
 

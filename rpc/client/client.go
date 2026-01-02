@@ -2,7 +2,8 @@
 package client
 
 import (
-	"errors"
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"iter"
@@ -11,12 +12,17 @@ import (
 
 	"github.com/gostdlib/base/concurrency/sync"
 	"github.com/gostdlib/base/context"
+	"github.com/gostdlib/base/values/sizes"
 
+	"github.com/bearlytools/claw/languages/go/pack"
 	"github.com/bearlytools/claw/rpc/compress"
+	"github.com/bearlytools/claw/rpc/errors"
+	"github.com/bearlytools/claw/rpc/hedge"
 	"github.com/bearlytools/claw/rpc/interceptor"
 	"github.com/bearlytools/claw/rpc/internal/msgs"
 	"github.com/bearlytools/claw/rpc/metadata"
 	"github.com/bearlytools/claw/rpc/retry"
+	"github.com/bearlytools/claw/rpc/serviceconfig"
 )
 
 // Protocol version constants.
@@ -28,6 +34,7 @@ const (
 // Common errors.
 var (
 	ErrClosed             = errors.New("connection closed")
+	ErrDraining           = errors.New("connection is draining")
 	ErrSessionClosed      = errors.New("session closed")
 	ErrFatalError         = errors.New("fatal connection error")
 	ErrTimeout            = errors.New("operation timed out")
@@ -69,8 +76,7 @@ func WithCompression(alg msgs.Compression) Option {
 }
 
 // WithMaxRecvMsgSize sets the maximum size of messages the client will accept.
-// Messages larger than this are rejected. Default is 4MB (same as maxPayloadSize).
-// Set to 0 to use the default.
+// Messages larger than this are rejected. Default is 4 MiB.
 func WithMaxRecvMsgSize(size int) Option {
 	return func(c *Conn) {
 		c.maxRecvMsgSize = size
@@ -78,8 +84,7 @@ func WithMaxRecvMsgSize(size int) Option {
 }
 
 // WithMaxSendMsgSize sets the maximum size of messages the client will send.
-// Attempts to send larger messages return ErrMessageTooLarge.
-// Default is 0 (no limit beyond maxPayloadSize).
+// Attempts to send larger messages return ErrMessageTooLarge. Default is 4 MiB.
 func WithMaxSendMsgSize(size int) Option {
 	return func(c *Conn) {
 		c.maxSendMsgSize = size
@@ -92,6 +97,16 @@ func WithMaxSendMsgSize(size int) Option {
 func WithSecure(secure bool) Option {
 	return func(c *Conn) {
 		c.secure = secure
+	}
+}
+
+// WithPacking enables Cap'n Proto-style message packing for this connection.
+// When enabled, the client will request packing in the first Open message.
+// If the server agrees, all subsequent messages (except Open/OpenAck) will be packed.
+// Packing can significantly reduce message size by eliminating zero bytes.
+func WithPacking(enabled bool) Option {
+	return func(c *Conn) {
+		c.usePacking = enabled
 	}
 }
 
@@ -129,6 +144,50 @@ func WithRetryPolicy(policy retry.Policy) Option {
 		} else {
 			c.unaryInterceptor = interceptor.ChainUnaryClient(retryInterceptor, c.unaryInterceptor)
 		}
+	}
+}
+
+// WithHedgePolicy adds a hedge interceptor with the given policy for unary calls.
+// Hedging sends the same request to multiple backends in parallel and uses the
+// first response. This reduces tail latency but increases backend load.
+//
+// Hedging is disabled by default. Set MaxHedgedRequests > 0 to enable.
+// The hedge interceptor is prepended to any existing unary interceptors,
+// so hedging happens before retry.
+//
+// Note: Only use hedging for idempotent operations.
+func WithHedgePolicy(policy hedge.Policy) Option {
+	return func(c *Conn) {
+		if policy.MaxHedgedRequests <= 0 {
+			return // Disabled
+		}
+		hedgeInterceptor := hedge.UnaryClientInterceptor(policy)
+		if c.unaryInterceptor == nil {
+			c.unaryInterceptor = hedgeInterceptor
+		} else {
+			c.unaryInterceptor = interceptor.ChainUnaryClient(hedgeInterceptor, c.unaryInterceptor)
+		}
+	}
+}
+
+// WithServiceConfig sets the service configuration for per-method settings.
+// The config allows setting default timeouts and wait-for-ready behavior
+// on a per-method, per-service, or per-package basis.
+//
+// Timeouts from service config are only applied if the context does not
+// already have a deadline. Per-call options override service config settings.
+//
+// Example:
+//
+//	cfg := serviceconfig.NewBuilder().
+//	    WithDefaultTimeout(30 * time.Second).
+//	    WithTimeout("myapp/UserService/*", 10 * time.Second).
+//	    WithTimeout("myapp/UserService/SlowMethod", 60 * time.Second).
+//	    Build()
+//	conn := client.New(ctx, transport, client.WithServiceConfig(cfg))
+func WithServiceConfig(cfg *serviceconfig.Config) Option {
+	return func(c *Conn) {
+		c.serviceConfig = cfg
 	}
 }
 
@@ -182,6 +241,17 @@ func WithPerRPCCredentials(creds PerRPCCredentials) CallOption {
 	}
 }
 
+// GetWaitForReady extracts the wait-for-ready setting from call options.
+// This is useful for connection pools that need to check this before
+// selecting a connection.
+func GetWaitForReady(opts ...CallOption) bool {
+	var co callOptions
+	for _, opt := range opts {
+		opt(&co)
+	}
+	return co.waitForReady
+}
+
 // session represents an active RPC session.
 type session struct {
 	id        uint32
@@ -228,16 +298,23 @@ type Conn struct {
 	nextOpenID uint32
 
 	closed   chan struct{}
+	draining bool          // True when draining (no new sessions allowed)
+	drained  chan struct{} // Closed when all sessions are done
 	readyCh  chan struct{} // Closed when connection is ready for use
 	fatalErr error
 
 	pingInterval       time.Duration
 	pingTimeout        time.Duration
 	maxPayloadSize     uint32
-	maxRecvMsgSize     int // Maximum size of received messages (0 = default 4MB)
-	maxSendMsgSize     int // Maximum size of sent messages (0 = no limit)
+	maxRecvMsgSize     int // Maximum size of received messages (default 4 MiB)
+	maxSendMsgSize     int // Maximum size of sent messages (default 4 MiB)
 	defaultCompression msgs.Compression
 	secure             bool // True if transport is secured (TLS)
+
+	// Packing state
+	usePacking        bool // Client wants to use packing (from option)
+	packingNegotiated bool // Whether packing has been negotiated
+	packingEnabled    bool // Whether packing is enabled (after negotiation)
 
 	// Keepalive state (times stored as UnixNano)
 	lastActivity atomic.Int64  // Last time we sent or received data
@@ -245,6 +322,8 @@ type Conn struct {
 
 	unaryInterceptor  interceptor.UnaryClientInterceptor
 	streamInterceptor interceptor.StreamClientInterceptor
+
+	serviceConfig *serviceconfig.Config // Per-method configuration
 
 	ctx context.Context
 }
@@ -262,7 +341,9 @@ func New(ctx context.Context, transport io.ReadWriteCloser, opts ...Option) *Con
 		readyCh:        readyCh,
 		pingInterval:   30 * time.Second,
 		pingTimeout:    10 * time.Second,
-		maxPayloadSize: 4 * 1024 * 1024, // 4MB default
+		maxPayloadSize: 4 * sizes.MiB,
+		maxRecvMsgSize: 4 * sizes.MiB,
+		maxSendMsgSize: 4 * sizes.MiB,
 		pongCh:         make(chan struct{}, 1),
 		ctx:            ctx,
 	}
@@ -286,7 +367,8 @@ func New(ctx context.Context, transport io.ReadWriteCloser, opts ...Option) *Con
 	return c
 }
 
-// Close closes the connection and all sessions.
+// Close closes the connection and all sessions immediately.
+// For graceful shutdown that waits for in-flight RPCs, use GracefulClose.
 func (c *Conn) Close() error {
 	c.mu.Lock()
 	select {
@@ -307,6 +389,77 @@ func (c *Conn) Close() error {
 	c.mu.Unlock()
 
 	return c.transport.Close()
+}
+
+// GracefulClose stops accepting new RPCs and waits for in-flight RPCs to complete
+// before closing the connection. The context controls how long to wait; if the
+// context is cancelled or times out, remaining sessions are forcefully closed.
+//
+// Returns nil if all sessions completed gracefully, or an error if the context
+// was cancelled before all sessions finished.
+func (c *Conn) GracefulClose(ctx context.Context) error {
+	c.mu.Lock()
+
+	// Check if already closed
+	select {
+	case <-c.closed:
+		c.mu.Unlock()
+		return nil
+	default:
+	}
+
+	// Enter draining mode - no new sessions allowed
+	c.draining = true
+
+	// If no sessions, we're done
+	if len(c.sessions) == 0 && len(c.pending) == 0 {
+		c.mu.Unlock()
+		return c.Close()
+	}
+
+	// Create drained channel if not exists
+	if c.drained == nil {
+		c.drained = make(chan struct{})
+	}
+	drained := c.drained
+	c.mu.Unlock()
+
+	// Wait for all sessions to complete or context to timeout
+	select {
+	case <-drained:
+		// All sessions completed gracefully
+		return c.Close()
+	case <-ctx.Done():
+		// Timeout - force close remaining sessions
+		c.Close()
+		return ctx.Err()
+	case <-c.closed:
+		// Connection was closed by other means
+		return nil
+	}
+}
+
+// IsDraining returns true if the connection is draining (no new sessions allowed).
+func (c *Conn) IsDraining() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.draining
+}
+
+// checkDrained checks if draining is complete and signals the drained channel.
+// Must be called when a session is removed.
+func (c *Conn) checkDrained() {
+	if !c.draining {
+		return
+	}
+	if len(c.sessions) == 0 && len(c.pending) == 0 && c.drained != nil {
+		select {
+		case <-c.drained:
+			// Already closed
+		default:
+			close(c.drained)
+		}
+	}
 }
 
 // Err returns any fatal error that occurred on the connection.
@@ -345,7 +498,7 @@ func (c *Conn) waitForReady(ctx context.Context, waitForReady bool) error {
 		if err := c.Err(); err != nil {
 			return err
 		}
-		return ErrClosed
+		return errors.E(ctx, errors.Unavailable, ErrClosed)
 	default:
 	}
 
@@ -355,7 +508,7 @@ func (c *Conn) waitForReady(ctx context.Context, waitForReady bool) error {
 			if err := c.Err(); err != nil {
 				return err
 			}
-			return ErrClosed
+			return errors.E(ctx, errors.Unavailable, ErrClosed)
 		}
 		return nil
 	}
@@ -368,14 +521,14 @@ func (c *Conn) waitForReady(ctx context.Context, waitForReady bool) error {
 			if err := c.Err(); err != nil {
 				return err
 			}
-			return ErrClosed
+			return errors.E(ctx, errors.Unavailable, ErrClosed)
 		}
 		return nil
 	case <-c.closed:
 		if err := c.Err(); err != nil {
 			return err
 		}
-		return ErrClosed
+		return errors.E(ctx, errors.Unavailable, ErrClosed)
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -418,14 +571,26 @@ func (c *Conn) readLoop() {
 		}
 
 		msg := msgs.NewMsg(c.ctx)
-		_, err := msg.UnmarshalReader(c.transport)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				c.setFatalError(io.EOF)
+
+		// If packing is enabled, read and unpack the message.
+		if c.packingEnabled {
+			if err := c.readPackedMsg(msg); err != nil {
+				if errors.Is(err, io.EOF) {
+					c.setFatalError(io.EOF)
+					return
+				}
+				c.setFatalError(errors.E(c.ctx, errors.Internal, fmt.Errorf("read error: %w", err)))
 				return
 			}
-			c.setFatalError(fmt.Errorf("read error: %w", err))
-			return
+		} else {
+			if _, err := msg.UnmarshalReader(c.transport); err != nil {
+				if errors.Is(err, io.EOF) {
+					c.setFatalError(io.EOF)
+					return
+				}
+				c.setFatalError(errors.E(c.ctx, errors.Internal, fmt.Errorf("read error: %w", err)))
+				return
+			}
 		}
 
 		// Mark activity for keepalive tracking
@@ -448,6 +613,38 @@ func (c *Conn) readLoop() {
 	}
 }
 
+// readPackedMsg reads a packed message from the transport and unmarshals it.
+func (c *Conn) readPackedMsg(msg msgs.Msg) error {
+	// Read pack header (16 bytes: 8 bytes unpacked size + 8 bytes packed size).
+	header := make([]byte, pack.HeaderSize)
+	if _, err := io.ReadFull(c.transport, header); err != nil {
+		return err
+	}
+
+	packedSize := int(binary.LittleEndian.Uint64(header[8:16]))
+
+	// Read packed data.
+	packedData := make([]byte, pack.HeaderSize+packedSize)
+	copy(packedData, header)
+	if _, err := io.ReadFull(c.transport, packedData[pack.HeaderSize:]); err != nil {
+		return err
+	}
+
+	// Unpack.
+	unpacked, err := pack.Unpack(c.ctx, packedData)
+	if err != nil {
+		return errors.E(c.ctx, errors.Internal, fmt.Errorf("unpack error: %w", err))
+	}
+	defer unpacked.Release(c.ctx)
+
+	// Unmarshal from unpacked bytes.
+	if _, err := msg.UnmarshalReader(bytes.NewReader(unpacked.Bytes())); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // handleOpenAck processes an OpenAck message.
 func (c *Conn) handleOpenAck(ack msgs.OpenAck) {
 	c.mu.Lock()
@@ -460,6 +657,7 @@ func (c *Conn) handleOpenAck(ack msgs.OpenAck) {
 
 	if ack.ErrCode() != msgs.ErrNone {
 		// Open was rejected.
+		c.checkDrained()
 		close(sess.readyCh) // Signal that session setup is complete (even though it failed)
 		sess.close()
 		c.mu.Unlock()
@@ -467,6 +665,12 @@ func (c *Conn) handleOpenAck(ack msgs.OpenAck) {
 	}
 
 	sess.id = ack.SessionID()
+
+	// Negotiate packing on first successful OpenAck.
+	if !c.packingNegotiated {
+		c.packingNegotiated = true
+		c.packingEnabled = c.usePacking && ack.Packing()
+	}
 
 	// Extract metadata from OpenAck.
 	mdLen := ack.MetadataLen(c.ctx)
@@ -492,6 +696,7 @@ func (c *Conn) handleClose(cl msgs.Close) {
 		return
 	}
 	delete(c.sessions, cl.SessionID())
+	c.checkDrained()
 	c.mu.Unlock()
 
 	// Send Close to closeCh for error info, then close recvCh to signal end of stream.
@@ -528,11 +733,7 @@ func (c *Conn) handlePayload(p msgs.Payload) {
 	}
 
 	// Check message size limit (after decompression).
-	maxSize := c.maxRecvMsgSize
-	if maxSize == 0 {
-		maxSize = int(c.maxPayloadSize) // Use default
-	}
-	if maxSize > 0 && len(p.Payload()) > maxSize {
+	if c.maxRecvMsgSize > 0 && len(p.Payload()) > c.maxRecvMsgSize {
 		// Message too large, drop it.
 		return
 	}
@@ -557,23 +758,47 @@ func (c *Conn) handlePong(p msgs.Pong) {
 func (c *Conn) handleGoAway(ga msgs.GoAway) {
 	// Server is going away. Mark connection as draining.
 	// New sessions after LastSessionID will fail.
-	c.setFatalError(fmt.Errorf("server going away: %s", ga.DebugData()))
+	c.setFatalError(errors.E(c.ctx, errors.Unavailable, fmt.Errorf("server going away: %s", ga.DebugData())))
 }
 
 // sendMsg sends a message on the transport.
+// If packing is negotiated and enabled, the message is packed before sending
+// (except for Open messages which are never packed).
 func (c *Conn) sendMsg(msg msgs.Msg) error {
 	c.writeMu.Lock()
 	defer c.writeMu.Unlock()
 
 	select {
 	case <-c.closed:
-		return ErrClosed
+		return errors.E(c.ctx, errors.Unavailable, ErrClosed)
 	default:
+	}
+
+	// Pack if enabled (Open messages are never packed since they negotiate packing).
+	if c.packingEnabled && msg.Type() != msgs.TOpen {
+		var buf bytes.Buffer
+		if _, err := msg.MarshalWriter(&buf); err != nil {
+			c.setFatalError(errors.E(c.ctx, errors.Internal, fmt.Errorf("marshal error: %w", err)))
+			return err
+		}
+
+		packed, err := pack.Pack(c.ctx, buf.Bytes())
+		if err != nil {
+			c.setFatalError(errors.E(c.ctx, errors.Internal, fmt.Errorf("pack error: %w", err)))
+			return err
+		}
+		defer packed.Release(c.ctx)
+
+		if _, err := c.transport.Write(packed.Bytes()); err != nil {
+			c.setFatalError(errors.E(c.ctx, errors.Unavailable, fmt.Errorf("write error: %w", err)))
+			return err
+		}
+		return nil
 	}
 
 	_, err := msg.MarshalWriter(c.transport)
 	if err != nil {
-		c.setFatalError(fmt.Errorf("write error: %w", err))
+		c.setFatalError(errors.E(c.ctx, errors.Unavailable, fmt.Errorf("write error: %w", err)))
 		return err
 	}
 	return nil
@@ -585,8 +810,14 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 	select {
 	case <-c.closed:
 		c.mu.Unlock()
-		return nil, ErrClosed
+		return nil, errors.E(ctx, errors.Unavailable, ErrClosed)
 	default:
+	}
+
+	// Reject new sessions if draining
+	if c.draining {
+		c.mu.Unlock()
+		return nil, errors.E(ctx, errors.Unavailable, ErrDraining)
 	}
 
 	openID := c.nextOpenID
@@ -597,31 +828,30 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 	c.mu.Unlock()
 
 	// Build the Open message.
-	descr := msgs.NewDescr(ctx).
-		SetPackage(pkg).
-		SetService(service).
-		SetCall(call).
-		SetType(rpcType)
-
-	open := msgs.NewOpen(ctx).
-		SetOpenID(openID).
-		SetDescr(descr).
-		SetProtocolMajor(ProtocolMajor).
-		SetProtocolMinor(ProtocolMinor).
-		SetMaxPayloadSize(c.maxPayloadSize)
+	open := msgs.NewOpenFromRaw(ctx, msgs.OpenRaw{
+		OpenID: openID,
+		Descr: &msgs.DescrRaw{
+			Package: pkg,
+			Service: service,
+			Call:    call,
+			Type:    rpcType,
+		},
+		ProtocolMajor:  ProtocolMajor,
+		ProtocolMinor:  ProtocolMinor,
+		MaxPayloadSize: c.maxPayloadSize,
+		Packing:        c.usePacking,
+	})
 
 	// Set deadline if context has one.
 	if deadline, ok := ctx.Deadline(); ok {
-		ms := time.Until(deadline).Milliseconds()
-		if ms > 0 {
+		if ms := time.Until(deadline).Milliseconds(); ms > 0 {
 			open = open.SetDeadlineMS(uint64(ms))
 		}
 	}
 
 	// Add metadata if provided.
 	if md != nil {
-		mds := md.ToMsgs(ctx)
-		open.MetadataAppend(ctx, mds...)
+		open.MetadataAppend(ctx, md.ToMsgs(ctx)...)
 	}
 
 	msg := msgs.NewMsg(ctx).SetType(msgs.TOpen).SetOpen(open)
@@ -644,12 +874,12 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 		c.mu.Unlock()
 		return nil, ctx.Err()
 	case <-c.closed:
-		return nil, ErrClosed
+		return nil, errors.E(ctx, errors.Unavailable, ErrClosed)
 	case <-timeout.C:
 		c.mu.Lock()
 		delete(c.pending, openID)
 		c.mu.Unlock()
-		return nil, ErrTimeout
+		return nil, errors.E(ctx, errors.DeadlineExceeded, ErrTimeout)
 	case <-sess.readyCh:
 		// OpenAck was received. Check if accepted or rejected.
 		// If sess.id != 0, the session was accepted and added to sessions map.
@@ -657,7 +887,7 @@ func (c *Conn) openSession(ctx context.Context, pkg, service, call string, rpcTy
 			return sess, nil
 		}
 		// sess.id == 0 means the open was rejected.
-		return nil, errors.New("session open rejected by server")
+		return nil, errors.E(ctx, errors.Unavailable, errors.New("session open rejected by server"))
 	}
 }
 
@@ -676,7 +906,7 @@ func (c *Conn) closeSession(sessionID uint32, errCode msgs.ErrCode, errMsg strin
 func (c *Conn) sendPayload(sessionID, reqID uint32, payload []byte, endStream bool) error {
 	// Check send size limit before compression (check uncompressed size).
 	if c.maxSendMsgSize > 0 && len(payload) > c.maxSendMsgSize {
-		return fmt.Errorf("%w: %d bytes exceeds send limit of %d", ErrMessageTooLarge, len(payload), c.maxSendMsgSize)
+		return errors.E(c.ctx, errors.ResourceExhausted, fmt.Errorf("%w: %d bytes exceeds send limit of %d", ErrMessageTooLarge, len(payload), c.maxSendMsgSize))
 	}
 
 	// Compress if compression is configured and there's data to compress.
@@ -686,7 +916,7 @@ func (c *Conn) sendPayload(sessionID, reqID uint32, payload []byte, endStream bo
 		var err error
 		compressed, err = compress.Compress(compression, payload)
 		if err != nil {
-			return fmt.Errorf("compression failed: %w", err)
+			return errors.E(c.ctx, errors.Internal, fmt.Errorf("compression failed: %w", err))
 		}
 	}
 
@@ -725,13 +955,13 @@ func (c *Conn) applyCredentials(ctx context.Context, opts *callOptions, uri stri
 
 	// Check transport security requirement.
 	if opts.creds.RequireTransportSecurity() && !c.secure {
-		return nil, ErrInsecureTransport
+		return nil, errors.E(ctx, errors.Unauthenticated, ErrInsecureTransport)
 	}
 
 	// Get credential metadata.
 	credMD, err := opts.creds.GetRequestMetadata(ctx, uri)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get credentials: %w", err)
+		return nil, errors.E(ctx, errors.Unauthenticated, fmt.Errorf("failed to get credentials: %w", err))
 	}
 
 	// Merge credential metadata.
@@ -747,12 +977,50 @@ func (c *Conn) applyCredentials(ctx context.Context, opts *callOptions, uri stri
 	return md, nil
 }
 
+// applyServiceConfig applies service configuration to the context and call options.
+// It returns the potentially modified context (with timeout) and a cancel func if a
+// timeout was applied (caller should defer cancel if non-nil).
+func (c *Conn) applyServiceConfig(ctx context.Context, pkg, service, call string, callOpts *callOptions) (context.Context, context.CancelFunc) {
+	if c.serviceConfig == nil {
+		return ctx, nil
+	}
+
+	cfg, ok := c.serviceConfig.GetMethodConfig(pkg, service, call)
+	if !ok {
+		return ctx, nil
+	}
+
+	// Apply WaitForReady from config if not explicitly set via call option.
+	// Note: We can't tell if waitForReady was explicitly set to false or just not set,
+	// so service config WaitForReady only applies if the call option is false.
+	if cfg.WaitForReady && !callOpts.waitForReady {
+		callOpts.waitForReady = true
+	}
+
+	// Apply timeout if context doesn't already have a deadline.
+	if cfg.Timeout > 0 {
+		if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+			return context.WithTimeout(ctx, cfg.Timeout)
+		}
+	}
+
+	return ctx, nil
+}
+
 // Sync creates a new synchronous RPC client.
+// If a service config timeout is set for this method and the context doesn't
+// have a deadline, the timeout is applied to all operations on this session.
 func (c *Conn) Sync(ctx context.Context, pkg, service, call string, opts ...CallOption) (*SyncClient, error) {
 	var callOpts callOptions
 	for _, opt := range opts {
 		opt(&callOpts)
 	}
+
+	// Apply service config (timeout, wait-for-ready).
+	// Note: We don't defer cancel() here because the context is used for the
+	// lifetime of the SyncClient. The context will be cancelled when the
+	// timeout expires or when the client is closed.
+	ctx, _ = c.applyServiceConfig(ctx, pkg, service, call, &callOpts)
 
 	// Wait for connection to be ready if requested.
 	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
@@ -781,11 +1049,16 @@ func (c *Conn) Sync(ctx context.Context, pkg, service, call string, opts ...Call
 }
 
 // BiDir creates a new bidirectional streaming RPC client.
+// If a service config timeout is set for this method and the context doesn't
+// have a deadline, the timeout is applied to the stream lifetime.
 func (c *Conn) BiDir(ctx context.Context, pkg, service, call string, opts ...CallOption) (*BiDirClient, error) {
 	var callOpts callOptions
 	for _, opt := range opts {
 		opt(&callOpts)
 	}
+
+	// Apply service config (timeout, wait-for-ready).
+	ctx, _ = c.applyServiceConfig(ctx, pkg, service, call, &callOpts)
 
 	// Wait for connection to be ready if requested.
 	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
@@ -812,11 +1085,16 @@ func (c *Conn) BiDir(ctx context.Context, pkg, service, call string, opts ...Cal
 }
 
 // Send creates a new send-only streaming RPC client.
+// If a service config timeout is set for this method and the context doesn't
+// have a deadline, the timeout is applied to the stream lifetime.
 func (c *Conn) Send(ctx context.Context, pkg, service, call string, opts ...CallOption) (*SendClient, error) {
 	var callOpts callOptions
 	for _, opt := range opts {
 		opt(&callOpts)
 	}
+
+	// Apply service config (timeout, wait-for-ready).
+	ctx, _ = c.applyServiceConfig(ctx, pkg, service, call, &callOpts)
 
 	// Wait for connection to be ready if requested.
 	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
@@ -843,11 +1121,16 @@ func (c *Conn) Send(ctx context.Context, pkg, service, call string, opts ...Call
 }
 
 // Recv creates a new receive-only streaming RPC client.
+// If a service config timeout is set for this method and the context doesn't
+// have a deadline, the timeout is applied to the stream lifetime.
 func (c *Conn) Recv(ctx context.Context, pkg, service, call string, opts ...CallOption) (*RecvClient, error) {
 	var callOpts callOptions
 	for _, opt := range opts {
 		opt(&callOpts)
 	}
+
+	// Apply service config (timeout, wait-for-ready).
+	ctx, _ = c.applyServiceConfig(ctx, pkg, service, call, &callOpts)
 
 	// Wait for connection to be ready if requested.
 	if err := c.waitForReady(ctx, callOpts.waitForReady); err != nil {
@@ -924,7 +1207,7 @@ func recvIter(ctx context.Context, sess *session, errPtr *error) iter.Seq[[]byte
 		select {
 		case cl := <-sess.closeCh:
 			if cl.ErrCode() != msgs.ErrNone {
-				*errPtr = fmt.Errorf("session closed with error: %s", cl.Error())
+				*errPtr = errors.E(ctx, errors.Category(cl.ErrCode()), fmt.Errorf("server error: %s", cl.Error()))
 			}
 		default:
 		}
@@ -974,7 +1257,7 @@ func (c *Conn) pingLoop() {
 				// Got pong, connection is healthy
 			case <-time.After(c.pingTimeout):
 				// No pong received, connection is dead
-				c.setFatalError(fmt.Errorf("keepalive timeout: no pong received within %v", c.pingTimeout))
+				c.setFatalError(errors.E(c.ctx, errors.DeadlineExceeded, fmt.Errorf("keepalive timeout: no pong received within %v", c.pingTimeout)))
 				return
 			}
 		}

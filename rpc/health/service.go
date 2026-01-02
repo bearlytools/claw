@@ -80,12 +80,12 @@ func (s *Server) Handler() server.SyncHandler {
 //
 //	srv := server.New()
 //	healthSvc := health.NewServer()
-//	health.Register(srv, healthSvc)
+//	health.Register(ctx, srv, healthSvc)
 //	// Now srv has a health endpoint at health/Health/Check
 //	// Update service status as needed:
 //	healthSvc.SetServingStatus("myservice", health.Serving)
-func Register(srv *server.Server, health *Server) error {
-	return srv.Register("health", "Health", "Check", health.Handler())
+func Register(ctx context.Context, srv *server.Server, health *Server) error {
+	return srv.Register(ctx, "health", "Health", "Check", health.Handler())
 }
 
 // Enable is a convenience function that creates a health server and registers it.
@@ -94,11 +94,11 @@ func Register(srv *server.Server, health *Server) error {
 // Example:
 //
 //	srv := server.New()
-//	healthSvc := health.Enable(srv)
+//	healthSvc := health.Enable(ctx, srv)
 //	healthSvc.SetServingStatus("myservice", health.Serving)
-func Enable(srv *server.Server) (*Server, error) {
+func Enable(ctx context.Context, srv *server.Server) (*Server, error) {
 	h := NewServer()
-	if err := Register(srv, h); err != nil {
+	if err := Register(ctx, srv, h); err != nil {
 		return nil, err
 	}
 	return h, nil
