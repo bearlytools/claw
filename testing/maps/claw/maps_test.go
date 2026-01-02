@@ -440,6 +440,199 @@ func TestReflectionMapFieldDescr(t *testing.T) {
 	}
 }
 
+func TestMapAnyRoundtrip(t *testing.T) {
+	ctx := t.Context()
+
+	// Create an AnyMaps struct
+	am := NewAnyMaps(ctx)
+
+	// Create some Inner structs to store as Any values
+	inner1 := NewInner(ctx).SetID(123).SetName("first")
+	inner2 := NewInner(ctx).SetID(456).SetName("second")
+
+	// Set values in the map[string]Any field
+	if err := am.DataSet("key1", inner1); err != nil {
+		t.Fatalf("TestMapAnyRoundtrip: DataSet(key1) error: %v", err)
+	}
+	if err := am.DataSet("key2", inner2); err != nil {
+		t.Fatalf("TestMapAnyRoundtrip: DataSet(key2) error: %v", err)
+	}
+
+	// Marshal
+	data, err := am.Marshal()
+	if err != nil {
+		t.Fatalf("TestMapAnyRoundtrip: Marshal() error: %v", err)
+	}
+
+	// Unmarshal into new struct
+	am2 := NewAnyMaps(ctx)
+	if err := am2.Unmarshal(data); err != nil {
+		t.Fatalf("TestMapAnyRoundtrip: Unmarshal() error: %v", err)
+	}
+
+	// Verify key1
+	target1 := NewInner(ctx)
+	if err := am2.DataGet("key1", target1); err != nil {
+		t.Fatalf("TestMapAnyRoundtrip: DataGet(key1) error: %v", err)
+	}
+	if target1.ID() != 123 {
+		t.Errorf("TestMapAnyRoundtrip: key1.ID() = %d, want 123", target1.ID())
+	}
+	if target1.Name() != "first" {
+		t.Errorf("TestMapAnyRoundtrip: key1.Name() = %q, want first", target1.Name())
+	}
+
+	// Verify key2
+	target2 := NewInner(ctx)
+	if err := am2.DataGet("key2", target2); err != nil {
+		t.Fatalf("TestMapAnyRoundtrip: DataGet(key2) error: %v", err)
+	}
+	if target2.ID() != 456 {
+		t.Errorf("TestMapAnyRoundtrip: key2.ID() = %d, want 456", target2.ID())
+	}
+	if target2.Name() != "second" {
+		t.Errorf("TestMapAnyRoundtrip: key2.Name() = %q, want second", target2.Name())
+	}
+}
+
+func TestMapListAnyRoundtrip(t *testing.T) {
+	ctx := t.Context()
+
+	// Create an AnyMaps struct
+	am := NewAnyMaps(ctx)
+
+	// Create some Inner structs to store as []Any values
+	inner1 := NewInner(ctx).SetID(100).SetName("item1")
+	inner2 := NewInner(ctx).SetID(200).SetName("item2")
+	inner3 := NewInner(ctx).SetID(300).SetName("item3")
+
+	// Set values in the map[string][]Any field
+	if err := am.ItemsSet("list1", []any{inner1, inner2}); err != nil {
+		t.Fatalf("TestMapListAnyRoundtrip: ItemsSet(list1) error: %v", err)
+	}
+	if err := am.ItemsSet("list2", []any{inner3}); err != nil {
+		t.Fatalf("TestMapListAnyRoundtrip: ItemsSet(list2) error: %v", err)
+	}
+
+	// Verify list lengths
+	if am.ItemsListLen("list1") != 2 {
+		t.Errorf("TestMapListAnyRoundtrip: ItemsListLen(list1) = %d, want 2", am.ItemsListLen("list1"))
+	}
+	if am.ItemsListLen("list2") != 1 {
+		t.Errorf("TestMapListAnyRoundtrip: ItemsListLen(list2) = %d, want 1", am.ItemsListLen("list2"))
+	}
+
+	// Marshal
+	data, err := am.Marshal()
+	if err != nil {
+		t.Fatalf("TestMapListAnyRoundtrip: Marshal() error: %v", err)
+	}
+
+	// Unmarshal into new struct
+	am2 := NewAnyMaps(ctx)
+	if err := am2.Unmarshal(data); err != nil {
+		t.Fatalf("TestMapListAnyRoundtrip: Unmarshal() error: %v", err)
+	}
+
+	// Verify list1 contents
+	if am2.ItemsListLen("list1") != 2 {
+		t.Fatalf("TestMapListAnyRoundtrip: after unmarshal ItemsListLen(list1) = %d, want 2", am2.ItemsListLen("list1"))
+	}
+
+	target1 := NewInner(ctx)
+	if err := am2.ItemsGet("list1", 0, target1); err != nil {
+		t.Fatalf("TestMapListAnyRoundtrip: ItemsGet(list1, 0) error: %v", err)
+	}
+	if target1.ID() != 100 {
+		t.Errorf("TestMapListAnyRoundtrip: list1[0].ID() = %d, want 100", target1.ID())
+	}
+
+	target2 := NewInner(ctx)
+	if err := am2.ItemsGet("list1", 1, target2); err != nil {
+		t.Fatalf("TestMapListAnyRoundtrip: ItemsGet(list1, 1) error: %v", err)
+	}
+	if target2.ID() != 200 {
+		t.Errorf("TestMapListAnyRoundtrip: list1[1].ID() = %d, want 200", target2.ID())
+	}
+
+	// Verify list2 contents
+	target3 := NewInner(ctx)
+	if err := am2.ItemsGet("list2", 0, target3); err != nil {
+		t.Fatalf("TestMapListAnyRoundtrip: ItemsGet(list2, 0) error: %v", err)
+	}
+	if target3.ID() != 300 {
+		t.Errorf("TestMapListAnyRoundtrip: list2[0].ID() = %d, want 300", target3.ID())
+	}
+}
+
+func TestMapAnyOperations(t *testing.T) {
+	ctx := t.Context()
+
+	am := NewAnyMaps(ctx)
+
+	// Test Has on empty map
+	if am.DataHas("key1") {
+		t.Errorf("TestMapAnyOperations: DataHas(key1) = true, want false")
+	}
+
+	// Test Set and Has
+	inner := NewInner(ctx).SetID(42).SetName("test")
+	if err := am.DataSet("key1", inner); err != nil {
+		t.Fatalf("TestMapAnyOperations: DataSet error: %v", err)
+	}
+	if !am.DataHas("key1") {
+		t.Errorf("TestMapAnyOperations: DataHas(key1) = false, want true")
+	}
+
+	// Test Len
+	if am.DataLen() != 1 {
+		t.Errorf("TestMapAnyOperations: DataLen() = %d, want 1", am.DataLen())
+	}
+
+	// Test Delete
+	am.DataDelete("key1")
+	if am.DataHas("key1") {
+		t.Errorf("TestMapAnyOperations: DataHas(key1) after delete = true, want false")
+	}
+	if am.DataLen() != 0 {
+		t.Errorf("TestMapAnyOperations: DataLen() after delete = %d, want 0", am.DataLen())
+	}
+}
+
+func TestMapAnyGetRaw(t *testing.T) {
+	ctx := t.Context()
+
+	am := NewAnyMaps(ctx)
+	inner := NewInner(ctx).SetID(999).SetName("raw test")
+	if err := am.DataSet("rawkey", inner); err != nil {
+		t.Fatalf("TestMapAnyGetRaw: DataSet error: %v", err)
+	}
+
+	// Test GetRaw
+	data, typeHash, ok := am.DataGetRaw("rawkey")
+	if !ok {
+		t.Fatalf("TestMapAnyGetRaw: DataGetRaw(rawkey) returned false")
+	}
+	if len(data) == 0 {
+		t.Errorf("TestMapAnyGetRaw: data is empty")
+	}
+	if typeHash == [16]byte{} {
+		t.Errorf("TestMapAnyGetRaw: typeHash is zero")
+	}
+
+	// Verify the typeHash matches Inner's typeHash
+	expectedHash := inner.XXXTypeHash()
+	if typeHash != expectedHash {
+		t.Errorf("TestMapAnyGetRaw: typeHash = %x, want %x", typeHash, expectedHash)
+	}
+
+	// Test GetRaw on non-existent key
+	_, _, ok = am.DataGetRaw("nonexistent")
+	if ok {
+		t.Errorf("TestMapAnyGetRaw: GetRaw(nonexistent) returned true, want false")
+	}
+}
+
 func TestReflectionMapClawStruct(t *testing.T) {
 	ctx := t.Context()
 

@@ -23,6 +23,7 @@ func _() {
 	_ = x[FTString-12]
 	_ = x[FTBytes-13]
 	_ = x[FTStruct-14]
+	_ = x[FTAny-15]
 	_ = x[FTListBools-41]
 	_ = x[FTListInt8-42]
 	_ = x[FTListInt16-43]
@@ -37,23 +38,25 @@ func _() {
 	_ = x[FTListBytes-52]
 	_ = x[FTListStrings-53]
 	_ = x[FTListStructs-54]
+	_ = x[FTListAny-56]
+	_ = x[FTMap-55]
 }
 
 const (
-	_Type_name_0 = "Unknownboolint8int16int32int64uint8uint16uint32uint64float32float64stringbytesstruct"
-	_Type_name_1 = "[]bool[]int8[]int16[]int32[]int64[]uint8[]uint16[]uint32[]uint64[]float32[]float64[]bytes[]string[]structs"
+	_Type_name_0 = "Unknownboolint8int16int32int64uint8uint16uint32uint64float32float64stringbytesstructany"
+	_Type_name_1 = "[]bool[]int8[]int16[]int32[]int64[]uint8[]uint16[]uint32[]uint64[]float32[]float64[]bytes[]string[]structsmap[]any"
 )
 
 var (
-	_Type_index_0 = [...]uint8{0, 7, 11, 15, 20, 25, 30, 35, 41, 47, 53, 60, 67, 73, 78, 84}
-	_Type_index_1 = [...]uint8{0, 6, 12, 19, 26, 33, 40, 48, 56, 64, 73, 82, 89, 97, 106}
+	_Type_index_0 = [...]uint8{0, 7, 11, 15, 20, 25, 30, 35, 41, 47, 53, 60, 67, 73, 78, 84, 87}
+	_Type_index_1 = [...]uint8{0, 6, 12, 19, 26, 33, 40, 48, 56, 64, 73, 82, 89, 97, 106, 109, 114}
 )
 
 func (i Type) String() string {
 	switch {
-	case i <= 14:
+	case i <= 15:
 		return _Type_name_0[_Type_index_0[i]:_Type_index_0[i+1]]
-	case 41 <= i && i <= 54:
+	case 41 <= i && i <= 56:
 		i -= 41
 		return _Type_name_1[_Type_index_1[i]:_Type_index_1[i+1]]
 	default:

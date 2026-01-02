@@ -59,7 +59,7 @@ func TestPatchVsFullWireSize(t *testing.T) {
 		patchOp.SetType(msgs.OpType(op.OpType))
 		patchOp.SetIndex(op.Index)
 		patchOp.SetData(op.Data)
-		patchObj.AppendOps(ctx, patchOp)
+		patchObj.OpsAppend(ctx, patchOp)
 	}
 	recordingPatchData, err := patchObj.Marshal()
 	if err != nil {
@@ -84,7 +84,7 @@ func TestPatchVsFullWireSize(t *testing.T) {
 		patchOp.SetType(msgs.OpType(op.OpType))
 		patchOp.SetIndex(op.Index)
 		patchOp.SetData(op.Data)
-		patchObj3.AppendOps(ctx, patchOp)
+		patchObj3.OpsAppend(ctx, patchOp)
 	}
 	nestedRecordingPatchData, err := patchObj3.Marshal()
 	if err != nil {
@@ -139,14 +139,14 @@ func BenchmarkPatchMarshal(b *testing.B) {
 	op1.SetType(msgs.Set)                                    // Set operation
 	op1.SetIndex(segment.NoListIndex)                        // Not a list
 	op1.SetData([]byte{byte(clawpod.PodPhaseFailed)})        // New value
-	patchObj.AppendOps(ctx, op1)
+	patchObj.OpsAppend(ctx, op1)
 
 	op2 := msgs.NewOp(ctx)
 	op2.SetFieldNum(2)                                       // Message field
 	op2.SetType(msgs.Set)
 	op2.SetIndex(segment.NoListIndex)
 	op2.SetData([]byte("Container crashed due to OOM"))
-	patchObj.AppendOps(ctx, op2)
+	patchObj.OpsAppend(ctx, op2)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -171,14 +171,14 @@ func BenchmarkPatchUnmarshal(b *testing.B) {
 	op1.SetType(msgs.Set)
 	op1.SetIndex(segment.NoListIndex)
 	op1.SetData([]byte{byte(clawpod.PodPhaseFailed)})
-	patchObj.AppendOps(ctx, op1)
+	patchObj.OpsAppend(ctx, op1)
 
 	op2 := msgs.NewOp(ctx)
 	op2.SetFieldNum(2)
 	op2.SetType(msgs.Set)
 	op2.SetIndex(segment.NoListIndex)
 	op2.SetData([]byte("Container crashed due to OOM"))
-	patchObj.AppendOps(ctx, op2)
+	patchObj.OpsAppend(ctx, op2)
 
 	data, err := patchObj.Marshal()
 	if err != nil {
@@ -309,7 +309,7 @@ func TestPatchApplyRoundtrip(t *testing.T) {
 		patchOp.SetType(msgs.OpType(op.OpType))
 		patchOp.SetIndex(op.Index)
 		patchOp.SetData(op.Data)
-		patchObj.AppendOps(ctx, patchOp)
+		patchObj.OpsAppend(ctx, patchOp)
 	}
 
 	// Serialize and deserialize (simulate network transmission)

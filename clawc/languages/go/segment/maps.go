@@ -333,6 +333,51 @@ func (m *Maps[K, V]) valueSize(value V) int {
 		s := any(value).(*Struct)
 		s.syncDirtyLists()
 		return s.seg.Len()
+	case field.FTAny:
+		// Any: hash (16 bytes) + struct data
+		// The value is *MapAnyValue with pre-serialized data
+		if mav, ok := any(value).(*MapAnyValue); ok {
+			if mav == nil {
+				return 0
+			}
+			return AnyHashSize + len(mav.Data)
+		}
+		// Fallback for raw struct values (not typical)
+		if getter, ok := any(value).(StructGetter); ok {
+			innerStruct := getter.XXXGetStruct()
+			if innerStruct == nil {
+				return AnyHashSize
+			}
+			return AnyHashSize + len(innerStruct.SegmentBytes())
+		}
+		return 0
+	case field.FTListAny:
+		// []Any: 4-byte count + items (each: hash + struct data)
+		// The value is []MapAnyValue with pre-serialized data
+		if items, ok := any(value).([]MapAnyValue); ok {
+			size := 4 // count
+			for _, item := range items {
+				size += AnyHashSize + len(item.Data)
+			}
+			return size
+		}
+		// Fallback for raw []any (not typical)
+		if items, ok := any(value).([]any); ok {
+			size := 4 // count
+			for _, item := range items {
+				if item == nil {
+					continue
+				}
+				if getter, ok := item.(StructGetter); ok {
+					innerStruct := getter.XXXGetStruct()
+					if innerStruct != nil {
+						size += AnyHashSize + len(innerStruct.SegmentBytes())
+					}
+				}
+			}
+			return size
+		}
+		return 4
 	case field.FTMap:
 		// Nested map - need to sync and get size
 		if syncer, ok := any(value).(MapSyncer); ok {
@@ -452,6 +497,71 @@ func (m *Maps[K, V]) encodeValueAt(buf []byte, offset int, value V) int {
 		s.syncDirtyLists()
 		copy(buf[offset:], s.seg.data)
 		return s.seg.Len()
+	case field.FTAny:
+		// Any: hash (16 bytes) + struct data
+		// The value is *MapAnyValue with pre-serialized data
+		if mav, ok := any(value).(*MapAnyValue); ok {
+			if mav == nil {
+				return 0
+			}
+			copy(buf[offset:offset+AnyHashSize], mav.TypeHash[:])
+			copy(buf[offset+AnyHashSize:], mav.Data)
+			return AnyHashSize + len(mav.Data)
+		}
+		// Fallback for raw struct values (not typical)
+		if hasher, ok := any(value).(TypeHasher); ok {
+			typeHash := hasher.XXXTypeHash()
+			copy(buf[offset:offset+AnyHashSize], typeHash[:])
+			if getter, ok := any(value).(StructGetter); ok {
+				innerStruct := getter.XXXGetStruct()
+				if innerStruct != nil {
+					innerData := innerStruct.SegmentBytes()
+					copy(buf[offset+AnyHashSize:], innerData)
+					return AnyHashSize + len(innerData)
+				}
+			}
+			return AnyHashSize
+		}
+		return 0
+	case field.FTListAny:
+		// []Any: 4-byte count + items (each: hash + struct data)
+		// The value is []MapAnyValue with pre-serialized data
+		if items, ok := any(value).([]MapAnyValue); ok {
+			binary.LittleEndian.PutUint32(buf[offset:], uint32(len(items)))
+			pos := offset + 4
+			for _, item := range items {
+				copy(buf[pos:pos+AnyHashSize], item.TypeHash[:])
+				pos += AnyHashSize
+				copy(buf[pos:], item.Data)
+				pos += len(item.Data)
+			}
+			return pos - offset
+		}
+		// Fallback for raw []any (not typical)
+		if items, ok := any(value).([]any); ok {
+			binary.LittleEndian.PutUint32(buf[offset:], uint32(len(items)))
+			pos := offset + 4
+			for _, item := range items {
+				if item == nil {
+					continue
+				}
+				if hasher, ok := item.(TypeHasher); ok {
+					typeHash := hasher.XXXTypeHash()
+					copy(buf[pos:pos+AnyHashSize], typeHash[:])
+					pos += AnyHashSize
+					if getter, ok := item.(StructGetter); ok {
+						innerStruct := getter.XXXGetStruct()
+						if innerStruct != nil {
+							innerData := innerStruct.SegmentBytes()
+							copy(buf[pos:], innerData)
+							pos += len(innerData)
+						}
+					}
+				}
+			}
+			return pos - offset
+		}
+		return 4
 	}
 	return 0
 }
@@ -738,6 +848,58 @@ func decodeValue[V any](data []byte, valType field.Type, valueMapping *mapping.M
 		parseFieldIndex(s)
 		result = s
 		size = structSize
+	case field.FTAny:
+		// Any: hash (16 bytes) + struct data
+		if len(data) < AnyHashSize+HeaderSize {
+			return zero, 0
+		}
+		// Read type hash
+		var typeHash [16]byte
+		copy(typeHash[:], data[:AnyHashSize])
+
+		// Read struct header to get struct size
+		_, _, final40 := DecodeHeader(data[AnyHashSize : AnyHashSize+HeaderSize])
+		structSize := int(final40)
+		if len(data) < AnyHashSize+structSize {
+			return zero, 0
+		}
+
+		// Return MapAnyValue containing raw data and hash
+		result = &MapAnyValue{
+			TypeHash: typeHash,
+			Data:     data[AnyHashSize : AnyHashSize+structSize],
+		}
+		size = AnyHashSize + structSize
+	case field.FTListAny:
+		// []Any: 4-byte count + items (each: hash + struct data)
+		if len(data) < 4 {
+			return zero, 0
+		}
+		count := int(binary.LittleEndian.Uint32(data))
+		pos := 4
+		items := make([]MapAnyValue, 0, count)
+		for i := 0; i < count; i++ {
+			if len(data) < pos+AnyHashSize+HeaderSize {
+				break
+			}
+			var typeHash [16]byte
+			copy(typeHash[:], data[pos:pos+AnyHashSize])
+			pos += AnyHashSize
+
+			// Read struct header to get struct size
+			_, _, final40 := DecodeHeader(data[pos : pos+HeaderSize])
+			structSize := int(final40)
+			if len(data) < pos+structSize {
+				break
+			}
+			items = append(items, MapAnyValue{
+				TypeHash: typeHash,
+				Data:     data[pos : pos+structSize],
+			})
+			pos += structSize
+		}
+		result = items
+		size = pos
 	default:
 		return zero, 0
 	}
@@ -860,6 +1022,75 @@ func GetMapStruct[K MapKey](s *Struct, fieldNum uint16, keyType field.Type, valu
 		values:       values,
 		dirty:        false,
 		valueMapping: valueMapping,
+	}
+	s.SetList(fieldNum, m)
+	return m
+}
+
+// MapAnyValue holds raw Any data for map values.
+// This is used as an intermediate representation when decoding map[K]Any values.
+type MapAnyValue struct {
+	TypeHash [16]byte
+	Data     []byte
+}
+
+// GetMapAny returns a Maps for scalar key and Any value types.
+func GetMapAny[K MapKey](s *Struct, fieldNum uint16, keyType field.Type) *Maps[K, *MapAnyValue] {
+	// Check if we already have this map cached
+	if existing := s.GetList(fieldNum); existing != nil {
+		if m, ok := existing.(*Maps[K, *MapAnyValue]); ok {
+			return m
+		}
+	}
+
+	offset, size := s.FieldOffset(fieldNum)
+	if size == 0 {
+		return nil
+	}
+
+	// Parse from segment data
+	data := s.seg.data[offset : offset+size]
+	keys, values := ParseMapFromSegment[K, *MapAnyValue](data, keyType, field.FTAny, nil)
+
+	m := &Maps[K, *MapAnyValue]{
+		parent:   s,
+		fieldNum: fieldNum,
+		keyType:  keyType,
+		valType:  field.FTAny,
+		keys:     keys,
+		values:   values,
+		dirty:    false,
+	}
+	s.SetList(fieldNum, m)
+	return m
+}
+
+// GetMapListAny returns a Maps for scalar key and []Any value types.
+func GetMapListAny[K MapKey](s *Struct, fieldNum uint16, keyType field.Type) *Maps[K, []MapAnyValue] {
+	// Check if we already have this map cached
+	if existing := s.GetList(fieldNum); existing != nil {
+		if m, ok := existing.(*Maps[K, []MapAnyValue]); ok {
+			return m
+		}
+	}
+
+	offset, size := s.FieldOffset(fieldNum)
+	if size == 0 {
+		return nil
+	}
+
+	// Parse from segment data
+	data := s.seg.data[offset : offset+size]
+	keys, values := ParseMapFromSegment[K, []MapAnyValue](data, keyType, field.FTListAny, nil)
+
+	m := &Maps[K, []MapAnyValue]{
+		parent:   s,
+		fieldNum: fieldNum,
+		keyType:  keyType,
+		valType:  field.FTListAny,
+		keys:     keys,
+		values:   values,
+		dirty:    false,
 	}
 	s.SetList(fieldNum, m)
 	return m

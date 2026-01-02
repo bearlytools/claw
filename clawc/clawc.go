@@ -15,7 +15,9 @@ import (
 	"github.com/bearlytools/claw/clawc/internal/imports/git"
 	"github.com/bearlytools/claw/clawc/internal/render"
 	_ "github.com/bearlytools/claw/clawc/internal/render/golang"
+	"github.com/bearlytools/claw/clawc/internal/vcs"
 	"github.com/bearlytools/claw/clawc/internal/vendor"
+	"github.com/bearlytools/claw/clawc/internal/work"
 	"github.com/bearlytools/claw/clawc/internal/writer"
 )
 
@@ -26,9 +28,18 @@ func main() {
 	args := flag.Args()
 
 	// Command routing: check if first argument is a command
-	if len(args) > 0 && args[0] == "get" {
-		handleGet(ctx, args[1:])
-		return
+	if len(args) > 0 {
+		switch args[0] {
+		case "get":
+			handleGet(ctx, args[1:])
+			return
+		case "init":
+			handleInit(ctx)
+			return
+		default:
+			fmt.Printf("unknown command: %s\n", args[0])
+			os.Exit(1)
+		}
 	}
 
 	// Default: compilation mode
@@ -351,4 +362,103 @@ func exit(i ...any) {
 func exitf(s string, i ...any) {
 	fmt.Printf(s+"\n", i...)
 	os.Exit(1)
+}
+
+// handleInit implements the "clawc init" command.
+// It initializes a new claw module by:
+// 1. Walking back to find either a claw.work file or the git root
+// 2. If claw.work is found, uses repo + relative path to create claw.mod in current directory
+// 3. If git root is found without claw.work, creates claw.work at git root and claw.mod in current directory
+// 4. If not in a git repo, returns an error
+func handleInit(ctx context.Context) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		exitf("failed to get current working directory: %s", err)
+	}
+
+	// Check if claw.mod already exists in current directory
+	modPath := filepath.Join(cwd, "claw.mod")
+	if _, err := os.Stat(modPath); err == nil {
+		exitf("claw.mod already exists in current directory")
+	}
+
+	// Try to find claw.work first, walking up the directory tree
+	workFile, workDir, workErr := work.FindWork(ctx, cwd)
+
+	// Try to find git root
+	gitInfo, gitErr := vcs.NewGit(cwd)
+
+	switch {
+	case workErr == nil:
+		// Found claw.work - use it to create claw.mod
+		relPath, err := filepath.Rel(workDir, cwd)
+		if err != nil {
+			exitf("failed to compute relative path: %s", err)
+		}
+
+		var modulePath string
+		if relPath == "." {
+			modulePath = workFile.Repo
+		} else {
+			modulePath = workFile.Repo + "/" + filepath.ToSlash(relPath)
+		}
+
+		if err := writeModFile(modPath, modulePath); err != nil {
+			exitf("failed to write claw.mod: %s", err)
+		}
+		fmt.Printf("Created claw.mod with module %s\n", modulePath)
+
+	case gitErr == nil:
+		// Found git root but no claw.work - create both
+		gitRoot := strings.TrimSuffix(gitInfo.Root(), string(filepath.Separator))
+		// Root() returns empty when .git is in the current directory
+		if gitRoot == "" {
+			gitRoot = cwd
+		} else {
+			// Make sure gitRoot is absolute
+			gitRoot, err = filepath.Abs(gitRoot)
+			if err != nil {
+				exitf("failed to get absolute path for git root: %s", err)
+			}
+		}
+		gitOrigin := gitInfo.Origin()
+
+		workPath := filepath.Join(gitRoot, "claw.work")
+		if err := writeWorkFile(workPath, gitOrigin, "claw_vendor"); err != nil {
+			exitf("failed to write claw.work: %s", err)
+		}
+		fmt.Printf("Created claw.work at %s\n", workPath)
+
+		relPath, err := filepath.Rel(gitRoot, cwd)
+		if err != nil {
+			exitf("failed to compute relative path: %s", err)
+		}
+
+		var modulePath string
+		if relPath == "." {
+			modulePath = gitOrigin
+		} else {
+			modulePath = gitOrigin + "/" + filepath.ToSlash(relPath)
+		}
+
+		if err := writeModFile(modPath, modulePath); err != nil {
+			exitf("failed to write claw.mod: %s", err)
+		}
+		fmt.Printf("Created claw.mod with module %s\n", modulePath)
+
+	default:
+		exitf("not in a git repository (could not find .git directory)")
+	}
+}
+
+// writeWorkFile writes a claw.work file with the given repo and vendor directory.
+func writeWorkFile(path, repo, vendorDir string) error {
+	content := fmt.Sprintf("repo %s\n\nvendorDir %s\n", repo, vendorDir)
+	return os.WriteFile(path, []byte(content), 0o644)
+}
+
+// writeModFile writes a claw.mod file with the given module path.
+func writeModFile(path, modulePath string) error {
+	content := fmt.Sprintf("module %s\n", modulePath)
+	return os.WriteFile(path, []byte(content), 0o644)
 }

@@ -192,11 +192,6 @@ func (x Vehicle) TruckAppend(ctx context.Context, values ...trucks.Truck) {
     }
 }
 
-// AppendTruck is an alias for TruckAppend for backwards compatibility.
-func (x Vehicle) AppendTruck(ctx context.Context, values ...trucks.Truck) {
-    x.TruckAppend(ctx, values...)
-}
-
 // TruckAppendRaw appends items to the list using Raw struct representations.
 func (x Vehicle) TruckAppendRaw(ctx context.Context, values ...*trucks.TruckRaw) {
     list := x.TruckList(ctx)
@@ -255,6 +250,14 @@ func (x Vehicle) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Vehicle) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Vehicle) XXXTypeHash() [16]byte {
+    return XXXTypeHashVehicle
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -368,6 +371,12 @@ func (x Vehicle) XXXDescr() reflect.StructDescr {
 } 
 
 // Everything below this line is internal details.
+
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashVehicle = [16]byte{0x7b, 0x3a, 0x6e, 0x09, 0xcb, 0xbe, 0x17, 0x37, 0x8f, 0x20, 0x8a, 0x77, 0xa6, 0x46, 0x9b, 0xf1}
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingVehicle = &mapping.Map{
     Name: "Vehicle",
@@ -381,6 +390,7 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "Type",
         },
         {
@@ -390,6 +400,7 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/test_claw_imports/cars/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "cars.Car",
             
             Mapping: cars.XXXMappingCar,
@@ -401,6 +412,7 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/test_claw_imports/trucks",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "trucks.Truck",
             
             Mapping: trucks.XXXMappingTruck,
@@ -412,6 +424,7 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
             FieldNum: 3,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "Type",
         },
         {
@@ -421,6 +434,7 @@ var XXXMappingVehicle = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -533,4 +547,13 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
+    runtime.RegisterTypeHash(XXXTypeHashVehicle, runtime.TypeEntry{
+        Name:     "Vehicle",
+        FullPath: "github.com/bearlytools/claw/testing/imports/vehicles/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewVehicle(ctx)
+        },
+    })
 }

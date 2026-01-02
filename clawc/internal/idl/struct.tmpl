@@ -535,11 +535,6 @@ func (x {{ $struct.Name }}) {{ $field.Name }}Append(ctx context.Context, values 
     }
 }
 
-// Append{{ $field.Name }} is an alias for {{ $field.Name }}Append for backwards compatibility.
-func (x {{ $struct.Name }}) Append{{ $field.Name }}(ctx context.Context, values ...{{ $field.IdentName }}) {
-    x.{{ $field.Name }}Append(ctx, values...)
-}
-
 // {{ $field.Name }}AppendRaw appends items to the list using Raw struct representations.
 func (x {{ $struct.Name }}) {{ $field.Name }}AppendRaw(ctx context.Context, values ...*{{ if $field.IsExternal }}{{ $field.Package }}.{{ $field.IdentInFile }}{{ else }}{{ $field.IdentName }}{{ end }}Raw) {
     list := x.{{ $field.Name }}List(ctx)
@@ -612,6 +607,154 @@ func (x {{ $struct.Name }}) {{ $field.Name }}Set(key {{ $field.MapKeyGoType }}, 
     x.{{ $field.Name }}Map().Set(key, value)
     return x
 }
+{{- else if eq $field.ValueTypeConst "FTAny" }}
+// {{ $field.Name }}Map returns the underlying map for iteration and modification.
+// Values are *segment.MapAnyValue containing the raw bytes and type hash.
+func (x {{ $struct.Name }}) {{ $field.Name }}Map() *segment.Maps[{{ $field.MapKeyGoType }}, *segment.MapAnyValue] {
+    // Check if we already have this map cached
+    if m := segment.GetMapAny[{{ $field.MapKeyGoType }}](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}); m != nil {
+        return m
+    }
+    // Create new empty map if no data exists
+    return segment.NewMaps[{{ $field.MapKeyGoType }}, *segment.MapAnyValue](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, field.FTAny, nil)
+}
+
+// {{ $field.Name }}Get decodes the Any value for the given key into the provided target.
+// The target must be a pointer to a Claw struct that implements segment.TypeHasher.
+func (x {{ $struct.Name }}) {{ $field.Name }}Get(key {{ $field.MapKeyGoType }}, target any) error {
+    raw, ok := x.{{ $field.Name }}Map().Get(key)
+    if !ok || raw == nil {
+        return fmt.Errorf("key not found in map")
+    }
+    // Validate and decode into target
+    hasher, ok := target.(segment.TypeHasher)
+    if !ok {
+        return fmt.Errorf("target must implement segment.TypeHasher")
+    }
+    if hasher.XXXTypeHash() != raw.TypeHash {
+        return fmt.Errorf("type hash mismatch")
+    }
+    getter, ok := target.(segment.StructGetter)
+    if !ok {
+        return fmt.Errorf("target must implement segment.StructGetter")
+    }
+    return getter.XXXGetStruct().Unmarshal(raw.Data)
+}
+
+// {{ $field.Name }}GetRaw returns the raw bytes and type hash for the given key.
+// Returns (nil, empty hash, false) if the key is not found.
+func (x {{ $struct.Name }}) {{ $field.Name }}GetRaw(key {{ $field.MapKeyGoType }}) (data []byte, typeHash [16]byte, ok bool) {
+    raw, found := x.{{ $field.Name }}Map().Get(key)
+    if !found || raw == nil {
+        return nil, [16]byte{}, false
+    }
+    return raw.Data, raw.TypeHash, true
+}
+
+// {{ $field.Name }}Set sets the Any value for the given key.
+// The value must implement segment.TypeHasher and segment.StructGetter.
+func (x {{ $struct.Name }}) {{ $field.Name }}Set(key {{ $field.MapKeyGoType }}, value any) error {
+    hasher, ok := value.(segment.TypeHasher)
+    if !ok {
+        return fmt.Errorf("value must implement segment.TypeHasher")
+    }
+    getter, ok := value.(segment.StructGetter)
+    if !ok {
+        return fmt.Errorf("value must implement segment.StructGetter")
+    }
+    innerStruct := getter.XXXGetStruct()
+    if innerStruct == nil {
+        return fmt.Errorf("value's struct is nil")
+    }
+    raw := &segment.MapAnyValue{
+        TypeHash: hasher.XXXTypeHash(),
+        Data:     innerStruct.SegmentBytes(),
+    }
+    x.{{ $field.Name }}Map().Set(key, raw)
+    return nil
+}
+{{- else if eq $field.ValueTypeConst "FTListAny" }}
+// {{ $field.Name }}Map returns the underlying map for iteration and modification.
+// Values are []segment.MapAnyValue containing the raw bytes and type hashes.
+func (x {{ $struct.Name }}) {{ $field.Name }}Map() *segment.Maps[{{ $field.MapKeyGoType }}, []segment.MapAnyValue] {
+    // Check if we already have this map cached
+    if m := segment.GetMapListAny[{{ $field.MapKeyGoType }}](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}); m != nil {
+        return m
+    }
+    // Create new empty map if no data exists
+    return segment.NewMaps[{{ $field.MapKeyGoType }}, []segment.MapAnyValue](x.s, {{ $field.Index }}, field.{{ $field.KeyTypeConst }}, field.FTListAny, nil)
+}
+
+// {{ $field.Name }}Get decodes an Any item at the given index for the given key.
+// The target must be a pointer to a Claw struct that implements segment.TypeHasher.
+func (x {{ $struct.Name }}) {{ $field.Name }}Get(key {{ $field.MapKeyGoType }}, index int, target any) error {
+    items, ok := x.{{ $field.Name }}Map().Get(key)
+    if !ok || items == nil {
+        return fmt.Errorf("key not found in map")
+    }
+    if index < 0 || index >= len(items) {
+        return fmt.Errorf("index out of bounds")
+    }
+    raw := items[index]
+    // Validate and decode into target
+    hasher, ok := target.(segment.TypeHasher)
+    if !ok {
+        return fmt.Errorf("target must implement segment.TypeHasher")
+    }
+    if hasher.XXXTypeHash() != raw.TypeHash {
+        return fmt.Errorf("type hash mismatch")
+    }
+    getter, ok := target.(segment.StructGetter)
+    if !ok {
+        return fmt.Errorf("target must implement segment.StructGetter")
+    }
+    return getter.XXXGetStruct().Unmarshal(raw.Data)
+}
+
+// {{ $field.Name }}GetRaw returns the raw bytes and type hash for the item at the given index.
+func (x {{ $struct.Name }}) {{ $field.Name }}GetRaw(key {{ $field.MapKeyGoType }}, index int) (data []byte, typeHash [16]byte, ok bool) {
+    items, found := x.{{ $field.Name }}Map().Get(key)
+    if !found || items == nil || index < 0 || index >= len(items) {
+        return nil, [16]byte{}, false
+    }
+    return items[index].Data, items[index].TypeHash, true
+}
+
+// {{ $field.Name }}ListLen returns the number of items in the []Any for the given key.
+// Use {{ $field.Name }}Len() to get the number of keys in the map.
+func (x {{ $struct.Name }}) {{ $field.Name }}ListLen(key {{ $field.MapKeyGoType }}) int {
+    items, ok := x.{{ $field.Name }}Map().Get(key)
+    if !ok || items == nil {
+        return 0
+    }
+    return len(items)
+}
+
+// {{ $field.Name }}Set sets the []Any value for the given key.
+// Each value must implement segment.TypeHasher and segment.StructGetter.
+func (x {{ $struct.Name }}) {{ $field.Name }}Set(key {{ $field.MapKeyGoType }}, values []any) error {
+    items := make([]segment.MapAnyValue, 0, len(values))
+    for i, v := range values {
+        hasher, ok := v.(segment.TypeHasher)
+        if !ok {
+            return fmt.Errorf("value at index %d must implement segment.TypeHasher", i)
+        }
+        getter, ok := v.(segment.StructGetter)
+        if !ok {
+            return fmt.Errorf("value at index %d must implement segment.StructGetter", i)
+        }
+        innerStruct := getter.XXXGetStruct()
+        if innerStruct == nil {
+            return fmt.Errorf("value at index %d has nil struct", i)
+        }
+        items = append(items, segment.MapAnyValue{
+            TypeHash: hasher.XXXTypeHash(),
+            Data:     innerStruct.SegmentBytes(),
+        })
+    }
+    x.{{ $field.Name }}Map().Set(key, items)
+    return nil
+}
 {{- else }}
 // {{ $field.Name }}Map returns the underlying map for iteration and modification.
 func (x {{ $struct.Name }}) {{ $field.Name }}Map() *segment.Maps[{{ $field.MapKeyGoType }}, {{ $field.MapValueGoType }}] {
@@ -657,6 +800,82 @@ func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
 }
 {{- end }}
 
+{{ else if eq $field.TypeAsString "Any" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
+// {{ $field.Name }} decodes the Any field into the provided target.
+// The target must be a pointer to a Claw struct that implements segment.TypeHasher.
+// Returns an error if the field is not set, the target doesn't implement required interfaces,
+// or the type hash doesn't match.
+func (x {{ $struct.Name }}) {{ $field.Name }}(target any) error {
+    return segment.GetAny(x.s, {{ $field.Index }}, target)
+}
+
+// {{ $field.Name }}Raw returns the raw bytes and type hash without decoding.
+// Useful for forwarding/proxying scenarios.
+// Returns (nil, empty hash, false) if the field is not set.
+func (x {{ $struct.Name }}) {{ $field.Name }}Raw() (data []byte, typeHash [16]byte, ok bool) {
+    return segment.GetAnyRaw(x.s, {{ $field.Index }})
+}
+
+// Set{{ $field.Name }} sets the Any field with a Claw struct value.
+// The value must implement segment.TypeHasher and segment.StructGetter interfaces.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(value any) error {
+    return segment.SetAny(x.s, {{ $field.Index }}, value)
+}
+
+// Set{{ $field.Name }}Raw sets the Any field from raw bytes and type hash.
+// Used by Ingest to reconstitute Any fields from Walk tokens.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}Raw(rawData, typeHash []byte) error {
+    return segment.SetAnyRaw(x.s, {{ $field.Index }}, rawData, typeHash)
+}
+
+{{- if $isSetEnabled }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.HasField({{ $field.Index }})
+}
+{{- end }}
+
+{{ else if eq $field.TypeAsString "ListAny" -}}
+{{- if $field.Comment -}}
+// {{ $field.Comment }}
+{{ end -}}
+// {{ $field.Name }}Len returns the number of items in the []Any field.
+func (x {{ $struct.Name }}) {{ $field.Name }}Len() int {
+    return segment.GetListAnyLen(x.s, {{ $field.Index }})
+}
+
+// {{ $field.Name }}Get decodes an item from the []Any field into the provided target.
+// The target must be a pointer to a Claw struct that implements segment.TypeHasher.
+func (x {{ $struct.Name }}) {{ $field.Name }}Get(index int, target any) error {
+    return segment.GetListAny(x.s, {{ $field.Index }}, index, target)
+}
+
+// {{ $field.Name }}GetRaw returns the raw bytes and type hash of an item without decoding.
+// Useful for forwarding/proxying scenarios.
+func (x {{ $struct.Name }}) {{ $field.Name }}GetRaw(index int) (data []byte, typeHash [16]byte, ok bool) {
+    return segment.GetListAnyRaw(x.s, {{ $field.Index }}, index)
+}
+
+// Set{{ $field.Name }} sets the []Any field with a slice of Claw struct values.
+// Each value must implement segment.TypeHasher and segment.StructGetter interfaces.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}(values []any) error {
+    return segment.SetListAny(x.s, {{ $field.Index }}, values)
+}
+
+// Set{{ $field.Name }}Raw sets the []Any field from raw bytes and type hashes.
+// Used by Ingest to reconstitute []Any fields from Walk tokens.
+func (x {{ $struct.Name }}) Set{{ $field.Name }}Raw(items []segment.AnyRawItem) error {
+    return segment.SetListAnyRaw(x.s, {{ $field.Index }}, items)
+}
+
+{{- if $isSetEnabled }}
+func (x {{ $struct.Name }}) IsSet{{ $field.Name }}() bool{
+    return x.s.HasField({{ $field.Index }})
+}
+{{- end }}
+
 {{ end }}{{/* End if eq $field.Type */}}
 {{- end }}{{/* End range $index, $field := .Fields */}}
 
@@ -671,6 +890,14 @@ func (x {{ $struct.Name }}) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x {{ $struct.Name }}) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x {{ $struct.Name }}) XXXTypeHash() [16]byte {
+    return XXXTypeHash{{ $struct.Name }}
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -779,6 +1006,16 @@ func New{{ $struct.Name }}FromRaw(ctx context.Context, raw {{ $struct.Name }}Raw
                 m.Set(k, New{{ $field.ValueIdentName }}FromRaw(ctx, *v).XXXGetStruct())
             }
             {{- end }}
+            {{- else if eq $field.ValueTypeConst "FTAny" }}
+            // Any values - Raw type is *segment.MapAnyValue
+            if v != nil {
+                m.Set(k, v)
+            }
+            {{- else if eq $field.ValueTypeConst "FTListAny" }}
+            // []Any values - Raw type is []segment.MapAnyValue
+            if v != nil {
+                m.Set(k, v)
+            }
             {{- else }}
             m.Set(k, v)
             {{- end }}

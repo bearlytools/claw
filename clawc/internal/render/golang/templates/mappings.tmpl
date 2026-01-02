@@ -1,6 +1,14 @@
 
 // Everything below this line is internal details.
 {{- $file := .File }}
+
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+{{- range $file.Structs }}
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHash{{ .Name }} = [16]byte{ {{- range $i, $b := .TypeHashBytes }}{{ if $i }}, {{ end }}0x{{ printf "%02x" $b }}{{ end -}} }
+{{ end }}
+
 {{- range $file.Structs }}
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMapping{{ .Name }} = &mapping.Map{
@@ -16,6 +24,7 @@ var XXXMapping{{ .Name }} = &mapping.Map{
             FullPath: "{{ $field.FullPath }}",
             FieldNum: {{ $index }},
             IsEnum: {{ $field.IsEnum }},
+            IsAny: {{ $field.IsAny }},
             {{- if $field.SelfReferential }}
             SelfReferential: true,
             {{- end }}

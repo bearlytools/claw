@@ -8,6 +8,8 @@ import (
 	"github.com/gostdlib/base/context"
 	"github.com/kylelemons/godebug/pretty"
 
+	"github.com/bearlytools/claw/clawc/languages/go/field"
+	anytest "github.com/bearlytools/claw/testing/any/claw"
 	vehicles "github.com/bearlytools/claw/testing/imports/vehicles/claw"
 	"github.com/bearlytools/claw/testing/imports/vehicles/claw/manufacturers"
 	cars "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
@@ -350,3 +352,156 @@ func TestMarshalHexBytes(t *testing.T) {
 		t.Errorf("TestMarshalHexBytes: expected 'Manufacturer: Toyota' in output, got: %s", got.String())
 	}
 }
+
+func TestMarshalAnyField(t *testing.T) {
+	ctx := context.Background()
+
+	// Create an Inner struct to store in the Any field
+	inner := anytest.NewInner(ctx).SetID(12345).SetValue("test value")
+
+	// Create a Container with the Any field
+	container := anytest.NewContainer(ctx).SetName("test container")
+	if err := container.SetData(inner); err != nil {
+		t.Fatalf("[TestMarshalAnyField]: SetData() error: %v", err)
+	}
+
+	// Marshal to clawtext
+	got, err := Marshal(ctx, container)
+	if err != nil {
+		t.Fatalf("[TestMarshalAnyField]: Marshal() error: %v", err)
+	}
+	defer got.Release(ctx)
+
+	// Verify the output contains @any(TypeName) format (readable format)
+	if !strings.Contains(got.String(), "@any(Inner)") {
+		t.Errorf("[TestMarshalAnyField]: expected '@any(Inner)' in output, got: %s", got.String())
+	}
+
+	// Verify the actual struct fields are present
+	if !strings.Contains(got.String(), "ID: 12345") {
+		t.Errorf("[TestMarshalAnyField]: expected 'ID: 12345' in output, got: %s", got.String())
+	}
+	if !strings.Contains(got.String(), `Value: "test value"`) {
+		t.Errorf("[TestMarshalAnyField]: expected 'Value: \"test value\"' in output, got: %s", got.String())
+	}
+
+	// Verify the output contains the Name field
+	if !strings.Contains(got.String(), `Name: "test container"`) {
+		t.Errorf("[TestMarshalAnyField]: expected 'Name: \"test container\"' in output, got: %s", got.String())
+	}
+}
+
+func TestMarshalListAnyField(t *testing.T) {
+	ctx := context.Background()
+
+	// Create multiple items
+	inner1 := anytest.NewInner(ctx).SetID(1).SetValue("first")
+	inner2 := anytest.NewInner(ctx).SetID(2).SetValue("second")
+
+	// Set the list
+	listContainer := anytest.NewListContainer(ctx).SetName("list test")
+	if err := listContainer.SetItems([]any{inner1, inner2}); err != nil {
+		t.Fatalf("[TestMarshalListAnyField]: SetItems() error: %v", err)
+	}
+
+	// Marshal to clawtext
+	got, err := Marshal(ctx, listContainer)
+	if err != nil {
+		t.Fatalf("[TestMarshalListAnyField]: Marshal() error: %v", err)
+	}
+	defer got.Release(ctx)
+
+	// Verify the output contains @any(TypeName) format for list items (readable format)
+	if !strings.Contains(got.String(), "@any(Inner)") {
+		t.Errorf("[TestMarshalListAnyField]: expected '@any(Inner)' in output, got: %s", got.String())
+	}
+
+	// Verify actual struct fields are present
+	if !strings.Contains(got.String(), "ID: 1") {
+		t.Errorf("[TestMarshalListAnyField]: expected 'ID: 1' in output, got: %s", got.String())
+	}
+
+	// Verify it has Items array
+	if !strings.Contains(got.String(), "Items: [") {
+		t.Errorf("[TestMarshalListAnyField]: expected 'Items: [' in output, got: %s", got.String())
+	}
+}
+
+func TestMarshalAnyNil(t *testing.T) {
+	ctx := context.Background()
+
+	// Create a container without setting the Any field
+	container := anytest.NewContainer(ctx).SetName("empty container")
+
+	// Marshal to clawtext
+	got, err := Marshal(ctx, container)
+	if err != nil {
+		t.Fatalf("[TestMarshalAnyNil]: Marshal() error: %v", err)
+	}
+	defer got.Release(ctx)
+
+	// Verify the output contains null for the Data field
+	if !strings.Contains(got.String(), "Data: null") {
+		t.Errorf("[TestMarshalAnyNil]: expected 'Data: null' in output, got: %s", got.String())
+	}
+}
+
+// TestAllFieldTypesSupported verifies that all field types defined in the field package
+// are handled by the clawtext writeValue function. This test ensures that when new
+// field types are added, they must be supported here or the test will fail.
+func TestAllFieldTypesSupported(t *testing.T) {
+	// All valid field types that should be supported.
+	// If you add a new field type, add it here AND ensure writeValue handles it.
+	supportedTypes := map[field.Type]bool{
+		field.FTUnknown:     true, // Unknown is not used in practice but should not panic
+		field.FTBool:        true,
+		field.FTInt8:        true,
+		field.FTInt16:       true,
+		field.FTInt32:       true,
+		field.FTInt64:       true,
+		field.FTUint8:       true,
+		field.FTUint16:      true,
+		field.FTUint32:      true,
+		field.FTUint64:      true,
+		field.FTFloat32:     true,
+		field.FTFloat64:     true,
+		field.FTString:      true,
+		field.FTBytes:       true,
+		field.FTStruct:      true,
+		field.FTAny:         true,
+		field.FTListBools:   true,
+		field.FTListInt8:    true,
+		field.FTListInt16:   true,
+		field.FTListInt32:   true,
+		field.FTListInt64:   true,
+		field.FTListUint8:   true,
+		field.FTListUint16:  true,
+		field.FTListUint32:  true,
+		field.FTListUint64:  true,
+		field.FTListFloat32: true,
+		field.FTListFloat64: true,
+		field.FTListBytes:   true,
+		field.FTListStrings: true,
+		field.FTListStructs: true,
+		field.FTListAny:     true,
+		field.FTMap:         true,
+	}
+
+	// Verify all types in field.constNames are in our supported map
+	for ft := range field.AllTypes() {
+		if !supportedTypes[ft] {
+			t.Errorf("[TestAllFieldTypesSupported]: field type %v (%s) is defined but not marked as supported in clawtext", ft, field.TypeToString(ft))
+		}
+	}
+
+	// Verify all types we claim to support actually exist
+	for ft := range supportedTypes {
+		name := field.TypeToString(ft)
+		if name == "" && ft != field.FTUnknown {
+			t.Errorf("[TestAllFieldTypesSupported]: field type %v is marked as supported but doesn't exist in field package", ft)
+		}
+	}
+}
+
+// Ensure imports are used
+var _ = pretty.Compare

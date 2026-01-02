@@ -9,6 +9,7 @@ import (
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
+    "github.com/bearlytools/claw/clawc/languages/go/segment"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/cars/claw"
     "github.com/bearlytools/claw/claw_vendor/github.com/bearlytools/test_claw_imports/trucks"
 )
@@ -17,6 +18,7 @@ import (
 var _ context.Context
 var _ = fmt.Errorf
 var _ = field.FTBool
+var _ segment.AnyRawItem
 
 
 // Ingest populates the struct from a Walker with options.

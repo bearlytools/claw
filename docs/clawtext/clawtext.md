@@ -207,6 +207,28 @@ Labels: @map {
 },
 ```
 
+### Any Type
+
+The `Any` type represents a dynamically-typed value that can hold any Claw struct. When the type is known (registered), it displays with the type name and full field values:
+
+```clawtext
+// Single Any field - type is known
+Data: @any(Inner) {ID: 12345, Value: "test value"},
+
+// List of Any - types are known
+Items: [
+    @any(Inner) {ID: 1, Value: "first"},
+    @any(Inner) {ID: 2, Value: "second"},
+],
+```
+
+When the type is not registered (unknown), the raw data is shown:
+
+```clawtext
+// Unknown type - shows hash and base64-encoded data
+Data: @any(@value: "SGVsbG8gV29ybGQ=", @type: "a1b2c3d4e5f6..."),
+```
+
 ## Complete Example
 
 ```clawtext

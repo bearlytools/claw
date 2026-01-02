@@ -27,8 +27,6 @@
   <img src="https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go" alt="Go version">
 </p>
 
-
-
 Claw is a binary serialization format and IDL (Interface Definition Language) designed for performance-critical applications. It prioritizes machine efficiency over wire size, offering lazy decoding and minimal heap allocations.
 
 Since you've made it this far, why don't you hit that :star: up in the right corner.
@@ -36,7 +34,7 @@ Since you've made it this far, why don't you hit that :star: up in the right cor
 ## Features
 
 - **Lazy Decoding** - Only decode fields when accessed, significantly improving performance for large messages
-- **Zero Heap Allocations** - Scalar type conversions require no heap allocations for languages that can support it
+- **Almost Zero Heap Allocations** - Scalar type conversions require no heap allocations for languages that can support it and heavy reuse of buffers to avoid future allocations
 - **No Re-encoding** - Unchanged messages can be forwarded without re-encoding overhead
 - **Message Patching** - Send and apply incremental patches instead of full messages
 - **Built-in RPC** - Supports TCP, HTTP/1.1, HTTP/2 and Unix Domain Sockets
@@ -154,11 +152,12 @@ fmt.Println(decoded.Name())  // Fields decoded only when accessed
 ## Design Goals
 
 - Machine-friendly binary format optimized for decode speed
-- Zero heap allocations for data access in Go, Rust, and C++
+- Close to Zero heap allocations for data access in Go (initial target language)
 - Single-pass encode/decode operations
-- Support for Go, Rust, Zig, and JavaScript
+- No encoding for empty fields
+- Eventual support for Rust, Zig, Pythobn and JavaScript
 - Intuitive import system (no `protoc` path gymnastics)
-- Extensible serialization (JSON export support)
+- Extensible serialization (JSON export support to start with)
 - Clear binary format specification
 
 ## Trade-offs
@@ -166,6 +165,10 @@ fmt.Println(decoded.Name())  // Fields decoded only when accessed
 Claw optimizes for **speed over size**. The wire format uses fixed-size encodings and alignment padding rather than variable-length encoding. If minimizing bandwidth is your primary concern, Protocol Buffers or similar formats may be more appropriate.
 
 ## Comparison with Alternatives
+
+**Note** These are micro-benchmarks using one message type. I cannot validate every type of marshal/unmarshal performance. Consider these rough benchmarks that tell part of the story, not the whole story. For almost any normal system this is just one minor part. Google has done quite well with proto2/3 for decades.
+
+This does not cover cost of access (lazy decoding advantages) and many other details that will be covered in real world systems.
 
 ### vs Protocol Buffers
 
@@ -188,7 +191,7 @@ Protocol Buffers is the industry standard with excellent language support and Go
 | ClawPatchUnmarshal      | 5,384,586  | 216     | 296     | 5         |
 ```
 
-ProtoMarshal/ProtoUnmarshal are the standard Go protocol buffer packages. I have not tried against various 3rd party enhancers like VTProto. This benchmark was for a Kubernetes Pod representation. The Patches represent using patch recording for 2 field changes in the Pod. This is a common thing for something like Kubernetes API server that will update a single date/time field and need to update all listeners.
+ProtoMarshal/ProtoUnmarshal benchmarks use the standard Go protocol buffer packages. I have not tried against various 3rd party enhancers like VTProto. This benchmark was for a Kubernetes Pod representation. The Patches represent using patch recording for 2 field changes in the Pod. This is a common thing for something like Kubernetes API server that will update a single date/time field and need to update all listeners.
 
 Choose Protocol Buffers when:
 
@@ -197,17 +200,19 @@ Choose Protocol Buffers when:
 - You're already invested in the protobuf ecosystem
 - Wire size is more important than decode speed:
 
-Here is that Pod on the wire:
+Quick size comparison:
 
  - Protocol Buffers: 14,416 bytes
  - Claw: 28,704 bytes
  - Patch (diff): 200 bytes (99.3% smaller)
  
-We are twice the size on the wire, however this can be reduced with compression.  Patching reduces the size to trivial amounts if the changes remain small.
+Claw is twice the size on the wire, however this can be reduced with compression.  Patching reduces the size to trivial amounts if the changes remain small.
+
+Consider using http://buf.build if you are using protocol buffers. Their Connect service is good and it eases dealing with protos.
 
 ### vs Cap'n Proto
 
-Cap'n Proto pioneered zero-copy serialization. Claw borrows the segment-based allocation strategy with its own flavort. Choose Claw when:
+Cap'n Proto pioneered zero-copy serialization. Claw borrows the segment-based allocation strategy with its own flavor. Choose Claw when:
 
 - You find Cap'n Proto's format difficult to implement
 - You want simple tooling
@@ -217,10 +222,10 @@ Cap'n Proto pioneered zero-copy serialization. Claw borrows the segment-based al
 
 Choose Cap'n Proto when:
 
-- You need the absolute fastest possible de-serialization
+- You need slightly faster de-serialization
 - You can use the C++ implementation or its bindings
 - You need time-traveling RPC capabilities
-- Interfaces, groups and other features are it provides are needed 
+- Interfaces, groups and other features it provides are needed 
 - You need a capabilities based system
 
 | Benchmark           | ops/sec    | ns/op   | B/op    | allocs/op |
@@ -231,7 +236,7 @@ Choose Cap'n Proto when:
 | ClawUnmarshal       | 5,413,490  | 221     | 328     | 6         |
 | ClawUnmarshalPooled | 4,671,649  | 254     | 218     | 4         |
 
-Pooling is slower, but avoid allocations. `Cap'n Proto` can do pooling as well, but it greatly decreases performance in these benchmarks. I imagine overall it also adds to speed by avoid GC pauses.
+Pooling is slower, but avoids allocations. `Cap'n Proto` can do pooling as well, but it greatly decreases performance in these benchmarks. I imagine overall it would add speed by avoid GC pauses.
 
 ### vs FlatBuffers
 
@@ -241,15 +246,88 @@ FlatBuffers offers zero-copy access patterns. Choose Claw when:
 - You want bounds checking and clear error handling
 - You need consistent performance across different message shapes
 
+Choose FlatBuffers when:
+
+- Speed of decode needs to be almost free 
+
+| Format           | Size         |
+|------------------|--------------|
+| Claw             | 28,704 bytes |
+| FlatBuffers      | 29,312 bytes |
+
+Marshal Performance
+
+| Benchmark            | ns/op  | B/op   | allocs/op |
+|----------------------|--------|--------|-----------|
+| PatchMarshal         | 35     | 144    | 1         |
+| ClawMarshal          | 3,866  | 32,768 | 1         |
+| FlatbufMarshal       | 91,658 | 43,647 | 871       |
+| FlatbufPooledMarshal | 86,423 | 10,469 | 864       |
+
+Unmarshal Performance
+
+| Benchmark            | ns/op   | B/op    | allocs/op |
+|----------------------|---------|---------|-----------|
+| FlatbufUnmarshal     | 0.36    | 0       | 0         |
+| PatchUnmarshal       | 210     | 296     | 5         |
+| ClawUnmarshal        | 218     | 328     | 6         |
+| ClawUnmarshalPooled  | 255     | 218     | 4         |
+
+Flatbuffer looses on marshalling, but unmarshal performance is unrivaled. So if unmarshalling is your only concern, Flatbuffers are significantly faster. 
+
+Flatbuffer is made for games, but I think this probably only has benefits in C++ or Rust where a GC doesn't exist. GC costs and marshal performance look to kill any advantages in Go.
+
+### vs JSON
+
+JSON is the industry standard via REST. It is not a binary encoding, but included here as a comparison. While there is BSON, this is really a niche version.
+
+Choose Claw when:
+
+- You value any aspect of performance
+- You are not required to implement JSON 
+- You don't need a schema 
+
+Choose JSON when:
+
+- You are required to
+
+Here is JSON performance information using the new Go json/v2 experimental package. This package greatly enhances Go's ability to deal with JSON at speed. But being a textual format, lacking information on message size and not doing lazy decode its perfomance is lackluster.
+
+Marshal Performance
+
+| Benchmark            | ns/op  | B/op    | allocs/op |
+|----------------------|--------|---------|-----------|
+| PatchMarshal         | 35     | 144     | 1         |
+| ClawMarshal          | 3,866  | 32,768  | 1         |
+| JSONMarshal          | 79,275  | 33,550 | 49        |
+
+Unmarshal Performance
+
+| Benchmark            | ns/op   | B/op    | allocs/op |
+|----------------------|---------|---------|-----------|
+| PatchUnmarshal       | 211     | 296     | 5         |
+| ClawUnmarshal        | 222     | 328     | 6         |
+| ClawUnmarshalPooled  | 257     | 218     | 4         |
+| JSONUnmarshal        | 177,778 | 83,192  | 1,319     |
+
+Serialized Sizes
+
+| Format           | Bytes  |
+|------------------|--------|
+| Claw             | 28,704 |
+| JSON             | 31,914 |
+
+Some of the JSON stuff can be overcome. You can do a type of lazy decode if you know what you are getting aheady of time. You can also use file sizes and headers in transports to be smarter about allocations. You can use packages with compile time schemas as well. But at that point you are hacking away at something that is never going to be great at performance. JSON maximizes human readability and everything else is an after thought.  And I'd note, it probably would never have caught on if the world had not though XML was a great idea for a while.
+
 ## Current Status
 
 - **Go**: Full support including RPC
-- **Rust, Zig, JavaScript, Python**: Future plans
+- **Rust, Zig, JavaScript, Python**: Future plans (way, way, way in the future)
 
-## Contributing
+## Licenses
 
-Contributions are welcome. Please open an issue to discuss significant changes before submitting a PR.
-
-## License
-
+Code is:
 [MIT License](LICENSE) - Copyright (c) 2025 John G. Doak
+
+Claw®and Claw Format® are trademarks of John G. Doak.
+The Claw logo is copyright John G. Doak.

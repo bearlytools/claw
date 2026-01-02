@@ -9,6 +9,7 @@ import (
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
+    "github.com/bearlytools/claw/clawc/languages/go/segment"
     {{- range .File.ExternalFieldImports }}
     "{{ $.Config.TransformImportPath . }}"
     {{- end }}
@@ -18,6 +19,7 @@ import (
 var _ context.Context
 var _ = fmt.Errorf
 var _ = field.FTBool
+var _ segment.AnyRawItem
 
 {{- $file := .File }}
 
@@ -506,7 +508,70 @@ func (x *{{ $struct.Name }}) XXXIngestFrom(ctx context.Context, ts *clawiter.Tok
                 m.Set(key, entryTok.Float32())
                 {{- else if eq $field.ValueTypeConst "FTFloat64" }}
                 m.Set(key, entryTok.Float64())
+                {{- else if eq $field.ValueTypeConst "FTAny" }}
+                // Any value - store type hash and raw data
+                anyVal := &segment.MapAnyValue{}
+                if len(entryTok.TypeHash) == 16 {
+                    copy(anyVal.TypeHash[:], entryTok.TypeHash)
+                }
+                anyVal.Data = entryTok.Bytes
+                m.Set(key, anyVal)
+                {{- else if eq $field.ValueTypeConst "FTListAny" }}
+                // List of Any values
+                listStartTok, ok := ts.Next()
+                if !ok || listStartTok.Kind != clawiter.TokenListStart {
+                    return fmt.Errorf("expected TokenListStart for {{ $field.Name }}[%v] value", key)
+                }
+                var anyList []segment.MapAnyValue
+                for {
+                    anyItemTok, ok := ts.Next()
+                    if !ok {
+                        return fmt.Errorf("unexpected EOF in {{ $field.Name }}[%v] list value", key)
+                    }
+                    if anyItemTok.Kind == clawiter.TokenListEnd {
+                        break
+                    }
+                    anyItem := segment.MapAnyValue{}
+                    if len(anyItemTok.TypeHash) == 16 {
+                        copy(anyItem.TypeHash[:], anyItemTok.TypeHash)
+                    }
+                    anyItem.Data = anyItemTok.Bytes
+                    anyList = append(anyList, anyItem)
+                }
+                m.Set(key, anyList)
                 {{- end }}
+            }
+            {{- else if eq $field.TypeAsString "Any" }}
+            if tok.IsNil {
+                continue
+            }
+            if err := x.Set{{ $field.Name }}Raw(tok.Bytes, tok.TypeHash); err != nil {
+                return fmt.Errorf("ingesting {{ $field.Name }}: %w", err)
+            }
+            {{- else if eq $field.TypeAsString "ListAny" }}
+            if tok.IsNil {
+                continue
+            }
+            listTok, ok := ts.Next()
+            if !ok || listTok.Kind != clawiter.TokenListStart {
+                return fmt.Errorf("expected TokenListStart for {{ $field.Name }}")
+            }
+            var anyItems []segment.AnyRawItem
+            for {
+                itemTok, ok := ts.Next()
+                if !ok {
+                    return fmt.Errorf("unexpected EOF in {{ $field.Name }} list")
+                }
+                if itemTok.Kind == clawiter.TokenListEnd {
+                    break
+                }
+                anyItems = append(anyItems, segment.AnyRawItem{
+                    Data:     itemTok.Bytes,
+                    TypeHash: itemTok.TypeHash,
+                })
+            }
+            if err := x.Set{{ $field.Name }}Raw(anyItems); err != nil {
+                return fmt.Errorf("ingesting {{ $field.Name }}: %w", err)
             }
             {{- end }}
         {{- end }}

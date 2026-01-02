@@ -1,0 +1,415 @@
+namespace flatbuf;
+
+// Time represents a timestamp.
+table Time {
+  seconds:int64;
+  nanos:int32;
+}
+
+// KeyValue is used for maps (labels, annotations, etc.)
+table KeyValue {
+  key:string;
+  value:string;
+}
+
+// TypeMeta describes an individual object in an API response or request.
+table TypeMeta {
+  kind:string;
+  api_version:string;
+}
+
+// OwnerReference contains enough information to let you identify an owning object.
+table OwnerReference {
+  api_version:string;
+  kind:string;
+  name:string;
+  uid:string;
+  controller:bool;
+  block_owner_deletion:bool;
+}
+
+// ObjectMeta is metadata that all persisted resources must have.
+table ObjectMeta {
+  name:string;
+  generate_name:string;
+  namespace_:string;
+  self_link:string;
+  uid:string;
+  resource_version:string;
+  generation:int64;
+  creation_timestamp:Time;
+  deletion_timestamp:Time;
+  deletion_grace_period_seconds:int64;
+  labels:[KeyValue];
+  annotations:[KeyValue];
+  owner_references:[OwnerReference];
+  finalizers:[string];
+}
+
+// Enumerations
+enum RestartPolicy:byte {
+  Unspecified = 0,
+  Always = 1,
+  OnFailure = 2,
+  Never = 3
+}
+
+enum PullPolicy:byte {
+  Unspecified = 0,
+  Always = 1,
+  Never = 2,
+  IfNotPresent = 3
+}
+
+enum Protocol:byte {
+  Unspecified = 0,
+  TCP = 1,
+  UDP = 2,
+  SCTP = 3
+}
+
+enum DNSPolicy:byte {
+  Unspecified = 0,
+  ClusterFirstWithHostNet = 1,
+  ClusterFirst = 2,
+  Default = 3,
+  None = 4
+}
+
+enum PodPhase:byte {
+  Unspecified = 0,
+  Pending = 1,
+  Running = 2,
+  Succeeded = 3,
+  Failed = 4,
+  Unknown = 5
+}
+
+enum PodQOSClass:byte {
+  Unspecified = 0,
+  Guaranteed = 1,
+  Burstable = 2,
+  BestEffort = 3
+}
+
+enum TolerationOperator:byte {
+  Unspecified = 0,
+  Exists = 1,
+  Equal = 2
+}
+
+enum TaintEffect:byte {
+  Unspecified = 0,
+  NoSchedule = 1,
+  PreferNoSchedule = 2,
+  NoExecute = 3
+}
+
+enum StorageMedium:byte {
+  Unspecified = 0,
+  Default = 1,
+  Memory = 2,
+  HugePages = 3
+}
+
+enum NodeSelectorOperator:byte {
+  Unspecified = 0,
+  In = 1,
+  NotIn = 2,
+  Exists = 3,
+  DoesNotExist = 4,
+  Gt = 5,
+  Lt = 6
+}
+
+enum PodConditionType:byte {
+  Unspecified = 0,
+  ContainersReady = 1,
+  Initialized = 2,
+  Ready = 3,
+  PodScheduled = 4,
+  DisruptionTarget = 5
+}
+
+enum ConditionStatus:byte {
+  Unspecified = 0,
+  True = 1,
+  False = 2,
+  Unknown = 3
+}
+
+// IntOrString is a type that can hold an int32 or a string.
+table IntOrString {
+  int_val:int32;
+  str_val:string;
+  is_string:bool;
+}
+
+// ContainerPort represents a network port in a single container.
+table ContainerPort {
+  name:string;
+  host_port:int32;
+  container_port:int32;
+  protocol:Protocol;
+  host_ip:string;
+}
+
+// EnvVar represents an environment variable.
+table EnvVar {
+  name:string;
+  value:string;
+}
+
+// ResourceRequirements describes the compute resource requirements.
+table ResourceRequirements {
+  limits:[KeyValue];
+  requests:[KeyValue];
+}
+
+// VolumeMount describes a mounting of a Volume within a container.
+table VolumeMount {
+  name:string;
+  read_only:bool;
+  mount_path:string;
+  sub_path:string;
+}
+
+// HTTPGetAction describes an action based on HTTP Get requests.
+table HTTPGetAction {
+  path:string;
+  port:IntOrString;
+  host:string;
+  scheme:string;
+}
+
+// ProbeHandler defines a specific action that should be taken.
+table ProbeHandler {
+  http_get:HTTPGetAction;
+}
+
+// Probe describes a health check to be performed against a container.
+table Probe {
+  handler:ProbeHandler;
+  initial_delay_seconds:int32;
+  timeout_seconds:int32;
+  period_seconds:int32;
+  success_threshold:int32;
+  failure_threshold:int32;
+}
+
+// Container represents a single container that is expected to be run on the host.
+table Container {
+  name:string;
+  image:string;
+  command:[string];
+  args:[string];
+  working_dir:string;
+  ports:[ContainerPort];
+  env:[EnvVar];
+  resources:ResourceRequirements;
+  volume_mounts:[VolumeMount];
+  termination_message_path:string;
+  image_pull_policy:PullPolicy;
+  liveness_probe:Probe;
+  readiness_probe:Probe;
+}
+
+// EmptyDirVolumeSource represents an empty directory for a pod.
+table EmptyDirVolumeSource {
+  medium:StorageMedium;
+  size_limit:string;
+}
+
+// VolumeSource represents the source location of a volume to mount.
+table VolumeSource {
+  empty_dir:EmptyDirVolumeSource;
+}
+
+// Volume represents a named volume in a pod.
+table Volume {
+  name:string;
+  volume_source:VolumeSource;
+}
+
+// PodSecurityContext holds pod-level security attributes.
+table PodSecurityContext {
+  run_as_user:int64;
+  run_as_group:int64;
+  run_as_non_root:bool;
+  supplemental_groups:[int64];
+  fs_group:int64;
+}
+
+// Toleration defines that a pod tolerates a taint.
+table Toleration {
+  key:string;
+  operator:TolerationOperator;
+  value:string;
+  effect:TaintEffect;
+  toleration_seconds:int64;
+}
+
+// HostAlias holds the mapping between IP and hostnames.
+table HostAlias {
+  ip:string;
+  hostnames:[string];
+}
+
+// PodDNSConfig defines the DNS parameters of a pod.
+table PodDNSConfig {
+  nameservers:[string];
+  searches:[string];
+}
+
+// NodeSelectorRequirement is a selector that contains values and an operator.
+table NodeSelectorRequirement {
+  key:string;
+  operator:NodeSelectorOperator;
+  values:[string];
+}
+
+// NodeSelectorTerm represents expressions and fields required to select node(s).
+table NodeSelectorTerm {
+  match_expressions:[NodeSelectorRequirement];
+  match_fields:[NodeSelectorRequirement];
+}
+
+// NodeSelector represents the union of the results of one or more label queries.
+table NodeSelector {
+  node_selector_terms:[NodeSelectorTerm];
+}
+
+// NodeAffinity is a group of node affinity scheduling rules.
+table NodeAffinity {
+  required_during_scheduling_ignored_during_execution:NodeSelector;
+}
+
+// LabelSelector is a label query over a set of resources.
+table LabelSelector {
+  match_labels:[KeyValue];
+}
+
+// PodAffinityTerm defines a set of pods for this pod to co-located/anti-located with.
+table PodAffinityTerm {
+  label_selector:LabelSelector;
+  namespaces:[string];
+  topology_key:string;
+}
+
+// PodAffinity is a group of inter pod affinity scheduling rules.
+table PodAffinity {
+  required_during_scheduling_ignored_during_execution:[PodAffinityTerm];
+}
+
+// Affinity is a group of affinity scheduling rules.
+table Affinity {
+  node_affinity:NodeAffinity;
+  pod_affinity:PodAffinity;
+}
+
+// PodSpec is a description of a pod.
+table PodSpec {
+  volumes:[Volume];
+  init_containers:[Container];
+  containers:[Container];
+  restart_policy:RestartPolicy;
+  termination_grace_period_seconds:int64;
+  dns_policy:DNSPolicy;
+  node_selector:[KeyValue];
+  service_account_name:string;
+  node_name:string;
+  host_network:bool;
+  host_pid:bool;
+  host_ipc:bool;
+  security_context:PodSecurityContext;
+  hostname:string;
+  subdomain:string;
+  scheduler_name:string;
+  tolerations:[Toleration];
+  host_aliases:[HostAlias];
+  priority_class_name:string;
+  priority:int32;
+  dns_config:PodDNSConfig;
+  affinity:Affinity;
+}
+
+// ContainerStateRunning is a running state of a container.
+table ContainerStateRunning {
+  started_at:Time;
+}
+
+// ContainerStateTerminated is a terminated state of a container.
+table ContainerStateTerminated {
+  exit_code:int32;
+  signal:int32;
+  reason:string;
+  message:string;
+  started_at:Time;
+  finished_at:Time;
+  container_id:string;
+}
+
+// ContainerStateWaiting is a waiting state of a container.
+table ContainerStateWaiting {
+  reason:string;
+  message:string;
+}
+
+// ContainerState holds a possible state of container.
+table ContainerState {
+  waiting:ContainerStateWaiting;
+  running:ContainerStateRunning;
+  terminated:ContainerStateTerminated;
+}
+
+// ContainerStatus contains the status of a container.
+table ContainerStatus {
+  name:string;
+  state:ContainerState;
+  last_termination_state:ContainerState;
+  ready:bool;
+  restart_count:int32;
+  image:string;
+  image_id:string;
+  container_id:string;
+  started:bool;
+}
+
+// PodCondition contains details for the current condition of this pod.
+table PodCondition {
+  type:PodConditionType;
+  status:ConditionStatus;
+  last_probe_time:Time;
+  last_transition_time:Time;
+  reason:string;
+  message:string;
+}
+
+// PodIP represents a single IP address allocated to the pod.
+table PodIP {
+  ip:string;
+}
+
+// PodStatus represents information about the status of a pod.
+table PodStatus {
+  phase:PodPhase;
+  conditions:[PodCondition];
+  message:string;
+  reason:string;
+  host_ip:string;
+  pod_ip:string;
+  pod_ips:[PodIP];
+  start_time:Time;
+  container_statuses:[ContainerStatus];
+  qos_class:PodQOSClass;
+}
+
+// Pod is a collection of containers that can run on a host.
+table Pod {
+  type_meta:TypeMeta;
+  metadata:ObjectMeta;
+  spec:PodSpec;
+  status:PodStatus;
+}
+
+root_type Pod;

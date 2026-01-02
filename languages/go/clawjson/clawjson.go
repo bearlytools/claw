@@ -15,6 +15,7 @@ import (
 
 	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
+	"github.com/bearlytools/claw/languages/go/reflect/runtime"
 	jsonv2 "github.com/go-json-experiment/json"
 	"github.com/go-json-experiment/json/jsontext"
 	"github.com/gostdlib/base/concurrency/sync"
@@ -186,6 +187,55 @@ func writeJSON(ctx context.Context, w io.Writer, walker Walkable, opts marshalOp
 				state.firstStack = state.firstStack[:len(state.firstStack)-1]
 			}
 
+		case clawiter.TokenMapStart:
+			// Maps are represented as JSON objects
+			if _, err := w.Write(jsonOpenBrace); err != nil {
+				writeErr = err
+				return false
+			}
+			state.firstStack = append(state.firstStack, true)
+
+		case clawiter.TokenMapEnd:
+			if _, err := w.Write(jsonCloseBrace); err != nil {
+				writeErr = err
+				return false
+			}
+			if len(state.firstStack) > 0 {
+				state.firstStack = state.firstStack[:len(state.firstStack)-1]
+			}
+
+		case clawiter.TokenMapEntry:
+			// Write comma if not first entry
+			if len(state.firstStack) > 0 {
+				if !state.firstStack[len(state.firstStack)-1] {
+					if _, err := w.Write(jsonComma); err != nil {
+						writeErr = err
+						return false
+					}
+				}
+				state.firstStack[len(state.firstStack)-1] = false
+			}
+
+			// Write key as JSON string
+			state.scratch = appendEscapedString(state.scratch[:0], tok.KeyString())
+			if _, err := w.Write(state.scratch); err != nil {
+				writeErr = err
+				return false
+			}
+			if _, err := w.Write(jsonColon); err != nil {
+				writeErr = err
+				return false
+			}
+
+			// For map entries, use ValueType as Type for writeValue
+			tok.Type = tok.ValueType
+
+			// Write value
+			if err := writeValue(w, tok, opts, &state.scratch); err != nil {
+				writeErr = err
+				return false
+			}
+
 		case clawiter.TokenField:
 			// Write comma if not first element
 			if len(state.firstStack) > 0 {
@@ -231,13 +281,117 @@ func writeValue(w io.Writer, tok clawiter.Token, opts marshalOptions, scratch *[
 		return err
 	}
 
-	// Handle struct and list announcements (values come from nested tokens)
+	// Handle struct, list, and map announcements (values come from nested tokens)
 	switch tok.Type {
 	case field.FTStruct, field.FTListStructs,
 		field.FTListBools, field.FTListInt8, field.FTListInt16, field.FTListInt32, field.FTListInt64,
 		field.FTListUint8, field.FTListUint16, field.FTListUint32, field.FTListUint64,
-		field.FTListFloat32, field.FTListFloat64, field.FTListBytes, field.FTListStrings:
-		return nil // Value handled by nested tokens (ListStart, items, ListEnd)
+		field.FTListFloat32, field.FTListFloat64, field.FTListBytes, field.FTListStrings,
+		field.FTListAny, field.FTMap:
+		return nil // Value handled by nested tokens (ListStart/MapStart, items, ListEnd/MapEnd)
+	case field.FTAny:
+		// Any type: try to decode and emit readable JSON, fall back to base64 if unknown type
+		var hash [16]byte
+		copy(hash[:], tok.TypeHash)
+		entry := runtime.LookupTypeHash(hash)
+
+		if entry == nil {
+			// Unknown type: fall back to {"@type": "<hex hash>", "@value": "<base64 data>"}
+			if _, err := w.Write([]byte(`{"@type":"`)); err != nil {
+				return err
+			}
+			*scratch = appendHex((*scratch)[:0], tok.TypeHash)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`","@value":"`)); err != nil {
+				return err
+			}
+			*scratch = base64.StdEncoding.AppendEncode((*scratch)[:0], tok.Bytes)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`"}`)); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Known type: decode and emit as readable JSON
+		// Create instance, unmarshal, and walk to get JSON
+		ctx := context.Background()
+		instance := entry.New(ctx)
+		if err := instance.Unmarshal(tok.Bytes); err != nil {
+			// Unmarshal failed, fall back to base64
+			if _, err := w.Write([]byte(`{"@type":"`)); err != nil {
+				return err
+			}
+			*scratch = appendHex((*scratch)[:0], tok.TypeHash)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`","@value":"`)); err != nil {
+				return err
+			}
+			*scratch = base64.StdEncoding.AppendEncode((*scratch)[:0], tok.Bytes)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`"}`)); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Marshal the decoded struct to JSON
+		var buf bytes.Buffer
+		if err := writeJSON(ctx, &buf, walkableWrapper{instance}, opts); err != nil {
+			return err
+		}
+
+		// Inject @type and @fieldType at the beginning of the JSON object
+		jsonBytes := buf.Bytes()
+		if len(jsonBytes) < 2 || jsonBytes[0] != '{' {
+			// Invalid JSON, fall back
+			if _, err := w.Write(jsonBytes); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Write: {"@type": "<hash>", "@fieldType": "<name>", ...rest of fields...}
+		if _, err := w.Write([]byte(`{"@type":"`)); err != nil {
+			return err
+		}
+		*scratch = appendHex((*scratch)[:0], tok.TypeHash)
+		if _, err := w.Write(*scratch); err != nil {
+			return err
+		}
+		if _, err := w.Write([]byte(`","@fieldType":"`)); err != nil {
+			return err
+		}
+		if _, err := w.Write([]byte(entry.Name)); err != nil {
+			return err
+		}
+		if _, err := w.Write([]byte(`"`)); err != nil {
+			return err
+		}
+
+		// Append the rest of the original JSON (skip the leading '{')
+		rest := jsonBytes[1:] // Skip '{'
+		if len(rest) > 1 {   // More than just '}'
+			if _, err := w.Write([]byte(`,`)); err != nil {
+				return err
+			}
+			// Skip leading whitespace after '{'
+			for len(rest) > 0 && (rest[0] == ' ' || rest[0] == '\t' || rest[0] == '\n' || rest[0] == '\r') {
+				rest = rest[1:]
+			}
+		}
+		if _, err := w.Write(rest); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Handle enums (individual values, not list announcements)
@@ -401,10 +555,27 @@ func appendEscapedString(dst []byte, s string) []byte {
 
 const hexDigits = "0123456789abcdef"
 
+// appendHex appends the hex encoding of data to dst.
+func appendHex(dst []byte, data []byte) []byte {
+	for _, b := range data {
+		dst = append(dst, hexDigits[b>>4], hexDigits[b&0x0f])
+	}
+	return dst
+}
+
 // stringToBytes converts a string to a byte slice without copying.
 // WARNING: The returned slice must NOT be modified.
 func stringToBytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
+}
+
+// walkableWrapper wraps a runtime.AnyType to implement Walkable.
+type walkableWrapper struct {
+	v runtime.AnyType
+}
+
+func (w walkableWrapper) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+	w.v.Walk(ctx, yield, opts...)
 }
 
 // Array is used to write out an array of JSON objects.

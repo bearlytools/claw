@@ -86,6 +86,9 @@ var ManufacturerByValue = map[uint8]string{
 
 // Everything below this line is internal details.
 
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+
 // init initializes all mapping function pointer tables for O(1) dispatch.
 func init() {
 }
@@ -151,4 +154,6 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
 }

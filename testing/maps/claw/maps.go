@@ -40,6 +40,362 @@ var _packagePath = "github.com/bearlytools/claw/testing/maps/claw"
 
 
 
+type AnyMaps struct {
+   s *segment.Struct
+}
+
+// NewAnyMaps creates a new pooled instance of AnyMaps.
+// Call Release() when done to return it to the pool for reuse.
+func NewAnyMaps(ctx context.Context) AnyMaps {
+    s := segment.New(ctx, XXXMappingAnyMaps)
+    s.SetIsSetEnabled(true)
+    return AnyMaps{
+        s: s,
+    }
+}
+
+// Release returns the struct to the pool for reuse.
+// After calling Release, the struct should not be used.
+func (x AnyMaps) Release(ctx context.Context) {
+    x.s.Release(ctx)
+}
+
+// XXXNewAnyMapsFrom creates a new AnyMaps from our internal Struct representation.
+// As with all things marked XXX*, this should not be used and has not compatibility
+// guarantees.
+//
+// Deprecated: This is not actually deprecated, but it should not be used directly nor
+// show up in any documentation.
+func XXXNewAnyMapsFrom(s *segment.Struct) AnyMaps {
+    return AnyMaps{s: s}
+}
+
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
+func (x AnyMaps) Marshal() ([]byte, error) {
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x AnyMaps) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
+}
+
+// MarshalWriter marshals to an io.Writer.
+func (x AnyMaps) MarshalWriter(w io.Writer) (n int, err error) {
+    return x.s.MarshalWriter(w)
+}
+
+// Unmarshal unmarshals b into the Struct.
+func (x AnyMaps) Unmarshal(b []byte) error {
+    return x.s.Unmarshal(b)
+}
+
+// UnmarshalReader unmarshals a Struct from an io.Reader.
+func (x AnyMaps) UnmarshalReader (r io.Reader) (int, error) {
+    return x.s.UnmarshalReader(r)
+}
+
+
+// DataMap returns the underlying map for iteration and modification.
+// Values are *segment.MapAnyValue containing the raw bytes and type hash.
+func (x AnyMaps) DataMap() *segment.Maps[string, *segment.MapAnyValue] {
+    // Check if we already have this map cached
+    if m := segment.GetMapAny[string](x.s, 0, field.FTString); m != nil {
+        return m
+    }
+    // Create new empty map if no data exists
+    return segment.NewMaps[string, *segment.MapAnyValue](x.s, 0, field.FTString, field.FTAny, nil)
+}
+
+// DataGet decodes the Any value for the given key into the provided target.
+// The target must be a pointer to a Claw struct that implements segment.TypeHasher.
+func (x AnyMaps) DataGet(key string, target any) error {
+    raw, ok := x.DataMap().Get(key)
+    if !ok || raw == nil {
+        return fmt.Errorf("key not found in map")
+    }
+    // Validate and decode into target
+    hasher, ok := target.(segment.TypeHasher)
+    if !ok {
+        return fmt.Errorf("target must implement segment.TypeHasher")
+    }
+    if hasher.XXXTypeHash() != raw.TypeHash {
+        return fmt.Errorf("type hash mismatch")
+    }
+    getter, ok := target.(segment.StructGetter)
+    if !ok {
+        return fmt.Errorf("target must implement segment.StructGetter")
+    }
+    return getter.XXXGetStruct().Unmarshal(raw.Data)
+}
+
+// DataGetRaw returns the raw bytes and type hash for the given key.
+// Returns (nil, empty hash, false) if the key is not found.
+func (x AnyMaps) DataGetRaw(key string) (data []byte, typeHash [16]byte, ok bool) {
+    raw, found := x.DataMap().Get(key)
+    if !found || raw == nil {
+        return nil, [16]byte{}, false
+    }
+    return raw.Data, raw.TypeHash, true
+}
+
+// DataSet sets the Any value for the given key.
+// The value must implement segment.TypeHasher and segment.StructGetter.
+func (x AnyMaps) DataSet(key string, value any) error {
+    hasher, ok := value.(segment.TypeHasher)
+    if !ok {
+        return fmt.Errorf("value must implement segment.TypeHasher")
+    }
+    getter, ok := value.(segment.StructGetter)
+    if !ok {
+        return fmt.Errorf("value must implement segment.StructGetter")
+    }
+    innerStruct := getter.XXXGetStruct()
+    if innerStruct == nil {
+        return fmt.Errorf("value's struct is nil")
+    }
+    raw := &segment.MapAnyValue{
+        TypeHash: hasher.XXXTypeHash(),
+        Data:     innerStruct.SegmentBytes(),
+    }
+    x.DataMap().Set(key, raw)
+    return nil
+}
+
+// DataDelete removes a key from the map.
+func (x AnyMaps) DataDelete(key string) AnyMaps {
+    x.DataMap().Delete(key)
+    return x
+}
+
+// DataHas returns true if the key exists in the map.
+func (x AnyMaps) DataHas(key string) bool {
+    return x.DataMap().Has(key)
+}
+
+// DataLen returns the number of entries in the map.
+func (x AnyMaps) DataLen() int {
+    return x.DataMap().Len()
+}
+func (x AnyMaps) IsSetData() bool{
+    return x.s.HasField(0)
+}
+
+
+// ItemsMap returns the underlying map for iteration and modification.
+// Values are []segment.MapAnyValue containing the raw bytes and type hashes.
+func (x AnyMaps) ItemsMap() *segment.Maps[string, []segment.MapAnyValue] {
+    // Check if we already have this map cached
+    if m := segment.GetMapListAny[string](x.s, 1, field.FTString); m != nil {
+        return m
+    }
+    // Create new empty map if no data exists
+    return segment.NewMaps[string, []segment.MapAnyValue](x.s, 1, field.FTString, field.FTListAny, nil)
+}
+
+// ItemsGet decodes an Any item at the given index for the given key.
+// The target must be a pointer to a Claw struct that implements segment.TypeHasher.
+func (x AnyMaps) ItemsGet(key string, index int, target any) error {
+    items, ok := x.ItemsMap().Get(key)
+    if !ok || items == nil {
+        return fmt.Errorf("key not found in map")
+    }
+    if index < 0 || index >= len(items) {
+        return fmt.Errorf("index out of bounds")
+    }
+    raw := items[index]
+    // Validate and decode into target
+    hasher, ok := target.(segment.TypeHasher)
+    if !ok {
+        return fmt.Errorf("target must implement segment.TypeHasher")
+    }
+    if hasher.XXXTypeHash() != raw.TypeHash {
+        return fmt.Errorf("type hash mismatch")
+    }
+    getter, ok := target.(segment.StructGetter)
+    if !ok {
+        return fmt.Errorf("target must implement segment.StructGetter")
+    }
+    return getter.XXXGetStruct().Unmarshal(raw.Data)
+}
+
+// ItemsGetRaw returns the raw bytes and type hash for the item at the given index.
+func (x AnyMaps) ItemsGetRaw(key string, index int) (data []byte, typeHash [16]byte, ok bool) {
+    items, found := x.ItemsMap().Get(key)
+    if !found || items == nil || index < 0 || index >= len(items) {
+        return nil, [16]byte{}, false
+    }
+    return items[index].Data, items[index].TypeHash, true
+}
+
+// ItemsListLen returns the number of items in the []Any for the given key.
+// Use ItemsLen() to get the number of keys in the map.
+func (x AnyMaps) ItemsListLen(key string) int {
+    items, ok := x.ItemsMap().Get(key)
+    if !ok || items == nil {
+        return 0
+    }
+    return len(items)
+}
+
+// ItemsSet sets the []Any value for the given key.
+// Each value must implement segment.TypeHasher and segment.StructGetter.
+func (x AnyMaps) ItemsSet(key string, values []any) error {
+    items := make([]segment.MapAnyValue, 0, len(values))
+    for i, v := range values {
+        hasher, ok := v.(segment.TypeHasher)
+        if !ok {
+            return fmt.Errorf("value at index %d must implement segment.TypeHasher", i)
+        }
+        getter, ok := v.(segment.StructGetter)
+        if !ok {
+            return fmt.Errorf("value at index %d must implement segment.StructGetter", i)
+        }
+        innerStruct := getter.XXXGetStruct()
+        if innerStruct == nil {
+            return fmt.Errorf("value at index %d has nil struct", i)
+        }
+        items = append(items, segment.MapAnyValue{
+            TypeHash: hasher.XXXTypeHash(),
+            Data:     innerStruct.SegmentBytes(),
+        })
+    }
+    x.ItemsMap().Set(key, items)
+    return nil
+}
+
+// ItemsDelete removes a key from the map.
+func (x AnyMaps) ItemsDelete(key string) AnyMaps {
+    x.ItemsMap().Delete(key)
+    return x
+}
+
+// ItemsHas returns true if the key exists in the map.
+func (x AnyMaps) ItemsHas(key string) bool {
+    return x.ItemsMap().Has(key)
+}
+
+// ItemsLen returns the number of entries in the map.
+func (x AnyMaps) ItemsLen() int {
+    return x.ItemsMap().Len()
+}
+func (x AnyMaps) IsSetItems() bool{
+    return x.s.HasField(1)
+}
+
+
+
+// ClawStruct returns a reflection type representing the Struct.
+func (x AnyMaps) ClawStruct() reflect.Struct{
+    return reflect.XXXNewStruct(x.s, x.XXXDescr())
+}
+
+// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
+// this should not be used and has no compatibility guarantees.
+//
+// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
+func (x AnyMaps) XXXGetStruct() *segment.Struct {
+    return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x AnyMaps) XXXTypeHash() [16]byte {
+    return XXXTypeHashAnyMaps
+}
+
+// SetRecording enables or disables mutation recording for patch generation.
+// When enabled, all Set* operations and list mutations are recorded.
+func (x AnyMaps) SetRecording(enabled bool) AnyMaps {
+    x.s.SetRecording(enabled)
+    return x
+}
+
+// Recording returns whether mutation recording is enabled.
+func (x AnyMaps) Recording() bool {
+    return x.s.Recording()
+}
+
+// DrainRecordedOps returns all recorded operations since recording was enabled
+// (or since the last DrainRecordedOps call) and clears the internal list.
+// Use patch.NewPatchFromOps() to convert these to a Patch for application.
+func (x AnyMaps) DrainRecordedOps() []segment.RecordedOp {
+    return x.s.DrainRecordedOps()
+}
+
+// RecordedOpsLen returns the number of recorded operations.
+func (x AnyMaps) RecordedOpsLen() int {
+    return x.s.RecordedOpsLen()
+}
+
+// AnyMapsRaw is a plain Go struct representation of AnyMaps.
+// Zero values are not set (sparse encoding).
+type AnyMapsRaw struct {
+    Data map[string]*segment.MapAnyValue
+    Items map[string][]segment.MapAnyValue
+}
+
+// NewAnyMapsFromRaw creates a new AnyMaps from a Raw struct representation.
+// Only non-zero values are set (sparse encoding).
+func NewAnyMapsFromRaw(ctx context.Context, raw AnyMapsRaw) AnyMaps {
+    x := NewAnyMaps(ctx)
+    if raw.Data != nil {
+        m := x.DataMap()
+        for k, v := range raw.Data {
+            // Any values - Raw type is *segment.MapAnyValue
+            if v != nil {
+                m.Set(k, v)
+            }
+        }
+    }
+    if raw.Items != nil {
+        m := x.ItemsMap()
+        for k, v := range raw.Items {
+            // []Any values - Raw type is []segment.MapAnyValue
+            if v != nil {
+                m.Set(k, v)
+            }
+        }
+    }
+    return x
+}
+
+// ToRaw converts the struct to a plain Go struct representation.
+func (x AnyMaps) ToRaw(ctx context.Context) AnyMapsRaw {
+    raw := AnyMapsRaw{}
+    // For maps, check if there's a cached dirty map or field data
+    // Don't use HasField alone as the map may not have been synced yet
+    if m := x.DataMap(); m.Len() > 0 {
+        raw.Data = make(map[string]*segment.MapAnyValue)
+        for k, v := range m.All() {
+            raw.Data[k] = v
+        }
+    }
+    // For maps, check if there's a cached dirty map or field data
+    // Don't use HasField alone as the map may not have been synced yet
+    if m := x.ItemsMap(); m.Len() > 0 {
+        raw.Items = make(map[string][]segment.MapAnyValue)
+        for k, v := range m.All() {
+            raw.Items[k] = v
+        }
+    }
+    return raw
+}
+ 
+
+// XXXDescr returns the Struct's descriptor. This should only be used
+// by the reflect package and is has no compatibility promises like all XXX fields.
+//
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
+func (x AnyMaps) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs().Get(0)
+}
+
 type ComplexMaps struct {
    s *segment.Struct
 }
@@ -159,6 +515,14 @@ func (x ComplexMaps) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ComplexMaps) XXXTypeHash() [16]byte {
+    return XXXTypeHashComplexMaps
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ComplexMaps) SetRecording(enabled bool) ComplexMaps {
@@ -226,7 +590,7 @@ func (x ComplexMaps) ToRaw(ctx context.Context) ComplexMapsRaw {
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x ComplexMaps) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(0)
+    return XXXPackageDescr.Structs().Get(1)
 }
 
 type Config struct {
@@ -507,6 +871,14 @@ func (x Config) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Config) XXXTypeHash() [16]byte {
+    return XXXTypeHashConfig
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Config) SetRecording(enabled bool) Config {
@@ -630,7 +1002,173 @@ func (x Config) ToRaw(ctx context.Context) ConfigRaw {
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Config) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(1)
+    return XXXPackageDescr.Structs().Get(2)
+}
+
+type Inner struct {
+   s *segment.Struct
+}
+
+// NewInner creates a new pooled instance of Inner.
+// Call Release() when done to return it to the pool for reuse.
+func NewInner(ctx context.Context) Inner {
+    s := segment.New(ctx, XXXMappingInner)
+    s.SetIsSetEnabled(true)
+    return Inner{
+        s: s,
+    }
+}
+
+// Release returns the struct to the pool for reuse.
+// After calling Release, the struct should not be used.
+func (x Inner) Release(ctx context.Context) {
+    x.s.Release(ctx)
+}
+
+// XXXNewInnerFrom creates a new Inner from our internal Struct representation.
+// As with all things marked XXX*, this should not be used and has not compatibility
+// guarantees.
+//
+// Deprecated: This is not actually deprecated, but it should not be used directly nor
+// show up in any documentation.
+func XXXNewInnerFrom(s *segment.Struct) Inner {
+    return Inner{s: s}
+}
+
+// Marshal marshal's the Struct to []byte. The returned slice is shared by Struct,
+// so Struct must not be modified after this call. If Struct needs to be modified,
+// use MarshalSafe() instead.
+func (x Inner) Marshal() ([]byte, error) {
+    return x.s.Marshal()
+}
+
+// MarshalSafe marshal's the Struct to []byte. The returned slice is a copy
+// and safe to modify.
+func (x Inner) MarshalSafe() ([]byte, error) {
+    return x.s.MarshalSafe()
+}
+
+// MarshalWriter marshals to an io.Writer.
+func (x Inner) MarshalWriter(w io.Writer) (n int, err error) {
+    return x.s.MarshalWriter(w)
+}
+
+// Unmarshal unmarshals b into the Struct.
+func (x Inner) Unmarshal(b []byte) error {
+    return x.s.Unmarshal(b)
+}
+
+// UnmarshalReader unmarshals a Struct from an io.Reader.
+func (x Inner) UnmarshalReader (r io.Reader) (int, error) {
+    return x.s.UnmarshalReader(r)
+}
+
+func (x Inner) ID() int64 {
+    return segment.GetInt64(x.s, 0)
+}
+
+func (x Inner) SetID(value int64) Inner {
+    segment.SetInt64(x.s, 0, value)
+    return x
+}
+func (x Inner) IsSetID() bool{
+    return x.s.HasField(0)
+}
+
+func (x Inner) Name() string {
+    return segment.GetString(x.s, 1)
+}
+
+func (x Inner) SetName(value string) Inner {
+    segment.SetString(x.s, 1, value)
+    return x
+}
+func (x Inner) IsSetName() bool{
+    return x.s.HasField(1)
+}
+
+
+
+// ClawStruct returns a reflection type representing the Struct.
+func (x Inner) ClawStruct() reflect.Struct{
+    return reflect.XXXNewStruct(x.s, x.XXXDescr())
+}
+
+// XXXGetStruct returns the internal Struct representation. Like all XXX* types/methods,
+// this should not be used and has no compatibility guarantees.
+//
+// Deprecated: Not deprectated, but should not be used and should not show up in documentation.
+func (x Inner) XXXGetStruct() *segment.Struct {
+    return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Inner) XXXTypeHash() [16]byte {
+    return XXXTypeHashInner
+}
+
+// SetRecording enables or disables mutation recording for patch generation.
+// When enabled, all Set* operations and list mutations are recorded.
+func (x Inner) SetRecording(enabled bool) Inner {
+    x.s.SetRecording(enabled)
+    return x
+}
+
+// Recording returns whether mutation recording is enabled.
+func (x Inner) Recording() bool {
+    return x.s.Recording()
+}
+
+// DrainRecordedOps returns all recorded operations since recording was enabled
+// (or since the last DrainRecordedOps call) and clears the internal list.
+// Use patch.NewPatchFromOps() to convert these to a Patch for application.
+func (x Inner) DrainRecordedOps() []segment.RecordedOp {
+    return x.s.DrainRecordedOps()
+}
+
+// RecordedOpsLen returns the number of recorded operations.
+func (x Inner) RecordedOpsLen() int {
+    return x.s.RecordedOpsLen()
+}
+
+// InnerRaw is a plain Go struct representation of Inner.
+// Zero values are not set (sparse encoding).
+type InnerRaw struct {
+    ID int64
+    Name string
+}
+
+// NewInnerFromRaw creates a new Inner from a Raw struct representation.
+// Only non-zero values are set (sparse encoding).
+func NewInnerFromRaw(ctx context.Context, raw InnerRaw) Inner {
+    x := NewInner(ctx)
+    if raw.ID != 0 {
+        x.SetID(raw.ID)
+    }
+    if raw.Name != "" {
+        x.SetName(raw.Name)
+    }
+    return x
+}
+
+// ToRaw converts the struct to a plain Go struct representation.
+func (x Inner) ToRaw(ctx context.Context) InnerRaw {
+    raw := InnerRaw{}
+    raw.ID = x.ID()
+    raw.Name = x.Name()
+    return raw
+}
+ 
+
+// XXXDescr returns the Struct's descriptor. This should only be used
+// by the reflect package and is has no compatibility promises like all XXX fields.
+//
+// Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
+func (x Inner) XXXDescr() reflect.StructDescr {
+    return XXXPackageDescr.Structs().Get(3)
 }
 
 type Setting struct {
@@ -742,6 +1280,14 @@ func (x Setting) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Setting) XXXTypeHash() [16]byte {
+    return XXXTypeHashSetting
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Setting) SetRecording(enabled bool) Setting {
@@ -805,10 +1351,61 @@ func (x Setting) ToRaw(ctx context.Context) SettingRaw {
 //
 // Deprecated: No deprecated, but shouldn't be used directly or show up in documentation.
 func (x Setting) XXXDescr() reflect.StructDescr {
-    return XXXPackageDescr.Structs().Get(2)
+    return XXXPackageDescr.Structs().Get(4)
 } 
 
 // Everything below this line is internal details.
+
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashAnyMaps = [16]byte{0xd6, 0xa8, 0x80, 0xe8, 0x9d, 0x1e, 0xd7, 0x3a, 0xc5, 0x26, 0xff, 0xc8, 0x0d, 0x96, 0xb9, 0x2c}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashComplexMaps = [16]byte{0xe6, 0x1a, 0x20, 0x09, 0xe0, 0x1c, 0xf3, 0xfe, 0xfb, 0x4d, 0x73, 0xfc, 0x01, 0x45, 0x03, 0xff}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashConfig = [16]byte{0x66, 0xff, 0xd1, 0xea, 0x19, 0xba, 0x18, 0x23, 0xde, 0x16, 0xeb, 0xfb, 0x71, 0x43, 0x67, 0x6e}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashInner = [16]byte{0x26, 0xf1, 0x19, 0xde, 0x7f, 0x84, 0xc4, 0x32, 0x0b, 0x5f, 0x32, 0xd0, 0x50, 0x8a, 0x67, 0xdc}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSetting = [16]byte{0x37, 0xc6, 0xe4, 0x44, 0x4f, 0xa0, 0x35, 0xe7, 0xc1, 0xaf, 0xcb, 0xf0, 0x1a, 0x8f, 0x5e, 0xac}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXMappingAnyMaps = &mapping.Map{
+    Name: "AnyMaps",
+    Pkg: "maps",
+    Path: "github.com/bearlytools/claw/testing/maps/claw",
+    Fields: []*mapping.FieldDescr{
+        {
+            Name: "Data",
+            Type: field.FTMap,
+            Package: "maps",
+            FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+            FieldNum: 0,
+            IsEnum: false,
+            IsAny: false,
+            IsMap: true,
+            KeyType: field.FTString,
+            ValueType: field.FTAny,
+        },
+        {
+            Name: "Items",
+            Type: field.FTMap,
+            Package: "maps",
+            FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+            FieldNum: 1,
+            IsEnum: false,
+            IsAny: false,
+            IsMap: true,
+            KeyType: field.FTString,
+            ValueType: field.FTListAny,
+        },
+    },
+}
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingComplexMaps = &mapping.Map{
     Name: "ComplexMaps",
@@ -822,6 +1419,7 @@ var XXXMappingComplexMaps = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             IsMap: true,
             KeyType: field.FTString,
             ValueType: field.FTStruct,
@@ -843,6 +1441,7 @@ var XXXMappingConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             IsMap: true,
             KeyType: field.FTString,
             ValueType: field.FTString,
@@ -854,6 +1453,7 @@ var XXXMappingConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             IsMap: true,
             KeyType: field.FTString,
             ValueType: field.FTInt32,
@@ -865,6 +1465,7 @@ var XXXMappingConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             IsMap: true,
             KeyType: field.FTString,
             ValueType: field.FTBool,
@@ -876,6 +1477,7 @@ var XXXMappingConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             IsMap: true,
             KeyType: field.FTInt32,
             ValueType: field.FTInt64,
@@ -887,9 +1489,37 @@ var XXXMappingConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
             IsMap: true,
             KeyType: field.FTFloat64,
             ValueType: field.FTString,
+        },
+    },
+}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXMappingInner = &mapping.Map{
+    Name: "Inner",
+    Pkg: "maps",
+    Path: "github.com/bearlytools/claw/testing/maps/claw",
+    Fields: []*mapping.FieldDescr{
+        {
+            Name: "ID",
+            Type: field.FTInt64,
+            Package: "maps",
+            FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+            FieldNum: 0,
+            IsEnum: false,
+            IsAny: false,
+        },
+        {
+            Name: "Name",
+            Type: field.FTString,
+            Package: "maps",
+            FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+            FieldNum: 1,
+            IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -907,6 +1537,7 @@ var XXXMappingSetting = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Value",
@@ -915,6 +1546,7 @@ var XXXMappingSetting = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Priority",
@@ -923,6 +1555,7 @@ var XXXMappingSetting = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/testing/maps/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -930,13 +1563,32 @@ var XXXMappingSetting = &mapping.Map{
 
 // init initializes all mapping function pointer tables for O(1) dispatch.
 func init() {
+    XXXMappingAnyMaps.Init()
     XXXMappingComplexMaps.Init()
     XXXMappingConfig.Init()
+    XXXMappingInner.Init()
     XXXMappingSetting.Init()
 }
 
  
 
+
+var XXXStructDescrAnyMaps = &reflect.XXXStructDescrImpl{
+    Name:      "AnyMaps",
+    Pkg:       XXXMappingAnyMaps.Pkg,
+    Path:      XXXMappingAnyMaps.Path,
+    Mapping:   XXXMappingAnyMaps,
+    FieldList: []reflect.FieldDescr {
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingAnyMaps.Fields[0],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingAnyMaps.Fields[1],  
+        },  
+    },
+}
 
 var XXXStructDescrComplexMaps = &reflect.XXXStructDescrImpl{
     Name:      "ComplexMaps",
@@ -980,6 +1632,23 @@ var XXXStructDescrConfig = &reflect.XXXStructDescrImpl{
     },
 }
 
+var XXXStructDescrInner = &reflect.XXXStructDescrImpl{
+    Name:      "Inner",
+    Pkg:       XXXMappingInner.Pkg,
+    Path:      XXXMappingInner.Path,
+    Mapping:   XXXMappingInner,
+    FieldList: []reflect.FieldDescr {
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingInner.Fields[0],  
+        }, 
+        
+        reflect.XXXFieldDescrImpl{
+            FD:  XXXMappingInner.Fields[1],  
+        },  
+    },
+}
+
 var XXXStructDescrSetting = &reflect.XXXStructDescrImpl{
     Name:      "Setting",
     Pkg:       XXXMappingSetting.Pkg,
@@ -1002,8 +1671,10 @@ var XXXStructDescrSetting = &reflect.XXXStructDescrImpl{
 }
 
 var XXXStructDescrs = map[string]*reflect.XXXStructDescrImpl{
+    "AnyMaps":  XXXStructDescrAnyMaps,
     "ComplexMaps":  XXXStructDescrComplexMaps,
     "Config":  XXXStructDescrConfig,
+    "Inner":  XXXStructDescrInner,
     "Setting":  XXXStructDescrSetting,
 }
 
@@ -1013,8 +1684,10 @@ var XXXPackageDescr reflect.PackageDescr = &reflect.XXXPackageDescrImpl{
     Path: "github.com/bearlytools/claw/testing/maps/claw",
     StructsDescrs: reflect.XXXStructDescrsImpl{
         Descrs: []reflect.StructDescr{
+            XXXStructDescrAnyMaps,
             XXXStructDescrComplexMaps,
             XXXStructDescrConfig,
+            XXXStructDescrInner,
             XXXStructDescrSetting,
         },
     },
@@ -1028,4 +1701,41 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
+    runtime.RegisterTypeHash(XXXTypeHashAnyMaps, runtime.TypeEntry{
+        Name:     "AnyMaps",
+        FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewAnyMaps(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashComplexMaps, runtime.TypeEntry{
+        Name:     "ComplexMaps",
+        FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewComplexMaps(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashConfig, runtime.TypeEntry{
+        Name:     "Config",
+        FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewConfig(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashInner, runtime.TypeEntry{
+        Name:     "Inner",
+        FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewInner(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSetting, runtime.TypeEntry{
+        Name:     "Setting",
+        FullPath: "github.com/bearlytools/claw/testing/maps/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSetting(ctx)
+        },
+    })
 }

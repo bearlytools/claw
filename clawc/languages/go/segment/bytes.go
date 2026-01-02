@@ -248,6 +248,26 @@ func parseFieldIndex(s *Struct) {
 			// Map: decode size from final40 (bits 16-39)
 			_, _, totalSize := DecodeMapHeader(data[pos : pos+HeaderSize])
 			fieldSize = int(totalSize)
+		case field.FTAny:
+			// Any: decode data size from final40 (bits 8-39)
+			_, dataSize := DecodeAnyHeader(data[pos : pos+HeaderSize])
+			fieldSize = HeaderSize + int(dataSize)
+		case field.FTListAny:
+			// ListAny: scan to find total size
+			// Count is in final40, then we need to scan items
+			count := int(final40)
+			itemPos := pos + HeaderSize
+			for i := 0; i < count; i++ {
+				if itemPos+AnyHashSize+HeaderSize > len(data) {
+					break
+				}
+				// Skip hash (16 bytes)
+				itemPos += AnyHashSize
+				// Read struct header to get struct size
+				_, _, structSize := DecodeHeader(data[itemPos : itemPos+HeaderSize])
+				itemPos += int(structSize)
+			}
+			fieldSize = itemPos - pos
 		default:
 			// Lists and other types: final40 is total size including header
 			if field.IsListType(fieldType) {

@@ -1,6 +1,7 @@
 package clawtext
 
 import (
+	"bytes"
 	"encoding/base64"
 	"io"
 	"math"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/bearlytools/claw/clawc/languages/go/clawiter"
 	"github.com/bearlytools/claw/clawc/languages/go/field"
+	"github.com/bearlytools/claw/languages/go/reflect/runtime"
 	"github.com/gostdlib/base/context"
 	"github.com/gostdlib/base/concurrency/sync"
 )
@@ -255,18 +257,27 @@ func writeClawtext(ctx context.Context, w io.Writer, walker Walkable, opts marsh
 				return false
 			}
 
+			// For map entries, use ValueType as Type for writeValue
+			tok.Type = tok.ValueType
+
 			// Write value
 			if err := writeValue(w, tok, opts, &state.scratch); err != nil {
 				writeErr = err
 				return false
 			}
-			if _, err := w.Write(textComma); err != nil {
-				writeErr = err
-				return false
-			}
-			if _, err := w.Write(textNewline); err != nil {
-				writeErr = err
-				return false
+
+			// For ListAny values in maps, the list tokens follow, so skip comma/newline here
+			if tok.ValueType == field.FTListAny {
+				// ListStart/items/ListEnd will follow
+			} else {
+				if _, err := w.Write(textComma); err != nil {
+					writeErr = err
+					return false
+				}
+				if _, err := w.Write(textNewline); err != nil {
+					writeErr = err
+					return false
+				}
 			}
 
 		case clawiter.TokenField:
@@ -354,6 +365,47 @@ func writeClawtext(ctx context.Context, w io.Writer, walker Walkable, opts marsh
 					}
 				}
 				// Non-nil map - value comes from nested tokens
+			case field.FTAny:
+				// Any value - write it directly
+				if tok.IsNil {
+					if _, err := w.Write(textNull); err != nil {
+						writeErr = err
+						return false
+					}
+				} else {
+					if err := writeValue(w, tok, opts, &state.scratch); err != nil {
+						writeErr = err
+						return false
+					}
+				}
+				// Only write comma/newline if not in an array (arrays handle their own separators)
+				if !state.inArray {
+					if _, err := w.Write(textComma); err != nil {
+						writeErr = err
+						return false
+					}
+					if _, err := w.Write(textNewline); err != nil {
+						writeErr = err
+						return false
+					}
+				}
+			case field.FTListAny:
+				// ListAny value handled by TokenListStart/End
+				if tok.IsNil {
+					if _, err := w.Write(textNull); err != nil {
+						writeErr = err
+						return false
+					}
+					if _, err := w.Write(textComma); err != nil {
+						writeErr = err
+						return false
+					}
+					if _, err := w.Write(textNewline); err != nil {
+						writeErr = err
+						return false
+					}
+				}
+				// Non-nil list - value comes from nested tokens
 			default:
 				// Scalar value - write it directly
 				if err := writeValue(w, tok, opts, &state.scratch); err != nil {
@@ -403,8 +455,94 @@ func writeValue(w io.Writer, tok clawiter.Token, opts marshalOptions, scratch *[
 		field.FTListBools, field.FTListInt8, field.FTListInt16, field.FTListInt32, field.FTListInt64,
 		field.FTListUint8, field.FTListUint16, field.FTListUint32, field.FTListUint64,
 		field.FTListFloat32, field.FTListFloat64, field.FTListBytes, field.FTListStrings,
-		field.FTMap:
+		field.FTMap, field.FTListAny:
 		return nil // Value handled by nested tokens
+	case field.FTAny:
+		// Any type: try to decode and emit readable clawtext, fall back to base64 if unknown type
+		var hash [16]byte
+		copy(hash[:], tok.TypeHash)
+		entry := runtime.LookupTypeHash(hash)
+
+		if entry == nil {
+			// Unknown type: fall back to @any(0x<hex hash>, "<base64 data>")
+			if _, err := w.Write([]byte("@any(0x")); err != nil {
+				return err
+			}
+			*scratch = appendHex((*scratch)[:0], tok.TypeHash)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`, "`)); err != nil {
+				return err
+			}
+			*scratch = base64.StdEncoding.AppendEncode((*scratch)[:0], tok.Bytes)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`")`)); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Known type: decode and emit as readable clawtext
+		ctx := context.Background()
+		instance := entry.New(ctx)
+		if err := instance.Unmarshal(tok.Bytes); err != nil {
+			// Unmarshal failed, fall back to base64
+			if _, err := w.Write([]byte("@any(0x")); err != nil {
+				return err
+			}
+			*scratch = appendHex((*scratch)[:0], tok.TypeHash)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`, "`)); err != nil {
+				return err
+			}
+			*scratch = base64.StdEncoding.AppendEncode((*scratch)[:0], tok.Bytes)
+			if _, err := w.Write(*scratch); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte(`")`)); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Marshal the decoded struct to clawtext
+		var buf bytes.Buffer
+		if err := writeClawtext(ctx, &buf, walkableWrapper{instance}, opts); err != nil {
+			return err
+		}
+
+		// Write: @any(<TypeName>) {field1: val, field2: val}
+		if _, err := w.Write([]byte("@any(")); err != nil {
+			return err
+		}
+		if _, err := w.Write([]byte(entry.Name)); err != nil {
+			return err
+		}
+		if _, err := w.Write([]byte(") {")); err != nil {
+			return err
+		}
+
+		// Convert the struct's fields to inline format (replace newlines with spaces, trim trailing comma)
+		textBytes := buf.Bytes()
+		if len(textBytes) > 0 {
+			// Replace newlines with spaces for inline format
+			inline := bytes.ReplaceAll(textBytes, []byte("\n"), []byte(" "))
+			// Trim trailing spaces and comma
+			inline = bytes.TrimRight(inline, " ,")
+			if _, err := w.Write(inline); err != nil {
+				return err
+			}
+		}
+
+		if _, err := w.Write([]byte("}")); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Handle enums
@@ -561,4 +699,13 @@ func appendEscapedString(dst []byte, s string) []byte {
 
 	dst = append(dst, '"')
 	return dst
+}
+
+// walkableWrapper wraps a runtime.AnyType to implement Walkable.
+type walkableWrapper struct {
+	v runtime.AnyType
+}
+
+func (w walkableWrapper) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+	w.v.Walk(ctx, yield, opts...)
 }
