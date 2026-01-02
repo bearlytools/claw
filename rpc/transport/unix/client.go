@@ -318,3 +318,34 @@ func (d *Dialer) Dial(ctx context.Context) (transport.Transport, error) {
 
 // Verify Dialer implements transport.Dialer.
 var _ transport.Dialer = (*Dialer)(nil)
+
+// NewResolvingDialer creates a Unix socket dialer with name resolution.
+// The target is parsed according to the scheme://authority/endpoint format.
+// If no scheme is specified, "passthrough" is used.
+//
+// For Unix sockets, the endpoint is the socket path.
+//
+// Example targets:
+//   - "passthrough:////var/run/app.sock" - direct path
+//   - "/var/run/app.sock" - direct path (uses passthrough)
+//
+// This function requires importing the resolver packages you want to use:
+//
+//	import _ "github.com/bearlytools/claw/rpc/transport/resolver/passthrough"
+func NewResolvingDialer(target string, opts ...Option) (*transport.ResolvingDialer, error) {
+	cfg := defaultConfig()
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	dialFunc := func(ctx context.Context, addr string) (transport.Transport, error) {
+		return Dial(ctx, addr,
+			WithRetryPolicy(cfg.retryPolicy),
+			WithDialTimeout(cfg.dialTimeout),
+			WithReadBufferSize(cfg.readBufferSize),
+			WithWriteBufferSize(cfg.writeBufferSize),
+		)
+	}
+
+	return transport.NewResolvingDialer(target, dialFunc)
+}

@@ -54,7 +54,7 @@ func TestTCPTransportSynchronousRPC(t *testing.T) {
 
 			// Setup RPC server.
 			srv := server.New()
-			err := srv.Register("test", "TestService", "Echo", server.SyncHandler{
+			err := srv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 				HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 					return append([]byte("echo:"), req...), nil
 				},
@@ -144,7 +144,7 @@ func TestTCPTransportBiDirectionalRPC(t *testing.T) {
 			// Server receives client messages and sends its own.
 			serverRecv := make(chan []byte, len(test.clientMsgs))
 			srv := server.New()
-			err := srv.Register("test", "TestService", "BiDir", server.BiDirHandler{
+			err := srv.Register(ctx, "test", "TestService", "BiDir", server.BiDirHandler{
 				HandleFunc: func(ctx context.Context, stream *server.BiDirStream) error {
 					// Send and receive concurrently.
 					sendDone := make(chan error, 1)
@@ -269,7 +269,7 @@ func TestTCPTransportWithTLS(t *testing.T) {
 
 	// Setup RPC server.
 	srv := server.New()
-	srv.Register("test", "TestService", "Echo", server.SyncHandler{
+	srv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 		HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 			return append([]byte("secure:"), req...), nil
 		},
@@ -332,7 +332,7 @@ func TestTCPTransportConnectionClose(t *testing.T) {
 	ctx := t.Context()
 
 	srv := server.New()
-	srv.Register("test", "TestService", "Echo", server.SyncHandler{
+	srv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 		HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 			return req, nil
 		},
@@ -422,7 +422,7 @@ func TestTCPTransportBufferedIO(t *testing.T) {
 	// This test verifies that buffered I/O works correctly
 	// by sending many small messages that would be inefficient without buffering.
 	srv := server.New()
-	srv.Register("test", "TestService", "Echo", server.SyncHandler{
+	srv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 		HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 			return req, nil
 		},
@@ -477,7 +477,7 @@ func TestTCPServerListenAndServe(t *testing.T) {
 
 	// Setup RPC server.
 	rpcSrv := server.New()
-	err := rpcSrv.Register("test", "TestService", "Echo", server.SyncHandler{
+	err := rpcSrv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 		HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 			return append([]byte("server:"), req...), nil
 		},
@@ -558,7 +558,7 @@ func TestTCPServerShutdown(t *testing.T) {
 
 	// Setup RPC server.
 	rpcSrv := server.New()
-	rpcSrv.Register("test", "TestService", "Echo", server.SyncHandler{
+	rpcSrv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 		HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 			return req, nil
 		},

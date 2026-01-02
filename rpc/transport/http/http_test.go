@@ -42,7 +42,7 @@ func TestHTTPTransportSynchronousRPC(t *testing.T) {
 
 			// Setup RPC server.
 			srv := server.New()
-			err := srv.Register("test", "TestService", "Echo", server.SyncHandler{
+			err := srv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 				HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 					return append([]byte("echo:"), req...), nil
 				},
@@ -119,7 +119,7 @@ func TestHTTPTransportBiDirectionalRPC(t *testing.T) {
 			// Server receives client messages and sends its own.
 			serverRecv := make(chan []byte, len(test.clientMsgs))
 			srv := server.New()
-			err := srv.Register("test", "TestService", "BiDir", server.BiDirHandler{
+			err := srv.Register(ctx, "test", "TestService", "BiDir", server.BiDirHandler{
 				HandleFunc: func(ctx context.Context, stream *server.BiDirStream) error {
 					// Send and receive concurrently.
 					sendDone := make(chan error, 1)
@@ -224,7 +224,7 @@ func TestHTTPTransportConnectionClose(t *testing.T) {
 	ctx := t.Context()
 
 	srv := server.New()
-	srv.Register("test", "TestService", "Echo", server.SyncHandler{
+	srv.Register(ctx, "test", "TestService", "Echo", server.SyncHandler{
 		HandleFunc: func(ctx context.Context, req []byte, md []msgs.Metadata) ([]byte, error) {
 			return req, nil
 		},
