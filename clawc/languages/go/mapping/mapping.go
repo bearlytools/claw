@@ -66,6 +66,8 @@ type FieldDescr struct {
 	// IsEnum indicates if the field is an enumerated type. This can only be true
 	// if the Type is FTUint8 or FTUint16
 	IsEnum bool
+	// IsAny indicates if this field is an Any type that can hold any Struct.
+	IsAny bool
 	// EnumGroup is the name of the enumeration group this belongs to. This will be
 	// either the name of the group in this file or the [package].[group].
 	EnumGroup string

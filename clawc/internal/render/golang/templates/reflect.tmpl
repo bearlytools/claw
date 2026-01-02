@@ -125,4 +125,15 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
+    {{- range $file.Structs }}
+    runtime.RegisterTypeHash(XXXTypeHash{{ .Name }}, runtime.TypeEntry{
+        Name:     "{{ .Name }}",
+        FullPath: "{{ $file.FullPath }}",
+        New: func(ctx context.Context) runtime.AnyType {
+            return New{{ .Name }}(ctx)
+        },
+    })
+    {{- end }}
 }

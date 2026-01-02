@@ -23,11 +23,9 @@ We will always allocate and set a value.
 
 ### Is set detection rule
 
-All types other than lists can detect if the field was set or was simply the zero value. To do this requires the file option `NoZeroTypeCompression()`. This cause any affected field to be set always encode a header with either the value encoded in the header or not follow up data.
+All types other than lists can detect if the field was set or was simply the zero value. To do this requires the file option `IsSet()`. This causes an additiona byte or bytes to be encoded holding the set status.
 
-This is more costly on the wire if you have a lot of fields that are the zero value for the type. However, it can offer important detection mechanisms when the encoded formats must understand the difference between being set and not set. It is safe to turn on `NoZeroTypeCompression()` if it was off before, as it simply adds methods to the generated code and will give the correct answers on data that was made before the change. It is UNSAFE to remove it.
-
-Like proto3, you can also use either sentinel values or Struct types containing a single value to detect if something is set.  This is fine if there is only 1 or 2 values like this. But otherwise, `NoZeroTypeCompression()` is the way to go.
+It is safe to add it to an existing type, it is UNSAFE to remove it.
 
 ### Lists do not have IsSet rule
 
@@ -77,6 +75,7 @@ Field types are defined in this table:
 | string     | 12                     |
 | byte       | 13                     |
 | struct     | 14                     |
+| Any        | 15                     |
 | []bool     | 41                     |
 | []int8     | 42                     |
 | []int16    | 43                     |
@@ -91,6 +90,8 @@ Field types are defined in this table:
 | []byte     | 52                     |
 | []string   | 53                     |
 | []struct   | 54                     |
+| map        | 55                     |
+| []Any      | 56                     |
 
 ## Encoding
 
@@ -246,3 +247,143 @@ A (8 bytes)   Generic Header with the last 40 bits set the number of items in th
 B (X bytes)   An encoded struct type
 
 When encoding lists of Structs, the Struct items have their field number set to the index number in the array.
+
+### Any
+
+The Any type stores a value of any Claw struct type along with a type identifier hash. This allows polymorphic message handling where the concrete type is determined at runtime.
+
+The Generic Header's data portion (40 bits) is structured as:
+- Bits 0-7: The real underlying type (always 14 for struct currently)
+- Bits 8-39: The data size in bytes (32 bits, up to 4GB)
+
+```
+ ____________8 bytes______________ + X bytes
+|                                 |
++-----+-+-------------------------+------------------+------------------+-------+
+|  A  |B|           C             |        D         |        E         |   F   |
+
+A (2 bytes)  Field number
+B (1 byte)   Field type (15 for Any)
+C (5 bytes)  Data portion: bits 0-7 = real type (14), bits 8-39 = data size
+D (16 bytes) SHAKE128 hash of full type path (e.g., "github.com/pkg.TypeName")
+E (X bytes)  Serialized struct data
+F (0-7 bytes) Padding to 64-bit alignment
+```
+
+The type hash is computed from the full import path concatenated with the type name (e.g., `github.com/example/pkg.MyStruct`). This provides a unique identifier for each type across packages.
+
+#### List of Any
+
+A list of Any values uses the same header format as other lists, with each item containing its own type hash and data.
+
+```
++-------+------------------+------------------+------------------+------------------+-------+
+|   A   |        B1        |        C1        |        B2        |        C2        |   D   |
+
+A (8 bytes)   Generic Header with field type 55, data portion = item count
+B (16 bytes)  SHAKE128 hash for item N
+C (X bytes)   Serialized struct data for item N (size determined by reading struct header)
+D (0-7 bytes) Final padding to 64-bit alignment
+```
+
+Each item in the list is self-describing: the hash identifies the type, and the struct header contains the size of that item's data. This allows heterogeneous lists where each item can be a different concrete type.
+
+### Maps
+
+Maps provide key-value storage with typed keys and values. Maps are encoded with a specialized header that includes both key and value type information.
+
+#### Map Header
+
+The map field uses a Generic Header with the data portion structured as follows:
+
+```
+ ____________8 bytes_______________
+|                                  |
++-----+-+--------------------------+
+|  A  |B|            C             |
+
+A (2 bytes)  Field number
+B (1 byte)   Field type (55 for map)
+C (5 bytes)  Data portion:
+             - Bits 0-7:   Key type (uint8)
+             - Bits 8-15:  Value type (uint8)
+             - Bits 16-39: Total size in bytes (24 bits, max 16 MiB)
+```
+
+The key type and value type use the same numeric representation as the field type table above.
+
+#### Map Data
+
+After the header, map entries are encoded sequentially without individual padding:
+
+```
++-------+---------+---------+---------+---------+-------+
+|   A   |   B1    |   C1    |   B2    |   C2    |   D   |
+
+A (8 bytes)   Map Header
+B (X bytes)   Encoded key N
+C (X bytes)   Encoded value N
+D (0-7 bytes) Padding to 64-bit alignment at the end
+```
+
+Keys are maintained in sorted order for deterministic encoding.
+
+#### Key Encoding
+
+Keys are encoded based on their type:
+
+| Key Type | Encoding |
+|----------|----------|
+| bool     | 1 byte (0 or 1) |
+| int8/uint8 | 1 byte |
+| int16/uint16 | 2 bytes, little-endian |
+| int32/uint32/float32 | 4 bytes, little-endian |
+| int64/uint64/float64 | 8 bytes, little-endian |
+| string   | 4-byte length (little-endian) + UTF-8 data |
+
+Signed integers use the same zigzag encoding as regular fields. Floats use IEEE 754 binary representation.
+
+#### Value Encoding
+
+Values are encoded based on their type:
+
+| Value Type | Encoding |
+|------------|----------|
+| bool       | 1 byte (0 or 1) |
+| int8/uint8 | 1 byte |
+| int16/uint16 | 2 bytes, little-endian |
+| int32/uint32/float32 | 4 bytes, little-endian |
+| int64/uint64/float64 | 8 bytes, little-endian |
+| string     | 4-byte length (little-endian) + UTF-8 data |
+| bytes      | 4-byte length (little-endian) + byte data |
+| struct     | Full encoded struct (includes struct header) |
+| map        | Full encoded map (nested, includes map header) |
+| Any        | 16-byte SHAKE128 hash + encoded struct data |
+| []Any      | 4-byte count + (16-byte hash + encoded struct) for each item |
+
+#### Map with Any Values
+
+For `map[K]Any`, each value is encoded as:
+
+```
++------------------+------------------+
+|        A         |        B         |
+
+A (16 bytes) SHAKE128 hash of full type path (e.g., "github.com/pkg.TypeName")
+B (X bytes)  Serialized struct data (size from embedded struct header)
+```
+
+#### Map with []Any Values
+
+For `map[K][]Any`, each value is encoded as:
+
+```
++--------+------------------+------------------+------------------+------------------+
+|   A    |        B1        |        C1        |        B2        |        C2        |
+
+A (4 bytes)   Item count (little-endian)
+B (16 bytes)  SHAKE128 hash for item N
+C (X bytes)   Serialized struct data for item N
+```
+
+Each item in the list can be a different concrete struct type, identified by its type hash.

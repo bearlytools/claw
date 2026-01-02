@@ -19,3 +19,13 @@ Struct Setting {
 	Value string @1
 	Priority int32 @2
 }
+
+Struct AnyMaps {
+	Data map[string]Any @0
+	Items map[string][]Any @1
+}
+
+Struct Inner {
+	ID int64 @0
+	Name string @1
+}

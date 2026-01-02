@@ -148,6 +148,7 @@ The following basic field types are defined:
 * Unsigned integers: `uint8`, `uint16`, `uint32`, `uint64`
 * Floating points: `float32`, `float64`
 * Blobs: `string`, `bytes`
+* Dynamic types: `Any`
 * Lists: `[]Type`
 
 Notes:
@@ -189,6 +190,129 @@ Enum CarMake {
 ```
 
 The same as Struct fields, an enum entry can have a list of options.
+
+## Any Type
+
+The `Any` type can hold any Claw struct type at runtime, similar to `google.protobuf.Any`. This is useful for:
+* Polymorphic message handling
+* Forwarding/proxying scenarios where the concrete type is unknown
+* Plugin systems with dynamic message types
+
+Example:
+
+```claw
+struct Container {
+    Name string @0
+    Data Any @1        // Can hold any struct type
+    Items []Any @2     // List of any struct types
+}
+```
+
+Types are identified by a SHAKE128 hash (16 bytes) of their full import path + type name. The receiving code must have the type registered to decode it; otherwise raw bytes and hash are accessible for forwarding.
+
+## Maps
+
+Maps provide key-value storage with typed keys and values. Keys must be comparable types (bool, integers, floats, or string). Values can be any scalar type, string, bytes, struct, nested maps, or Any types.
+
+### Map Syntax
+
+```claw
+struct Config {
+    Labels map[string]string @0      // String keys and values
+    Ports map[string]int32 @1        // String keys, int32 values
+    Enabled map[string]bool @2       // String keys, bool values
+    Counts map[int32]int64 @3        // Integer keys
+    Settings map[string]Setting @4   // Struct values
+    Nested map[string]map[int32]string @5  // Nested maps
+}
+```
+
+### Valid Key Types
+
+The following types can be used as map keys:
+* `bool`
+* `int8`, `int16`, `int32`, `int64`
+* `uint8`, `uint16`, `uint32`, `uint64`
+* `float32`, `float64`
+* `string`
+
+### Valid Value Types
+
+The following types can be used as map values:
+* All scalar types: `bool`, integers, floats
+* `string`, `bytes`
+* `struct` (custom struct types)
+* `map` (nested maps)
+* `Any` (polymorphic values)
+* `[]Any` (list of polymorphic values)
+
+### Maps with Any Values
+
+Maps can hold polymorphic values using `Any` or `[]Any` as the value type:
+
+```claw
+struct PluginConfig {
+    Plugins map[string]Any @0        // Each key maps to a different plugin config type
+    Handlers map[string][]Any @1     // Each key maps to a list of handler configs
+}
+
+struct HTTPPlugin {
+    Port int32 @0
+    TLS bool @1
+}
+
+struct GRPCPlugin {
+    Port int32 @0
+    MaxConnections int32 @1
+}
+```
+
+This allows storing heterogeneous values in a single map, where each value can be a different concrete struct type identified by its type hash.
+
+### Generated Go API for map[K]Any
+
+For a field `Data map[string]Any @0`, the following methods are generated:
+
+```go
+// Access the underlying map
+func (x MyStruct) DataMap() *segment.Maps[string, *segment.MapAnyValue]
+
+// Get a value, decoding into a typed target
+func (x MyStruct) DataGet(key string, target any) error
+
+// Get raw bytes and type hash without decoding
+func (x MyStruct) DataGetRaw(key string) (data []byte, typeHash [16]byte, ok bool)
+
+// Set a value (must implement TypeHasher and StructGetter)
+func (x MyStruct) DataSet(key string, value any) error
+
+// Standard map operations
+func (x MyStruct) DataDelete(key string)
+func (x MyStruct) DataHas(key string) bool
+func (x MyStruct) DataLen() int
+```
+
+For `Items map[string][]Any @1`:
+
+```go
+// Access the underlying map
+func (x MyStruct) ItemsMap() *segment.Maps[string, []segment.MapAnyValue]
+
+// Get an item at index from the list for a key
+func (x MyStruct) ItemsGet(key string, index int, target any) error
+
+// Get raw bytes and type hash for an item
+func (x MyStruct) ItemsGetRaw(key string, index int) (data []byte, typeHash [16]byte, ok bool)
+
+// Get the length of the list for a key
+func (x MyStruct) ItemsListLen(key string) int
+
+// Set the entire list for a key
+func (x MyStruct) ItemsSet(key string, values []any) error
+
+// Standard map operations
+func (x MyStruct) ItemsLen() int  // Number of keys in the map
+```
 
 ## Changing the definitions
 

@@ -53,6 +53,10 @@ type Token struct {
 	// Len is the list length (for TokenListStart).
 	Len int
 
+	// TypeHash is the 16-byte SHAKE128 hash for Any type fields.
+	// Used for type identification when encoding/decoding Any values.
+	TypeHash []byte
+
 	// Map-related fields (for TokenMapStart and TokenMapEntry)
 	// KeyType is the type of map keys.
 	KeyType field.Type

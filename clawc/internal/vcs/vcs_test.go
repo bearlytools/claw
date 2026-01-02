@@ -22,11 +22,7 @@ func TestGit(t *testing.T) {
 	}
 	g, err := NewGit(wd)
 	if err != nil {
-		panic(err)
-	}
-
-	if !g.Using() {
-		t.Fatalf("TestGit: says we are not using git in our git directory")
+		t.Fatalf("TestGit: NewGit failed: %s", err)
 	}
 
 	rootWant := "/Users/jdoak/trees/claw/"

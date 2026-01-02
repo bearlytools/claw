@@ -3,6 +3,7 @@ package idl
 import (
 	"cmp"
 	_ "embed"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"path"
@@ -15,6 +16,7 @@ import (
 	"github.com/gostdlib/base/context"
 
 	"github.com/johnsiilver/halfpike"
+	"golang.org/x/crypto/sha3"
 	"golang.org/x/exp/slices"
 
 	"github.com/bearlytools/claw/clawc/languages/go/field"
@@ -699,6 +701,8 @@ type StructField struct {
 	IdentName string
 	// SelfReferential indicates this type is the same Struct type as the containing Struct.
 	SelfReferential bool
+	// IsAny indicates if this field is an Any type that can hold any Struct.
+	IsAny bool
 
 	// Map-related fields
 	// IsMap indicates if this field is a map type.
@@ -773,6 +777,13 @@ func (s StructField) MapRawValueGoType() string {
 		}
 		return "*" + s.ValueIdentName + "Raw"
 	}
+	// Handle Any types specially - they use segment.MapAnyValue
+	switch s.ValueType {
+	case field.FTAny:
+		return "*segment.MapAnyValue"
+	case field.FTListAny:
+		return "[]segment.MapAnyValue"
+	}
 	return fieldTypeToGoType(s.ValueType)
 }
 
@@ -807,7 +818,15 @@ func (s StructField) nestedMapRawGoType(info *MapTypeInfo) string {
 			valType = "*" + info.ValueIdentName + "Raw"
 		}
 	} else {
-		valType = fieldTypeToGoType(info.ValueType)
+		// Handle Any types specially
+		switch info.ValueType {
+		case field.FTAny:
+			valType = "*segment.MapAnyValue"
+		case field.FTListAny:
+			valType = "[]segment.MapAnyValue"
+		default:
+			valType = fieldTypeToGoType(info.ValueType)
+		}
 	}
 	return "map[" + keyType + "]" + valType
 }
@@ -1010,6 +1029,10 @@ func (s StructField) RawGoType() string {
 		keyType := fieldTypeToGoType(s.KeyType)
 		valType := s.MapRawValueGoType()
 		return "map[" + keyType + "]" + valType
+	case field.FTAny:
+		return "any"
+	case field.FTListAny:
+		return "[]any"
 	}
 	panic(fmt.Sprintf("RawGoType: unsupported type %v for field %s", s.Type, s.Name))
 }
@@ -1030,6 +1053,27 @@ type Struct struct {
 // NewStruct creates a new Struct type.
 func NewStruct(file *File) Struct {
 	return Struct{File: file}
+}
+
+// TypeHash returns the SHAKE128 hash (128 bits) of this type's identity (full path + type name).
+// This is used for Any type serialization to identify the concrete type.
+func (s Struct) TypeHash() [16]byte {
+	var result [16]byte
+	// Use full path + name for globally unique identity
+	sha3.ShakeSum128(result[:], []byte(s.File.FullPath+"."+s.Name))
+	return result
+}
+
+// TypeHashHex returns the SHAKE128 hash as a hex string for debugging/logging.
+func (s Struct) TypeHashHex() string {
+	hash := s.TypeHash()
+	return hex.EncodeToString(hash[:])
+}
+
+// TypeHashBytes returns the SHAKE128 hash as a slice of bytes for template iteration.
+func (s Struct) TypeHashBytes() []byte {
+	hash := s.TypeHash()
+	return hash[:]
 }
 
 //go:embed struct.tmpl
@@ -1318,6 +1362,13 @@ func (s *Struct) field(p *halfpike.Parser, comment string) error {
 	case "[]bytes":
 		f.Type = field.FTListBytes
 		f.IsList = true
+	case "Any":
+		f.Type = field.FTAny
+		f.IsAny = true
+	case "[]Any":
+		f.Type = field.FTListAny
+		f.IsList = true
+		f.IsAny = true
 	default: // Struct, []Struct, []{{Enum}}, or map[K]V
 		ft := l.Items[1].Val
 
@@ -1501,8 +1552,11 @@ func (s *Struct) parseMapType(mapStr string, lineNum int) (keyType, valType fiel
 			NestedMapInfo:  nestedNested,
 		}
 		valType = field.FTMap
+	} else if valueStr == "[]Any" {
+		// List of Any as map value
+		valType = field.FTListAny
 	} else {
-		// Scalar, string, bytes, or struct value
+		// Scalar, string, bytes, Any, or struct value
 		valType, err = parseScalarType(valueStr)
 		if err != nil {
 			// Could be a struct type
@@ -1559,6 +1613,8 @@ func parseScalarType(typeStr string) (field.Type, error) {
 		return field.FTString, nil
 	case "bytes":
 		return field.FTBytes, nil
+	case "Any":
+		return field.FTAny, nil
 	default:
 		return field.FTUnknown, fmt.Errorf("unknown type %q", typeStr)
 	}

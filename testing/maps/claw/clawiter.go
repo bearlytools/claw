@@ -19,6 +19,98 @@ var _ context.Context
 
 // Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
 // This walks all fields including nested structs and lists.
+func (x AnyMaps) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "AnyMaps"}) {
+        return
+    }
+        // Field 0: Data
+        {
+            m := x.DataMap()
+            if m.Len() == 0 {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Data", Type: field.FTMap, KeyType: field.FTString, ValueType: field.FTAny, IsNil: true}) {
+                    return
+                }
+            } else {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Data", Type: field.FTMap, KeyType: field.FTString, ValueType: field.FTAny}) {
+                    return
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenMapStart, Name: "Data", KeyType: field.FTString, ValueType: field.FTAny, Len: m.Len()}) {
+                    return
+                }
+                for k, v := range m.All() {
+                    tok := clawiter.Token{Kind: clawiter.TokenMapEntry, Name: "Data", KeyType: field.FTString, ValueType: field.FTAny}
+                    // Set the key
+                    tok.KeyBytes = []byte(k)
+                    // Set the value
+                    // Any value - yield token with type hash and raw data
+                    if v != nil {
+                        tok.TypeHash = v.TypeHash[:]
+                        tok.Bytes = v.Data
+                    }
+                    if !yield(tok) {
+                        return
+                    }
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenMapEnd, Name: "Data"}) {
+                    return
+                }
+            }
+        }
+        // Field 1: Items
+        {
+            m := x.ItemsMap()
+            if m.Len() == 0 {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Items", Type: field.FTMap, KeyType: field.FTString, ValueType: field.FTListAny, IsNil: true}) {
+                    return
+                }
+            } else {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Items", Type: field.FTMap, KeyType: field.FTString, ValueType: field.FTListAny}) {
+                    return
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenMapStart, Name: "Items", KeyType: field.FTString, ValueType: field.FTListAny, Len: m.Len()}) {
+                    return
+                }
+                for k, v := range m.All() {
+                    tok := clawiter.Token{Kind: clawiter.TokenMapEntry, Name: "Items", KeyType: field.FTString, ValueType: field.FTListAny}
+                    // Set the key
+                    tok.KeyBytes = []byte(k)
+                    // Set the value
+                    // List of Any values
+                    if !yield(tok) {
+                        return
+                    }
+                    if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "", Type: field.FTListAny, Len: len(v)}) {
+                        return
+                    }
+                    for _, anyVal := range v {
+                        anyTok := clawiter.Token{
+                            Kind: clawiter.TokenField,
+                            Name: "",
+                            Type: field.FTAny,
+                            TypeHash: anyVal.TypeHash[:],
+                            Bytes: anyVal.Data,
+                        }
+                        if !yield(anyTok) {
+                            return
+                        }
+                    }
+                    if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: ""}) {
+                        return
+                    }
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenMapEnd, Name: "Items"}) {
+                    return
+                }
+            }
+        }
+
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "AnyMaps"}) {
+        return
+    }
+}
+
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
+// This walks all fields including nested structs and lists.
 func (x ComplexMaps) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
     if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "ComplexMaps"}) {
         return
@@ -216,6 +308,33 @@ func (x Config) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...cla
         }
 
     if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Config"}) {
+        return
+    }
+}
+
+// Walk calls yield for each token during serialization. If yield returns false, Walk stops and returns.
+// This walks all fields including nested structs and lists.
+func (x Inner) Walk(ctx context.Context, yield clawiter.YieldToken, opts ...clawiter.WalkOption) {
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructStart, Name: "Inner"}) {
+        return
+    }
+        // Field 0: ID
+        {
+            tok := clawiter.Token{Kind: clawiter.TokenField, Name: "ID", Type: field.FTInt64}
+            tok.SetInt64(x.ID())
+            if !yield(tok) {
+                return
+            }
+        }
+        // Field 1: Name
+        {
+            s := x.Name()
+            if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "Name", Type: field.FTString, Bytes: []byte(s)}) {
+                return
+            }
+        }
+
+    if !yield(clawiter.Token{Kind: clawiter.TokenStructEnd, Name: "Inner"}) {
         return
     }
 }

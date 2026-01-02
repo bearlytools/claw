@@ -18,7 +18,8 @@ import (
 )
 
 var (
-	ErrNotInstalled = fmt.Errorf("not installed")
+	ErrNotInstalled = fmt.Errorf("git not installed")
+	ErrNotInRepo    = fmt.Errorf("not in a git repository")
 )
 
 type Version struct {
@@ -81,7 +82,7 @@ func NewGit(path string) (*Git, error) {
 	}
 
 	g := &Git{gitCmd: gitPath, path: path}
-	if !g.Using() {
+	if err := g.checkInRepo(); err != nil {
 		return nil, err
 	}
 
@@ -95,22 +96,20 @@ func NewGit(path string) (*Git, error) {
 	return g, nil
 }
 
-// Using returns true if the directory you wanted is using git.
-func (g *Git) Using() bool {
-	// git rev-parse --is-inside-work-tree
+// checkInRepo returns an error if not in a git repository.
+func (g *Git) checkInRepo() error {
 	cmd := exec.Command(g.gitCmd, "rev-parse", "--is-inside-work-tree")
 	cmd.Dir = g.path
 
 	b, err := cmd.CombinedOutput()
 	if err != nil {
-		panic(fmt.Errorf("had error trying to run git: %s", err))
+		return ErrNotInRepo
 	}
 	b = bytes.TrimSpace(b)
-	switch conversions.ByteSlice2String(b) {
-	case "true":
-		return true
+	if conversions.ByteSlice2String(b) != "true" {
+		return ErrNotInRepo
 	}
-	return false
+	return nil
 }
 
 func (g *Git) Version() Version { return g.ver }

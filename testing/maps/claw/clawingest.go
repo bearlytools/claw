@@ -9,13 +9,151 @@ import (
 
     "github.com/bearlytools/claw/clawc/languages/go/clawiter"
     "github.com/bearlytools/claw/clawc/languages/go/field"
+    "github.com/bearlytools/claw/clawc/languages/go/segment"
 )
 
 // Ensure imports are used.
 var _ context.Context
 var _ = fmt.Errorf
 var _ = field.FTBool
+var _ segment.AnyRawItem
 
+
+// Ingest populates the struct from a Walker with options.
+// This is the inverse of Walk().
+func (x *AnyMaps) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
+    defer ts.Close()
+    return x.XXXIngestFrom(ctx, ts, o)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *AnyMaps) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in AnyMaps")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "Data":
+            if tok.IsNil {
+                continue
+            }
+            mapStartTok, ok := ts.Next()
+            if !ok || mapStartTok.Kind != clawiter.TokenMapStart {
+                return fmt.Errorf("expected TokenMapStart for Data")
+            }
+            m := x.DataMap()
+            for {
+                entryTok, ok := ts.Next()
+                if !ok {
+                    return fmt.Errorf("unexpected EOF in Data map")
+                }
+                if entryTok.Kind == clawiter.TokenMapEnd {
+                    break
+                }
+                if entryTok.Kind != clawiter.TokenMapEntry {
+                    return fmt.Errorf("expected TokenMapEntry for Data, got %v", entryTok.Kind)
+                }
+                // Get the key
+                key := entryTok.KeyString()
+                // Get the value
+                // Any value - store type hash and raw data
+                anyVal := &segment.MapAnyValue{}
+                if len(entryTok.TypeHash) == 16 {
+                    copy(anyVal.TypeHash[:], entryTok.TypeHash)
+                }
+                anyVal.Data = entryTok.Bytes
+                m.Set(key, anyVal)
+            }
+        case "Items":
+            if tok.IsNil {
+                continue
+            }
+            mapStartTok, ok := ts.Next()
+            if !ok || mapStartTok.Kind != clawiter.TokenMapStart {
+                return fmt.Errorf("expected TokenMapStart for Items")
+            }
+            m := x.ItemsMap()
+            for {
+                entryTok, ok := ts.Next()
+                if !ok {
+                    return fmt.Errorf("unexpected EOF in Items map")
+                }
+                if entryTok.Kind == clawiter.TokenMapEnd {
+                    break
+                }
+                if entryTok.Kind != clawiter.TokenMapEntry {
+                    return fmt.Errorf("expected TokenMapEntry for Items, got %v", entryTok.Kind)
+                }
+                // Get the key
+                key := entryTok.KeyString()
+                // Get the value
+                // List of Any values
+                listStartTok, ok := ts.Next()
+                if !ok || listStartTok.Kind != clawiter.TokenListStart {
+                    return fmt.Errorf("expected TokenListStart for Items[%v] value", key)
+                }
+                var anyList []segment.MapAnyValue
+                for {
+                    anyItemTok, ok := ts.Next()
+                    if !ok {
+                        return fmt.Errorf("unexpected EOF in Items[%v] list value", key)
+                    }
+                    if anyItemTok.Kind == clawiter.TokenListEnd {
+                        break
+                    }
+                    anyItem := segment.MapAnyValue{}
+                    if len(anyItemTok.TypeHash) == 16 {
+                        copy(anyItem.TypeHash[:], anyItemTok.TypeHash)
+                    }
+                    anyItem.Data = anyItemTok.Bytes
+                    anyList = append(anyList, anyItem)
+                }
+                m.Set(key, anyList)
+            }
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
 
 // Ingest populates the struct from a Walker with options.
 // This is the inverse of Walk().
@@ -278,6 +416,69 @@ func (x *Config) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, op
                 // Get the value
                 m.Set(key, entryTok.String())
             }
+        default:
+            if opts.IgnoreUnknownFields {
+                if err := clawiter.SkipValue(ts, tok); err != nil {
+                    return err
+                }
+                continue
+            }
+            return fmt.Errorf("unknown field: %s", tok.Name)
+        }
+    }
+}
+
+// Ingest populates the struct from a Walker with options.
+// This is the inverse of Walk().
+func (x *Inner) Ingest(ctx context.Context, walk clawiter.Walker, opts ...clawiter.IngestOption) error {
+    // Apply options
+    var o clawiter.IngestOptions
+    for _, opt := range opts {
+        var err error
+        o, err = opt(o)
+        if err != nil {
+            return err
+        }
+    }
+
+    // Convert Walker to iter.Seq for TokenStream
+    seq := func(yield func(clawiter.Token) bool) {
+        walk(yield)
+    }
+    ts := clawiter.NewTokenStream(seq)
+    defer ts.Close()
+    return x.XXXIngestFrom(ctx, ts, o)
+}
+
+// XXXIngestFrom is for internal use - ingests from a shared token stream.
+func (x *Inner) XXXIngestFrom(ctx context.Context, ts *clawiter.TokenStream, opts clawiter.IngestOptions) error {
+    tok, ok := ts.Next()
+    if !ok {
+        return fmt.Errorf("expected TokenStructStart, got EOF")
+    }
+    if tok.Kind != clawiter.TokenStructStart {
+        return fmt.Errorf("expected TokenStructStart, got %v", tok.Kind)
+    }
+
+    for {
+        tok, ok = ts.Next()
+        if !ok {
+            return fmt.Errorf("unexpected EOF in Inner")
+        }
+
+        if tok.Kind == clawiter.TokenStructEnd {
+            return nil
+        }
+
+        if tok.Kind != clawiter.TokenField {
+            return fmt.Errorf("expected TokenField, got %v", tok.Kind)
+        }
+
+        switch tok.Name {
+        case "ID":
+            x.SetID(tok.Int64())
+        case "Name":
+            x.SetName(tok.String())
         default:
             if opts.IgnoreUnknownFields {
                 if err := clawiter.SkipValue(ts, tok); err != nil {

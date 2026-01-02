@@ -226,6 +226,14 @@ func (x Op) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Op) XXXTypeHash() [16]byte {
+    return XXXTypeHashOp
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Op) SetRecording(enabled bool) Op {
@@ -400,11 +408,6 @@ func (x Patch) OpsAppend(ctx context.Context, values ...Op) {
     }
 }
 
-// AppendOps is an alias for OpsAppend for backwards compatibility.
-func (x Patch) AppendOps(ctx context.Context, values ...Op) {
-    x.OpsAppend(ctx, values...)
-}
-
 // OpsAppendRaw appends items to the list using Raw struct representations.
 func (x Patch) OpsAppendRaw(ctx context.Context, values ...*OpRaw) {
     list := x.OpsList(ctx)
@@ -428,6 +431,14 @@ func (x Patch) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Patch) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Patch) XXXTypeHash() [16]byte {
+    return XXXTypeHashPatch
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -515,6 +526,15 @@ func (x Patch) XXXDescr() reflect.StructDescr {
 } 
 
 // Everything below this line is internal details.
+
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashOp = [16]byte{0xb8, 0xa7, 0x0b, 0xdb, 0xd6, 0x8a, 0xc3, 0xe3, 0xd5, 0x8c, 0x75, 0x1d, 0x5c, 0xa3, 0x4e, 0xf7}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPatch = [16]byte{0x0e, 0xcb, 0x47, 0x08, 0xfe, 0x68, 0x87, 0x65, 0x40, 0xbb, 0xde, 0x43, 0x53, 0x1c, 0x00, 0xc7}
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingOp = &mapping.Map{
     Name: "Op",
@@ -528,6 +548,7 @@ var XXXMappingOp = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Type",
@@ -536,6 +557,7 @@ var XXXMappingOp = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "OpType",
         },
         {
@@ -545,6 +567,7 @@ var XXXMappingOp = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Data",
@@ -553,6 +576,7 @@ var XXXMappingOp = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -570,6 +594,7 @@ var XXXMappingPatch = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Ops",
@@ -578,6 +603,7 @@ var XXXMappingPatch = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "Op",
             
             Mapping: XXXMappingOp,
@@ -730,4 +756,20 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
+    runtime.RegisterTypeHash(XXXTypeHashOp, runtime.TypeEntry{
+        Name:     "Op",
+        FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewOp(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPatch, runtime.TypeEntry{
+        Name:     "Patch",
+        FullPath: "github.com/bearlytools/claw/languages/go/patch/msgs",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPatch(ctx)
+        },
+    })
 }

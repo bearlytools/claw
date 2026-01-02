@@ -1582,6 +1582,14 @@ func (x AWSElasticBlockStoreVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x AWSElasticBlockStoreVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashAWSElasticBlockStoreVolumeSource
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x AWSElasticBlockStoreVolumeSource) SetRecording(enabled bool) AWSElasticBlockStoreVolumeSource {
@@ -1766,6 +1774,14 @@ func (x Affinity) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Affinity) XXXTypeHash() [16]byte {
+    return XXXTypeHashAffinity
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Affinity) SetRecording(enabled bool) Affinity {
@@ -1937,6 +1953,14 @@ func (x AppArmorProfile) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x AppArmorProfile) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x AppArmorProfile) XXXTypeHash() [16]byte {
+    return XXXTypeHashAppArmorProfile
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -2126,11 +2150,6 @@ func (x CSIVolumeSource) VolumeAttributesAppend(ctx context.Context, values ...K
     }
 }
 
-// AppendVolumeAttributes is an alias for VolumeAttributesAppend for backwards compatibility.
-func (x CSIVolumeSource) AppendVolumeAttributes(ctx context.Context, values ...KeyValue) {
-    x.VolumeAttributesAppend(ctx, values...)
-}
-
 // VolumeAttributesAppendRaw appends items to the list using Raw struct representations.
 func (x CSIVolumeSource) VolumeAttributesAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
     list := x.VolumeAttributesList(ctx)
@@ -2170,6 +2189,14 @@ func (x CSIVolumeSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x CSIVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x CSIVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashCSIVolumeSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -2388,6 +2415,14 @@ func (x Capabilities) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Capabilities) XXXTypeHash() [16]byte {
+    return XXXTypeHashCapabilities
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Capabilities) SetRecording(enabled bool) Capabilities {
@@ -2592,6 +2627,14 @@ func (x ClusterTrustBundleProjection) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ClusterTrustBundleProjection) XXXTypeHash() [16]byte {
+    return XXXTypeHashClusterTrustBundleProjection
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ClusterTrustBundleProjection) SetRecording(enabled bool) ClusterTrustBundleProjection {
@@ -2769,6 +2812,14 @@ func (x ConfigMapEnvSource) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ConfigMapEnvSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashConfigMapEnvSource
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ConfigMapEnvSource) SetRecording(enabled bool) ConfigMapEnvSource {
@@ -2940,6 +2991,14 @@ func (x ConfigMapKeySelector) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ConfigMapKeySelector) XXXTypeHash() [16]byte {
+    return XXXTypeHashConfigMapKeySelector
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ConfigMapKeySelector) SetRecording(enabled bool) ConfigMapKeySelector {
@@ -3108,11 +3167,6 @@ func (x ConfigMapProjection) ItemsAppend(ctx context.Context, values ...KeyToPat
     }
 }
 
-// AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x ConfigMapProjection) AppendItems(ctx context.Context, values ...KeyToPath) {
-    x.ItemsAppend(ctx, values...)
-}
-
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x ConfigMapProjection) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
     list := x.ItemsList(ctx)
@@ -3151,6 +3205,14 @@ func (x ConfigMapProjection) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ConfigMapProjection) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ConfigMapProjection) XXXTypeHash() [16]byte {
+    return XXXTypeHashConfigMapProjection
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -3344,11 +3406,6 @@ func (x ConfigMapVolumeSource) ItemsAppend(ctx context.Context, values ...KeyToP
     }
 }
 
-// AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x ConfigMapVolumeSource) AppendItems(ctx context.Context, values ...KeyToPath) {
-    x.ItemsAppend(ctx, values...)
-}
-
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x ConfigMapVolumeSource) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
     list := x.ItemsList(ctx)
@@ -3399,6 +3456,14 @@ func (x ConfigMapVolumeSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ConfigMapVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ConfigMapVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashConfigMapVolumeSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -3661,11 +3726,6 @@ func (x Container) PortsAppend(ctx context.Context, values ...ContainerPort) {
     }
 }
 
-// AppendPorts is an alias for PortsAppend for backwards compatibility.
-func (x Container) AppendPorts(ctx context.Context, values ...ContainerPort) {
-    x.PortsAppend(ctx, values...)
-}
-
 // PortsAppendRaw appends items to the list using Raw struct representations.
 func (x Container) PortsAppendRaw(ctx context.Context, values ...*ContainerPortRaw) {
     list := x.PortsList(ctx)
@@ -3710,11 +3770,6 @@ func (x Container) EnvFromAppend(ctx context.Context, values ...EnvFromSource) {
     }
 }
 
-// AppendEnvFrom is an alias for EnvFromAppend for backwards compatibility.
-func (x Container) AppendEnvFrom(ctx context.Context, values ...EnvFromSource) {
-    x.EnvFromAppend(ctx, values...)
-}
-
 // EnvFromAppendRaw appends items to the list using Raw struct representations.
 func (x Container) EnvFromAppendRaw(ctx context.Context, values ...*EnvFromSourceRaw) {
     list := x.EnvFromList(ctx)
@@ -3757,11 +3812,6 @@ func (x Container) EnvAppend(ctx context.Context, values ...EnvVar) {
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendEnv is an alias for EnvAppend for backwards compatibility.
-func (x Container) AppendEnv(ctx context.Context, values ...EnvVar) {
-    x.EnvAppend(ctx, values...)
 }
 
 // EnvAppendRaw appends items to the list using Raw struct representations.
@@ -3821,11 +3871,6 @@ func (x Container) ResizePolicyAppend(ctx context.Context, values ...ContainerRe
     }
 }
 
-// AppendResizePolicy is an alias for ResizePolicyAppend for backwards compatibility.
-func (x Container) AppendResizePolicy(ctx context.Context, values ...ContainerResizePolicy) {
-    x.ResizePolicyAppend(ctx, values...)
-}
-
 // ResizePolicyAppendRaw appends items to the list using Raw struct representations.
 func (x Container) ResizePolicyAppendRaw(ctx context.Context, values ...*ContainerResizePolicyRaw) {
     list := x.ResizePolicyList(ctx)
@@ -3882,11 +3927,6 @@ func (x Container) VolumeMountsAppend(ctx context.Context, values ...VolumeMount
     }
 }
 
-// AppendVolumeMounts is an alias for VolumeMountsAppend for backwards compatibility.
-func (x Container) AppendVolumeMounts(ctx context.Context, values ...VolumeMount) {
-    x.VolumeMountsAppend(ctx, values...)
-}
-
 // VolumeMountsAppendRaw appends items to the list using Raw struct representations.
 func (x Container) VolumeMountsAppendRaw(ctx context.Context, values ...*VolumeMountRaw) {
     list := x.VolumeMountsList(ctx)
@@ -3929,11 +3969,6 @@ func (x Container) VolumeDevicesAppend(ctx context.Context, values ...VolumeDevi
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendVolumeDevices is an alias for VolumeDevicesAppend for backwards compatibility.
-func (x Container) AppendVolumeDevices(ctx context.Context, values ...VolumeDevice) {
-    x.VolumeDevicesAppend(ctx, values...)
 }
 
 // VolumeDevicesAppendRaw appends items to the list using Raw struct representations.
@@ -4099,6 +4134,14 @@ func (x Container) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Container) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Container) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainer
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -4570,6 +4613,14 @@ func (x ContainerPort) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ContainerPort) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainerPort
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ContainerPort) SetRecording(enabled bool) ContainerPort {
@@ -4742,6 +4793,14 @@ func (x ContainerResizePolicy) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ContainerResizePolicy) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ContainerResizePolicy) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainerResizePolicy
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -4918,6 +4977,14 @@ func (x ContainerState) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ContainerState) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainerState
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ContainerState) SetRecording(enabled bool) ContainerState {
@@ -5078,6 +5145,14 @@ func (x ContainerStateRunning) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ContainerStateRunning) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ContainerStateRunning) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainerStateRunning
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -5299,6 +5374,14 @@ func (x ContainerStateTerminated) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ContainerStateTerminated) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainerStateTerminated
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ContainerStateTerminated) SetRecording(enabled bool) ContainerStateTerminated {
@@ -5487,6 +5570,14 @@ func (x ContainerStateWaiting) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ContainerStateWaiting) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ContainerStateWaiting) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainerStateWaiting
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -5750,11 +5841,6 @@ func (x ContainerStatus) AllocatedResourcesAppend(ctx context.Context, values ..
     }
 }
 
-// AppendAllocatedResources is an alias for AllocatedResourcesAppend for backwards compatibility.
-func (x ContainerStatus) AppendAllocatedResources(ctx context.Context, values ...KeyValue) {
-    x.AllocatedResourcesAppend(ctx, values...)
-}
-
 // AllocatedResourcesAppendRaw appends items to the list using Raw struct representations.
 func (x ContainerStatus) AllocatedResourcesAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
     list := x.AllocatedResourcesList(ctx)
@@ -5812,11 +5898,6 @@ func (x ContainerStatus) VolumeMountsAppend(ctx context.Context, values ...Volum
     }
 }
 
-// AppendVolumeMounts is an alias for VolumeMountsAppend for backwards compatibility.
-func (x ContainerStatus) AppendVolumeMounts(ctx context.Context, values ...VolumeMountStatus) {
-    x.VolumeMountsAppend(ctx, values...)
-}
-
 // VolumeMountsAppendRaw appends items to the list using Raw struct representations.
 func (x ContainerStatus) VolumeMountsAppendRaw(ctx context.Context, values ...*VolumeMountStatusRaw) {
     list := x.VolumeMountsList(ctx)
@@ -5843,6 +5924,14 @@ func (x ContainerStatus) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ContainerStatus) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ContainerStatus) XXXTypeHash() [16]byte {
+    return XXXTypeHashContainerStatus
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -6101,11 +6190,6 @@ func (x DownwardAPIProjection) ItemsAppend(ctx context.Context, values ...Downwa
     }
 }
 
-// AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x DownwardAPIProjection) AppendItems(ctx context.Context, values ...DownwardAPIVolumeFile) {
-    x.ItemsAppend(ctx, values...)
-}
-
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x DownwardAPIProjection) ItemsAppendRaw(ctx context.Context, values ...*DownwardAPIVolumeFileRaw) {
     list := x.ItemsList(ctx)
@@ -6132,6 +6216,14 @@ func (x DownwardAPIProjection) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x DownwardAPIProjection) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x DownwardAPIProjection) XXXTypeHash() [16]byte {
+    return XXXTypeHashDownwardAPIProjection
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -6337,6 +6429,14 @@ func (x DownwardAPIVolumeFile) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x DownwardAPIVolumeFile) XXXTypeHash() [16]byte {
+    return XXXTypeHashDownwardAPIVolumeFile
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x DownwardAPIVolumeFile) SetRecording(enabled bool) DownwardAPIVolumeFile {
@@ -6504,11 +6604,6 @@ func (x DownwardAPIVolumeSource) ItemsAppend(ctx context.Context, values ...Down
     }
 }
 
-// AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x DownwardAPIVolumeSource) AppendItems(ctx context.Context, values ...DownwardAPIVolumeFile) {
-    x.ItemsAppend(ctx, values...)
-}
-
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x DownwardAPIVolumeSource) ItemsAppendRaw(ctx context.Context, values ...*DownwardAPIVolumeFileRaw) {
     list := x.ItemsList(ctx)
@@ -6547,6 +6642,14 @@ func (x DownwardAPIVolumeSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x DownwardAPIVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x DownwardAPIVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashDownwardAPIVolumeSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -6731,6 +6834,14 @@ func (x EmptyDirVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x EmptyDirVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashEmptyDirVolumeSource
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x EmptyDirVolumeSource) SetRecording(enabled bool) EmptyDirVolumeSource {
@@ -6902,6 +7013,14 @@ func (x EnvFromSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x EnvFromSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x EnvFromSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashEnvFromSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -7085,6 +7204,14 @@ func (x EnvVar) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x EnvVar) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x EnvVar) XXXTypeHash() [16]byte {
+    return XXXTypeHashEnvVar
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -7280,6 +7407,14 @@ func (x EnvVarSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x EnvVarSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x EnvVarSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashEnvVarSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -7531,11 +7666,6 @@ func (x EphemeralContainer) PortsAppend(ctx context.Context, values ...Container
     }
 }
 
-// AppendPorts is an alias for PortsAppend for backwards compatibility.
-func (x EphemeralContainer) AppendPorts(ctx context.Context, values ...ContainerPort) {
-    x.PortsAppend(ctx, values...)
-}
-
 // PortsAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) PortsAppendRaw(ctx context.Context, values ...*ContainerPortRaw) {
     list := x.PortsList(ctx)
@@ -7580,11 +7710,6 @@ func (x EphemeralContainer) EnvFromAppend(ctx context.Context, values ...EnvFrom
     }
 }
 
-// AppendEnvFrom is an alias for EnvFromAppend for backwards compatibility.
-func (x EphemeralContainer) AppendEnvFrom(ctx context.Context, values ...EnvFromSource) {
-    x.EnvFromAppend(ctx, values...)
-}
-
 // EnvFromAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) EnvFromAppendRaw(ctx context.Context, values ...*EnvFromSourceRaw) {
     list := x.EnvFromList(ctx)
@@ -7627,11 +7752,6 @@ func (x EphemeralContainer) EnvAppend(ctx context.Context, values ...EnvVar) {
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendEnv is an alias for EnvAppend for backwards compatibility.
-func (x EphemeralContainer) AppendEnv(ctx context.Context, values ...EnvVar) {
-    x.EnvAppend(ctx, values...)
 }
 
 // EnvAppendRaw appends items to the list using Raw struct representations.
@@ -7691,11 +7811,6 @@ func (x EphemeralContainer) VolumeMountsAppend(ctx context.Context, values ...Vo
     }
 }
 
-// AppendVolumeMounts is an alias for VolumeMountsAppend for backwards compatibility.
-func (x EphemeralContainer) AppendVolumeMounts(ctx context.Context, values ...VolumeMount) {
-    x.VolumeMountsAppend(ctx, values...)
-}
-
 // VolumeMountsAppendRaw appends items to the list using Raw struct representations.
 func (x EphemeralContainer) VolumeMountsAppendRaw(ctx context.Context, values ...*VolumeMountRaw) {
     list := x.VolumeMountsList(ctx)
@@ -7738,11 +7853,6 @@ func (x EphemeralContainer) VolumeDevicesAppend(ctx context.Context, values ...V
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendVolumeDevices is an alias for VolumeDevicesAppend for backwards compatibility.
-func (x EphemeralContainer) AppendVolumeDevices(ctx context.Context, values ...VolumeDevice) {
-    x.VolumeDevicesAppend(ctx, values...)
 }
 
 // VolumeDevicesAppendRaw appends items to the list using Raw struct representations.
@@ -7920,6 +8030,14 @@ func (x EphemeralContainer) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x EphemeralContainer) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x EphemeralContainer) XXXTypeHash() [16]byte {
+    return XXXTypeHashEphemeralContainer
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -8316,6 +8434,14 @@ func (x EphemeralVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x EphemeralVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashEphemeralVolumeSource
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x EphemeralVolumeSource) SetRecording(enabled bool) EphemeralVolumeSource {
@@ -8467,6 +8593,14 @@ func (x ExecAction) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ExecAction) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ExecAction) XXXTypeHash() [16]byte {
+    return XXXTypeHashExecAction
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -8651,6 +8785,14 @@ func (x GCEPersistentDiskVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x GCEPersistentDiskVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashGCEPersistentDiskVolumeSource
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x GCEPersistentDiskVolumeSource) SetRecording(enabled bool) GCEPersistentDiskVolumeSource {
@@ -8818,6 +8960,14 @@ func (x GRPCAction) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x GRPCAction) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x GRPCAction) XXXTypeHash() [16]byte {
+    return XXXTypeHashGRPCAction
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -9020,11 +9170,6 @@ func (x HTTPGetAction) HttpHeadersAppend(ctx context.Context, values ...HTTPHead
     }
 }
 
-// AppendHttpHeaders is an alias for HttpHeadersAppend for backwards compatibility.
-func (x HTTPGetAction) AppendHttpHeaders(ctx context.Context, values ...HTTPHeader) {
-    x.HttpHeadersAppend(ctx, values...)
-}
-
 // HttpHeadersAppendRaw appends items to the list using Raw struct representations.
 func (x HTTPGetAction) HttpHeadersAppendRaw(ctx context.Context, values ...*HTTPHeaderRaw) {
     list := x.HttpHeadersList(ctx)
@@ -9051,6 +9196,14 @@ func (x HTTPGetAction) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x HTTPGetAction) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x HTTPGetAction) XXXTypeHash() [16]byte {
+    return XXXTypeHashHTTPGetAction
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -9253,6 +9406,14 @@ func (x HTTPHeader) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x HTTPHeader) XXXTypeHash() [16]byte {
+    return XXXTypeHashHTTPHeader
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x HTTPHeader) SetRecording(enabled bool) HTTPHeader {
@@ -9420,6 +9581,14 @@ func (x HostAlias) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x HostAlias) XXXTypeHash() [16]byte {
+    return XXXTypeHashHostAlias
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x HostAlias) SetRecording(enabled bool) HostAlias {
@@ -9569,6 +9738,14 @@ func (x HostIP) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x HostIP) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x HostIP) XXXTypeHash() [16]byte {
+    return XXXTypeHashHostIP
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -9723,6 +9900,14 @@ func (x HostPathVolumeSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x HostPathVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x HostPathVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashHostPathVolumeSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -9894,6 +10079,14 @@ func (x IntOrString) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x IntOrString) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x IntOrString) XXXTypeHash() [16]byte {
+    return XXXTypeHashIntOrString
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -10072,6 +10265,14 @@ func (x KeyToPath) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x KeyToPath) XXXTypeHash() [16]byte {
+    return XXXTypeHashKeyToPath
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x KeyToPath) SetRecording(enabled bool) KeyToPath {
@@ -10236,6 +10437,14 @@ func (x KeyValue) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x KeyValue) XXXTypeHash() [16]byte {
+    return XXXTypeHashKeyValue
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x KeyValue) SetRecording(enabled bool) KeyValue {
@@ -10387,11 +10596,6 @@ func (x LabelSelector) MatchLabelsAppend(ctx context.Context, values ...KeyValue
     }
 }
 
-// AppendMatchLabels is an alias for MatchLabelsAppend for backwards compatibility.
-func (x LabelSelector) AppendMatchLabels(ctx context.Context, values ...KeyValue) {
-    x.MatchLabelsAppend(ctx, values...)
-}
-
 // MatchLabelsAppendRaw appends items to the list using Raw struct representations.
 func (x LabelSelector) MatchLabelsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
     list := x.MatchLabelsList(ctx)
@@ -10436,11 +10640,6 @@ func (x LabelSelector) MatchExpressionsAppend(ctx context.Context, values ...Lab
     }
 }
 
-// AppendMatchExpressions is an alias for MatchExpressionsAppend for backwards compatibility.
-func (x LabelSelector) AppendMatchExpressions(ctx context.Context, values ...LabelSelectorRequirement) {
-    x.MatchExpressionsAppend(ctx, values...)
-}
-
 // MatchExpressionsAppendRaw appends items to the list using Raw struct representations.
 func (x LabelSelector) MatchExpressionsAppendRaw(ctx context.Context, values ...*LabelSelectorRequirementRaw) {
     list := x.MatchExpressionsList(ctx)
@@ -10467,6 +10666,14 @@ func (x LabelSelector) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x LabelSelector) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x LabelSelector) XXXTypeHash() [16]byte {
+    return XXXTypeHashLabelSelector
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -10694,6 +10901,14 @@ func (x LabelSelectorRequirement) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x LabelSelectorRequirement) XXXTypeHash() [16]byte {
+    return XXXTypeHashLabelSelectorRequirement
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x LabelSelectorRequirement) SetRecording(enabled bool) LabelSelectorRequirement {
@@ -10862,6 +11077,14 @@ func (x Lifecycle) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Lifecycle) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Lifecycle) XXXTypeHash() [16]byte {
+    return XXXTypeHashLifecycle
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -11057,6 +11280,14 @@ func (x LifecycleHandler) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x LifecycleHandler) XXXTypeHash() [16]byte {
+    return XXXTypeHashLifecycleHandler
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x LifecycleHandler) SetRecording(enabled bool) LifecycleHandler {
@@ -11224,6 +11455,14 @@ func (x LocalObjectReference) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x LocalObjectReference) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x LocalObjectReference) XXXTypeHash() [16]byte {
+    return XXXTypeHashLocalObjectReference
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -11441,6 +11680,14 @@ func (x ManagedFieldsEntry) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ManagedFieldsEntry) XXXTypeHash() [16]byte {
+    return XXXTypeHashManagedFieldsEntry
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ManagedFieldsEntry) SetRecording(enabled bool) ManagedFieldsEntry {
@@ -11640,6 +11887,14 @@ func (x NFSVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x NFSVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashNFSVolumeSource
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x NFSVolumeSource) SetRecording(enabled bool) NFSVolumeSource {
@@ -11809,11 +12064,6 @@ func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx 
     }
 }
 
-// AppendPreferredDuringSchedulingIgnoredDuringExecution is an alias for PreferredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x NodeAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...PreferredSchedulingTerm) {
-    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
-}
-
 // PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x NodeAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*PreferredSchedulingTermRaw) {
     list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
@@ -11840,6 +12090,14 @@ func (x NodeAffinity) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x NodeAffinity) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x NodeAffinity) XXXTypeHash() [16]byte {
+    return XXXTypeHashNodeAffinity
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -12019,11 +12277,6 @@ func (x NodeSelector) NodeSelectorTermsAppend(ctx context.Context, values ...Nod
     }
 }
 
-// AppendNodeSelectorTerms is an alias for NodeSelectorTermsAppend for backwards compatibility.
-func (x NodeSelector) AppendNodeSelectorTerms(ctx context.Context, values ...NodeSelectorTerm) {
-    x.NodeSelectorTermsAppend(ctx, values...)
-}
-
 // NodeSelectorTermsAppendRaw appends items to the list using Raw struct representations.
 func (x NodeSelector) NodeSelectorTermsAppendRaw(ctx context.Context, values ...*NodeSelectorTermRaw) {
     list := x.NodeSelectorTermsList(ctx)
@@ -12050,6 +12303,14 @@ func (x NodeSelector) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x NodeSelector) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x NodeSelector) XXXTypeHash() [16]byte {
+    return XXXTypeHashNodeSelector
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -12249,6 +12510,14 @@ func (x NodeSelectorRequirement) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x NodeSelectorRequirement) XXXTypeHash() [16]byte {
+    return XXXTypeHashNodeSelectorRequirement
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x NodeSelectorRequirement) SetRecording(enabled bool) NodeSelectorRequirement {
@@ -12409,11 +12678,6 @@ func (x NodeSelectorTerm) MatchExpressionsAppend(ctx context.Context, values ...
     }
 }
 
-// AppendMatchExpressions is an alias for MatchExpressionsAppend for backwards compatibility.
-func (x NodeSelectorTerm) AppendMatchExpressions(ctx context.Context, values ...NodeSelectorRequirement) {
-    x.MatchExpressionsAppend(ctx, values...)
-}
-
 // MatchExpressionsAppendRaw appends items to the list using Raw struct representations.
 func (x NodeSelectorTerm) MatchExpressionsAppendRaw(ctx context.Context, values ...*NodeSelectorRequirementRaw) {
     list := x.MatchExpressionsList(ctx)
@@ -12458,11 +12722,6 @@ func (x NodeSelectorTerm) MatchFieldsAppend(ctx context.Context, values ...NodeS
     }
 }
 
-// AppendMatchFields is an alias for MatchFieldsAppend for backwards compatibility.
-func (x NodeSelectorTerm) AppendMatchFields(ctx context.Context, values ...NodeSelectorRequirement) {
-    x.MatchFieldsAppend(ctx, values...)
-}
-
 // MatchFieldsAppendRaw appends items to the list using Raw struct representations.
 func (x NodeSelectorTerm) MatchFieldsAppendRaw(ctx context.Context, values ...*NodeSelectorRequirementRaw) {
     list := x.MatchFieldsList(ctx)
@@ -12489,6 +12748,14 @@ func (x NodeSelectorTerm) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x NodeSelectorTerm) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x NodeSelectorTerm) XXXTypeHash() [16]byte {
+    return XXXTypeHashNodeSelectorTerm
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -12694,6 +12961,14 @@ func (x ObjectFieldSelector) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ObjectFieldSelector) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ObjectFieldSelector) XXXTypeHash() [16]byte {
+    return XXXTypeHashObjectFieldSelector
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -12969,11 +13244,6 @@ func (x ObjectMeta) LabelsAppend(ctx context.Context, values ...KeyValue) {
     }
 }
 
-// AppendLabels is an alias for LabelsAppend for backwards compatibility.
-func (x ObjectMeta) AppendLabels(ctx context.Context, values ...KeyValue) {
-    x.LabelsAppend(ctx, values...)
-}
-
 // LabelsAppendRaw appends items to the list using Raw struct representations.
 func (x ObjectMeta) LabelsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
     list := x.LabelsList(ctx)
@@ -13018,11 +13288,6 @@ func (x ObjectMeta) AnnotationsAppend(ctx context.Context, values ...KeyValue) {
     }
 }
 
-// AppendAnnotations is an alias for AnnotationsAppend for backwards compatibility.
-func (x ObjectMeta) AppendAnnotations(ctx context.Context, values ...KeyValue) {
-    x.AnnotationsAppend(ctx, values...)
-}
-
 // AnnotationsAppendRaw appends items to the list using Raw struct representations.
 func (x ObjectMeta) AnnotationsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
     list := x.AnnotationsList(ctx)
@@ -13065,11 +13330,6 @@ func (x ObjectMeta) OwnerReferencesAppend(ctx context.Context, values ...OwnerRe
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendOwnerReferences is an alias for OwnerReferencesAppend for backwards compatibility.
-func (x ObjectMeta) AppendOwnerReferences(ctx context.Context, values ...OwnerReference) {
-    x.OwnerReferencesAppend(ctx, values...)
 }
 
 // OwnerReferencesAppendRaw appends items to the list using Raw struct representations.
@@ -13136,11 +13396,6 @@ func (x ObjectMeta) ManagedFieldsAppend(ctx context.Context, values ...ManagedFi
     }
 }
 
-// AppendManagedFields is an alias for ManagedFieldsAppend for backwards compatibility.
-func (x ObjectMeta) AppendManagedFields(ctx context.Context, values ...ManagedFieldsEntry) {
-    x.ManagedFieldsAppend(ctx, values...)
-}
-
 // ManagedFieldsAppendRaw appends items to the list using Raw struct representations.
 func (x ObjectMeta) ManagedFieldsAppendRaw(ctx context.Context, values ...*ManagedFieldsEntryRaw) {
     list := x.ManagedFieldsList(ctx)
@@ -13167,6 +13422,14 @@ func (x ObjectMeta) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ObjectMeta) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ObjectMeta) XXXTypeHash() [16]byte {
+    return XXXTypeHashObjectMeta
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -13543,6 +13806,14 @@ func (x OwnerReference) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x OwnerReference) XXXTypeHash() [16]byte {
+    return XXXTypeHashOwnerReference
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x OwnerReference) SetRecording(enabled bool) OwnerReference {
@@ -13827,6 +14098,14 @@ func (x PersistentVolumeClaimSpec) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PersistentVolumeClaimSpec) XXXTypeHash() [16]byte {
+    return XXXTypeHashPersistentVolumeClaimSpec
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PersistentVolumeClaimSpec) SetRecording(enabled bool) PersistentVolumeClaimSpec {
@@ -14043,6 +14322,14 @@ func (x PersistentVolumeClaimTemplate) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PersistentVolumeClaimTemplate) XXXTypeHash() [16]byte {
+    return XXXTypeHashPersistentVolumeClaimTemplate
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PersistentVolumeClaimTemplate) SetRecording(enabled bool) PersistentVolumeClaimTemplate {
@@ -14206,6 +14493,14 @@ func (x PersistentVolumeClaimVolumeSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PersistentVolumeClaimVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PersistentVolumeClaimVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashPersistentVolumeClaimVolumeSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -14395,6 +14690,14 @@ func (x Pod) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Pod) XXXTypeHash() [16]byte {
+    return XXXTypeHashPod
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Pod) SetRecording(enabled bool) Pod {
@@ -14568,11 +14871,6 @@ func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx co
     }
 }
 
-// AppendRequiredDuringSchedulingIgnoredDuringExecution is an alias for RequiredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAffinity) AppendRequiredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...PodAffinityTerm) {
-    x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
-}
-
 // RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*PodAffinityTermRaw) {
     list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
@@ -14617,11 +14915,6 @@ func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx c
     }
 }
 
-// AppendPreferredDuringSchedulingIgnoredDuringExecution is an alias for PreferredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...WeightedPodAffinityTerm) {
-    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
-}
-
 // PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*WeightedPodAffinityTermRaw) {
     list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
@@ -14648,6 +14941,14 @@ func (x PodAffinity) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodAffinity) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodAffinity) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodAffinity
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -14929,6 +15230,14 @@ func (x PodAffinityTerm) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodAffinityTerm) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodAffinityTerm
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PodAffinityTerm) SetRecording(enabled bool) PodAffinityTerm {
@@ -15118,11 +15427,6 @@ func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppend(ct
     }
 }
 
-// AppendRequiredDuringSchedulingIgnoredDuringExecution is an alias for RequiredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAntiAffinity) AppendRequiredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...PodAffinityTerm) {
-    x.RequiredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
-}
-
 // RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAntiAffinity) RequiredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*PodAffinityTermRaw) {
     list := x.RequiredDuringSchedulingIgnoredDuringExecutionList(ctx)
@@ -15167,11 +15471,6 @@ func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppend(c
     }
 }
 
-// AppendPreferredDuringSchedulingIgnoredDuringExecution is an alias for PreferredDuringSchedulingIgnoredDuringExecutionAppend for backwards compatibility.
-func (x PodAntiAffinity) AppendPreferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, values ...WeightedPodAffinityTerm) {
-    x.PreferredDuringSchedulingIgnoredDuringExecutionAppend(ctx, values...)
-}
-
 // PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw appends items to the list using Raw struct representations.
 func (x PodAntiAffinity) PreferredDuringSchedulingIgnoredDuringExecutionAppendRaw(ctx context.Context, values ...*WeightedPodAffinityTermRaw) {
     list := x.PreferredDuringSchedulingIgnoredDuringExecutionList(ctx)
@@ -15198,6 +15497,14 @@ func (x PodAntiAffinity) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodAntiAffinity) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodAntiAffinity) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodAntiAffinity
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -15455,6 +15762,14 @@ func (x PodCondition) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodCondition) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodCondition
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PodCondition) SetRecording(enabled bool) PodCondition {
@@ -15672,11 +15987,6 @@ func (x PodDNSConfig) OptionsAppend(ctx context.Context, values ...PodDNSConfigO
     }
 }
 
-// AppendOptions is an alias for OptionsAppend for backwards compatibility.
-func (x PodDNSConfig) AppendOptions(ctx context.Context, values ...PodDNSConfigOption) {
-    x.OptionsAppend(ctx, values...)
-}
-
 // OptionsAppendRaw appends items to the list using Raw struct representations.
 func (x PodDNSConfig) OptionsAppendRaw(ctx context.Context, values ...*PodDNSConfigOptionRaw) {
     list := x.OptionsList(ctx)
@@ -15703,6 +16013,14 @@ func (x PodDNSConfig) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodDNSConfig) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodDNSConfig) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodDNSConfig
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -15900,6 +16218,14 @@ func (x PodDNSConfigOption) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodDNSConfigOption) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodDNSConfigOption
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PodDNSConfigOption) SetRecording(enabled bool) PodDNSConfigOption {
@@ -16047,6 +16373,14 @@ func (x PodIP) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodIP) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodIP
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PodIP) SetRecording(enabled bool) PodIP {
@@ -16189,6 +16523,14 @@ func (x PodOS) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodOS) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodOS
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PodOS) SetRecording(enabled bool) PodOS {
@@ -16329,6 +16671,14 @@ func (x PodReadinessGate) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodReadinessGate) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodReadinessGate) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodReadinessGate
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -16497,6 +16847,14 @@ func (x PodResourceClaim) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodResourceClaim) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodResourceClaim
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PodResourceClaim) SetRecording(enabled bool) PodResourceClaim {
@@ -16661,6 +17019,14 @@ func (x PodResourceClaimStatus) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodResourceClaimStatus) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodResourceClaimStatus
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PodResourceClaimStatus) SetRecording(enabled bool) PodResourceClaimStatus {
@@ -16806,6 +17172,14 @@ func (x PodSchedulingGate) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodSchedulingGate) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodSchedulingGate) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodSchedulingGate
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -17061,11 +17435,6 @@ func (x PodSecurityContext) SysctlsAppend(ctx context.Context, values ...Sysctl)
     }
 }
 
-// AppendSysctls is an alias for SysctlsAppend for backwards compatibility.
-func (x PodSecurityContext) AppendSysctls(ctx context.Context, values ...Sysctl) {
-    x.SysctlsAppend(ctx, values...)
-}
-
 // SysctlsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSecurityContext) SysctlsAppendRaw(ctx context.Context, values ...*SysctlRaw) {
     list := x.SysctlsList(ctx)
@@ -17142,6 +17511,14 @@ func (x PodSecurityContext) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodSecurityContext) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodSecurityContext) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodSecurityContext
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -17389,11 +17766,6 @@ func (x PodSpec) VolumesAppend(ctx context.Context, values ...Volume) {
     }
 }
 
-// AppendVolumes is an alias for VolumesAppend for backwards compatibility.
-func (x PodSpec) AppendVolumes(ctx context.Context, values ...Volume) {
-    x.VolumesAppend(ctx, values...)
-}
-
 // VolumesAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) VolumesAppendRaw(ctx context.Context, values ...*VolumeRaw) {
     list := x.VolumesList(ctx)
@@ -17436,11 +17808,6 @@ func (x PodSpec) InitContainersAppend(ctx context.Context, values ...Container) 
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendInitContainers is an alias for InitContainersAppend for backwards compatibility.
-func (x PodSpec) AppendInitContainers(ctx context.Context, values ...Container) {
-    x.InitContainersAppend(ctx, values...)
 }
 
 // InitContainersAppendRaw appends items to the list using Raw struct representations.
@@ -17487,11 +17854,6 @@ func (x PodSpec) ContainersAppend(ctx context.Context, values ...Container) {
     }
 }
 
-// AppendContainers is an alias for ContainersAppend for backwards compatibility.
-func (x PodSpec) AppendContainers(ctx context.Context, values ...Container) {
-    x.ContainersAppend(ctx, values...)
-}
-
 // ContainersAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ContainersAppendRaw(ctx context.Context, values ...*ContainerRaw) {
     list := x.ContainersList(ctx)
@@ -17534,11 +17896,6 @@ func (x PodSpec) EphemeralContainersAppend(ctx context.Context, values ...Epheme
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendEphemeralContainers is an alias for EphemeralContainersAppend for backwards compatibility.
-func (x PodSpec) AppendEphemeralContainers(ctx context.Context, values ...EphemeralContainer) {
-    x.EphemeralContainersAppend(ctx, values...)
 }
 
 // EphemeralContainersAppendRaw appends items to the list using Raw struct representations.
@@ -17631,11 +17988,6 @@ func (x PodSpec) NodeSelectorAppend(ctx context.Context, values ...KeyValue) {
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendNodeSelector is an alias for NodeSelectorAppend for backwards compatibility.
-func (x PodSpec) AppendNodeSelector(ctx context.Context, values ...KeyValue) {
-    x.NodeSelectorAppend(ctx, values...)
 }
 
 // NodeSelectorAppendRaw appends items to the list using Raw struct representations.
@@ -17779,11 +18131,6 @@ func (x PodSpec) ImagePullSecretsAppend(ctx context.Context, values ...LocalObje
     }
 }
 
-// AppendImagePullSecrets is an alias for ImagePullSecretsAppend for backwards compatibility.
-func (x PodSpec) AppendImagePullSecrets(ctx context.Context, values ...LocalObjectReference) {
-    x.ImagePullSecretsAppend(ctx, values...)
-}
-
 // ImagePullSecretsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ImagePullSecretsAppendRaw(ctx context.Context, values ...*LocalObjectReferenceRaw) {
     list := x.ImagePullSecretsList(ctx)
@@ -17877,11 +18224,6 @@ func (x PodSpec) TolerationsAppend(ctx context.Context, values ...Toleration) {
     }
 }
 
-// AppendTolerations is an alias for TolerationsAppend for backwards compatibility.
-func (x PodSpec) AppendTolerations(ctx context.Context, values ...Toleration) {
-    x.TolerationsAppend(ctx, values...)
-}
-
 // TolerationsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) TolerationsAppendRaw(ctx context.Context, values ...*TolerationRaw) {
     list := x.TolerationsList(ctx)
@@ -17924,11 +18266,6 @@ func (x PodSpec) HostAliasesAppend(ctx context.Context, values ...HostAlias) {
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendHostAliases is an alias for HostAliasesAppend for backwards compatibility.
-func (x PodSpec) AppendHostAliases(ctx context.Context, values ...HostAlias) {
-    x.HostAliasesAppend(ctx, values...)
 }
 
 // HostAliasesAppendRaw appends items to the list using Raw struct representations.
@@ -18012,11 +18349,6 @@ func (x PodSpec) ReadinessGatesAppend(ctx context.Context, values ...PodReadines
     }
 }
 
-// AppendReadinessGates is an alias for ReadinessGatesAppend for backwards compatibility.
-func (x PodSpec) AppendReadinessGates(ctx context.Context, values ...PodReadinessGate) {
-    x.ReadinessGatesAppend(ctx, values...)
-}
-
 // ReadinessGatesAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ReadinessGatesAppendRaw(ctx context.Context, values ...*PodReadinessGateRaw) {
     list := x.ReadinessGatesList(ctx)
@@ -18097,11 +18429,6 @@ func (x PodSpec) OverheadAppend(ctx context.Context, values ...KeyValue) {
     }
 }
 
-// AppendOverhead is an alias for OverheadAppend for backwards compatibility.
-func (x PodSpec) AppendOverhead(ctx context.Context, values ...KeyValue) {
-    x.OverheadAppend(ctx, values...)
-}
-
 // OverheadAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) OverheadAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
     list := x.OverheadList(ctx)
@@ -18144,11 +18471,6 @@ func (x PodSpec) TopologySpreadConstraintsAppend(ctx context.Context, values ...
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendTopologySpreadConstraints is an alias for TopologySpreadConstraintsAppend for backwards compatibility.
-func (x PodSpec) AppendTopologySpreadConstraints(ctx context.Context, values ...TopologySpreadConstraint) {
-    x.TopologySpreadConstraintsAppend(ctx, values...)
 }
 
 // TopologySpreadConstraintsAppendRaw appends items to the list using Raw struct representations.
@@ -18232,11 +18554,6 @@ func (x PodSpec) SchedulingGatesAppend(ctx context.Context, values ...PodSchedul
     }
 }
 
-// AppendSchedulingGates is an alias for SchedulingGatesAppend for backwards compatibility.
-func (x PodSpec) AppendSchedulingGates(ctx context.Context, values ...PodSchedulingGate) {
-    x.SchedulingGatesAppend(ctx, values...)
-}
-
 // SchedulingGatesAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) SchedulingGatesAppendRaw(ctx context.Context, values ...*PodSchedulingGateRaw) {
     list := x.SchedulingGatesList(ctx)
@@ -18281,11 +18598,6 @@ func (x PodSpec) ResourceClaimsAppend(ctx context.Context, values ...PodResource
     }
 }
 
-// AppendResourceClaims is an alias for ResourceClaimsAppend for backwards compatibility.
-func (x PodSpec) AppendResourceClaims(ctx context.Context, values ...PodResourceClaim) {
-    x.ResourceClaimsAppend(ctx, values...)
-}
-
 // ResourceClaimsAppendRaw appends items to the list using Raw struct representations.
 func (x PodSpec) ResourceClaimsAppendRaw(ctx context.Context, values ...*PodResourceClaimRaw) {
     list := x.ResourceClaimsList(ctx)
@@ -18325,6 +18637,14 @@ func (x PodSpec) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodSpec) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodSpec) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodSpec
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -18989,11 +19309,6 @@ func (x PodStatus) ConditionsAppend(ctx context.Context, values ...PodCondition)
     }
 }
 
-// AppendConditions is an alias for ConditionsAppend for backwards compatibility.
-func (x PodStatus) AppendConditions(ctx context.Context, values ...PodCondition) {
-    x.ConditionsAppend(ctx, values...)
-}
-
 // ConditionsAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) ConditionsAppendRaw(ctx context.Context, values ...*PodConditionRaw) {
     list := x.ConditionsList(ctx)
@@ -19086,11 +19401,6 @@ func (x PodStatus) HostIpsAppend(ctx context.Context, values ...HostIP) {
     }
 }
 
-// AppendHostIps is an alias for HostIpsAppend for backwards compatibility.
-func (x PodStatus) AppendHostIps(ctx context.Context, values ...HostIP) {
-    x.HostIpsAppend(ctx, values...)
-}
-
 // HostIpsAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) HostIpsAppendRaw(ctx context.Context, values ...*HostIPRaw) {
     list := x.HostIpsList(ctx)
@@ -19145,11 +19455,6 @@ func (x PodStatus) PodIpsAppend(ctx context.Context, values ...PodIP) {
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendPodIps is an alias for PodIpsAppend for backwards compatibility.
-func (x PodStatus) AppendPodIps(ctx context.Context, values ...PodIP) {
-    x.PodIpsAppend(ctx, values...)
 }
 
 // PodIpsAppendRaw appends items to the list using Raw struct representations.
@@ -19209,11 +19514,6 @@ func (x PodStatus) InitContainerStatusesAppend(ctx context.Context, values ...Co
     }
 }
 
-// AppendInitContainerStatuses is an alias for InitContainerStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendInitContainerStatuses(ctx context.Context, values ...ContainerStatus) {
-    x.InitContainerStatusesAppend(ctx, values...)
-}
-
 // InitContainerStatusesAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) InitContainerStatusesAppendRaw(ctx context.Context, values ...*ContainerStatusRaw) {
     list := x.InitContainerStatusesList(ctx)
@@ -19256,11 +19556,6 @@ func (x PodStatus) ContainerStatusesAppend(ctx context.Context, values ...Contai
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendContainerStatuses is an alias for ContainerStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendContainerStatuses(ctx context.Context, values ...ContainerStatus) {
-    x.ContainerStatusesAppend(ctx, values...)
 }
 
 // ContainerStatusesAppendRaw appends items to the list using Raw struct representations.
@@ -19319,11 +19614,6 @@ func (x PodStatus) EphemeralContainerStatusesAppend(ctx context.Context, values 
     }
 }
 
-// AppendEphemeralContainerStatuses is an alias for EphemeralContainerStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendEphemeralContainerStatuses(ctx context.Context, values ...ContainerStatus) {
-    x.EphemeralContainerStatusesAppend(ctx, values...)
-}
-
 // EphemeralContainerStatusesAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) EphemeralContainerStatusesAppendRaw(ctx context.Context, values ...*ContainerStatusRaw) {
     list := x.EphemeralContainerStatusesList(ctx)
@@ -19380,11 +19670,6 @@ func (x PodStatus) ResourceClaimStatusesAppend(ctx context.Context, values ...Po
     }
 }
 
-// AppendResourceClaimStatuses is an alias for ResourceClaimStatusesAppend for backwards compatibility.
-func (x PodStatus) AppendResourceClaimStatuses(ctx context.Context, values ...PodResourceClaimStatus) {
-    x.ResourceClaimStatusesAppend(ctx, values...)
-}
-
 // ResourceClaimStatusesAppendRaw appends items to the list using Raw struct representations.
 func (x PodStatus) ResourceClaimStatusesAppendRaw(ctx context.Context, values ...*PodResourceClaimStatusRaw) {
     list := x.ResourceClaimStatusesList(ctx)
@@ -19423,6 +19708,14 @@ func (x PodStatus) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x PodStatus) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PodStatus) XXXTypeHash() [16]byte {
+    return XXXTypeHashPodStatus
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -19824,6 +20117,14 @@ func (x PreferredSchedulingTerm) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x PreferredSchedulingTerm) XXXTypeHash() [16]byte {
+    return XXXTypeHashPreferredSchedulingTerm
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x PreferredSchedulingTerm) SetRecording(enabled bool) PreferredSchedulingTerm {
@@ -20047,6 +20348,14 @@ func (x Probe) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Probe) XXXTypeHash() [16]byte {
+    return XXXTypeHashProbe
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Probe) SetRecording(enabled bool) Probe {
@@ -20262,6 +20571,14 @@ func (x ProbeHandler) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ProbeHandler) XXXTypeHash() [16]byte {
+    return XXXTypeHashProbeHandler
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ProbeHandler) SetRecording(enabled bool) ProbeHandler {
@@ -20435,11 +20752,6 @@ func (x ProjectedVolumeSource) SourcesAppend(ctx context.Context, values ...Volu
     }
 }
 
-// AppendSources is an alias for SourcesAppend for backwards compatibility.
-func (x ProjectedVolumeSource) AppendSources(ctx context.Context, values ...VolumeProjection) {
-    x.SourcesAppend(ctx, values...)
-}
-
 // SourcesAppendRaw appends items to the list using Raw struct representations.
 func (x ProjectedVolumeSource) SourcesAppendRaw(ctx context.Context, values ...*VolumeProjectionRaw) {
     list := x.SourcesList(ctx)
@@ -20478,6 +20790,14 @@ func (x ProjectedVolumeSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ProjectedVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ProjectedVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashProjectedVolumeSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -20662,6 +20982,14 @@ func (x ResourceClaim) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ResourceClaim) XXXTypeHash() [16]byte {
+    return XXXTypeHashResourceClaim
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ResourceClaim) SetRecording(enabled bool) ResourceClaim {
@@ -20833,6 +21161,14 @@ func (x ResourceFieldSelector) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ResourceFieldSelector) XXXTypeHash() [16]byte {
+    return XXXTypeHashResourceFieldSelector
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ResourceFieldSelector) SetRecording(enabled bool) ResourceFieldSelector {
@@ -20989,11 +21325,6 @@ func (x ResourceRequirements) LimitsAppend(ctx context.Context, values ...KeyVal
     }
 }
 
-// AppendLimits is an alias for LimitsAppend for backwards compatibility.
-func (x ResourceRequirements) AppendLimits(ctx context.Context, values ...KeyValue) {
-    x.LimitsAppend(ctx, values...)
-}
-
 // LimitsAppendRaw appends items to the list using Raw struct representations.
 func (x ResourceRequirements) LimitsAppendRaw(ctx context.Context, values ...*KeyValueRaw) {
     list := x.LimitsList(ctx)
@@ -21036,11 +21367,6 @@ func (x ResourceRequirements) RequestsAppend(ctx context.Context, values ...KeyV
     for _, v := range values {
         list.Append(v.XXXGetStruct())
     }
-}
-
-// AppendRequests is an alias for RequestsAppend for backwards compatibility.
-func (x ResourceRequirements) AppendRequests(ctx context.Context, values ...KeyValue) {
-    x.RequestsAppend(ctx, values...)
 }
 
 // RequestsAppendRaw appends items to the list using Raw struct representations.
@@ -21087,11 +21413,6 @@ func (x ResourceRequirements) ClaimsAppend(ctx context.Context, values ...Resour
     }
 }
 
-// AppendClaims is an alias for ClaimsAppend for backwards compatibility.
-func (x ResourceRequirements) AppendClaims(ctx context.Context, values ...ResourceClaim) {
-    x.ClaimsAppend(ctx, values...)
-}
-
 // ClaimsAppendRaw appends items to the list using Raw struct representations.
 func (x ResourceRequirements) ClaimsAppendRaw(ctx context.Context, values ...*ResourceClaimRaw) {
     list := x.ClaimsList(ctx)
@@ -21118,6 +21439,14 @@ func (x ResourceRequirements) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x ResourceRequirements) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ResourceRequirements) XXXTypeHash() [16]byte {
+    return XXXTypeHashResourceRequirements
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -21377,6 +21706,14 @@ func (x SELinuxOptions) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SELinuxOptions) XXXTypeHash() [16]byte {
+    return XXXTypeHashSELinuxOptions
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x SELinuxOptions) SetRecording(enabled bool) SELinuxOptions {
@@ -21546,6 +21883,14 @@ func (x SeccompProfile) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SeccompProfile) XXXTypeHash() [16]byte {
+    return XXXTypeHashSeccompProfile
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x SeccompProfile) SetRecording(enabled bool) SeccompProfile {
@@ -21703,6 +22048,14 @@ func (x SecretEnvSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x SecretEnvSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SecretEnvSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashSecretEnvSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -21876,6 +22229,14 @@ func (x SecretKeySelector) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SecretKeySelector) XXXTypeHash() [16]byte {
+    return XXXTypeHashSecretKeySelector
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x SecretKeySelector) SetRecording(enabled bool) SecretKeySelector {
@@ -22044,11 +22405,6 @@ func (x SecretProjection) ItemsAppend(ctx context.Context, values ...KeyToPath) 
     }
 }
 
-// AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x SecretProjection) AppendItems(ctx context.Context, values ...KeyToPath) {
-    x.ItemsAppend(ctx, values...)
-}
-
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x SecretProjection) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
     list := x.ItemsList(ctx)
@@ -22087,6 +22443,14 @@ func (x SecretProjection) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x SecretProjection) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SecretProjection) XXXTypeHash() [16]byte {
+    return XXXTypeHashSecretProjection
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -22280,11 +22644,6 @@ func (x SecretVolumeSource) ItemsAppend(ctx context.Context, values ...KeyToPath
     }
 }
 
-// AppendItems is an alias for ItemsAppend for backwards compatibility.
-func (x SecretVolumeSource) AppendItems(ctx context.Context, values ...KeyToPath) {
-    x.ItemsAppend(ctx, values...)
-}
-
 // ItemsAppendRaw appends items to the list using Raw struct representations.
 func (x SecretVolumeSource) ItemsAppendRaw(ctx context.Context, values ...*KeyToPathRaw) {
     list := x.ItemsList(ctx)
@@ -22335,6 +22694,14 @@ func (x SecretVolumeSource) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x SecretVolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SecretVolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashSecretVolumeSource
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -22654,6 +23021,14 @@ func (x SecurityContext) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SecurityContext) XXXTypeHash() [16]byte {
+    return XXXTypeHashSecurityContext
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x SecurityContext) SetRecording(enabled bool) SecurityContext {
@@ -22890,6 +23265,14 @@ func (x ServiceAccountTokenProjection) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x ServiceAccountTokenProjection) XXXTypeHash() [16]byte {
+    return XXXTypeHashServiceAccountTokenProjection
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x ServiceAccountTokenProjection) SetRecording(enabled bool) ServiceAccountTokenProjection {
@@ -23040,6 +23423,14 @@ func (x SleepAction) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x SleepAction) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x SleepAction) XXXTypeHash() [16]byte {
+    return XXXTypeHashSleepAction
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -23194,6 +23585,14 @@ func (x Sysctl) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Sysctl) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Sysctl) XXXTypeHash() [16]byte {
+    return XXXTypeHashSysctl
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -23356,6 +23755,14 @@ func (x TCPSocketAction) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x TCPSocketAction) XXXTypeHash() [16]byte {
+    return XXXTypeHashTCPSocketAction
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x TCPSocketAction) SetRecording(enabled bool) TCPSocketAction {
@@ -23516,6 +23923,14 @@ func (x Time) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Time) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Time) XXXTypeHash() [16]byte {
+    return XXXTypeHashTime
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -23711,6 +24126,14 @@ func (x Toleration) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x Toleration) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Toleration) XXXTypeHash() [16]byte {
+    return XXXTypeHashToleration
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -23968,6 +24391,14 @@ func (x TopologySpreadConstraint) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x TopologySpreadConstraint) XXXTypeHash() [16]byte {
+    return XXXTypeHashTopologySpreadConstraint
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x TopologySpreadConstraint) SetRecording(enabled bool) TopologySpreadConstraint {
@@ -24164,6 +24595,14 @@ func (x TypeMeta) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x TypeMeta) XXXTypeHash() [16]byte {
+    return XXXTypeHashTypeMeta
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x TypeMeta) SetRecording(enabled bool) TypeMeta {
@@ -24333,6 +24772,14 @@ func (x TypedLocalObjectReference) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x TypedLocalObjectReference) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x TypedLocalObjectReference) XXXTypeHash() [16]byte {
+    return XXXTypeHashTypedLocalObjectReference
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -24523,6 +24970,14 @@ func (x TypedObjectReference) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x TypedObjectReference) XXXTypeHash() [16]byte {
+    return XXXTypeHashTypedObjectReference
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x TypedObjectReference) SetRecording(enabled bool) TypedObjectReference {
@@ -24693,6 +25148,14 @@ func (x Volume) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x Volume) XXXTypeHash() [16]byte {
+    return XXXTypeHashVolume
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x Volume) SetRecording(enabled bool) Volume {
@@ -24853,6 +25316,14 @@ func (x VolumeDevice) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x VolumeDevice) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x VolumeDevice) XXXTypeHash() [16]byte {
+    return XXXTypeHashVolumeDevice
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -25074,6 +25545,14 @@ func (x VolumeMount) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x VolumeMount) XXXTypeHash() [16]byte {
+    return XXXTypeHashVolumeMount
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x VolumeMount) SetRecording(enabled bool) VolumeMount {
@@ -25280,6 +25759,14 @@ func (x VolumeMountStatus) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x VolumeMountStatus) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x VolumeMountStatus) XXXTypeHash() [16]byte {
+    return XXXTypeHashVolumeMountStatus
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -25490,6 +25977,14 @@ func (x VolumeProjection) ClawStruct() reflect.Struct{
 // Deprecated: Not deprectated, but should not be used and should not show up in documentation.
 func (x VolumeProjection) XXXGetStruct() *segment.Struct {
     return x.s
+}
+
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x VolumeProjection) XXXTypeHash() [16]byte {
+    return XXXTypeHashVolumeProjection
 }
 
 // SetRecording enables or disables mutation recording for patch generation.
@@ -25813,6 +26308,14 @@ func (x VolumeSource) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x VolumeSource) XXXTypeHash() [16]byte {
+    return XXXTypeHashVolumeSource
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x VolumeSource) SetRecording(enabled bool) VolumeSource {
@@ -26059,6 +26562,14 @@ func (x WeightedPodAffinityTerm) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x WeightedPodAffinityTerm) XXXTypeHash() [16]byte {
+    return XXXTypeHashWeightedPodAffinityTerm
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x WeightedPodAffinityTerm) SetRecording(enabled bool) WeightedPodAffinityTerm {
@@ -26245,6 +26756,14 @@ func (x WindowsSecurityContextOptions) XXXGetStruct() *segment.Struct {
     return x.s
 }
 
+// XXXTypeHash returns the SHAKE128 hash (128 bits) of this type's identity.
+// Used for Any type serialization to identify the concrete type.
+//
+// Deprecated: Not deprecated, but should not be used directly and should not show up in documentation.
+func (x WindowsSecurityContextOptions) XXXTypeHash() [16]byte {
+    return XXXTypeHashWindowsSecurityContextOptions
+}
+
 // SetRecording enables or disables mutation recording for patch generation.
 // When enabled, all Set* operations and list mutations are recorded.
 func (x WindowsSecurityContextOptions) SetRecording(enabled bool) WindowsSecurityContextOptions {
@@ -26317,6 +26836,318 @@ func (x WindowsSecurityContextOptions) XXXDescr() reflect.StructDescr {
 } 
 
 // Everything below this line is internal details.
+
+// Type hash constants for Any type support.
+// These are SHAKE128 hashes (128 bits) of the full type path + name.
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashAWSElasticBlockStoreVolumeSource = [16]byte{0x1c, 0x72, 0xa7, 0x36, 0xda, 0x6f, 0xec, 0x7d, 0xdb, 0x33, 0xfe, 0xe1, 0xa9, 0x5f, 0x1a, 0x4d}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashAffinity = [16]byte{0x54, 0x2d, 0x0b, 0xf0, 0x0e, 0x70, 0xca, 0x7d, 0xb2, 0x23, 0x4b, 0x01, 0xff, 0x60, 0x91, 0xc8}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashAppArmorProfile = [16]byte{0x59, 0x3b, 0x5e, 0xe3, 0x97, 0xaf, 0xac, 0xc7, 0xb1, 0xb5, 0x2f, 0x69, 0xd6, 0xbd, 0xeb, 0x49}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashCSIVolumeSource = [16]byte{0x3c, 0xec, 0xf5, 0xfc, 0x7a, 0xbf, 0x27, 0x1c, 0x96, 0xee, 0x27, 0xcf, 0x86, 0x19, 0x1f, 0xa0}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashCapabilities = [16]byte{0x9a, 0x76, 0x0c, 0x09, 0x6e, 0xb1, 0xf7, 0x6a, 0xe2, 0x3f, 0x18, 0xbc, 0x13, 0x8f, 0x8d, 0x4c}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashClusterTrustBundleProjection = [16]byte{0xc0, 0xa0, 0xba, 0xa3, 0x18, 0x3d, 0x18, 0xca, 0x6f, 0xb7, 0x09, 0x6d, 0x7e, 0x96, 0x58, 0x06}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashConfigMapEnvSource = [16]byte{0x20, 0x84, 0x6a, 0x2b, 0x72, 0xb5, 0xb7, 0x49, 0xc2, 0x86, 0x9b, 0xfd, 0xd7, 0x5f, 0x89, 0x26}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashConfigMapKeySelector = [16]byte{0x9a, 0xe6, 0x80, 0x5a, 0x1d, 0x86, 0x59, 0x36, 0x0a, 0xbf, 0x3e, 0xac, 0xc3, 0x2a, 0x19, 0xd2}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashConfigMapProjection = [16]byte{0x69, 0x5e, 0x85, 0xe2, 0xe4, 0x7d, 0x6e, 0x44, 0xeb, 0xbc, 0x29, 0xc4, 0x7f, 0xa2, 0x89, 0x7a}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashConfigMapVolumeSource = [16]byte{0x0e, 0xeb, 0xeb, 0x32, 0x61, 0x42, 0x8a, 0xd3, 0x68, 0xc5, 0x39, 0x8f, 0x84, 0x5d, 0x7c, 0xd8}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainer = [16]byte{0xd9, 0xe5, 0x5a, 0x99, 0x4f, 0x97, 0x4f, 0x9b, 0xc9, 0xfa, 0xfb, 0x70, 0x45, 0x80, 0x5c, 0x91}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainerPort = [16]byte{0xe1, 0x6b, 0x3d, 0x12, 0xf8, 0x1f, 0x39, 0x35, 0x7f, 0x03, 0x9a, 0xad, 0xd5, 0x37, 0x5d, 0x47}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainerResizePolicy = [16]byte{0x78, 0x96, 0xa6, 0x12, 0x9b, 0xc6, 0xbe, 0x37, 0xba, 0x9a, 0xfd, 0x18, 0xeb, 0x0d, 0xeb, 0xbb}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainerState = [16]byte{0xcd, 0xa0, 0x1e, 0x0e, 0x04, 0x66, 0xb0, 0x05, 0x35, 0xcc, 0xd6, 0xa1, 0xfb, 0xb6, 0x1b, 0x23}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainerStateRunning = [16]byte{0x57, 0x70, 0xcc, 0xe4, 0x10, 0x0a, 0xff, 0x6d, 0xcd, 0x91, 0x94, 0xb6, 0x3e, 0x95, 0x67, 0x35}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainerStateTerminated = [16]byte{0x67, 0x6d, 0x78, 0x17, 0x1b, 0x33, 0xad, 0xbb, 0x75, 0xac, 0xb1, 0xb2, 0x4b, 0x18, 0xd6, 0x00}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainerStateWaiting = [16]byte{0x79, 0xe2, 0xce, 0xd1, 0xb9, 0x1b, 0x84, 0x0b, 0x9a, 0x7c, 0x27, 0x85, 0x3b, 0x11, 0x89, 0xdd}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashContainerStatus = [16]byte{0xf2, 0x4b, 0xe2, 0x0b, 0x08, 0xe4, 0xbb, 0x5b, 0x18, 0x26, 0x5f, 0xcf, 0xbe, 0x0b, 0x48, 0xca}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashDownwardAPIProjection = [16]byte{0xe9, 0xcc, 0xa4, 0xe4, 0x16, 0x8f, 0x0e, 0xbc, 0xc6, 0x20, 0xd6, 0x34, 0xa9, 0x11, 0x7d, 0x5a}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashDownwardAPIVolumeFile = [16]byte{0x19, 0xbd, 0x9a, 0x8f, 0xf5, 0xd0, 0xa0, 0x64, 0x6a, 0x12, 0xf9, 0x29, 0x4c, 0xf8, 0x57, 0x17}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashDownwardAPIVolumeSource = [16]byte{0x36, 0xe2, 0xf1, 0x6c, 0x6a, 0xd4, 0xa9, 0x06, 0x3d, 0xf2, 0xd6, 0x26, 0x8c, 0xdb, 0x11, 0x1d}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashEmptyDirVolumeSource = [16]byte{0x8f, 0xce, 0xdb, 0x9a, 0x84, 0xaf, 0x6e, 0x87, 0xa7, 0xdc, 0x19, 0x81, 0x57, 0xd7, 0xda, 0x60}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashEnvFromSource = [16]byte{0x08, 0xfa, 0x76, 0x4b, 0x52, 0x00, 0xa3, 0x59, 0xf8, 0x03, 0xc1, 0xd2, 0xd1, 0xdb, 0x1e, 0xcb}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashEnvVar = [16]byte{0xcd, 0xe1, 0x3c, 0x9e, 0xb2, 0x80, 0xf3, 0x0f, 0x38, 0xbf, 0xcd, 0x35, 0x51, 0x34, 0x73, 0xce}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashEnvVarSource = [16]byte{0x4b, 0x61, 0xfe, 0xe3, 0x64, 0xb5, 0x6b, 0x2b, 0x21, 0xcc, 0x7b, 0x96, 0xe5, 0x5a, 0xcc, 0xd1}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashEphemeralContainer = [16]byte{0xd2, 0x72, 0x19, 0xe6, 0x1d, 0x64, 0xbe, 0x16, 0x91, 0x86, 0xf2, 0x28, 0x08, 0x52, 0xb8, 0x48}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashEphemeralVolumeSource = [16]byte{0x33, 0xb0, 0x78, 0x5f, 0x44, 0xdf, 0x3f, 0x88, 0x4a, 0xc9, 0x67, 0x56, 0x7f, 0x09, 0xdb, 0xe3}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashExecAction = [16]byte{0x91, 0x1c, 0x8c, 0xd0, 0x85, 0xb7, 0x9a, 0x7d, 0x38, 0xc6, 0xb3, 0xb4, 0x41, 0x60, 0xa9, 0x98}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashGCEPersistentDiskVolumeSource = [16]byte{0xd7, 0x0d, 0xb5, 0x8b, 0x87, 0x4d, 0x1f, 0x42, 0xff, 0x28, 0x84, 0x15, 0x88, 0x92, 0xbb, 0x1d}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashGRPCAction = [16]byte{0xcc, 0x7a, 0xbe, 0xe8, 0x00, 0x56, 0x51, 0x58, 0xca, 0x28, 0x7e, 0x65, 0x7b, 0x53, 0xbe, 0x81}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashHTTPGetAction = [16]byte{0x66, 0x4c, 0xe5, 0x89, 0xeb, 0x7d, 0x72, 0x66, 0x29, 0x1b, 0xd8, 0x2d, 0x01, 0xbe, 0x60, 0x65}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashHTTPHeader = [16]byte{0x67, 0x11, 0x2a, 0x4c, 0x26, 0x17, 0x42, 0xa1, 0xc3, 0x62, 0xe3, 0x1c, 0x48, 0x8c, 0x4f, 0xc1}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashHostAlias = [16]byte{0xe3, 0x8b, 0x33, 0x1d, 0xf6, 0xa9, 0xd2, 0x12, 0x85, 0x25, 0xcd, 0x9d, 0x71, 0x16, 0xf3, 0xa2}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashHostIP = [16]byte{0x38, 0x8b, 0x22, 0x02, 0x5c, 0x7e, 0x79, 0x26, 0xa3, 0x7f, 0x2c, 0x68, 0x63, 0x73, 0x28, 0x5b}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashHostPathVolumeSource = [16]byte{0x5d, 0xe2, 0x07, 0x71, 0x90, 0xfc, 0xee, 0x80, 0x25, 0x29, 0x9b, 0xf6, 0x2d, 0x39, 0x2c, 0xb7}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashIntOrString = [16]byte{0x80, 0x55, 0x9d, 0x19, 0xbc, 0x08, 0xfc, 0xc0, 0x3e, 0x97, 0x5f, 0x35, 0xd4, 0x03, 0x7e, 0x03}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashKeyToPath = [16]byte{0xcf, 0xc7, 0xf5, 0x60, 0x76, 0x75, 0x85, 0xa4, 0x4d, 0x4f, 0x92, 0x2b, 0x24, 0xc5, 0x0a, 0x95}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashKeyValue = [16]byte{0x81, 0x5e, 0xdd, 0xb3, 0x8d, 0x35, 0x8d, 0xb0, 0xc4, 0xa0, 0x40, 0xdb, 0x26, 0x03, 0xa6, 0xdb}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashLabelSelector = [16]byte{0xed, 0x7e, 0x6e, 0xbd, 0x91, 0x3d, 0x09, 0x6e, 0xdf, 0x51, 0xff, 0x21, 0x2f, 0x08, 0x7f, 0xb7}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashLabelSelectorRequirement = [16]byte{0x0a, 0x5a, 0xa1, 0xce, 0x5a, 0xfe, 0x53, 0x82, 0x7b, 0x94, 0x6d, 0xe9, 0x33, 0x14, 0xf4, 0x8e}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashLifecycle = [16]byte{0x15, 0x7a, 0xf2, 0x71, 0x37, 0x8a, 0xed, 0x19, 0x30, 0xa8, 0x11, 0x09, 0x92, 0x77, 0x7e, 0xbf}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashLifecycleHandler = [16]byte{0xca, 0x2b, 0x50, 0x25, 0x84, 0x28, 0xba, 0x2b, 0xe9, 0x2f, 0x8d, 0xd6, 0x4d, 0x57, 0x9a, 0x19}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashLocalObjectReference = [16]byte{0x9d, 0x64, 0x56, 0x8d, 0xa8, 0x27, 0x5f, 0x2e, 0x41, 0xff, 0x25, 0x14, 0xe0, 0xe0, 0x82, 0xf6}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashManagedFieldsEntry = [16]byte{0x9b, 0x29, 0x0c, 0x56, 0x8c, 0x90, 0x8d, 0xcb, 0x99, 0x0b, 0x3b, 0x33, 0x40, 0x97, 0xd7, 0x65}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashNFSVolumeSource = [16]byte{0x5a, 0x67, 0x03, 0x9c, 0x97, 0xff, 0x3b, 0x60, 0x1f, 0x02, 0x95, 0xe9, 0x09, 0x28, 0xb3, 0x1f}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashNodeAffinity = [16]byte{0x37, 0x90, 0x8c, 0x67, 0xf2, 0x18, 0x8a, 0x49, 0xde, 0x28, 0x06, 0x8b, 0x9b, 0x7c, 0x68, 0xbf}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashNodeSelector = [16]byte{0xe3, 0x65, 0xdd, 0x02, 0x37, 0xeb, 0x8e, 0xf1, 0xb2, 0xa2, 0xd5, 0xda, 0xec, 0x06, 0x3d, 0xcc}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashNodeSelectorRequirement = [16]byte{0x25, 0xd5, 0xaa, 0x13, 0xd3, 0x45, 0xd8, 0xf4, 0xc9, 0x67, 0xb1, 0x4b, 0xbc, 0x95, 0x49, 0xae}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashNodeSelectorTerm = [16]byte{0x6a, 0x6e, 0x6b, 0xef, 0x7d, 0xb7, 0x5f, 0xd4, 0x98, 0xa6, 0x2d, 0xac, 0x01, 0xeb, 0xf5, 0x87}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashObjectFieldSelector = [16]byte{0x40, 0xd7, 0xff, 0x08, 0x80, 0xb2, 0xe9, 0x99, 0x11, 0xd1, 0x4d, 0x4f, 0x60, 0x4c, 0xfa, 0x46}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashObjectMeta = [16]byte{0xa0, 0x31, 0x66, 0xf5, 0x8c, 0x01, 0x31, 0x58, 0x11, 0x27, 0x09, 0x2c, 0x98, 0xa5, 0x5a, 0xe0}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashOwnerReference = [16]byte{0x2f, 0x12, 0xfb, 0xe2, 0xf5, 0x60, 0x0a, 0x8b, 0x83, 0xd2, 0xb5, 0x6a, 0x24, 0x5c, 0xc1, 0x98}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPersistentVolumeClaimSpec = [16]byte{0xac, 0xc8, 0x30, 0x0c, 0xf0, 0xe8, 0xa2, 0x1f, 0x57, 0xf3, 0xf1, 0x8f, 0x1c, 0x72, 0xa5, 0xc1}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPersistentVolumeClaimTemplate = [16]byte{0x2a, 0x59, 0xe1, 0x3b, 0xdf, 0x55, 0x91, 0xcd, 0xe3, 0xa4, 0x1a, 0xef, 0xbe, 0x16, 0x21, 0x62}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPersistentVolumeClaimVolumeSource = [16]byte{0x2d, 0x96, 0xdb, 0x3f, 0x77, 0x7f, 0xbf, 0x35, 0x30, 0xd9, 0xb2, 0x0e, 0xdd, 0xd2, 0x34, 0x38}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPod = [16]byte{0x3d, 0x62, 0x4c, 0x0b, 0x96, 0xa5, 0x92, 0xdc, 0xb0, 0x62, 0x17, 0x44, 0x17, 0xeb, 0xc5, 0x4a}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodAffinity = [16]byte{0x75, 0x02, 0x3a, 0x01, 0xc9, 0x50, 0x66, 0x3e, 0xb4, 0x37, 0x02, 0xe7, 0x6f, 0x0c, 0x39, 0xd4}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodAffinityTerm = [16]byte{0x75, 0x5e, 0xe6, 0x80, 0x44, 0xf8, 0x15, 0x40, 0xdd, 0x52, 0xab, 0x68, 0x6e, 0xcd, 0xe4, 0x1b}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodAntiAffinity = [16]byte{0x4d, 0xcf, 0x4f, 0xc6, 0xeb, 0x95, 0xf1, 0xc1, 0x69, 0xe4, 0x38, 0xb6, 0x48, 0x03, 0x01, 0x57}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodCondition = [16]byte{0xc2, 0x34, 0xea, 0xbf, 0xac, 0x03, 0xb7, 0x71, 0x8f, 0xd6, 0x41, 0x93, 0x4e, 0x8d, 0x83, 0x71}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodDNSConfig = [16]byte{0x95, 0xd5, 0x44, 0x91, 0x3c, 0x4b, 0xa5, 0x92, 0x04, 0x96, 0x9f, 0x9c, 0x4f, 0xb3, 0x8a, 0x76}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodDNSConfigOption = [16]byte{0x8f, 0x6a, 0xa9, 0x89, 0xfa, 0x44, 0xba, 0x4f, 0x1e, 0xd7, 0x18, 0x7e, 0xd4, 0xba, 0xae, 0x02}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodIP = [16]byte{0x6f, 0x99, 0x48, 0xd3, 0xae, 0xa0, 0x9e, 0x44, 0x8d, 0x4c, 0x27, 0x64, 0xc8, 0xb1, 0x66, 0xed}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodOS = [16]byte{0x88, 0x3e, 0xa9, 0xb0, 0x20, 0xa0, 0xa5, 0xdf, 0x84, 0xca, 0x4e, 0xa4, 0x67, 0x99, 0x81, 0x22}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodReadinessGate = [16]byte{0x5e, 0xb4, 0x35, 0x5d, 0xe1, 0xa3, 0x77, 0xd9, 0x0a, 0x6a, 0x9a, 0x98, 0xc0, 0xb7, 0xf7, 0x24}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodResourceClaim = [16]byte{0x2c, 0xc3, 0xdc, 0x46, 0xb6, 0xf2, 0xdb, 0xd6, 0xe1, 0x62, 0x12, 0x2d, 0x47, 0x2b, 0x09, 0x54}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodResourceClaimStatus = [16]byte{0x34, 0xfd, 0x49, 0x61, 0x04, 0xd3, 0xfa, 0xec, 0xd7, 0xf1, 0x0d, 0x7f, 0x1f, 0x6b, 0x53, 0xe6}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodSchedulingGate = [16]byte{0xd6, 0x02, 0xf0, 0xd6, 0xf8, 0xd6, 0x96, 0x14, 0x8c, 0x27, 0x7b, 0xcb, 0xff, 0x37, 0x1f, 0x14}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodSecurityContext = [16]byte{0x67, 0x74, 0x14, 0x0a, 0x88, 0x99, 0xd3, 0x3a, 0xa8, 0x91, 0x80, 0x37, 0xaa, 0xab, 0x4f, 0x96}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodSpec = [16]byte{0x45, 0x66, 0xac, 0x1f, 0x7d, 0x40, 0x50, 0x84, 0xaa, 0x4b, 0xb0, 0x92, 0xaf, 0xf4, 0xc4, 0xe1}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPodStatus = [16]byte{0xa6, 0x04, 0xde, 0x26, 0x47, 0x43, 0xde, 0x65, 0x63, 0x9e, 0xb2, 0x43, 0x28, 0xc5, 0x90, 0xc5}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashPreferredSchedulingTerm = [16]byte{0x11, 0x08, 0x5c, 0xa4, 0x98, 0x41, 0xfc, 0x30, 0xe6, 0x7c, 0x7c, 0x64, 0x56, 0x8c, 0x8a, 0xc4}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashProbe = [16]byte{0x76, 0xa9, 0x69, 0x51, 0x27, 0xe7, 0xdb, 0x00, 0x68, 0x99, 0xd1, 0xd3, 0xb9, 0x88, 0xf7, 0xdf}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashProbeHandler = [16]byte{0x51, 0x1f, 0x2f, 0x56, 0x21, 0xc8, 0xff, 0xea, 0x0e, 0xd9, 0xac, 0x25, 0x0e, 0xa7, 0x9b, 0x88}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashProjectedVolumeSource = [16]byte{0x7e, 0x87, 0xc4, 0xe4, 0x8a, 0x64, 0xe4, 0xc2, 0x48, 0x2b, 0xb4, 0x09, 0xd0, 0xb5, 0xec, 0xc8}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashResourceClaim = [16]byte{0x66, 0x86, 0xfe, 0x46, 0x4c, 0x12, 0x11, 0xbe, 0x34, 0xc7, 0xe0, 0xae, 0x90, 0xe0, 0x10, 0xae}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashResourceFieldSelector = [16]byte{0xaf, 0x12, 0x32, 0xf5, 0x6c, 0x2e, 0x40, 0x8e, 0xbd, 0x24, 0xe6, 0x50, 0x77, 0x46, 0xd4, 0x3d}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashResourceRequirements = [16]byte{0xe0, 0x9a, 0x1b, 0xe2, 0xc5, 0xc7, 0x32, 0x4f, 0x17, 0x2d, 0x44, 0x21, 0x07, 0x1d, 0x94, 0x9c}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSELinuxOptions = [16]byte{0x5f, 0x1d, 0x97, 0x28, 0xd7, 0x74, 0xb4, 0xef, 0x21, 0x17, 0x0a, 0x88, 0xdb, 0x6a, 0xeb, 0x8e}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSeccompProfile = [16]byte{0x12, 0x71, 0xa4, 0xc8, 0xcb, 0x8e, 0x4b, 0xe1, 0x1a, 0x9a, 0xd1, 0x96, 0x1d, 0xc6, 0x35, 0x22}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSecretEnvSource = [16]byte{0x91, 0x6e, 0xe0, 0x3d, 0x7d, 0xd6, 0x5b, 0x54, 0xaa, 0xdf, 0x45, 0x0f, 0xd2, 0x28, 0xc4, 0x7d}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSecretKeySelector = [16]byte{0x9d, 0xf8, 0xdb, 0x84, 0xc3, 0x7d, 0x2e, 0x17, 0x35, 0xef, 0x50, 0x37, 0x61, 0x9b, 0x99, 0xae}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSecretProjection = [16]byte{0x91, 0xdc, 0xee, 0x62, 0x2f, 0x2b, 0xce, 0xa8, 0x90, 0x76, 0xe9, 0x74, 0x15, 0x72, 0x50, 0xff}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSecretVolumeSource = [16]byte{0x9e, 0xa8, 0xc8, 0xd4, 0x7f, 0xde, 0x42, 0x7f, 0x8b, 0x1b, 0x9e, 0x67, 0xc9, 0x1f, 0x19, 0xa6}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSecurityContext = [16]byte{0x3e, 0xa8, 0x01, 0x08, 0xc0, 0x07, 0x81, 0x9b, 0x33, 0x47, 0x9a, 0x8b, 0x1c, 0x49, 0xe0, 0xc8}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashServiceAccountTokenProjection = [16]byte{0x53, 0x8d, 0xd8, 0xe1, 0x0a, 0xee, 0x62, 0x7a, 0xd0, 0x62, 0xc9, 0x55, 0x31, 0x8f, 0xdc, 0x68}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSleepAction = [16]byte{0x12, 0x42, 0xee, 0xf8, 0x48, 0x56, 0x11, 0x54, 0xbd, 0x29, 0xa3, 0x0c, 0x1a, 0x65, 0x68, 0xb0}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashSysctl = [16]byte{0x83, 0xf8, 0xe8, 0x16, 0x93, 0x63, 0xea, 0x15, 0x53, 0xff, 0x97, 0x93, 0x57, 0x51, 0x1b, 0xd6}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashTCPSocketAction = [16]byte{0x9e, 0xfd, 0xd7, 0x60, 0x29, 0x94, 0x96, 0xcf, 0x3c, 0x53, 0xde, 0xa7, 0xa4, 0x1b, 0xdf, 0x0e}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashTime = [16]byte{0x3e, 0xb5, 0xba, 0x68, 0xaf, 0xac, 0xad, 0xf2, 0xf9, 0x1c, 0x77, 0x3a, 0x62, 0x49, 0x22, 0xd9}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashToleration = [16]byte{0xb8, 0xdc, 0x41, 0x6b, 0x45, 0x0f, 0x5e, 0xcc, 0xeb, 0xb7, 0xb3, 0x42, 0x99, 0x05, 0x7b, 0x0e}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashTopologySpreadConstraint = [16]byte{0x5c, 0xe4, 0x94, 0x6e, 0x26, 0x9b, 0xd6, 0x6c, 0x8f, 0xcb, 0x83, 0x93, 0xdf, 0xe6, 0xf5, 0xef}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashTypeMeta = [16]byte{0x53, 0x1b, 0x37, 0xe8, 0x49, 0xe9, 0xff, 0xba, 0xbf, 0x04, 0xf5, 0x01, 0x7c, 0x2b, 0x89, 0xa3}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashTypedLocalObjectReference = [16]byte{0xbc, 0x1b, 0xa6, 0xe6, 0x9b, 0xd5, 0x3e, 0x08, 0xa1, 0x71, 0xe5, 0xae, 0x31, 0xad, 0x87, 0xda}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashTypedObjectReference = [16]byte{0xb3, 0x3c, 0x98, 0x85, 0x54, 0x69, 0x12, 0x72, 0xc6, 0xd1, 0x24, 0x8a, 0xcc, 0xf3, 0xa8, 0xf6}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashVolume = [16]byte{0x5c, 0x60, 0x41, 0x62, 0x5f, 0xe2, 0x0c, 0xd1, 0x96, 0x3d, 0x57, 0x89, 0x8c, 0x05, 0x66, 0xf2}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashVolumeDevice = [16]byte{0x74, 0xb9, 0x6d, 0xa2, 0x09, 0xca, 0x85, 0xf2, 0xba, 0x36, 0x26, 0xdb, 0xb4, 0x4f, 0x0e, 0x05}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashVolumeMount = [16]byte{0x76, 0x7a, 0xf7, 0x39, 0x41, 0x4c, 0xf1, 0x90, 0x68, 0xb6, 0xef, 0xfc, 0xa4, 0xdf, 0xe9, 0x9a}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashVolumeMountStatus = [16]byte{0xde, 0x8c, 0xde, 0x7e, 0xea, 0x9e, 0x3e, 0x70, 0x44, 0xd7, 0xf5, 0x9d, 0x90, 0x23, 0xa4, 0x7f}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashVolumeProjection = [16]byte{0x2a, 0x21, 0xfb, 0x5a, 0x44, 0x74, 0x18, 0x3e, 0xc5, 0x6c, 0x42, 0x36, 0x45, 0x66, 0x4b, 0xae}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashVolumeSource = [16]byte{0x07, 0x67, 0xa0, 0x93, 0x17, 0xb1, 0x15, 0x36, 0x38, 0x3b, 0x05, 0x37, 0x32, 0xf5, 0x15, 0xb1}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashWeightedPodAffinityTerm = [16]byte{0x10, 0x77, 0xb5, 0xd3, 0x30, 0xeb, 0x1a, 0xa5, 0xfb, 0x90, 0x47, 0x98, 0x9c, 0x8b, 0x92, 0x53}
+
+// Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
+var XXXTypeHashWindowsSecurityContextOptions = [16]byte{0xdf, 0x4a, 0xd2, 0xf0, 0x4b, 0x32, 0x53, 0xd1, 0x99, 0x66, 0xf8, 0x32, 0xc5, 0x5b, 0xcb, 0xb9}
+
 // Deprecated: Not deprecated, but shouldn't be used directly or show up in documentation.
 var XXXMappingAWSElasticBlockStoreVolumeSource = &mapping.Map{
     Name: "AWSElasticBlockStoreVolumeSource",
@@ -26330,6 +27161,7 @@ var XXXMappingAWSElasticBlockStoreVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "FsType",
@@ -26338,6 +27170,7 @@ var XXXMappingAWSElasticBlockStoreVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Partition",
@@ -26346,6 +27179,7 @@ var XXXMappingAWSElasticBlockStoreVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnly",
@@ -26354,6 +27188,7 @@ var XXXMappingAWSElasticBlockStoreVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26371,6 +27206,7 @@ var XXXMappingAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "NodeAffinity",
             
             Mapping: XXXMappingNodeAffinity,
@@ -26382,6 +27218,7 @@ var XXXMappingAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodAffinity",
             
             Mapping: XXXMappingPodAffinity,
@@ -26393,6 +27230,7 @@ var XXXMappingAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodAntiAffinity",
             
             Mapping: XXXMappingPodAntiAffinity,
@@ -26413,6 +27251,7 @@ var XXXMappingAppArmorProfile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "AppArmorProfileType",
         },
         {
@@ -26422,6 +27261,7 @@ var XXXMappingAppArmorProfile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26439,6 +27279,7 @@ var XXXMappingCSIVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnly",
@@ -26447,6 +27288,7 @@ var XXXMappingCSIVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "FsType",
@@ -26455,6 +27297,7 @@ var XXXMappingCSIVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "VolumeAttributes",
@@ -26463,6 +27306,7 @@ var XXXMappingCSIVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -26474,6 +27318,7 @@ var XXXMappingCSIVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
             StructName: "LocalObjectReference",
             
             Mapping: XXXMappingLocalObjectReference,
@@ -26494,6 +27339,7 @@ var XXXMappingCapabilities = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Drop",
@@ -26502,6 +27348,7 @@ var XXXMappingCapabilities = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26519,6 +27366,7 @@ var XXXMappingClusterTrustBundleProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SignerName",
@@ -26527,6 +27375,7 @@ var XXXMappingClusterTrustBundleProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "LabelSelector",
@@ -26535,6 +27384,7 @@ var XXXMappingClusterTrustBundleProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "LabelSelector",
             
             Mapping: XXXMappingLabelSelector,
@@ -26546,6 +27396,7 @@ var XXXMappingClusterTrustBundleProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Path",
@@ -26554,6 +27405,7 @@ var XXXMappingClusterTrustBundleProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26571,6 +27423,7 @@ var XXXMappingConfigMapEnvSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Optional",
@@ -26579,6 +27432,7 @@ var XXXMappingConfigMapEnvSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26596,6 +27450,7 @@ var XXXMappingConfigMapKeySelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Key",
@@ -26604,6 +27459,7 @@ var XXXMappingConfigMapKeySelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Optional",
@@ -26612,6 +27468,7 @@ var XXXMappingConfigMapKeySelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26629,6 +27486,7 @@ var XXXMappingConfigMapProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Items",
@@ -26637,6 +27495,7 @@ var XXXMappingConfigMapProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyToPath",
             
             Mapping: XXXMappingKeyToPath,
@@ -26648,6 +27507,7 @@ var XXXMappingConfigMapProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26665,6 +27525,7 @@ var XXXMappingConfigMapVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Items",
@@ -26673,6 +27534,7 @@ var XXXMappingConfigMapVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyToPath",
             
             Mapping: XXXMappingKeyToPath,
@@ -26684,6 +27546,7 @@ var XXXMappingConfigMapVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Optional",
@@ -26692,6 +27555,7 @@ var XXXMappingConfigMapVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26709,6 +27573,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Image",
@@ -26717,6 +27582,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Command",
@@ -26725,6 +27591,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Args",
@@ -26733,6 +27600,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "WorkingDir",
@@ -26741,6 +27609,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Ports",
@@ -26749,6 +27618,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerPort",
             
             Mapping: XXXMappingContainerPort,
@@ -26760,6 +27630,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
             StructName: "EnvFromSource",
             
             Mapping: XXXMappingEnvFromSource,
@@ -26771,6 +27642,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
             StructName: "EnvVar",
             
             Mapping: XXXMappingEnvVar,
@@ -26782,6 +27654,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceRequirements",
             
             Mapping: XXXMappingResourceRequirements,
@@ -26793,6 +27666,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerResizePolicy",
             
             Mapping: XXXMappingContainerResizePolicy,
@@ -26804,6 +27678,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ContainerRestartPolicy",
         },
         {
@@ -26813,6 +27688,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "VolumeMount",
             
             Mapping: XXXMappingVolumeMount,
@@ -26824,6 +27700,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 12,
             IsEnum: false,
+            IsAny: false,
             StructName: "VolumeDevice",
             
             Mapping: XXXMappingVolumeDevice,
@@ -26835,6 +27712,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 13,
             IsEnum: false,
+            IsAny: false,
             StructName: "Probe",
             
             Mapping: XXXMappingProbe,
@@ -26846,6 +27724,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 14,
             IsEnum: false,
+            IsAny: false,
             StructName: "Probe",
             
             Mapping: XXXMappingProbe,
@@ -26857,6 +27736,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 15,
             IsEnum: false,
+            IsAny: false,
             StructName: "Probe",
             
             Mapping: XXXMappingProbe,
@@ -26868,6 +27748,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 16,
             IsEnum: false,
+            IsAny: false,
             StructName: "Lifecycle",
             
             Mapping: XXXMappingLifecycle,
@@ -26879,6 +27760,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 17,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TerminationMessagePolicy",
@@ -26887,6 +27769,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 18,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "TerminationMessagePolicy",
         },
         {
@@ -26896,6 +27779,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 19,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PullPolicy",
         },
         {
@@ -26905,6 +27789,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 20,
             IsEnum: false,
+            IsAny: false,
             StructName: "SecurityContext",
             
             Mapping: XXXMappingSecurityContext,
@@ -26916,6 +27801,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 21,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "StdinOnce",
@@ -26924,6 +27810,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 22,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Tty",
@@ -26932,6 +27819,7 @@ var XXXMappingContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 23,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26949,6 +27837,7 @@ var XXXMappingContainerPort = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "HostPort",
@@ -26957,6 +27846,7 @@ var XXXMappingContainerPort = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ContainerPort",
@@ -26965,6 +27855,7 @@ var XXXMappingContainerPort = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Protocol",
@@ -26973,6 +27864,7 @@ var XXXMappingContainerPort = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "Protocol",
         },
         {
@@ -26982,6 +27874,7 @@ var XXXMappingContainerPort = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -26999,6 +27892,7 @@ var XXXMappingContainerResizePolicy = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RestartPolicy",
@@ -27007,6 +27901,7 @@ var XXXMappingContainerResizePolicy = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ResourceResizeRestartPolicy",
         },
     },
@@ -27025,6 +27920,7 @@ var XXXMappingContainerState = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerStateWaiting",
             
             Mapping: XXXMappingContainerStateWaiting,
@@ -27036,6 +27932,7 @@ var XXXMappingContainerState = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerStateRunning",
             
             Mapping: XXXMappingContainerStateRunning,
@@ -27047,6 +27944,7 @@ var XXXMappingContainerState = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerStateTerminated",
             
             Mapping: XXXMappingContainerStateTerminated,
@@ -27067,6 +27965,7 @@ var XXXMappingContainerStateRunning = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -27087,6 +27986,7 @@ var XXXMappingContainerStateTerminated = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Signal",
@@ -27095,6 +27995,7 @@ var XXXMappingContainerStateTerminated = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Reason",
@@ -27103,6 +28004,7 @@ var XXXMappingContainerStateTerminated = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Message",
@@ -27111,6 +28013,7 @@ var XXXMappingContainerStateTerminated = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "StartedAt",
@@ -27119,6 +28022,7 @@ var XXXMappingContainerStateTerminated = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -27130,6 +28034,7 @@ var XXXMappingContainerStateTerminated = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -27141,6 +28046,7 @@ var XXXMappingContainerStateTerminated = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27158,6 +28064,7 @@ var XXXMappingContainerStateWaiting = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Message",
@@ -27166,6 +28073,7 @@ var XXXMappingContainerStateWaiting = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27183,6 +28091,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "State",
@@ -27191,6 +28100,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerState",
             
             Mapping: XXXMappingContainerState,
@@ -27202,6 +28112,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerState",
             
             Mapping: XXXMappingContainerState,
@@ -27213,6 +28124,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RestartCount",
@@ -27221,6 +28133,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Image",
@@ -27229,6 +28142,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ImageId",
@@ -27237,6 +28151,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ContainerId",
@@ -27245,6 +28160,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Started",
@@ -27253,6 +28169,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "AllocatedResources",
@@ -27261,6 +28178,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -27272,6 +28190,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceRequirements",
             
             Mapping: XXXMappingResourceRequirements,
@@ -27283,6 +28202,7 @@ var XXXMappingContainerStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "VolumeMountStatus",
             
             Mapping: XXXMappingVolumeMountStatus,
@@ -27303,6 +28223,7 @@ var XXXMappingDownwardAPIProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "DownwardAPIVolumeFile",
             
             Mapping: XXXMappingDownwardAPIVolumeFile,
@@ -27323,6 +28244,7 @@ var XXXMappingDownwardAPIVolumeFile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "FieldRef",
@@ -27331,6 +28253,7 @@ var XXXMappingDownwardAPIVolumeFile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "ObjectFieldSelector",
             
             Mapping: XXXMappingObjectFieldSelector,
@@ -27342,6 +28265,7 @@ var XXXMappingDownwardAPIVolumeFile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceFieldSelector",
             
             Mapping: XXXMappingResourceFieldSelector,
@@ -27353,6 +28277,7 @@ var XXXMappingDownwardAPIVolumeFile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27370,6 +28295,7 @@ var XXXMappingDownwardAPIVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "DownwardAPIVolumeFile",
             
             Mapping: XXXMappingDownwardAPIVolumeFile,
@@ -27381,6 +28307,7 @@ var XXXMappingDownwardAPIVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27398,6 +28325,7 @@ var XXXMappingEmptyDirVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "StorageMedium",
         },
         {
@@ -27407,6 +28335,7 @@ var XXXMappingEmptyDirVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27424,6 +28353,7 @@ var XXXMappingEnvFromSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ConfigMapRef",
@@ -27432,6 +28362,7 @@ var XXXMappingEnvFromSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "ConfigMapEnvSource",
             
             Mapping: XXXMappingConfigMapEnvSource,
@@ -27443,6 +28374,7 @@ var XXXMappingEnvFromSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "SecretEnvSource",
             
             Mapping: XXXMappingSecretEnvSource,
@@ -27463,6 +28395,7 @@ var XXXMappingEnvVar = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Value",
@@ -27471,6 +28404,7 @@ var XXXMappingEnvVar = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ValueFrom",
@@ -27479,6 +28413,7 @@ var XXXMappingEnvVar = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "EnvVarSource",
             
             Mapping: XXXMappingEnvVarSource,
@@ -27499,6 +28434,7 @@ var XXXMappingEnvVarSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "ObjectFieldSelector",
             
             Mapping: XXXMappingObjectFieldSelector,
@@ -27510,6 +28446,7 @@ var XXXMappingEnvVarSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceFieldSelector",
             
             Mapping: XXXMappingResourceFieldSelector,
@@ -27521,6 +28458,7 @@ var XXXMappingEnvVarSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "ConfigMapKeySelector",
             
             Mapping: XXXMappingConfigMapKeySelector,
@@ -27532,6 +28470,7 @@ var XXXMappingEnvVarSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "SecretKeySelector",
             
             Mapping: XXXMappingSecretKeySelector,
@@ -27552,6 +28491,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Image",
@@ -27560,6 +28500,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Command",
@@ -27568,6 +28509,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Args",
@@ -27576,6 +28518,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "WorkingDir",
@@ -27584,6 +28527,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Ports",
@@ -27592,6 +28536,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerPort",
             
             Mapping: XXXMappingContainerPort,
@@ -27603,6 +28548,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
             StructName: "EnvFromSource",
             
             Mapping: XXXMappingEnvFromSource,
@@ -27614,6 +28560,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
             StructName: "EnvVar",
             
             Mapping: XXXMappingEnvVar,
@@ -27625,6 +28572,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceRequirements",
             
             Mapping: XXXMappingResourceRequirements,
@@ -27636,6 +28584,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: false,
+            IsAny: false,
             StructName: "VolumeMount",
             
             Mapping: XXXMappingVolumeMount,
@@ -27647,6 +28596,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
             StructName: "VolumeDevice",
             
             Mapping: XXXMappingVolumeDevice,
@@ -27658,6 +28608,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "Probe",
             
             Mapping: XXXMappingProbe,
@@ -27669,6 +28620,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 12,
             IsEnum: false,
+            IsAny: false,
             StructName: "Probe",
             
             Mapping: XXXMappingProbe,
@@ -27680,6 +28632,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 13,
             IsEnum: false,
+            IsAny: false,
             StructName: "Probe",
             
             Mapping: XXXMappingProbe,
@@ -27691,6 +28644,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 14,
             IsEnum: false,
+            IsAny: false,
             StructName: "Lifecycle",
             
             Mapping: XXXMappingLifecycle,
@@ -27702,6 +28656,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 15,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TerminationMessagePolicy",
@@ -27710,6 +28665,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 16,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "TerminationMessagePolicy",
         },
         {
@@ -27719,6 +28675,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 17,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PullPolicy",
         },
         {
@@ -27728,6 +28685,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 18,
             IsEnum: false,
+            IsAny: false,
             StructName: "SecurityContext",
             
             Mapping: XXXMappingSecurityContext,
@@ -27739,6 +28697,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 19,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "StdinOnce",
@@ -27747,6 +28706,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 20,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Tty",
@@ -27755,6 +28715,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 21,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TargetContainerName",
@@ -27763,6 +28724,7 @@ var XXXMappingEphemeralContainer = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 22,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27780,6 +28742,7 @@ var XXXMappingEphemeralVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "PersistentVolumeClaimTemplate",
             
             Mapping: XXXMappingPersistentVolumeClaimTemplate,
@@ -27800,6 +28763,7 @@ var XXXMappingExecAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27817,6 +28781,7 @@ var XXXMappingGCEPersistentDiskVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "FsType",
@@ -27825,6 +28790,7 @@ var XXXMappingGCEPersistentDiskVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Partition",
@@ -27833,6 +28799,7 @@ var XXXMappingGCEPersistentDiskVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnly",
@@ -27841,6 +28808,7 @@ var XXXMappingGCEPersistentDiskVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27858,6 +28826,7 @@ var XXXMappingGRPCAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Service",
@@ -27866,6 +28835,7 @@ var XXXMappingGRPCAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27883,6 +28853,7 @@ var XXXMappingHTTPGetAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Port",
@@ -27891,6 +28862,7 @@ var XXXMappingHTTPGetAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "IntOrString",
             
             Mapping: XXXMappingIntOrString,
@@ -27902,6 +28874,7 @@ var XXXMappingHTTPGetAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Scheme",
@@ -27910,6 +28883,7 @@ var XXXMappingHTTPGetAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "URIScheme",
         },
         {
@@ -27919,6 +28893,7 @@ var XXXMappingHTTPGetAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
             StructName: "HTTPHeader",
             
             Mapping: XXXMappingHTTPHeader,
@@ -27939,6 +28914,7 @@ var XXXMappingHTTPHeader = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Value",
@@ -27947,6 +28923,7 @@ var XXXMappingHTTPHeader = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27964,6 +28941,7 @@ var XXXMappingHostAlias = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Hostnames",
@@ -27972,6 +28950,7 @@ var XXXMappingHostAlias = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -27989,6 +28968,7 @@ var XXXMappingHostIP = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28006,6 +28986,7 @@ var XXXMappingHostPathVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Type",
@@ -28014,6 +28995,7 @@ var XXXMappingHostPathVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "HostPathType",
         },
     },
@@ -28032,6 +29014,7 @@ var XXXMappingIntOrString = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "StrVal",
@@ -28040,6 +29023,7 @@ var XXXMappingIntOrString = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "IsString",
@@ -28048,6 +29032,7 @@ var XXXMappingIntOrString = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28065,6 +29050,7 @@ var XXXMappingKeyToPath = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Path",
@@ -28073,6 +29059,7 @@ var XXXMappingKeyToPath = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Mode",
@@ -28081,6 +29068,7 @@ var XXXMappingKeyToPath = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28098,6 +29086,7 @@ var XXXMappingKeyValue = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Value",
@@ -28106,6 +29095,7 @@ var XXXMappingKeyValue = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28123,6 +29113,7 @@ var XXXMappingLabelSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -28134,6 +29125,7 @@ var XXXMappingLabelSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "LabelSelectorRequirement",
             
             Mapping: XXXMappingLabelSelectorRequirement,
@@ -28154,6 +29146,7 @@ var XXXMappingLabelSelectorRequirement = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Operator",
@@ -28162,6 +29155,7 @@ var XXXMappingLabelSelectorRequirement = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "LabelSelectorOperator",
         },
         {
@@ -28171,6 +29165,7 @@ var XXXMappingLabelSelectorRequirement = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28188,6 +29183,7 @@ var XXXMappingLifecycle = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "LifecycleHandler",
             
             Mapping: XXXMappingLifecycleHandler,
@@ -28199,6 +29195,7 @@ var XXXMappingLifecycle = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "LifecycleHandler",
             
             Mapping: XXXMappingLifecycleHandler,
@@ -28219,6 +29216,7 @@ var XXXMappingLifecycleHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "ExecAction",
             
             Mapping: XXXMappingExecAction,
@@ -28230,6 +29228,7 @@ var XXXMappingLifecycleHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "HTTPGetAction",
             
             Mapping: XXXMappingHTTPGetAction,
@@ -28241,6 +29240,7 @@ var XXXMappingLifecycleHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "TCPSocketAction",
             
             Mapping: XXXMappingTCPSocketAction,
@@ -28252,6 +29252,7 @@ var XXXMappingLifecycleHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "SleepAction",
             
             Mapping: XXXMappingSleepAction,
@@ -28272,6 +29273,7 @@ var XXXMappingLocalObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28289,6 +29291,7 @@ var XXXMappingManagedFieldsEntry = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Operation",
@@ -28297,6 +29300,7 @@ var XXXMappingManagedFieldsEntry = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ApiVersion",
@@ -28305,6 +29309,7 @@ var XXXMappingManagedFieldsEntry = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Time",
@@ -28313,6 +29318,7 @@ var XXXMappingManagedFieldsEntry = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -28324,6 +29330,7 @@ var XXXMappingManagedFieldsEntry = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "FieldsV1",
@@ -28332,6 +29339,7 @@ var XXXMappingManagedFieldsEntry = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Subresource",
@@ -28340,6 +29348,7 @@ var XXXMappingManagedFieldsEntry = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28357,6 +29366,7 @@ var XXXMappingNFSVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Path",
@@ -28365,6 +29375,7 @@ var XXXMappingNFSVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnly",
@@ -28373,6 +29384,7 @@ var XXXMappingNFSVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28390,6 +29402,7 @@ var XXXMappingNodeAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "NodeSelector",
             
             Mapping: XXXMappingNodeSelector,
@@ -28401,6 +29414,7 @@ var XXXMappingNodeAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "PreferredSchedulingTerm",
             
             Mapping: XXXMappingPreferredSchedulingTerm,
@@ -28421,6 +29435,7 @@ var XXXMappingNodeSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "NodeSelectorTerm",
             
             Mapping: XXXMappingNodeSelectorTerm,
@@ -28441,6 +29456,7 @@ var XXXMappingNodeSelectorRequirement = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Operator",
@@ -28449,6 +29465,7 @@ var XXXMappingNodeSelectorRequirement = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "NodeSelectorOperator",
         },
         {
@@ -28458,6 +29475,7 @@ var XXXMappingNodeSelectorRequirement = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28475,6 +29493,7 @@ var XXXMappingNodeSelectorTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "NodeSelectorRequirement",
             
             Mapping: XXXMappingNodeSelectorRequirement,
@@ -28486,6 +29505,7 @@ var XXXMappingNodeSelectorTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "NodeSelectorRequirement",
             
             Mapping: XXXMappingNodeSelectorRequirement,
@@ -28506,6 +29526,7 @@ var XXXMappingObjectFieldSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "FieldPath",
@@ -28514,6 +29535,7 @@ var XXXMappingObjectFieldSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28531,6 +29553,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "GenerateName",
@@ -28539,6 +29562,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Namespace",
@@ -28547,6 +29571,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SelfLink",
@@ -28555,6 +29580,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Uid",
@@ -28563,6 +29589,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ResourceVersion",
@@ -28571,6 +29598,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Generation",
@@ -28579,6 +29607,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "CreationTimestamp",
@@ -28587,6 +29616,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -28598,6 +29628,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -28609,6 +29640,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Labels",
@@ -28617,6 +29649,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -28628,6 +29661,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -28639,6 +29673,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 12,
             IsEnum: false,
+            IsAny: false,
             StructName: "OwnerReference",
             
             Mapping: XXXMappingOwnerReference,
@@ -28650,6 +29685,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 13,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ManagedFields",
@@ -28658,6 +29694,7 @@ var XXXMappingObjectMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 14,
             IsEnum: false,
+            IsAny: false,
             StructName: "ManagedFieldsEntry",
             
             Mapping: XXXMappingManagedFieldsEntry,
@@ -28678,6 +29715,7 @@ var XXXMappingOwnerReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Kind",
@@ -28686,6 +29724,7 @@ var XXXMappingOwnerReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Name",
@@ -28694,6 +29733,7 @@ var XXXMappingOwnerReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Uid",
@@ -28702,6 +29742,7 @@ var XXXMappingOwnerReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Controller",
@@ -28710,6 +29751,7 @@ var XXXMappingOwnerReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "BlockOwnerDeletion",
@@ -28718,6 +29760,7 @@ var XXXMappingOwnerReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28735,6 +29778,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PersistentVolumeAccessMode",
         },
         {
@@ -28744,6 +29788,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "LabelSelector",
             
             Mapping: XXXMappingLabelSelector,
@@ -28755,6 +29800,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceRequirements",
             
             Mapping: XXXMappingResourceRequirements,
@@ -28766,6 +29812,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "StorageClassName",
@@ -28774,6 +29821,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "VolumeMode",
@@ -28782,6 +29830,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PersistentVolumeMode",
         },
         {
@@ -28791,6 +29840,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
             StructName: "TypedLocalObjectReference",
             
             Mapping: XXXMappingTypedLocalObjectReference,
@@ -28802,6 +29852,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
             StructName: "TypedObjectReference",
             
             Mapping: XXXMappingTypedObjectReference,
@@ -28813,6 +29864,7 @@ var XXXMappingPersistentVolumeClaimSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28830,6 +29882,7 @@ var XXXMappingPersistentVolumeClaimTemplate = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "ObjectMeta",
             
             Mapping: XXXMappingObjectMeta,
@@ -28841,6 +29894,7 @@ var XXXMappingPersistentVolumeClaimTemplate = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "PersistentVolumeClaimSpec",
             
             Mapping: XXXMappingPersistentVolumeClaimSpec,
@@ -28861,6 +29915,7 @@ var XXXMappingPersistentVolumeClaimVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnly",
@@ -28869,6 +29924,7 @@ var XXXMappingPersistentVolumeClaimVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -28886,6 +29942,7 @@ var XXXMappingPod = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "TypeMeta",
             
             Mapping: XXXMappingTypeMeta,
@@ -28897,6 +29954,7 @@ var XXXMappingPod = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "ObjectMeta",
             
             Mapping: XXXMappingObjectMeta,
@@ -28908,6 +29966,7 @@ var XXXMappingPod = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodSpec",
             
             Mapping: XXXMappingPodSpec,
@@ -28919,6 +29978,7 @@ var XXXMappingPod = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodStatus",
             
             Mapping: XXXMappingPodStatus,
@@ -28939,6 +29999,7 @@ var XXXMappingPodAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodAffinityTerm",
             
             Mapping: XXXMappingPodAffinityTerm,
@@ -28950,6 +30011,7 @@ var XXXMappingPodAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "WeightedPodAffinityTerm",
             
             Mapping: XXXMappingWeightedPodAffinityTerm,
@@ -28970,6 +30032,7 @@ var XXXMappingPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "LabelSelector",
             
             Mapping: XXXMappingLabelSelector,
@@ -28981,6 +30044,7 @@ var XXXMappingPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TopologyKey",
@@ -28989,6 +30053,7 @@ var XXXMappingPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "NamespaceSelector",
@@ -28997,6 +30062,7 @@ var XXXMappingPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "LabelSelector",
             
             Mapping: XXXMappingLabelSelector,
@@ -29008,6 +30074,7 @@ var XXXMappingPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "MismatchLabelKeys",
@@ -29016,6 +30083,7 @@ var XXXMappingPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29033,6 +30101,7 @@ var XXXMappingPodAntiAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodAffinityTerm",
             
             Mapping: XXXMappingPodAffinityTerm,
@@ -29044,6 +30113,7 @@ var XXXMappingPodAntiAffinity = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "WeightedPodAffinityTerm",
             
             Mapping: XXXMappingWeightedPodAffinityTerm,
@@ -29064,6 +30134,7 @@ var XXXMappingPodCondition = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PodConditionType",
         },
         {
@@ -29073,6 +30144,7 @@ var XXXMappingPodCondition = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ConditionStatus",
         },
         {
@@ -29082,6 +30154,7 @@ var XXXMappingPodCondition = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -29093,6 +30166,7 @@ var XXXMappingPodCondition = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -29104,6 +30178,7 @@ var XXXMappingPodCondition = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Message",
@@ -29112,6 +30187,7 @@ var XXXMappingPodCondition = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29129,6 +30205,7 @@ var XXXMappingPodDNSConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Searches",
@@ -29137,6 +30214,7 @@ var XXXMappingPodDNSConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Options",
@@ -29145,6 +30223,7 @@ var XXXMappingPodDNSConfig = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodDNSConfigOption",
             
             Mapping: XXXMappingPodDNSConfigOption,
@@ -29165,6 +30244,7 @@ var XXXMappingPodDNSConfigOption = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Value",
@@ -29173,6 +30253,7 @@ var XXXMappingPodDNSConfigOption = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29190,6 +30271,7 @@ var XXXMappingPodIP = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29207,6 +30289,7 @@ var XXXMappingPodOS = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29224,6 +30307,7 @@ var XXXMappingPodReadinessGate = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PodConditionType",
         },
     },
@@ -29242,6 +30326,7 @@ var XXXMappingPodResourceClaim = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ResourceClaimName",
@@ -29250,6 +30335,7 @@ var XXXMappingPodResourceClaim = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ResourceClaimTemplateName",
@@ -29258,6 +30344,7 @@ var XXXMappingPodResourceClaim = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29275,6 +30362,7 @@ var XXXMappingPodResourceClaimStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ResourceClaimName",
@@ -29283,6 +30371,7 @@ var XXXMappingPodResourceClaimStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29300,6 +30389,7 @@ var XXXMappingPodSchedulingGate = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29317,6 +30407,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "SELinuxOptions",
             
             Mapping: XXXMappingSELinuxOptions,
@@ -29328,6 +30419,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "WindowsSecurityContextOptions",
             
             Mapping: XXXMappingWindowsSecurityContextOptions,
@@ -29339,6 +30431,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RunAsGroup",
@@ -29347,6 +30440,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RunAsNonRoot",
@@ -29355,6 +30449,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SupplementalGroups",
@@ -29363,6 +30458,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SupplementalGroupsPolicy",
@@ -29371,6 +30467,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "SupplementalGroupsPolicy",
         },
         {
@@ -29380,6 +30477,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Sysctls",
@@ -29388,6 +30486,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "Sysctl",
             
             Mapping: XXXMappingSysctl,
@@ -29399,6 +30498,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PodFSGroupChangePolicy",
         },
         {
@@ -29408,6 +30508,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
             StructName: "SeccompProfile",
             
             Mapping: XXXMappingSeccompProfile,
@@ -29419,6 +30520,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "AppArmorProfile",
             
             Mapping: XXXMappingAppArmorProfile,
@@ -29430,6 +30532,7 @@ var XXXMappingPodSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 12,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PodSELinuxChangePolicy",
         },
     },
@@ -29448,6 +30551,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "Volume",
             
             Mapping: XXXMappingVolume,
@@ -29459,6 +30563,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "Container",
             
             Mapping: XXXMappingContainer,
@@ -29470,6 +30575,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "Container",
             
             Mapping: XXXMappingContainer,
@@ -29481,6 +30587,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "EphemeralContainer",
             
             Mapping: XXXMappingEphemeralContainer,
@@ -29492,6 +30599,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "RestartPolicy",
         },
         {
@@ -29501,6 +30609,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ActiveDeadlineSeconds",
@@ -29509,6 +30618,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "DnsPolicy",
@@ -29517,6 +30627,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "DNSPolicy",
         },
         {
@@ -29526,6 +30637,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -29537,6 +30649,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "AutomountServiceAccountToken",
@@ -29545,6 +30658,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "NodeName",
@@ -29553,6 +30667,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "HostNetwork",
@@ -29561,6 +30676,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 12,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "HostPid",
@@ -29569,6 +30685,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 13,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "HostIpc",
@@ -29577,6 +30694,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 14,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ShareProcessNamespace",
@@ -29585,6 +30703,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 15,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SecurityContext",
@@ -29593,6 +30712,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 16,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodSecurityContext",
             
             Mapping: XXXMappingPodSecurityContext,
@@ -29604,6 +30724,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 17,
             IsEnum: false,
+            IsAny: false,
             StructName: "LocalObjectReference",
             
             Mapping: XXXMappingLocalObjectReference,
@@ -29615,6 +30736,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 18,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Subdomain",
@@ -29623,6 +30745,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 19,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Affinity",
@@ -29631,6 +30754,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 20,
             IsEnum: false,
+            IsAny: false,
             StructName: "Affinity",
             
             Mapping: XXXMappingAffinity,
@@ -29642,6 +30766,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 21,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Tolerations",
@@ -29650,6 +30775,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 22,
             IsEnum: false,
+            IsAny: false,
             StructName: "Toleration",
             
             Mapping: XXXMappingToleration,
@@ -29661,6 +30787,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 23,
             IsEnum: false,
+            IsAny: false,
             StructName: "HostAlias",
             
             Mapping: XXXMappingHostAlias,
@@ -29672,6 +30799,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 24,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Priority",
@@ -29680,6 +30808,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 25,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "DnsConfig",
@@ -29688,6 +30817,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 26,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodDNSConfig",
             
             Mapping: XXXMappingPodDNSConfig,
@@ -29699,6 +30829,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 27,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodReadinessGate",
             
             Mapping: XXXMappingPodReadinessGate,
@@ -29710,6 +30841,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 28,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "EnableServiceLinks",
@@ -29718,6 +30850,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 29,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "PreemptionPolicy",
@@ -29726,6 +30859,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 30,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PreemptionPolicy",
         },
         {
@@ -29735,6 +30869,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 31,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -29746,6 +30881,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 32,
             IsEnum: false,
+            IsAny: false,
             StructName: "TopologySpreadConstraint",
             
             Mapping: XXXMappingTopologySpreadConstraint,
@@ -29757,6 +30893,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 33,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Os",
@@ -29765,6 +30902,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 34,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodOS",
             
             Mapping: XXXMappingPodOS,
@@ -29776,6 +30914,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 35,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SchedulingGates",
@@ -29784,6 +30923,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 36,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodSchedulingGate",
             
             Mapping: XXXMappingPodSchedulingGate,
@@ -29795,6 +30935,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 37,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodResourceClaim",
             
             Mapping: XXXMappingPodResourceClaim,
@@ -29806,6 +30947,7 @@ var XXXMappingPodSpec = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 38,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceRequirements",
             
             Mapping: XXXMappingResourceRequirements,
@@ -29826,6 +30968,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PodPhase",
         },
         {
@@ -29835,6 +30978,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodCondition",
             
             Mapping: XXXMappingPodCondition,
@@ -29846,6 +30990,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Reason",
@@ -29854,6 +30999,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "NominatedNodeName",
@@ -29862,6 +31008,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "HostIp",
@@ -29870,6 +31017,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "HostIps",
@@ -29878,6 +31026,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
             StructName: "HostIP",
             
             Mapping: XXXMappingHostIP,
@@ -29889,6 +31038,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "PodIps",
@@ -29897,6 +31047,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodIP",
             
             Mapping: XXXMappingPodIP,
@@ -29908,6 +31059,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: false,
+            IsAny: false,
             StructName: "Time",
             
             Mapping: XXXMappingTime,
@@ -29919,6 +31071,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerStatus",
             
             Mapping: XXXMappingContainerStatus,
@@ -29930,6 +31083,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerStatus",
             
             Mapping: XXXMappingContainerStatus,
@@ -29941,6 +31095,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 12,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PodQOSClass",
         },
         {
@@ -29950,6 +31105,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 13,
             IsEnum: false,
+            IsAny: false,
             StructName: "ContainerStatus",
             
             Mapping: XXXMappingContainerStatus,
@@ -29961,6 +31117,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 14,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "PodResizeStatus",
         },
         {
@@ -29970,6 +31127,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 15,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodResourceClaimStatus",
             
             Mapping: XXXMappingPodResourceClaimStatus,
@@ -29981,6 +31139,7 @@ var XXXMappingPodStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 16,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -29998,6 +31157,7 @@ var XXXMappingPreferredSchedulingTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Preference",
@@ -30006,6 +31166,7 @@ var XXXMappingPreferredSchedulingTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "NodeSelectorTerm",
             
             Mapping: XXXMappingNodeSelectorTerm,
@@ -30026,6 +31187,7 @@ var XXXMappingProbe = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "ProbeHandler",
             
             Mapping: XXXMappingProbeHandler,
@@ -30037,6 +31199,7 @@ var XXXMappingProbe = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TimeoutSeconds",
@@ -30045,6 +31208,7 @@ var XXXMappingProbe = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "PeriodSeconds",
@@ -30053,6 +31217,7 @@ var XXXMappingProbe = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SuccessThreshold",
@@ -30061,6 +31226,7 @@ var XXXMappingProbe = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "FailureThreshold",
@@ -30069,6 +31235,7 @@ var XXXMappingProbe = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TerminationGracePeriodSeconds",
@@ -30077,6 +31244,7 @@ var XXXMappingProbe = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30094,6 +31262,7 @@ var XXXMappingProbeHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "ExecAction",
             
             Mapping: XXXMappingExecAction,
@@ -30105,6 +31274,7 @@ var XXXMappingProbeHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "HTTPGetAction",
             
             Mapping: XXXMappingHTTPGetAction,
@@ -30116,6 +31286,7 @@ var XXXMappingProbeHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "TCPSocketAction",
             
             Mapping: XXXMappingTCPSocketAction,
@@ -30127,6 +31298,7 @@ var XXXMappingProbeHandler = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "GRPCAction",
             
             Mapping: XXXMappingGRPCAction,
@@ -30147,6 +31319,7 @@ var XXXMappingProjectedVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "VolumeProjection",
             
             Mapping: XXXMappingVolumeProjection,
@@ -30158,6 +31331,7 @@ var XXXMappingProjectedVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30175,6 +31349,7 @@ var XXXMappingResourceClaim = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Request",
@@ -30183,6 +31358,7 @@ var XXXMappingResourceClaim = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30200,6 +31376,7 @@ var XXXMappingResourceFieldSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Resource",
@@ -30208,6 +31385,7 @@ var XXXMappingResourceFieldSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Divisor",
@@ -30216,6 +31394,7 @@ var XXXMappingResourceFieldSelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30233,6 +31412,7 @@ var XXXMappingResourceRequirements = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -30244,6 +31424,7 @@ var XXXMappingResourceRequirements = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyValue",
             
             Mapping: XXXMappingKeyValue,
@@ -30255,6 +31436,7 @@ var XXXMappingResourceRequirements = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "ResourceClaim",
             
             Mapping: XXXMappingResourceClaim,
@@ -30275,6 +31457,7 @@ var XXXMappingSELinuxOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Role",
@@ -30283,6 +31466,7 @@ var XXXMappingSELinuxOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Type",
@@ -30291,6 +31475,7 @@ var XXXMappingSELinuxOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Level",
@@ -30299,6 +31484,7 @@ var XXXMappingSELinuxOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30316,6 +31502,7 @@ var XXXMappingSeccompProfile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "SeccompProfileType",
         },
         {
@@ -30325,6 +31512,7 @@ var XXXMappingSeccompProfile = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30342,6 +31530,7 @@ var XXXMappingSecretEnvSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Optional",
@@ -30350,6 +31539,7 @@ var XXXMappingSecretEnvSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30367,6 +31557,7 @@ var XXXMappingSecretKeySelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Key",
@@ -30375,6 +31566,7 @@ var XXXMappingSecretKeySelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Optional",
@@ -30383,6 +31575,7 @@ var XXXMappingSecretKeySelector = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30400,6 +31593,7 @@ var XXXMappingSecretProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Items",
@@ -30408,6 +31602,7 @@ var XXXMappingSecretProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyToPath",
             
             Mapping: XXXMappingKeyToPath,
@@ -30419,6 +31614,7 @@ var XXXMappingSecretProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30436,6 +31632,7 @@ var XXXMappingSecretVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Items",
@@ -30444,6 +31641,7 @@ var XXXMappingSecretVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "KeyToPath",
             
             Mapping: XXXMappingKeyToPath,
@@ -30455,6 +31653,7 @@ var XXXMappingSecretVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Optional",
@@ -30463,6 +31662,7 @@ var XXXMappingSecretVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30480,6 +31680,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "Capabilities",
             
             Mapping: XXXMappingCapabilities,
@@ -30491,6 +31692,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SeLinuxOptions",
@@ -30499,6 +31701,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "SELinuxOptions",
             
             Mapping: XXXMappingSELinuxOptions,
@@ -30510,6 +31713,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "WindowsSecurityContextOptions",
             
             Mapping: XXXMappingWindowsSecurityContextOptions,
@@ -30521,6 +31725,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RunAsGroup",
@@ -30529,6 +31734,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RunAsNonRoot",
@@ -30537,6 +31743,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnlyRootFilesystem",
@@ -30545,6 +31752,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "AllowPrivilegeEscalation",
@@ -30553,6 +31761,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ProcMount",
@@ -30561,6 +31770,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "ProcMountType",
         },
         {
@@ -30570,6 +31780,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
             StructName: "SeccompProfile",
             
             Mapping: XXXMappingSeccompProfile,
@@ -30581,6 +31792,7 @@ var XXXMappingSecurityContext = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "AppArmorProfile",
             
             Mapping: XXXMappingAppArmorProfile,
@@ -30601,6 +31813,7 @@ var XXXMappingServiceAccountTokenProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ExpirationSeconds",
@@ -30609,6 +31822,7 @@ var XXXMappingServiceAccountTokenProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Path",
@@ -30617,6 +31831,7 @@ var XXXMappingServiceAccountTokenProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30634,6 +31849,7 @@ var XXXMappingSleepAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30651,6 +31867,7 @@ var XXXMappingSysctl = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Value",
@@ -30659,6 +31876,7 @@ var XXXMappingSysctl = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30676,6 +31894,7 @@ var XXXMappingTCPSocketAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "IntOrString",
             
             Mapping: XXXMappingIntOrString,
@@ -30687,6 +31906,7 @@ var XXXMappingTCPSocketAction = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30704,6 +31924,7 @@ var XXXMappingTime = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Nanos",
@@ -30712,6 +31933,7 @@ var XXXMappingTime = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30729,6 +31951,7 @@ var XXXMappingToleration = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Operator",
@@ -30737,6 +31960,7 @@ var XXXMappingToleration = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "TolerationOperator",
         },
         {
@@ -30746,6 +31970,7 @@ var XXXMappingToleration = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Effect",
@@ -30754,6 +31979,7 @@ var XXXMappingToleration = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "TaintEffect",
         },
         {
@@ -30763,6 +31989,7 @@ var XXXMappingToleration = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30780,6 +32007,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "TopologyKey",
@@ -30788,6 +32016,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "WhenUnsatisfiable",
@@ -30796,6 +32025,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "UnsatisfiableConstraintAction",
         },
         {
@@ -30805,6 +32035,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "LabelSelector",
             
             Mapping: XXXMappingLabelSelector,
@@ -30816,6 +32047,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "NodeAffinityPolicy",
@@ -30824,6 +32056,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "NodeInclusionPolicy",
         },
         {
@@ -30833,6 +32066,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "NodeInclusionPolicy",
         },
         {
@@ -30842,6 +32076,7 @@ var XXXMappingTopologySpreadConstraint = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30859,6 +32094,7 @@ var XXXMappingTypeMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ApiVersion",
@@ -30867,6 +32103,7 @@ var XXXMappingTypeMeta = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30884,6 +32121,7 @@ var XXXMappingTypedLocalObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Kind",
@@ -30892,6 +32130,7 @@ var XXXMappingTypedLocalObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Name",
@@ -30900,6 +32139,7 @@ var XXXMappingTypedLocalObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30917,6 +32157,7 @@ var XXXMappingTypedObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Kind",
@@ -30925,6 +32166,7 @@ var XXXMappingTypedObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Name",
@@ -30933,6 +32175,7 @@ var XXXMappingTypedObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "Namespace",
@@ -30941,6 +32184,7 @@ var XXXMappingTypedObjectReference = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -30958,6 +32202,7 @@ var XXXMappingVolume = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "VolumeSource",
@@ -30966,6 +32211,7 @@ var XXXMappingVolume = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "VolumeSource",
             
             Mapping: XXXMappingVolumeSource,
@@ -30986,6 +32232,7 @@ var XXXMappingVolumeDevice = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "DevicePath",
@@ -30994,6 +32241,7 @@ var XXXMappingVolumeDevice = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -31011,6 +32259,7 @@ var XXXMappingVolumeMount = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnly",
@@ -31019,6 +32268,7 @@ var XXXMappingVolumeMount = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RecursiveReadOnly",
@@ -31027,6 +32277,7 @@ var XXXMappingVolumeMount = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "RecursiveReadOnlyMode",
         },
         {
@@ -31036,6 +32287,7 @@ var XXXMappingVolumeMount = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "SubPath",
@@ -31044,6 +32296,7 @@ var XXXMappingVolumeMount = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "MountPropagation",
@@ -31052,6 +32305,7 @@ var XXXMappingVolumeMount = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "MountPropagationMode",
         },
         {
@@ -31061,6 +32315,7 @@ var XXXMappingVolumeMount = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -31078,6 +32333,7 @@ var XXXMappingVolumeMountStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "MountPath",
@@ -31086,6 +32342,7 @@ var XXXMappingVolumeMountStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "ReadOnly",
@@ -31094,6 +32351,7 @@ var XXXMappingVolumeMountStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RecursiveReadOnly",
@@ -31102,6 +32360,7 @@ var XXXMappingVolumeMountStatus = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: true,
+            IsAny: false,
             EnumGroup: "RecursiveReadOnlyMode",
         },
     },
@@ -31120,6 +32379,7 @@ var XXXMappingVolumeProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "SecretProjection",
             
             Mapping: XXXMappingSecretProjection,
@@ -31131,6 +32391,7 @@ var XXXMappingVolumeProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "DownwardAPIProjection",
             
             Mapping: XXXMappingDownwardAPIProjection,
@@ -31142,6 +32403,7 @@ var XXXMappingVolumeProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "ConfigMapProjection",
             
             Mapping: XXXMappingConfigMapProjection,
@@ -31153,6 +32415,7 @@ var XXXMappingVolumeProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "ServiceAccountTokenProjection",
             
             Mapping: XXXMappingServiceAccountTokenProjection,
@@ -31164,6 +32427,7 @@ var XXXMappingVolumeProjection = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
             StructName: "ClusterTrustBundleProjection",
             
             Mapping: XXXMappingClusterTrustBundleProjection,
@@ -31184,6 +32448,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
             StructName: "HostPathVolumeSource",
             
             Mapping: XXXMappingHostPathVolumeSource,
@@ -31195,6 +32460,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "EmptyDirVolumeSource",
             
             Mapping: XXXMappingEmptyDirVolumeSource,
@@ -31206,6 +32472,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
             StructName: "GCEPersistentDiskVolumeSource",
             
             Mapping: XXXMappingGCEPersistentDiskVolumeSource,
@@ -31217,6 +32484,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
             StructName: "AWSElasticBlockStoreVolumeSource",
             
             Mapping: XXXMappingAWSElasticBlockStoreVolumeSource,
@@ -31228,6 +32496,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 4,
             IsEnum: false,
+            IsAny: false,
             StructName: "SecretVolumeSource",
             
             Mapping: XXXMappingSecretVolumeSource,
@@ -31239,6 +32508,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 5,
             IsEnum: false,
+            IsAny: false,
             StructName: "NFSVolumeSource",
             
             Mapping: XXXMappingNFSVolumeSource,
@@ -31250,6 +32520,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 6,
             IsEnum: false,
+            IsAny: false,
             StructName: "PersistentVolumeClaimVolumeSource",
             
             Mapping: XXXMappingPersistentVolumeClaimVolumeSource,
@@ -31261,6 +32532,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 7,
             IsEnum: false,
+            IsAny: false,
             StructName: "DownwardAPIVolumeSource",
             
             Mapping: XXXMappingDownwardAPIVolumeSource,
@@ -31272,6 +32544,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 8,
             IsEnum: false,
+            IsAny: false,
             StructName: "ConfigMapVolumeSource",
             
             Mapping: XXXMappingConfigMapVolumeSource,
@@ -31283,6 +32556,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 9,
             IsEnum: false,
+            IsAny: false,
             StructName: "ProjectedVolumeSource",
             
             Mapping: XXXMappingProjectedVolumeSource,
@@ -31294,6 +32568,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 10,
             IsEnum: false,
+            IsAny: false,
             StructName: "CSIVolumeSource",
             
             Mapping: XXXMappingCSIVolumeSource,
@@ -31305,6 +32580,7 @@ var XXXMappingVolumeSource = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 11,
             IsEnum: false,
+            IsAny: false,
             StructName: "EphemeralVolumeSource",
             
             Mapping: XXXMappingEphemeralVolumeSource,
@@ -31325,6 +32601,7 @@ var XXXMappingWeightedPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "PodAffinityTerm",
@@ -31333,6 +32610,7 @@ var XXXMappingWeightedPodAffinityTerm = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
             StructName: "PodAffinityTerm",
             
             Mapping: XXXMappingPodAffinityTerm,
@@ -31353,6 +32631,7 @@ var XXXMappingWindowsSecurityContextOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 0,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "GmsaCredentialSpec",
@@ -31361,6 +32640,7 @@ var XXXMappingWindowsSecurityContextOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 1,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "RunAsUserName",
@@ -31369,6 +32649,7 @@ var XXXMappingWindowsSecurityContextOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 2,
             IsEnum: false,
+            IsAny: false,
         },
         {
             Name: "HostProcess",
@@ -31377,6 +32658,7 @@ var XXXMappingWindowsSecurityContextOptions = &mapping.Map{
             FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
             FieldNum: 3,
             IsEnum: false,
+            IsAny: false,
         },
     },
 }
@@ -35642,4 +36924,727 @@ func PackageDescr() reflect.PackageDescr {
 // Registers our package description with the runtime.
 func init() {
     runtime.RegisterPackage(XXXPackageDescr)
+
+    // Register each struct type by its hash for Any field decoding.
+    runtime.RegisterTypeHash(XXXTypeHashAWSElasticBlockStoreVolumeSource, runtime.TypeEntry{
+        Name:     "AWSElasticBlockStoreVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewAWSElasticBlockStoreVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashAffinity, runtime.TypeEntry{
+        Name:     "Affinity",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewAffinity(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashAppArmorProfile, runtime.TypeEntry{
+        Name:     "AppArmorProfile",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewAppArmorProfile(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashCSIVolumeSource, runtime.TypeEntry{
+        Name:     "CSIVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewCSIVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashCapabilities, runtime.TypeEntry{
+        Name:     "Capabilities",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewCapabilities(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashClusterTrustBundleProjection, runtime.TypeEntry{
+        Name:     "ClusterTrustBundleProjection",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewClusterTrustBundleProjection(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashConfigMapEnvSource, runtime.TypeEntry{
+        Name:     "ConfigMapEnvSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewConfigMapEnvSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashConfigMapKeySelector, runtime.TypeEntry{
+        Name:     "ConfigMapKeySelector",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewConfigMapKeySelector(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashConfigMapProjection, runtime.TypeEntry{
+        Name:     "ConfigMapProjection",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewConfigMapProjection(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashConfigMapVolumeSource, runtime.TypeEntry{
+        Name:     "ConfigMapVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewConfigMapVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainer, runtime.TypeEntry{
+        Name:     "Container",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainer(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainerPort, runtime.TypeEntry{
+        Name:     "ContainerPort",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainerPort(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainerResizePolicy, runtime.TypeEntry{
+        Name:     "ContainerResizePolicy",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainerResizePolicy(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainerState, runtime.TypeEntry{
+        Name:     "ContainerState",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainerState(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainerStateRunning, runtime.TypeEntry{
+        Name:     "ContainerStateRunning",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainerStateRunning(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainerStateTerminated, runtime.TypeEntry{
+        Name:     "ContainerStateTerminated",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainerStateTerminated(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainerStateWaiting, runtime.TypeEntry{
+        Name:     "ContainerStateWaiting",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainerStateWaiting(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashContainerStatus, runtime.TypeEntry{
+        Name:     "ContainerStatus",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewContainerStatus(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashDownwardAPIProjection, runtime.TypeEntry{
+        Name:     "DownwardAPIProjection",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewDownwardAPIProjection(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashDownwardAPIVolumeFile, runtime.TypeEntry{
+        Name:     "DownwardAPIVolumeFile",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewDownwardAPIVolumeFile(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashDownwardAPIVolumeSource, runtime.TypeEntry{
+        Name:     "DownwardAPIVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewDownwardAPIVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashEmptyDirVolumeSource, runtime.TypeEntry{
+        Name:     "EmptyDirVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewEmptyDirVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashEnvFromSource, runtime.TypeEntry{
+        Name:     "EnvFromSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewEnvFromSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashEnvVar, runtime.TypeEntry{
+        Name:     "EnvVar",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewEnvVar(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashEnvVarSource, runtime.TypeEntry{
+        Name:     "EnvVarSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewEnvVarSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashEphemeralContainer, runtime.TypeEntry{
+        Name:     "EphemeralContainer",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewEphemeralContainer(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashEphemeralVolumeSource, runtime.TypeEntry{
+        Name:     "EphemeralVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewEphemeralVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashExecAction, runtime.TypeEntry{
+        Name:     "ExecAction",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewExecAction(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashGCEPersistentDiskVolumeSource, runtime.TypeEntry{
+        Name:     "GCEPersistentDiskVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewGCEPersistentDiskVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashGRPCAction, runtime.TypeEntry{
+        Name:     "GRPCAction",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewGRPCAction(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashHTTPGetAction, runtime.TypeEntry{
+        Name:     "HTTPGetAction",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewHTTPGetAction(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashHTTPHeader, runtime.TypeEntry{
+        Name:     "HTTPHeader",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewHTTPHeader(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashHostAlias, runtime.TypeEntry{
+        Name:     "HostAlias",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewHostAlias(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashHostIP, runtime.TypeEntry{
+        Name:     "HostIP",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewHostIP(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashHostPathVolumeSource, runtime.TypeEntry{
+        Name:     "HostPathVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewHostPathVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashIntOrString, runtime.TypeEntry{
+        Name:     "IntOrString",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewIntOrString(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashKeyToPath, runtime.TypeEntry{
+        Name:     "KeyToPath",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewKeyToPath(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashKeyValue, runtime.TypeEntry{
+        Name:     "KeyValue",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewKeyValue(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashLabelSelector, runtime.TypeEntry{
+        Name:     "LabelSelector",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewLabelSelector(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashLabelSelectorRequirement, runtime.TypeEntry{
+        Name:     "LabelSelectorRequirement",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewLabelSelectorRequirement(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashLifecycle, runtime.TypeEntry{
+        Name:     "Lifecycle",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewLifecycle(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashLifecycleHandler, runtime.TypeEntry{
+        Name:     "LifecycleHandler",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewLifecycleHandler(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashLocalObjectReference, runtime.TypeEntry{
+        Name:     "LocalObjectReference",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewLocalObjectReference(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashManagedFieldsEntry, runtime.TypeEntry{
+        Name:     "ManagedFieldsEntry",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewManagedFieldsEntry(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashNFSVolumeSource, runtime.TypeEntry{
+        Name:     "NFSVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewNFSVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashNodeAffinity, runtime.TypeEntry{
+        Name:     "NodeAffinity",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewNodeAffinity(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashNodeSelector, runtime.TypeEntry{
+        Name:     "NodeSelector",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewNodeSelector(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashNodeSelectorRequirement, runtime.TypeEntry{
+        Name:     "NodeSelectorRequirement",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewNodeSelectorRequirement(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashNodeSelectorTerm, runtime.TypeEntry{
+        Name:     "NodeSelectorTerm",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewNodeSelectorTerm(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashObjectFieldSelector, runtime.TypeEntry{
+        Name:     "ObjectFieldSelector",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewObjectFieldSelector(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashObjectMeta, runtime.TypeEntry{
+        Name:     "ObjectMeta",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewObjectMeta(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashOwnerReference, runtime.TypeEntry{
+        Name:     "OwnerReference",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewOwnerReference(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPersistentVolumeClaimSpec, runtime.TypeEntry{
+        Name:     "PersistentVolumeClaimSpec",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPersistentVolumeClaimSpec(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPersistentVolumeClaimTemplate, runtime.TypeEntry{
+        Name:     "PersistentVolumeClaimTemplate",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPersistentVolumeClaimTemplate(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPersistentVolumeClaimVolumeSource, runtime.TypeEntry{
+        Name:     "PersistentVolumeClaimVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPersistentVolumeClaimVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPod, runtime.TypeEntry{
+        Name:     "Pod",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPod(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodAffinity, runtime.TypeEntry{
+        Name:     "PodAffinity",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodAffinity(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodAffinityTerm, runtime.TypeEntry{
+        Name:     "PodAffinityTerm",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodAffinityTerm(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodAntiAffinity, runtime.TypeEntry{
+        Name:     "PodAntiAffinity",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodAntiAffinity(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodCondition, runtime.TypeEntry{
+        Name:     "PodCondition",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodCondition(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodDNSConfig, runtime.TypeEntry{
+        Name:     "PodDNSConfig",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodDNSConfig(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodDNSConfigOption, runtime.TypeEntry{
+        Name:     "PodDNSConfigOption",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodDNSConfigOption(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodIP, runtime.TypeEntry{
+        Name:     "PodIP",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodIP(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodOS, runtime.TypeEntry{
+        Name:     "PodOS",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodOS(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodReadinessGate, runtime.TypeEntry{
+        Name:     "PodReadinessGate",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodReadinessGate(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodResourceClaim, runtime.TypeEntry{
+        Name:     "PodResourceClaim",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodResourceClaim(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodResourceClaimStatus, runtime.TypeEntry{
+        Name:     "PodResourceClaimStatus",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodResourceClaimStatus(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodSchedulingGate, runtime.TypeEntry{
+        Name:     "PodSchedulingGate",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodSchedulingGate(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodSecurityContext, runtime.TypeEntry{
+        Name:     "PodSecurityContext",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodSecurityContext(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodSpec, runtime.TypeEntry{
+        Name:     "PodSpec",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodSpec(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPodStatus, runtime.TypeEntry{
+        Name:     "PodStatus",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPodStatus(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashPreferredSchedulingTerm, runtime.TypeEntry{
+        Name:     "PreferredSchedulingTerm",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewPreferredSchedulingTerm(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashProbe, runtime.TypeEntry{
+        Name:     "Probe",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewProbe(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashProbeHandler, runtime.TypeEntry{
+        Name:     "ProbeHandler",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewProbeHandler(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashProjectedVolumeSource, runtime.TypeEntry{
+        Name:     "ProjectedVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewProjectedVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashResourceClaim, runtime.TypeEntry{
+        Name:     "ResourceClaim",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewResourceClaim(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashResourceFieldSelector, runtime.TypeEntry{
+        Name:     "ResourceFieldSelector",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewResourceFieldSelector(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashResourceRequirements, runtime.TypeEntry{
+        Name:     "ResourceRequirements",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewResourceRequirements(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSELinuxOptions, runtime.TypeEntry{
+        Name:     "SELinuxOptions",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSELinuxOptions(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSeccompProfile, runtime.TypeEntry{
+        Name:     "SeccompProfile",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSeccompProfile(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSecretEnvSource, runtime.TypeEntry{
+        Name:     "SecretEnvSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSecretEnvSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSecretKeySelector, runtime.TypeEntry{
+        Name:     "SecretKeySelector",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSecretKeySelector(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSecretProjection, runtime.TypeEntry{
+        Name:     "SecretProjection",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSecretProjection(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSecretVolumeSource, runtime.TypeEntry{
+        Name:     "SecretVolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSecretVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSecurityContext, runtime.TypeEntry{
+        Name:     "SecurityContext",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSecurityContext(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashServiceAccountTokenProjection, runtime.TypeEntry{
+        Name:     "ServiceAccountTokenProjection",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewServiceAccountTokenProjection(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSleepAction, runtime.TypeEntry{
+        Name:     "SleepAction",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSleepAction(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashSysctl, runtime.TypeEntry{
+        Name:     "Sysctl",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewSysctl(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashTCPSocketAction, runtime.TypeEntry{
+        Name:     "TCPSocketAction",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewTCPSocketAction(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashTime, runtime.TypeEntry{
+        Name:     "Time",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewTime(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashToleration, runtime.TypeEntry{
+        Name:     "Toleration",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewToleration(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashTopologySpreadConstraint, runtime.TypeEntry{
+        Name:     "TopologySpreadConstraint",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewTopologySpreadConstraint(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashTypeMeta, runtime.TypeEntry{
+        Name:     "TypeMeta",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewTypeMeta(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashTypedLocalObjectReference, runtime.TypeEntry{
+        Name:     "TypedLocalObjectReference",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewTypedLocalObjectReference(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashTypedObjectReference, runtime.TypeEntry{
+        Name:     "TypedObjectReference",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewTypedObjectReference(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashVolume, runtime.TypeEntry{
+        Name:     "Volume",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewVolume(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashVolumeDevice, runtime.TypeEntry{
+        Name:     "VolumeDevice",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewVolumeDevice(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashVolumeMount, runtime.TypeEntry{
+        Name:     "VolumeMount",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewVolumeMount(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashVolumeMountStatus, runtime.TypeEntry{
+        Name:     "VolumeMountStatus",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewVolumeMountStatus(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashVolumeProjection, runtime.TypeEntry{
+        Name:     "VolumeProjection",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewVolumeProjection(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashVolumeSource, runtime.TypeEntry{
+        Name:     "VolumeSource",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewVolumeSource(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashWeightedPodAffinityTerm, runtime.TypeEntry{
+        Name:     "WeightedPodAffinityTerm",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewWeightedPodAffinityTerm(ctx)
+        },
+    })
+    runtime.RegisterTypeHash(XXXTypeHashWindowsSecurityContextOptions, runtime.TypeEntry{
+        Name:     "WindowsSecurityContextOptions",
+        FullPath: "github.com/bearlytools/claw/benchmark/msgs/claw",
+        New: func(ctx context.Context) runtime.AnyType {
+            return NewWindowsSecurityContextOptions(ctx)
+        },
+    })
 }

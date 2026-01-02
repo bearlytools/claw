@@ -581,6 +581,38 @@ func (x {{ $struct.Name }}) Walk(ctx context.Context, yield clawiter.YieldToken,
                         {{- end }}
                         wrapped.Walk(ctx, yield, opts...)
                     }
+                    {{- else if eq $field.ValueTypeConst "FTAny" }}
+                    // Any value - yield token with type hash and raw data
+                    if v != nil {
+                        tok.TypeHash = v.TypeHash[:]
+                        tok.Bytes = v.Data
+                    }
+                    if !yield(tok) {
+                        return
+                    }
+                    {{- else if eq $field.ValueTypeConst "FTListAny" }}
+                    // List of Any values
+                    if !yield(tok) {
+                        return
+                    }
+                    if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "", Type: field.FTListAny, Len: len(v)}) {
+                        return
+                    }
+                    for _, anyVal := range v {
+                        anyTok := clawiter.Token{
+                            Kind: clawiter.TokenField,
+                            Name: "",
+                            Type: field.FTAny,
+                            TypeHash: anyVal.TypeHash[:],
+                            Bytes: anyVal.Data,
+                        }
+                        if !yield(anyTok) {
+                            return
+                        }
+                    }
+                    if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: ""}) {
+                        return
+                    }
                     {{- else if eq $field.ValueTypeConst "FTString" }}
                     tok.Bytes = []byte(v)
                     if !yield(tok) {
@@ -649,6 +681,60 @@ func (x {{ $struct.Name }}) Walk(ctx context.Context, yield clawiter.YieldToken,
                     {{- end }}
                 }
                 if !yield(clawiter.Token{Kind: clawiter.TokenMapEnd, Name: "{{ $field.Name }}"}) {
+                    return
+                }
+            }
+        }
+        {{- else if eq $field.TypeAsString "Any" }}
+        {
+            data, typeHash, ok := x.{{ $field.Name }}Raw()
+            if !ok {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTAny, IsNil: true}) {
+                    return
+                }
+            } else {
+                tok := clawiter.Token{
+                    Kind: clawiter.TokenField,
+                    Name: "{{ $field.Name }}",
+                    Type: field.FTAny,
+                    Bytes: data,
+                    TypeHash: typeHash[:],
+                }
+                if !yield(tok) {
+                    return
+                }
+            }
+        }
+        {{- else if eq $field.TypeAsString "ListAny" }}
+        {
+            listLen := x.{{ $field.Name }}Len()
+            if listLen == 0 {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListAny, IsNil: true}) {
+                    return
+                }
+            } else {
+                if !yield(clawiter.Token{Kind: clawiter.TokenField, Name: "{{ $field.Name }}", Type: field.FTListAny}) {
+                    return
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListStart, Name: "{{ $field.Name }}", Type: field.FTListAny, Len: listLen}) {
+                    return
+                }
+                for i := 0; i < listLen; i++ {
+                    data, typeHash, ok := x.{{ $field.Name }}GetRaw(i)
+                    if ok {
+                        tok := clawiter.Token{
+                            Kind: clawiter.TokenField,
+                            Name: "",
+                            Type: field.FTAny,
+                            Bytes: data,
+                            TypeHash: typeHash[:],
+                        }
+                        if !yield(tok) {
+                            return
+                        }
+                    }
+                }
+                if !yield(clawiter.Token{Kind: clawiter.TokenListEnd, Name: "{{ $field.Name }}"}) {
                     return
                 }
             }

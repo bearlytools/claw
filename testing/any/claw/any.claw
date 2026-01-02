@@ -1,0 +1,28 @@
+package any
+
+options [ IsSet() ]
+
+// Container holds an Any field that can contain any Struct type
+Struct Container {
+	Name string @0
+	Data Any @1
+}
+
+// ListContainer holds a []Any field for multiple values of different types
+Struct ListContainer {
+	Name string @0
+	Items []Any @1
+}
+
+// Inner is a simple struct to be stored in Any fields
+Struct Inner {
+	ID int64 @0
+	Value string @1
+}
+
+// Outer is a more complex struct to test nested Any
+Struct Outer {
+	Label string @0
+	Count int32 @1
+	Nested Inner @2
+}
